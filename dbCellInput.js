@@ -12,6 +12,7 @@ oInput.style.visibility = 'hidden';
 oInput.style.backgroundColor='white';
 // this changes how the input box copes with overflow
 oInput.style.overflow='visible';
+oInput.style.zIndex=1;
 
 oInput.attachEvent('onkeydown',inputOnKeyDown);
 oInput.attachEvent('onkeyup',inputOnKeyUp);
@@ -66,35 +67,30 @@ function selectText(option) {
 }
 
 function show(oCell,value) {
-  oInput.style.borderWidth = oCell.currentStyle.borderWidth;
-  oInput.style.borderStyle = oCell.currentStyle.borderStyle;
-  oInput.style.borderColor = oCell.currentStyle.borderColor;
-  
-  oInput.style.marginTop = oCell.currentStyle.marginTop;
-  oInput.style.marginRight = oCell.currentStyle.marginRight;
-  oInput.style.marginBottom = oCell.currentStyle.marginBottom;
-  oInput.style.marginLeft = oCell.currentStyle.marginLeft;
-  
-  oInput.style.paddingTop = oCell.currentStyle.paddingTop;
-  oInput.style.paddingRight = oCell.currentStyle.paddingRight;
-  oInput.style.paddingBottom = oCell.currentStyle.paddingBottom;
-  oInput.style.paddingLeft = oCell.currentStyle.paddingLeft;
-  
-  oInput.style.textAlign = oCell.currentStyle.textAlign;
-  oInput.style.verticalAlign = oCell.currentStyle.verticalAlign;
-  oInput.style.fontSize = oCell.currentStyle.fontSize;
-  oInput.style.fontFamily = oCell.currentStyle.fontFamily;
+  var attributes = new Array();
+  attributes.push('borderTopWidth','borderTopStyle','borderTopColor');
+  attributes.push('borderBottomWidth','borderBottomStyle','borderBottomColor');
+  attributes.push('borderLeftWidth','borderLeftStyle','borderLeftColor');
+  attributes.push('borderRightWidth','borderRightStyle','borderRightColor');
+  attributes.push('marginTop','marginRight','marginBottom','marginLeft');
+  attributes.push('paddingTop','paddingRight','paddingBottom','paddingLeft');
+  attributes.push('textAlign','verticalAlign','fontSize','fontFamily','fontWeight');
+
+  for (var i=0;i<attributes.length;i++) {
+    var name = attributes[i];
+    oInput.style.setAttribute(name,oCell.currentStyle.getAttribute(name));
+  }
   if ( oCell.currentStyle.backgroundColor=='transparent' )	{
     oInput.style.backgroundColor='white';
   } else {
     oInput.style.backgroundColor=oCell.currentStyle.backgroundColor;
   }	
   
-  oInput.style.pixelWidth = oCell.offsetWidth;
-  oInput.style.pixelHeight = oCell.offsetHeight;
+  oInput.style.width = oCell.offsetWidth;
+  oInput.style.height = oCell.offsetHeight;
   
-  oInput.style.pixelTop = getPixelTop(oCell)-getPixelTop(oInput.offsetParent);
-  oInput.style.pixelLeft = getPixelLeft(oCell)-getPixelLeft(oInput.offsetParent);
+  oInput.style.top = getPixelTop(oCell)-getPixelTop(oInput.offsetParent)+2;
+  oInput.style.left = getPixelLeft(oCell)-getPixelLeft(oInput.offsetParent)+2;
   
   oInput.style.visibility = 'visible';
   oInput.value = value;
@@ -167,23 +163,6 @@ function inputOnPaste() {
 function inputOnBlur() {
   var e = window.event;
   callback(e);
-}
-
-function getContainerPixelLeft(elem) {
-  var left = 0;
-  while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-    left += elem.offsetLeft - elem.scrollLeft;
-    elem = elem.offsetParent;
-  }
-  return left;
-}
-function getContainerPixelTop(elem) {
-  var top = 0;
-  while (elem != oInput.offsetparent && elem.tagName !='BODY') {
-    top += elem.offsetTop - elem.scrollTop;
-    elem = elem.offsetParent;
-  }
-  return top;
 }
 
 function destroy() {

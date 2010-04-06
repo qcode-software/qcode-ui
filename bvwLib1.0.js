@@ -198,13 +198,13 @@ function urlDataSet(data,name,value) {
   }
   for (var i=0;i<a.length;i++) {
     b = a[i].split('=');
-    var n = unescape(b[0]);
-    var v = unescape(b[1]);
+    var n = decodeURIComponent(b[0].replace(/\+/g,' '));
+    var v = decodeURIComponent(b[1].replace(/\+/g,' '));
     c[n]=v;
   }
   c[name] = value;
   for (key in c) {
-    list.push(escape(key) + "=" + escape(c[key]));
+    list.push(encodeURIComponent(key) + "=" + encodeURIComponent(c[key]));
   }
   
   data=list.join("&");
@@ -230,8 +230,8 @@ function urlDataGet(data,name) {
   }
   for (var i=0;i<a.length;i++) {
     b = a[i].split('=');
-    if (name == unescape(b[0])) {
-      return unescape(b[1]);
+    if (name == decodeURIComponent(b[0].replace(/\+/g,' '))) {
+      return decodeURIComponent(b[1].replace(/\+/g,' '));
     }
   }
   return null;
@@ -395,14 +395,8 @@ function actionConfirm(oLink) {
 	}
 }
 
-function escapePlus(value) {
-	value = escape(value);
-	value = value.replace(/\+/g,'%2B');
-	return value;
-}
-
 function stripHTML(html) {
-	return html.replace(/<[^>]+>/,"");
+  return html.replace(/<[^>]+>/gi,"");
 }
 
 function formEncode(form) {
@@ -432,7 +426,7 @@ function formEncode(form) {
 			value = elmt.value;
 		}
 		if ( name != "" ) {
-			list.push(escapePlus(name) + "=" + escapePlus(value));
+			list.push(encodeURIComponent(name) + "=" + encodeURIComponent(value));
 		}
 	}
 	return list.join("&");
@@ -549,10 +543,10 @@ function unescapeHTML(str) {
 }
 
 function parseBoolean(value) {
-  value = stripHTML(String(value));
+  value = stripHTML(String(value)).toLowerCase();
   var truth = ['true','yes','y','1','t'];
   for (var i=0;i<truth.length;i++) {
-    if ( value == truth[i].toUpperCase() ) {
+    if ( value == truth[i].toLowerCase() ) {
       return true;
     } 
   }
