@@ -1,0 +1,29 @@
+/* COLUMNS */
+
+col.clsHidden { 
+	display:none;
+}
+col.clsNumber { 
+	text-align:right;
+}
+col.clsMoney { 
+	text-align:right;
+}
+col.clsCenter {
+	text-align:center;
+}
+col.clsInteger {
+	text-align:right;
+}
+col.clsDate {
+	text-align:right;
+}
+col.clsBold {
+	font-weight:bold
+}
+col.clsBool {
+	text-align:center;
+}
+col.clsYesNo {
+	text-align:center;
+}

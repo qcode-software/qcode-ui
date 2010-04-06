@@ -1,0 +1,24 @@
+table.clsCustomerReport {
+	border-collapse:collapse;
+	font-size:10pt;
+	border:solid 1px black;
+}
+
+table.clsCustomerReport thead {
+	display:table-header-group;
+}
+
+table.clsCustomerReport th {
+	font-weight:bold;
+	text-align:center;
+	border:solid 1px black;
+	padding:3x;
+}
+
+table.clsCustomerReport tbody td {
+	border-left:solid 1px #aaaaaa;
+	border-right:solid 1px #aaaaaa;
+	border-bottom:solid 1px #aaaaaa;
+	padding:3x;
+	vertical-align:top;
+}

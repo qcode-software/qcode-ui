@@ -1,0 +1,16 @@
+table.clsDbHeader {
+	border-collapse:collapse;
+	table-layout:fixed;
+	border-left:1px solid #aca899;
+	border-right:1px solid #aca899;
+}
+table.clsDbHeader tr { min-height:20px; }
+table.clsDbHeader th {
+	 border-top:1px solid #aca899;
+	 border-left:1px solid #aca899;
+	 border-right:1px solid #aca899;
+	 background-color:#ece9d8;
+	 color:black;
+	 font-weight:bold;
+	 text-align:center;
+}

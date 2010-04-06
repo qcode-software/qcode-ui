@@ -1,0 +1,121 @@
+
+<html>
+<head>
+<link href="Style/global.css"            rel="stylesheet" type="text/css">
+<link href="Style/cols.css"              rel="stylesheet" type="text/css">
+<link href="Style/clsReport.css"         rel="stylesheet" type="text/css">
+<link href="Style/clsGrid.css"           rel="stylesheet" type="text/css">
+<link href="Style/clsFlexGrid.css"       rel="stylesheet" type="text/css">
+<link href="Style/clsDbList.css"         rel="stylesheet" type="text/css">
+<link href="Style/clsDbHeader.css"       rel="stylesheet" type="text/css">
+<link href="Style/clsDbGrid.css"         rel="stylesheet" type="text/css">
+<link href="Style/clsDbFlexGrid.css"     rel="stylesheet" type="text/css">
+<link href="Style/clsDbForm.css"         rel="stylesheet" type="text/css">
+<link href="Style/clsSection.css"        rel="stylesheet" type="text/css">
+<link href="Style/clsDoc.css"            rel="stylesheet" type="text/css">
+<link href="Style/clsWorksheet.css"      rel="stylesheet" type="text/css">
+<link href="Style/clsScrollGrid.css"     rel="stylesheet" type="text/css">
+<link href="Style/clsCustomerReport.css" rel="stylesheet" type="text/css">
+    
+
+<script src="behavior.js" language="JScript"></script>
+<script src="bvwLib1.0.js" language="JScript"></script>
+<script src="dbCells.js" language="JScript"></script>
+<script src="dbCellInput.js" language="JScript"></script>
+<script src="dbCellHTMLArea.js" language="JScript"></script>
+<script src="accessKey.js" language="JScript"></script>
+<script src="tableRowHighlight.js" language="JScript"></script>
+
+<style type="text/css">
+.clsDbCell {
+	background-color:pink;
+}
+</style>
+<title>DB Cells</title>
+</head>
+<body onLoad="behave();">
+
+<h2>Customer Types</h2>
+
+<hr>
+<div class="clsDbCells">
+<table class="clsFlexGrid">
+<colgroup>
+<col name="customer_type_id" class="clsCenter">
+<col name="type_description" style="width:100" class="clsCenter">
+<col name="firstname" style="width:100" class="clsCenter">
+<col name="include" type="htmlarea" class="clsCenter" style="width:60">
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th>Type</th>
+<th>Name</th>
+<th>Include</th>
+</tr>
+</thead>
+<tbody>
+<tr style="vertical-align:middle">
+<td>4</td>
+<td><span class="clsDbCell" name="customer_type" updateURL="http://mesh.qcode.co.uk/update.xml" style="font-size:120%">House</span></td>
+<td><span class="clsDbCell" name="firstname" updateURL="http://mesh.qcode.co.uk/update.xml" style="font-size:160%">Jimmy</span></td>
+<td><span class="clsDbCell" name="include" updateURL="http://mesh.qcode.co.uk/update.xml" type="htmlarea"><span class="clsFalse">No</span></span></td>
+</tr>
+<tr style="vertical-align:middle">
+<td>4</td>
+<td><span class="clsDbCell" name="customer_type" updateURL="http://mesh.qcode.co.uk/update.xml" style="font-size:160%">House</span></td>
+<td><span class="clsDbCell" name="firstname" updateURL="http://mesh.qcode.co.uk/update.xml" style="font-size:80%">Jimmy2</span></td>
+<td><span class="clsDbCell" name="include" updateURL="http://mesh.qcode.co.uk/update.xml" type="htmlarea" style="font-size:120%"><span class="clsFalse">No2</span></span></td>
+</tr>
+<tr>
+<td>2411</td>
+<td>Regular</td>
+<td>James</td>
+<td><span class="clsTrue">Yes</span></td>
+</tr>
+</tbody>
+</table>
+Break
+<table class="clsFlexGrid">
+  <colgroup>
+  <col name="customer_type_id" class="clsNumber">
+  <col name="type_description" style="width:100">
+  <col name="firstname" style="width:100">
+  <col name="include" type="htmlarea" class="clsCenter" style="width:60">
+  </colgroup>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Type</th>
+      <th>Name</th>
+      <th>Include</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>4</td>
+      <td>House</td>
+      <td><span class="clsDbCell" name="firstname" updateURL="http://mesh.qcode.co.uk/update.xml">Jimmy</span></td>
+      <td><span class="clsDbCell" name="include" updateURL="http://mesh.qcode.co.uk/update.xml" type="htmlarea"><span class="clsFalse">No</span></span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>House</td>
+      <td><span class="clsDbCell" name="firstname" updateURL="http://mesh.qcode.co.uk/update.xml">Jimmy2</span></td>
+      <td><span class="clsDbCell" name="include" updateURL="http://mesh.qcode.co.uk/update.xml" type="htmlarea"><span class="clsFalse">No2</span></span></td>
+    </tr>
+    <tr>
+      <td>2411</td>
+      <td>Regular</td>
+      <td>James</td>
+      <td><span class="clsTrue">Yes</span></td>
+    </tr>
+  </tbody>
+</table>
+<p>&nbsp;</p>
+</div>
+
+<hr>
+<address>ML Accessories</address>
+</body>
+</html>

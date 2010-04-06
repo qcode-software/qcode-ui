@@ -1,0 +1,35 @@
+.clsReportLabel1 {
+	font-style:italic;
+	margin-left:0px;
+	margin-top:10px;
+}
+
+.clsReportLabel2 {
+	margin-left:10px;
+}
+
+.clsReportLabel3 {
+	margin-left:50px;
+}
+
+/* SUM */
+.clsReportLabel1Sum {
+	font-weight:bold;
+	margin-left:0px;
+}
+
+.clsReportLabel2Sum {
+	font-weight:bold;
+	margin-left:10px;
+}
+
+.clsReportLabel3Sum  {
+	font-weight:bold;
+	margin-left:50px;
+}
+
+
+.clsReportLabelFinalSum  {
+	font-weight:bold;
+	margin-left:0px;
+}

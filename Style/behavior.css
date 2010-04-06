@@ -1,0 +1,21 @@
+form.clsDbForm {
+	behavior:url(htc/dbForm.htc);
+}
+
+input.clsDbFormCombo {
+	behavior:url(htc/dbFormCombo.htc);
+}
+
+table.clsDbHeader {
+	behavior:url(htc/dbHeader.htc);
+}
+
+
+
+div.clsDbGridDivStatus {
+	behavior:url(htc/dbGridDivStatus.htc);
+}
+
+table.clsDbList {
+	behavior:url(htc/dbList.htc);
+}

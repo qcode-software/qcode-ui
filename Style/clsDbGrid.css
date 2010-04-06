@@ -1,0 +1,49 @@
+table.clsDbGrid {		
+  border-collapse:collapse;
+ border:1px solid #aca899;
+}
+
+@media screen {
+  table.clsDbGrid {		
+    table-layout:fixed;
+  }
+}
+
+table.clsDbGrid th {
+	 border:1px solid #aca899;
+	 background-color:#ece9d8;
+	 color:black;
+	 font-weight:bold;
+	 text-align:center;
+}
+
+table.clsDbGrid tbody td { 
+	border:1px solid #aca899;
+}
+
+@media screen {
+  table.clsDbGrid tbody tr { 
+  height:20px; 
+  }
+}
+
+div.clsDbGridDiv { 
+	border-top:3px solid #ece9d8;
+	border-left:3px solid #ece9d8;
+	border-right:3px solid #ece9d8;
+}
+
+@media screen {
+  div.clsDbGridDiv {
+  height:400px;
+  overflow:auto;
+  }
+}
+
+div.clsDbGridDivStatus {
+	border-left:3px solid #ece9d8;
+	border-right:3px solid #ece9d8;
+	border-bottom:3px solid #ece9d8;
+	background:oldlace;
+	height:20px;
+}

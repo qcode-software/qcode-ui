@@ -1,0 +1,21 @@
+form.clsDbForm {
+     margin:0px;
+}
+
+div.clsDbFormDiv {
+	border-top:3px solid #ece9d8;
+	border-left:3px solid #ece9d8;
+	border-right:3px solid #ece9d8;
+}
+
+div.clsDbFormDivStatus {
+	border-left:3px solid #ece9d8;
+	border-right:3px solid #ece9d8;
+	border-bottom:3px solid #ece9d8;
+	background:oldlace;
+	padding-left:5px;
+	padding-top:1px;
+	padding-bottom:1px;
+	height:20px;
+}
+

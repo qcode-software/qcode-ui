@@ -1,0 +1,25 @@
+table.clsGrid th {
+	 border-width:1px;
+	 border-style:solid;
+	 border-color:white #aca899 #aca899 white;
+	 background-color:#ece9d8;
+	 color:black;
+	 font-weight:bold;
+	 text-align:center;
+}
+
+table.clsGrid { 
+	border-collapse:collapse;
+	table-layout:fixed;
+	border-width:1px;
+	border-style:solid;
+	border-color:#aca899;
+}
+
+table.clsGrid td {
+	border:solid 1px #aca899;
+}
+
+table.clsGrid tfoot {
+	font-weight:bold;
+}

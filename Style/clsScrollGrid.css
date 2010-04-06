@@ -1,0 +1,38 @@
+table.clsScrollGrid th {
+	border:solid 1px black;
+	font-weight:bold;
+	text-align:center;
+}
+
+table.clsScrollGrid { 
+	border-collapse:collapse;
+	border-width:1px;
+	border-style:solid;
+	border-color:#aca899;
+}
+
+table.clsScrollGrid td {
+	border:solid 1px #aca899;
+}
+
+table.clsScrollGrid tfoot {
+	font-weight:bold;
+}
+
+/* HEADER */
+
+table.clsScrollGridHeader {
+	border-collapse:collapse;
+	border-left:1px solid #aca899;
+	border-right:1px solid #aca899;
+}
+
+table.clsScrollGridHeader th {
+	 border-top:1px solid #aca899;
+	 border-left:1px solid #aca899;
+	 border-right:1px solid #aca899;
+	 background-color:#ece9d8;
+	 color:black;
+	 font-weight:bold;
+	 text-align:center;
+}

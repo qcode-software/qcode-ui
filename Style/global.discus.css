@@ -1,0 +1,196 @@
+/* BODY */
+body { 
+    	font-family:Arial, Helvetica, sans-serif;
+	font-size: x-small;	
+	background-color:ivory;
+}
+
+@media screen {
+   body { 
+	margin-top:0px;
+   }
+   div.clsScroll {
+	height:600px;
+	overflow:auto;
+   }
+}
+
+input {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size: x-small;
+}
+
+textarea {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size: x-small;
+}
+
+/* LINKS */
+a:visited { 
+	color:blue
+}
+a:hover {
+	text-decoration:underline;
+}
+a {
+	color:blue;
+	text-decoration: none;
+}
+
+a.clsAction:visited { 
+	color:red
+}
+a.clsAction:hover {
+	text-decoration:underline;
+}
+a.clsAction {
+	color:red;
+	text-decoration: none;
+}
+
+/* ALL TABLES */
+table {
+	font-size: x-small;
+}
+
+table thead {
+	display:table-header-group;
+}
+
+/* HEADINGS */
+h2 { 
+	margin-top:15px;margin-bottom:5px;font-size:large;color:saddlebrown;
+}
+
+h3 {
+	margin-left:3px;margin-top:15px;margin-bottom:2px;font-size:medium;color:saddlebrown;
+}
+
+h4 {
+	margin-left:3px;margin-top:5px;margin-bottom:2px;color:saddlebrown;
+}
+
+/* HORIZONTAL RULE */
+hr {
+	margin-top:0px;margin-bottom:0px;
+}
+
+/* LISTS */
+ul {
+	margin-top:10pt;
+}
+li {	
+	margin-bottom:3pt;
+}
+
+/* Search */
+table.clsSearch {
+	border:2px solid #aca899;
+	background-color:#ece9d8;
+}
+
+
+/* Columar */
+table.clsColumar tr {
+	vertical-align:top;
+}
+	
+/* Application Menu */
+div.clsMenuApp {	
+	background:linen;
+	padding-left:10px;
+	padding-top:3px;
+	padding-bottom:3px;
+}
+
+/*LABEL*/
+
+label { 
+	font-weight:bold;
+}
+
+label.clsRequired {
+	border-bottom:dashed 1px red;
+}
+
+
+span.clsDisabled {
+	color:gray;
+}
+
+span.clsAction {	
+	color:red;
+	cursor:hand;
+}
+
+p.break { page-break-after: always }
+
+div.clsDetails {
+	border:3px solid #ece9d8;
+}
+
+.clsYes {
+ color:green;
+ font-weight:bold;
+}
+.clsNo {
+ color:red;
+ font-weight:bold;
+}
+.clsTrue {
+ color:green;
+ font-weight:bold;
+}
+.clsFalse {
+ color:red;
+ font-weight:bold;
+}
+
+.highlight {
+  font-weight:bold;
+  color:#CC0000;
+}
+
+span.clsSort {
+        color:blue;
+        cursor:hand;
+}
+
+div.clsSortMenu {
+        background:white;
+        border:solid 1px #aca899;
+        padding-top:2px;
+        padding-bottom:2px;
+        padding-left:15px;
+        padding-right:15px;
+}
+
+.clsAsc {
+        font-size:70%;
+        color:#009900;
+}
+
+.clsDesc {
+        font-size:70%;
+        color:#CC0000;
+}
+
+@media print {
+ div.clsMenuApp {
+	display:none;
+ }
+ div.clsMenu {
+	display:none;
+ }
+ a:visited {
+	color:black
+ }
+ a {
+	color:black;
+	text-decoration: none;
+ }
+ div.clsScrollHeader {
+	display:none;
+ }
+}
+

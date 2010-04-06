@@ -1,0 +1,47 @@
+table.clsDocDetail {
+	border-collapse:collapse;
+	font-size:10pt;
+}
+
+table.clsDocDetail th {
+	font-weight:bold;
+	text-align:center;
+	border:solid 1px black;
+	padding:3x;
+}
+
+table.clsDocDetail td {
+	border:solid 1px black;
+	padding:3x;
+	vertical-align:top;
+}
+
+/* clsDocProduct */
+
+table.clsDocProduct {
+	border-collapse:collapse;
+	font-size:10pt;
+	border:solid 1px black;
+}
+
+table.clsDocProduct thead {
+	display:table-header-group;
+}
+
+table.clsDocProduct th {
+	font-weight:bold;
+	text-align:center;
+	border:solid 1px black;
+	padding:3x;
+}
+
+table.clsDocProduct tbody td {
+	border-left:solid 1px #aaaaaa;
+	border-right:solid 1px #aaaaaa;
+	border-bottom:solid 1px #aaaaaa;
+	padding:3x;
+}
+
+table.clsDocProduct tfoot {
+	font-weight:bold
+}

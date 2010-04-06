@@ -1,0 +1,78 @@
+table.clsFlexGrid { 
+  border-collapse:collapse;
+  border-width:1px;
+  border-style:solid;
+  border-color:#aca899;
+}
+
+table.clsFlexGrid th {
+  border-width:1px;
+  border-style:solid;
+  border-color:#aca899;
+  background-color:#ece9d8;
+ color:black;
+  font-weight:bold;
+  text-align:center;
+  padding-left:8px;
+  padding-right:8px;
+}
+
+table.clsFlexGrid td {
+ border:solid 1px #aca899;
+}
+
+table.clsFlexGrid tr {
+  vertical-align:top;
+}
+
+table.clsFlexGrid tfoot {
+  font-weight:bold;
+}
+
+table.clsFlexGrid thead th.clsSorted {
+ background:#FFFFE9;
+}
+
+span.clsSort {
+ color:blue;
+ cursor:hand;
+}
+
+div.clsSortMenu {
+ background:white;
+ border:solid 1px #aca899;
+ padding-top:2px;
+ padding-bottom:2px;
+ padding-left:15px;
+ padding-right:15px;
+}
+
+table.clsFlexGrid col {
+  padding-left:2px;
+  padding-right:15px;
+  
+}
+
+table.clsFlexGrid col.clsNumber { 
+  text-align:right;
+  padding-left:15px;
+  padding-right:2px;
+}
+table.clsFlexGrid col.clsMoney { 
+  text-align:right;
+  padding-left:15px;
+  padding-right:2px;
+}
+table.clsFlexGrid col.clsCenter {
+  text-align:center;
+}
+table.clsFlexGrid col.clsRight {
+  text-align:right;
+  padding-left:15px;
+  padding-right:2px;
+}
+table.clsFlexGrid col.clsInteger {
+  text-align:right;
+  padding-left:15px;
+  padding-right:2px;
+}

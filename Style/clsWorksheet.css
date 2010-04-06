@@ -1,0 +1,46 @@
+table.clsWorksheetDetail {
+	border-collapse:collapse;
+	font-size:12pt;
+}
+
+table.clsWorksheetDetail th {
+	font-weight:bold;
+	text-align:center;
+	border:solid 1px black;
+	padding:3x;
+}
+
+table.clsWorksheetDetail td {
+	border:solid 1px black;
+	padding:3x;
+}
+
+/* clsWorksheetProduct */
+
+table.clsWorksheetProduct {
+	border-collapse:collapse;
+	font-size:12pt;
+	border:solid 1px black;
+}
+
+table.clsWorksheetProduct thead {
+	display:table-header-group;
+}
+
+table.clsWorksheetProduct tr {
+	height:18pt;
+}
+
+table.clsWorksheetProduct th {
+	font-weight:bold;
+	text-align:center;
+	border:solid 1px black;
+	padding:3x;
+}
+
+table.clsWorksheetProduct tbody td {
+	border-left:solid 1px #aaaaaa;
+	border-right:solid 1px #aaaaaa;
+	border-bottom:solid 1px #aaaaaa;
+	padding:3x;
+}
