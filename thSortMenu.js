@@ -58,7 +58,9 @@ function thSortMenu(oSpan) {
   
       var ascURL = urlSet(document.location.href,'sortCols',sortColsPush(sortCols,colName,'ASC'));
       var descURL = urlSet(document.location.href,'sortCols',sortColsPush(sortCols,colName,'DESC'));
- 
+      ascURL="javascript:location.replace('" + ascURL + "');";
+      descURL="javascript:location.replace('" + descURL + "');";
+
       var ascLink;
       var descLink;
       if (colType=='NUMERIC') {
