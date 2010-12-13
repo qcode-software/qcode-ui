@@ -42,6 +42,7 @@ function dbGrid(oTable) {
   oTable.resize = resize;
   oTable.focus = focus;
   oTable.save = save;
+  oTable.delete = del;
   oTable.requery = requery;
   oTable.rowAction = rowAction;
   oTable.rowRemove = rowRemove;
