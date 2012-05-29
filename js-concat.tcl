@@ -5,18 +5,17 @@
 set dir [file normalize [file dirname [info script]]]
 
 # Determinde the most recent version of qcode.js
-set previous_version 1.0
+set last_major_version 1
+set last_minor_version 0
 foreach filename [glob $dir/qcode-?*.?*.js] {
-    regexp {qcode-([0-9]+\.[0-9]+).js} $filename -> version
-    if { $version > $previous_version } {
-	set previous_version $version
+    regexp {qcode-([0-9]+)\.([0-9]+).js} $filename -> major_version minor_version
+    if { $major_version >= $last_major_version && $minor_version > $last_minor_version } {
+	set last_minor_version $minor_version
+	set last_major_version $major_version
     }
 }
 
-set major_version [lindex [split $previous_version .] 0]
-set minor_version [expr {[lindex [split $previous_version .] 1] + 1}]
-set version [join [list $major_version $minor_version] .]
-set out_filename qcode-$version.js
+set out_filename qcode-$last_major_version.[expr {$last_minor_version + 1}].js
 set temp /tmp/$out_filename
 set out [open $temp w]
 
