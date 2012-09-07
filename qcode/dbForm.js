@@ -9,7 +9,7 @@ oForm.find=find;
 oForm.del=del;
 
 // Parameters
-if (oForm.formType == undefined) { oForm.formType = 'update' } 
+if (dbFormData.formType == undefined) { dbFormData.formType = 'update' } 
 if (oForm.enabled == undefined) { oForm.enabled = "true" }
 if (oForm.checkOnExit == undefined) { oForm.checkOnExit = "true" }
 if (oForm.initialFocus == undefined) { oForm.initialFocus = "true" }
@@ -38,20 +38,9 @@ function init() {
     }
   }
   
-  var e = oForm.getElementsByTagName('INPUT');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
-  
-  var e = oForm.getElementsByTagName('SELECT');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
-  
-  var e = oForm.getElementsByTagName('TEXTAREA');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
+    $(oForm).find('input, select, textarea').each(function(){
+	elmts.push($(this)[0]);
+    });
   
   var e = oForm.getElementsByTagName('DIV');
   for(var i=0;i<e.length;i++) {
@@ -60,10 +49,10 @@ function init() {
     }
   }
   
-  if ( oForm.dataURL !=undefined ) {
+  if ( dbFormData.dataURL !=undefined ) {
     formAction('requery',oForm.dataURL);
   }
-  if ( oForm.qryURL !=undefined ) {
+  if ( dbFormData.qryURL !=undefined ) {
     nav('FIRST');
   }
   // Look for dropdowns and attach onchange behavior
@@ -81,7 +70,7 @@ function init() {
   }
   
   // document unload
-  if ( oForm.checkOnExit == "true" && oForm.formType=="update") {
+  if ( oForm.checkOnExit == "true" && dbFormData.formType=="update") {
     window.attachEvent('onbeforeunload',onBeforeUnload);
   }
   oForm.attachEvent('onkeydown',onKeyDown);
@@ -128,7 +117,7 @@ function onBeforeUnload() {
 }
 
 function onSubmit() {
-  if ( oForm.formType == 'submit' ) {
+  if ( dbFormData.formType == 'submit' ) {
     return true;
   }
   return false;
@@ -161,7 +150,7 @@ function setState(newState) {
      var span ='<span style="color:blue;cursor:hand;text-decoration:underline" onclick="' + oForm.id + '.save()">save</span>';
      setStatus('Editing ... To ' + span + ' type Ctrl+S');
      if ( oForm.nav_new) {
-       if ( oForm.addURL ) {
+       if ( dbFormData.addURL ) {
 	 oForm.nav_new.disabled=false;
        } else {
 	 oForm.nav_new.disabled=true;
@@ -197,17 +186,17 @@ function setState(newState) {
 }
 
 function save(async) {
-  if ( oForm.formType == 'update' ) {
+  if ( dbFormData.formType == 'update' ) {
     setState('updating');
-    formAction('update',oForm.updateURL);
+    formAction('update',dbFormData.updateURL);
   }
-  if ( oForm.formType == 'add' ) {
+  if ( dbFormData.formType == 'add' ) {
     setState('updating');
-    formAction('add',oForm.addURL);
+    formAction('add',dbFormData.addURL);
   }
-  if ( oForm.formType == 'submit' ) {
+  if ( dbFormData.formType == 'submit' ) {
     // oForm submit
-    oForm.action = oForm.submitURL;		
+    oForm.action = dbFormData.submitURL;		
     for(var i=0;i<elmts.length;i++) {
       var elmt = elmts[i];
       if ( elmt.tagName=='DIV' && elmt.className == 'clsDbFormHTMLArea' ) {
@@ -232,7 +221,7 @@ function save(async) {
 function del() {
   if ( window.confirm('Delete the current record?') ) {
     setState('deleting');
-    formAction('delete',oForm.deleteURL);
+    formAction('delete',dbFormData.deleteURL);
   }
 }
 
@@ -242,7 +231,7 @@ function nav(navTo) {
      save();
    } else {
      setState('loading');
-     formAction('qry',oForm.qryURL);
+     formAction('qry',dbFormData.qryURL);
    }
 }
 
@@ -253,9 +242,9 @@ function find(name,value) {
     setState('loading');
   }
   handler = formActionReturn;
-  var url = oForm.searchURL;
+  var url = dbFormData.searchURL;
   var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.Open("POST",url,false);
+  xmlhttp.open("POST",url,false);
   var action = new Object;
   action.type = 'search';
   action.xmlhttp = xmlhttp;
@@ -275,7 +264,7 @@ function formAction(type,url,handler,async) {
     async = false;
   }
   var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.Open("POST",url,async);
+  xmlhttp.open("POST",url,async);
   var action = new Object;
   action.type = type;
   action.xmlhttp = xmlhttp;
@@ -358,19 +347,19 @@ function formActionReturn(action) {
     }
     if ( recordNumber==0 ) {
       // New Record
-      oForm.formType='add';
+      dbFormData.formType='add';
       oForm.nav_new.disabled=true;
       oForm.nav_prev.disabled=true;
       oForm.nav_next.disabled=true;
       oForm.nav_del.disabled=true;
     } else {
-       oForm.formType='update';
-       if ( oForm.addURL ) {
+       dbFormData.formType='update';
+       if ( dbFormData.addURL ) {
 	 oForm.nav_new.disabled=false;
        } else {
 	 oForm.nav_new.disabled=true;
        }
-       if ( oForm.deleteURL ) {
+       if ( dbFormData.deleteURL ) {
 	 oForm.nav_del.disabled=false;
        } else {
 	 oForm.nav_del.disabled=true;
@@ -388,7 +377,7 @@ function formActionReturn(action) {
 // Status Message
 function setStatus(msg) {
   if ( oDivStatus != undefined ) {
-    setObjectValue(oDivStatus,msg);
+      $(oDivStatus).html(msg);
   }
 }
 
