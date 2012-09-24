@@ -105,7 +105,7 @@ function focus() {
 function onBeforeUnload() {
    if ( state == 'dirty' ) {
      if (window.confirm('Do you want to save your changes?')) {
-       save();
+       oForm.save();
        if (state == 'error' ) {
 	 event.returnValue = "Your changes could not been saved.\nStay on the current page to correct.";
        }
@@ -127,7 +127,7 @@ function onKeyDown() {
   var e = window.event;
   if ( e.keyCode == 83 && e.ctrlKey ) {
     // Ctrl+S
-    save();
+    oForm.save();
     e.returnValue = false;
   }
   // Backspace
@@ -228,16 +228,16 @@ function del() {
 function nav(navTo) {
    oForm.navTo.value = navTo;
    if ( state=='dirty' ) {
-     save();
+     oForm.save();
    } else {
      setState('loading');
      formAction('qry',dbFormData.qryURL);
    }
 }
 
-function find(name,value) {
+function find() {
   if ( state=='dirty' ) {
-    save();
+    oForm.save();
   } else {
     setState('loading');
   }
@@ -252,7 +252,10 @@ function find(name,value) {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == 4) handler(action);
   }
-  var data = encodeURIComponent(name) + "=" + encodeURIComponent(value)
+    var data = "action=search";
+    for(var i = 0; i < arguments.length; i += 2){
+	data = data + "&" + encodeURIComponent(arguments[i]) + "=" + encodeURIComponent(arguments[i+1]);
+    }
   xmlhttp.Send(data);
 }
 
