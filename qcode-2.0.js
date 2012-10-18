@@ -7580,7 +7580,7 @@ function dbFormHTMLArea(oDiv) {
     
       // The status table should be contained in a div element that is a sibling of the parent of this table
       if ( table.hasClass('clsDbGrid') ) {
-	statusTable = table.parent().next('.clsDbGridDivStatus').children('table');
+	statusTable = table.closest('.clsDbGridDiv').next('.clsDbGridDivStatus').children('table');
       } else {
 	statusTable = jQuery([]);
       }      
