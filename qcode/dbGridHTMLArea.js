@@ -1,212 +1,214 @@
-function dbGridHTMLArea(callback) {
+// DbGridHTMLArea Class Constructor
+var DbGridHTMLArea = function(callback, container) {
+  var dbGridHTMLArea = this;
 
-// vars
-var oHTMLArea;
-var callback;
+  var HTMLArea = jQuery('<div>');
+  HTMLArea.attr('contentEditable',true);
+  HTMLArea.css({
+    'position':'absolute',
+    'visibility':'hidden'
+  });
+  container.append(HTMLArea);
 
-// Init
-oHTMLArea = document.createElement('DIV');
-oHTMLArea.contentEditable = true;
-oHTMLArea.style.position = 'absolute';
-oHTMLArea.style.visibility = 'hidden';
+  // Properties
+  dbGridHTMLArea.callback = callback;
+  dbGridHTMLArea.HTMLArea = HTMLArea;
 
-oHTMLArea.attachEvent('onkeydown',inputOnKeyDown);
-oHTMLArea.attachEvent('onkeyup',inputOnKeyUp);
+  // Events
+  HTMLArea.on('keyup.dbGridHTMLArea', function(e) {
+    dbGridHTMLArea.inputOnKeyUp(e)    
+  });
+  HTMLArea.on('keydown.dbGridHTMLArea', function(e) {
+    dbGridHTMLArea.inputOnKeyDown(e)
+  });   
+};
 
-// Set up handlers
-oHTMLArea.getType = getType;
-oHTMLArea.getValue = getValue;
-oHTMLArea.show = show;
-oHTMLArea.hide = hide;
-oHTMLArea.selectText = selectText;
-oHTMLArea.destroy = destroy;
+/************************************
+ * Public DbGridHTMLArea Methods Start
+ ************************************/
+DbGridHTMLArea.prototype.getType = function() {
+  return 'htmlarea';
+};
+DbGridHTMLArea.prototype.getValue = function() {
+  return this.HTMLArea.html();
+};
+DbGridHTMLArea.prototype.getElmt = function() {
+  return this.HTMLArea;
+};
+DbGridHTMLArea.prototype.inputOnKeyDown = function(e) {
+  // decide whether to propagate the event to the cell
+  // using the callback function passed in
+  var textrangeData = this.HTMLArea.textrange('get'); 
+  out: {
+    if ( e.which == 9 || e.which == 46 ) {
+      // TAB or Delete
+      this.callback(e)
+      break out;
+    }
+    if ( e.which == 13 && ! e.shiftKey ) {
+      // Return no shift
+      this.callback(e)
+      break out;
+    }
+    if ( e.which == 37 && textrangeData.selectionAtStart ) {
+      // Left Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 38 && textrangeData.selectionAtStart ) {
+      // Up Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
+      // Right Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 40 && textrangeData.selectionAtEnd ) {
+      // Down Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 83 && e.ctrlKey ) {
+      // Ctrl+S
+      this.callback(e);
+      break out;
+    }
+    
+    // Default 
+    // don't propagate
+  }
+};
+DbGridHTMLArea.prototype.inputOnKeyUp = function(e) {
+  // allways propagate
+  this.callback(e);
+};
+DbGridHTMLArea.prototype.selectText = function(option) {
+  if ( option == undefined || option == 'end') {
+    this.HTMLArea.textrange('set', 'end');
+  }
+  if ( option == 'start' ) {
+    this.HTMLArea.textrange('set', 'start');
+  }
+  if ( option == 'all' ) {
+    this.HTMLArea.textrange('set', 'all');
+  }
+};
+DbGridHTMLArea.prototype.show = function(cell,value,editorHeight) {
+  var row = cell.closest('tr');
+  var table = row.closest('table');
+  var container = table.closest('div');
+  var HTMLArea = this.HTMLArea;
 
-return oHTMLArea;
+  var top = cell.position().top + container.scrollTop() ;
+  var left =  cell.position().left + container.scrollLeft();
+  if ( editorHeight == undefined ) {
+    height = cell.height();
+  } else {
+    height = editorHeight;
+  }
+  width = cell.width();
+  
+  if ( cell.css('backgroundColor') != 'transparent' ) {
+    backgroundColor = cell.css('background-color');
+  } else if ( row.css('background-color') != 'transparent' ) {
+    backgroundColor = row.css('background-color');
+  } else {
+    backgroundColor = 'white';
+  }
 
-function getType() {
-	return 'htmlarea';
-}
+  var borderTopWidth = parseInt(cell.css('border-top-width'));
+  var borderRightWidth = parseInt(cell.css('border-right-width'));
+  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
+  var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-function getValue() {
-	return oHTMLArea.innerHTML;
-}
+  if ( table.css('border-collapse') == 'collapse' ) {
+    if ( borderTopWidth%2 == 0 ) {
+      var borderTopWidth = borderTopWidth/2;
+    } else {
+      var borderTopWidth = Math.ceil(borderTopWidth/2);
+    }
+    
+    if ( borderRightWidth%2 == 0 ) {
+      var borderRightWidth = borderRightWidth/2;
+    } else {
+      var borderRightWidth = Math.ceil(borderRightWidth/2);
+    }
 
-function selectText(option) {
-	var rng = document.body.createTextRange();
-	rng.moveToElementText(oHTMLArea);
-	if ( option == undefined || option == 'end') {
-		rng.collapse(false);
-		rng.select();
-	}
-	if ( option == 'start' ) {
-		rng.collapse(true);
-		rng.select();
-	}
-	if ( option == 'all' ) {
-		rng.select();
-	}
-}
+    if ( borderBottomWidth%2 == 0 ) {
+      var borderBottomWidth = borderBottomWidth/2;
+    } else {
+      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
+    }
 
-function show(oTD,value,editorHeight) {
-	// copy the style of oTD onto oHTMLArea
-	var oTable = getContainingElmt(oTD,'TABLE');
-	if ( oTable.currentStyle.borderCollapse == 'collapse' ) {
-		// BORDER COLLAPSE
-		var oTBody = getContainingElmt(oTD,"TBODY");
-		var oRow = getContainingElmt(oTD,"TR");
-		var rows = oTable.rows.length - 1;
-		var cells = oRow.cells.length - 1;
-		var rowIndex = oRow.rowIndex;
-		var cellIndex = oTD.cellIndex;
-		var borderWidth = parseInt(oTD.currentStyle.borderWidth);
-		if ( borderWidth%2 == 0 ) {
-			// Even
-			var borderTopWidth = borderWidth/2;
-			var borderRightWidth = borderWidth/2;
-			var borderBottomWidth = borderWidth/2;
-			var borderLeftWidth = borderWidth/2;
-		} else {
-			// Odd
-			var borderTopWidth = Math.ceil(borderWidth/2);
-			var borderLeftWidth = Math.ceil(borderWidth/2);
-			var borderBottomWidth = Math.ceil(borderWidth/2);
-			var borderRightWidth = Math.ceil(borderWidth/2);
-		}
-		// Top Row
-		if ( rowIndex == 0 ) {
-			oHTMLArea.style.borderTopWidth = '0px';
-		} else {
-			oHTMLArea.style.borderTopWidth = borderTopWidth;
-		}
-		// Right Boundary
-		oHTMLArea.style.borderRightWidth = borderRightWidth;
-		
-		// Bottom
-		oHTMLArea.style.borderBottomWidth = borderBottomWidth;
-		
-		// Left
-		if ( cellIndex == 0 ) {
-			oHTMLArea.style.borderLeftWidth = '0px';
-		} else {
-			oHTMLArea.style.borderLeftWidth = borderLeftWidth;
-		}
-	} else {
-		oHTMLArea.style.borderWidth = oTD.currentStyle.borderWidth;
-	}
-	oHTMLArea.style.borderStyle = oTD.currentStyle.borderStyle;
-	oHTMLArea.style.borderColor = oTD.currentStyle.borderColor;
-	//oHTMLArea.style.borderColor = 'pink';
-	
-	oHTMLArea.style.marginTop = oTD.currentStyle.marginTop;
-	oHTMLArea.style.marginRight = oTD.currentStyle.marginRight;
-	oHTMLArea.style.marginBottom = oTD.currentStyle.marginBottom;
-	oHTMLArea.style.marginLeft = oTD.currentStyle.marginLeft;
-	
-	oHTMLArea.style.paddingTop = oTD.currentStyle.paddingTop;
-	oHTMLArea.style.paddingRight = oTD.currentStyle.paddingRight;
-	oHTMLArea.style.paddingBottom = oTD.currentStyle.paddingBottom;
-	oHTMLArea.style.paddingLeft = oTD.currentStyle.paddingLeft;
-	
-	oHTMLArea.style.textAlign = oTD.currentStyle.textAlign;
-	oHTMLArea.style.verticalAlign = oTD.currentStyle.verticalAlign;
-	oHTMLArea.style.fontSize = oTD.currentStyle.fontSize;
-	oHTMLArea.style.fontFamily = oTD.currentStyle.fontFamily;
-	if ( oTD.currentStyle.backgroundColor=='transparent' )	{
-		oHTMLArea.style.backgroundColor='white';
-	} else {
-		oHTMLArea.style.backgroundColor=oTD.currentStyle.backgroundColor;
-	}
-	
-	if ( editorHeight == undefined ) {
-		oHTMLArea.style.pixelWidth = oTD.offsetWidth+parseInt(borderRightWidth);
-		oHTMLArea.style.pixelHeight = oTD.offsetHeight+parseInt(borderBottomWidth);	
-	} else {
-		oHTMLArea.style.pixelWidth = oTD.offsetWidth + parseInt(borderRightWidth);
-		oHTMLArea.style.pixelHeight = editorHeight;
-	}
-	oHTMLArea.style.pixelTop = getContainerPixelTop(oTD);
-	oHTMLArea.style.pixelLeft = getContainerPixelLeft(oTD);
-	
-	oHTMLArea.style.visibility = 'visible';
-	oHTMLArea.innerHTML = value;
-}
+    if ( borderLeftWidth%2 == 0 ) {
+      var borderLeftWidth = borderLeftWidth/2;
+    } else {
+      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
+    }
 
-function hide() {
-	oHTMLArea.style.visibility = 'hidden';
-}
+    top -=  borderTopWidth;
+    left -= borderLeftWidth;
+    height +=  borderTopWidth;
+    width +=  borderLeftWidth;
+  } 
 
-function inputOnKeyDown() {
-	// decide whether to propagate the event to the cell
-	// using the callback function passed in
-	var e = window.event;
-	out: {
-		if (e.keyCode == 9 || e.keyCode == 46) {
-			// TAB or Delete
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 13 && ! e.shiftKey) {
-			// Return no shift
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 37 && atEditStart(oHTMLArea)) {
-			// Left Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 38 && atEditStart(oHTMLArea)) {
-			// Up Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 39 && atEditEnd(oHTMLArea)) {
-			// Right Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 40 && atEditEnd(oHTMLArea)) {
-			// Down Arrow
-			callback(e);
-			break out;
-		}
-		if ( e.keyCode == 83 && e.ctrlKey ) {
-			// Ctrl+S
-			callback(e);
-			break out;
-		}
-		
-		// Default 
-		// don't propagate
-	}
-}
+  // get styles applied to td
+  var styles = {
+    'border-top-width': borderTopWidth,
+    'border-right-width': borderRightWidth,
+    'border-bottom-width': borderBottomWidth,
+    'border-left-width': borderLeftWidth,
 
-function inputOnKeyUp() {
-	// allways propagate
-	var e = window.event;
-	callback(e);
-}
+    'border-top-style': cell.css('border-top-style'),
+    'border-right-style': cell.css('border-right-style'),
+    'border-bottom-style': cell.css('border-bottom-style'),
+    'border-left-style': cell.css('border-left-style'),
 
-function getContainerPixelLeft(elem) {
-	var left = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		left += elem.offsetLeft - elem.scrollLeft;
-		elem = elem.offsetParent;
-	}
-	return left;
-}
-function getContainerPixelTop(elem) {
-	var top = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		top += elem.offsetTop - elem.scrollTop;
-		elem = elem.offsetParent;
-	}
-	return top;
-}
+    'border-top-color': cell.css('border-top-color'),
+    'border-right-color': cell.css('border-right-color'),
+    'border-bottom-color': cell.css('border-bottom-color'),
+    'border-left-color': cell.css('border-left-color'),
 
-function destroy() {
-	oHTMLArea.removeNode(true);
-}
+    'margin-top': cell.css('margin-top'),
+    'margin-right': cell.css('margin-right'),
+    'margin-bottom': cell.css('margin-bottom'),
+    'margin-left': cell.css('margin-left'),
+    
+    'padding-top': cell.css('padding-top'),
+    'padding-right': cell.css('padding-right'),
+    'padding-bottom': cell.css('padding-bottom'),
+    'padding-left': cell.css('padding-left'),
+    
+    'text-align': cell.css('text-align'),
+    'vertical-align': cell.css('vertical-align'),
+    'font-size': cell.css('font-size'),
+    'font-family': cell.css('font-family'),
 
-//
-}
+    'top': top,
+    'left': left,
+    'width': width,
+    'height': height,
+
+    'background-color': backgroundColor,
+
+    'visibility': 'visible'
+  };
+  
+  // copy td styles onto HTMLArea
+  HTMLArea.css(styles);
+
+  HTMLArea.html(value);
+};
+
+DbGridHTMLArea.prototype.hide = function() {
+  this.HTMLArea.css('visibility','hidden');
+};
+DbGridHTMLArea.prototype.destroy = function() {
+  this.HTMLArea.remove();
+};
+/**********************************
+ * Public DbGridHTMLArea Methods End
+ **********************************/
+

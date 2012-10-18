@@ -1,248 +1,247 @@
-function dbGridInput(callback) {
+// DbGridInput Class Constructor 
+var DbGridInput = function(callback, container) {
+  var dbGridInput = this;
 
-// vars
-var oInput;
-var callback;
+  var input = jQuery('<input>');
+  input.attr('type','text');
+  input.css({
+    'position':'absolute',
+    'visibility':'hidden',
+    'background-color':'white'
+  });
+  container.append(input);
 
-// Init
-oInput = document.createElement('INPUT');
-oInput.type='text';
-oInput.style.position = 'absolute';
-oInput.style.visibility = 'hidden';
-oInput.style.backgroundColor='white';
+  // Properties
+  dbGridInput.callback = callback;
+  dbGridInput.input = input;
+  dbGridInput.bookmark;
+ 
+  // Events
+  input.on('keyup.dbGridInput', function(e) {
+    dbGridInput.inputOnKeyUp(e)    
+  });
+  input.on('keydown.dbGridInput', function(e) {
+    dbGridInput.inputOnKeyDown(e)
+  });
+  input.on('cut.dbGridInput', function(e) {
+    dbGridInput.inputOnCut(e)    
+  });
+  input.on('paste.dbGridInput', function(e) {
+    dbGridInput.inputOnPaste(e)
+  });
+  input.on('blur.dbGridInput', function(e) {
+    dbGridInput.inputOnBlur(e)
+  });
+};
 
-oInput.attachEvent('onkeydown',inputOnKeyDown);
-oInput.attachEvent('onkeyup',inputOnKeyUp);
-oInput.attachEvent('oncut',inputOnCut);
-oInput.attachEvent('onpaste',inputOnPaste);
-oInput.attachEvent('onblur',inputOnBlur);
-
-// Set up handlers
-oInput.getType = getType;
-oInput.getValue = getValue;
-oInput.show = show;
-oInput.hide = hide;
-oInput.selectText = selectText;
-oInput.destroy = destroy;
-
-var bookmark;
-var lastValue;
-return oInput;
-
-function getType() {
-	return 'text';
-}
-
-function getValue() {
-	return oInput.value;
-}
-
-function selectText(option) {
-  var rng = oInput.createTextRange();
-  if ( option == 'end') {
-    rng.collapse(false);
-    rng.select();
-  }
-  if ( option == 'start' ) {
-    rng.collapse(true);
-    rng.select();
-  }
-  if ( option == 'preserve' && bookmark) {
-    if (lastValue==getValue()) {
-      rng.moveToBookmark(bookmark);
-    } else {
-      // move to end
-      rng.collapse(false);
-    }
-    rng.select();
-  }
-  if (option == undefined || option == 'all') {
-    rng.select();
-  }
-
-  storeSelection();
-}
-
-function show(oTD,value) {
-  // copy the style of oTD onto oInput
-  var oTable = getContainingElmt(oTD,'TABLE');
-  if ( oTable.currentStyle.borderCollapse == 'collapse' ) {
-    // BORDER COLLAPSE
-    var oTBody = getContainingElmt(oTD,"TBODY");
-    var oRow = getContainingElmt(oTD,"TR");
-    var rows = oTable.rows.length - 1;
-    var cells = oRow.cells.length - 1;
-    var rowIndex = oRow.rowIndex;
-    var cellIndex = oTD.cellIndex;
-    var borderWidth = parseInt(oTD.currentStyle.borderWidth);
-    if ( borderWidth%2 == 0 ) {
-      // Even
-      var borderTopWidth = borderWidth/2;
-      var borderRightWidth = borderWidth/2;
-      var borderBottomWidth = borderWidth/2;
-      var borderLeftWidth = borderWidth/2;
-    } else {
-      // Odd
-      var borderTopWidth = Math.ceil(borderWidth/2);
-      var borderLeftWidth = Math.ceil(borderWidth/2);
-      var borderBottomWidth = Math.floor(borderWidth/2);
-      var borderRightWidth = Math.floor(borderWidth/2);
-    }
-    // Top Row
-    if ( rowIndex == 0 ) {
-      oInput.style.borderTopWidth = '0px';
-    } else {
-      oInput.style.borderTopWidth = borderTopWidth;
-    }
-    // Right Boundary
-    if ( cellIndex == cells ) {
-      oInput.style.borderRightWidth = '0px';
-    } else {
-      oInput.style.borderRightWidth = borderRightWidth;
-    }
-    // Bottom
-    if ( rowIndex == rows ) {
-      oInput.style.borderBottomWidth = '0px';
-    } else {
-      oInput.style.borderBottomWidth = borderBottomWidth;
-    }
-    // Left
-    if ( cellIndex == 0 ) {
-      oInput.style.borderLeftWidth = '0px';
-    } else {
-      oInput.style.borderLeftWidth = borderLeftWidth;
-    }
-  } else {
-    oInput.style.borderWidth = oTD.currentStyle.borderWidth;
-  }
-  oInput.style.borderStyle = oTD.currentStyle.borderStyle;
-  oInput.style.borderColor = oTD.currentStyle.borderColor;
-  
-  oInput.style.marginTop = oTD.currentStyle.marginTop;
-  oInput.style.marginRight = oTD.currentStyle.marginRight;
-  oInput.style.marginBottom = oTD.currentStyle.marginBottom;
-  oInput.style.marginLeft = oTD.currentStyle.marginLeft;
-  
-  oInput.style.paddingTop = oTD.currentStyle.paddingTop;
-  oInput.style.paddingRight = oTD.currentStyle.paddingRight;
-  oInput.style.paddingBottom = oTD.currentStyle.paddingBottom;
-  oInput.style.paddingLeft = oTD.currentStyle.paddingLeft;
-  
-  oInput.style.textAlign = oTD.currentStyle.textAlign;
-  oInput.style.verticalAlign = oTD.currentStyle.verticalAlign;
-  oInput.style.fontSize = oTD.currentStyle.fontSize;
-  oInput.style.fontFamily = oTD.currentStyle.fontFamily;
-  if ( oTD.currentStyle.backgroundColor=='transparent' )	{
-    oInput.style.backgroundColor='white';
-  } else {
-    oInput.style.backgroundColor=oTD.currentStyle.backgroundColor;
-  }	
-  
-  oInput.style.pixelWidth = oTD.offsetWidth;
-  oInput.style.pixelHeight = oTD.offsetHeight;
-  
-  oInput.style.pixelTop = getContainerPixelTop(oTD);
-  oInput.style.pixelLeft = getContainerPixelLeft(oTD);
-  
-  oInput.style.visibility = 'visible';
-  oInput.value = value;
-}
-
-function hide() {
-  oInput.blur();
-  oInput.style.visibility = 'hidden';
-}
-
-function inputOnKeyDown() {
+/**********************************
+ * Public DbGridInput Methods Start
+ **********************************/  
+DbGridInput.prototype.getType = function() {
+  return 'text';
+};
+DbGridInput.prototype.getValue = function() {
+  return this.input.val();
+};
+DbGridInput.prototype.getElmt = function() {
+  return this.input;
+};
+DbGridInput.prototype.storeSelection = function() {
+  this.bookmark = this.input.textrange('get');
+};
+DbGridInput.prototype.inputOnKeyUp = function(e) {
+  // allways propagate
+  this.callback(e);
+  this.storeSelection();
+};
+DbGridInput.prototype.inputOnKeyDown = function(e) {
   // decide whether to propagate the event to the cell
   // using the callback function passed in
-  var e = window.event;
- out: {
-    if (e.keyCode == 9 || e.keyCode == 13 || e.keyCode == 46) {
+  var textrangeData = this.input.textrange('get'); 
+  out: {
+    if ( e.which == 9 || e.which == 13 || e.which == 46 ) {
       // TAB or Return or Delete
-      callback(e)
-	break out;
+      this.callback(e)
+      break out;
     }
-    if (e.keyCode == 37 && atEditStart(oInput)) {
+    if ( e.which == 37 && textrangeData.selectionAtStart ) {
       // Left Arrow
-      callback(e);
+      this.callback(e);
       break out;
     }
-    if (e.keyCode == 38) {
+    if ( e.which == 38 ) {
       // Up Arrow
-      callback(e);
+      this.callback(e);
       break out;
     }
-    if (e.keyCode == 39 && atEditEnd(oInput) ) {
+    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
       // Right Arrow
-      callback(e);
+      this.callback(e);
       break out;
     }
-    if (e.keyCode == 40) {
+    if ( e.which == 40 ) {
       // Down Arrow
-      callback(e);
+      this.callback(e);
       break out;
     }
-    if ( e.keyCode == 83 && e.ctrlKey ) {
+    if ( e.which == 83 && e.ctrlKey ) {
       // Ctrl+S
-      callback(e);
+      this.callback(e);
       break out;
     }
     // Default 
     // don't propagate
   }
-}
-
-function inputOnKeyUp() {
-  // allways propagate
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnCut() {
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnPaste() {
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnBlur() {
-  var e = window.event;
-  callback(e);
-}
-
-function getContainerPixelLeft(elem) {
-  var left = 0;
-  while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-    left += elem.offsetLeft - elem.scrollLeft;
-    elem = elem.offsetParent;
+};
+DbGridInput.prototype.inputOnCut = function(e) {
+  this.callback(e);
+  this.storeSelection();
+};
+DbGridInput.prototype.inputOnPaste = function(e) {
+  this.callback(e);
+  this.storeSelection();
+};
+DbGridInput.prototype.inputOnBlur = function(e) {
+  this.callback(e);
+};
+DbGridInput.prototype.selectText = function(option) {
+  if ( option == 'end') {
+    this.input.textrange('set', 'end');
   }
-  return left;
-}
-function getContainerPixelTop(elem) {
-  var top = 0;
-  while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-    top += elem.offsetTop - elem.scrollTop;
-    elem = elem.offsetParent;
+  if ( option == 'start' ) {
+    this.input.textrange('set', 'start');
   }
-  return top;
-}
+  if ( option == undefined || option == 'all' ) {
+    this.input.textrange('set', 'all');
+  }
+  if ( option == 'preserve' ) {
+    if ( this.bookmark && this.getValue() == this.bookmark.text ) {
+      this.input.textrange('set', this.bookmark.selectionStart, this.bookmark.selectionEnd);
+    } else {
+      this.input.textrange('set','end');
+    }
+  }
+  this.storeSelection();
+};
+DbGridInput.prototype.show = function(cell,value) {
+  var row = cell.closest('tr');
+  var table = row.closest('table');
+  var container = table.closest('div');
+  var input = this.input;
 
-function destroy() {
-  oInput.removeNode(true);
-}
+  var top = cell.position().top + container.scrollTop() ;
+  var left =  cell.position().left + container.scrollLeft();
+  height = cell.height();
+  width = cell.width();
+  
+  if ( cell.css('backgroundColor') != 'transparent' ) {
+    backgroundColor = cell.css('background-color');
+  } else if ( row.css('background-color') != 'transparent' ) {
+    backgroundColor = row.css('background-color');
+  } else {
+    backgroundColor = 'white';
+  }
 
-function storeSelection() {
-  var currentRange=document.selection.createRange();
-  bookmark = currentRange.getBookmark();
-  lastValue=getValue();
- }
+  var borderTopWidth = parseInt(cell.css('border-top-width'));
+  var borderRightWidth = parseInt(cell.css('border-right-width'));
+  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
+  var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-//
-}
+  if ( table.css('border-collapse') == 'collapse' ) {
+    if ( borderTopWidth%2 == 0 ) {
+      var borderTopWidth = borderTopWidth/2;
+    } else {
+      var borderTopWidth = Math.ceil(borderTopWidth/2);
+    }
+    
+    if ( borderRightWidth%2 == 0 ) {
+      var borderRightWidth = borderRightWidth/2;
+    } else {
+      var borderRightWidth = Math.ceil(borderRightWidth/2);
+    }
+
+    if ( borderBottomWidth%2 == 0 ) {
+      var borderBottomWidth = borderBottomWidth/2;
+    } else {
+      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
+    }
+
+    if ( borderLeftWidth%2 == 0 ) {
+      var borderLeftWidth = borderLeftWidth/2;
+    } else {
+      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
+    }
+
+    top -=  borderTopWidth;
+    left -= borderLeftWidth;
+    height +=  borderTopWidth;
+    width +=  borderLeftWidth;
+  } 
+  
+  // get styles applied to td
+  var styles = {
+    'border-top-width': borderTopWidth,
+    'border-right-width': borderRightWidth,
+    'border-bottom-width': borderBottomWidth,
+    'border-left-width': borderLeftWidth,
+
+    'border-top-style': cell.css('border-top-style'),
+    'border-right-style': cell.css('border-right-style'),
+    'border-bottom-style': cell.css('border-bottom-style'),
+    'border-left-style': cell.css('border-left-style'),
+
+    'border-top-color': cell.css('border-top-color'),
+    'border-right-color': cell.css('border-right-color'),
+    'border-bottom-color': cell.css('border-bottom-color'),
+    'border-left-color': cell.css('border-left-color'),
+
+    'margin-top': cell.css('margin-top'),
+    'margin-right': cell.css('margin-right'),
+    'margin-bottom': cell.css('margin-bottom'),
+    'margin-left': cell.css('margin-left'),
+    
+    'padding-top': cell.css('padding-top'),
+    'padding-right': cell.css('padding-right'),
+    'padding-bottom': parseInt(cell.css('padding-bottom')),
+    'padding-left': cell.css('padding-left'),
+    
+    'text-align': cell.css('text-align'),
+    'vertical-align': cell.css('vertical-align'),
+    'font-size': cell.css('font-size'),
+    'font-family': cell.css('font-family'),
+
+    'top': top,
+    'left': left,
+    'width': width,
+    
+    'background-color': backgroundColor,
+
+    'visibility': 'visible'
+  };
+  
+  // copy td styles onto input
+  input.css(styles);
+
+  // adjust padding & height css properties to make input the same height as the cell.
+  // If we use only height property we can not vertical align text inside input element
+  var inputVerticalAlign = input.css('vertical-align')
+  if ( inputVerticalAlign == 'top' ) {
+    input.css('padding-bottom', parseInt(cell.css('padding-bottom')) + parseInt(cell.css('height')) - parseInt(input.css('height')));
+  } else if ( inputVerticalAlign == 'bottom' ) {
+    input.css('padding-top', parseInt(cell.css('padding-top')) + parseInt(cell.css('height')) - parseInt(input.css('height'))) ;
+  } else {
+    input.css('height', height);
+  }
+
+  input.val(value);
+};
+DbGridInput.prototype.hide = function() {
+  this.input.blur();
+  this.input.css('visibility','hidden');
+};
+DbGridInput.prototype.destroy = function() {
+  this.input.remove();
+};
+/**********************************
+ * Public DbGridInput Methods End
+ **********************************/

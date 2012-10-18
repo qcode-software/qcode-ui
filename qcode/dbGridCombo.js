@@ -1,382 +1,443 @@
-function dbGridCombo(callback) {
+// DbGridCombo Class Constructor 
+var DbGridCombo = function(callback, container) {
+  var dbGridCombo = this;
+  
+  var combo = jQuery('<input>');
+  combo.attr('type','text');
+  combo.css({
+    'position':'absolute',
+    'visibility':'hidden'
+  });
+  container.append(combo);
 
-// vars
-var callback;
-var oInput;
-var oComboDiv; // The dropdown container
-var xmlDoc;
-var currentItem; // The highlighted row selected
-var lastValue;
-var _name;
-var _value;
-var _boundValue;
-var _boundName;
-var _searchURL;
+  var comboDiv = jQuery('<div>');
+  comboDiv.css({
+    'border-width':'1px',
+    'border-style':'solid',
+    'border-color':'black',
+    'background-color':'white',
+    'position':'absolute',
+    'overflow':'auto',
+    'visibility':'hidden'
+  });
+  container.append(comboDiv);
 
-// Init
-// Attach to text input
-oComboDiv = document.createElement('DIV');
-oComboDiv.style.borderWidth='1px';
-oComboDiv.style.borderStyle='solid';
-oComboDiv.style.borderColor='black';
-oComboDiv.style.background = 'white';
-oComboDiv.style.position='absolute';
-oComboDiv.style.overflow = 'auto';
-oComboDiv.style.visibility='hidden';
-oComboDiv.style.display='none';
-document.body.appendChild(oComboDiv);
 
-oInput = document.createElement('INPUT');
-oInput.type='text';
-oInput.style.position = 'absolute';
-oInput.style.visibility = 'hidden';
-	
-oInput.attachEvent('onkeydown',inputOnKeyDown);
-oInput.attachEvent('onkeyup',inputOnKeyUp);
-oInput.attachEvent('onblur',inputOnBlur);
+  // Public Properties
+  dbGridCombo.callback = callback;
+  dbGridCombo.combo = combo;
+  dbGridCombo.comboDiv = comboDiv; // The dropdown container
+  dbGridCombo.xmlDoc;
+  dbGridCombo.currentItem = jQuery([]); // The highlighted row selected
+  dbGridCombo.lastValue;
+  dbGridCombo._name;
+  dbGridCombo._value;
+  dbGridCombo._boundValue;
+  dbGridCombo._boundName;
+  dbGridCombo._searchURL;
 
-// Set up dbGrid handlers
-oInput.getType = getType;
-oInput.getValue = getValue;
-oInput.getBoundName=getBoundName;
-oInput.getBoundValue=getBoundValue;
-oInput.show = show;
-oInput.hide = hide;
-oInput.selectText = selectText;
-oInput.destroy = destroy;
+  // Events  	
+  combo.on('keydown.dbGridCombo', function(e) {
+    dbGridCombo.inputOnKeyDown(e);
+  });
+  combo.on('keyup.dbGridCombo', function(e) {
+    dbGridCombo.inputOnKeyUp(e);
+  });
+  combo.on('blur.dbGridCombo', function(e) {
+    dbGridCombo.inputOnBlur(e);
+  });
+};
 
-return oInput;
+/**********************************
+ * Public DbGridCombo Methods Start
+ **********************************/ 
+DbGridCombo.prototype.getType = function() {
+  return 'combo';
+};
+DbGridCombo.prototype.getValue = function() {
+  return this._value;
+};
+DbGridCombo.prototype.getBoundName = function() {
+  return this._boundName;
+};
+DbGridCombo.prototype.getBoundValue = function() {
+  return this._boundValue;
+};
+DbGridCombo.prototype.getElmt = function() {
+  return this.combo;
+};
+DbGridCombo.prototype.show = function(cell,name,value,boundName,boundValue,searchURL) {
+  var row = cell.closest('tr');
+  var table = row.closest('table');
+  var container = table.closest('div');
+  var combo = this.combo;
+  var comboDiv = this.comboDiv;
 
-function getType() {
-	return 'combo';
-}
+  var top = cell.position().top + container.scrollTop() ;
+  var left =  cell.position().left + container.scrollLeft();
+  height = cell.height();
+  width = cell.width();
+  
+  if ( cell.css('backgroundColor') != 'transparent' ) {
+    backgroundColor = cell.css('background-color');
+  } else if ( row.css('background-color') != 'transparent' ) {
+    backgroundColor = row.css('background-color');
+  } else {
+    backgroundColor = 'white';
+  }
 
-function show(oTD,name,value,boundName,boundValue,searchURL) {
-	// copy the style of oTD onto oInput
-	var oTable = getContainingElmt(oTD,'TABLE');
-	if ( oTable.currentStyle.borderCollapse == 'collapse' ) {
-		// BORDER COLLAPSE
-		var oTBody = getContainingElmt(oTD,"TBODY");
-		var oRow = getContainingElmt(oTD,"TR");
-		var rows = oTBody.rows.length - 1;
-		var cells = oRow.cells.length - 1;
-		var rowIndex = oRow.sectionRowIndex;
-		var cellIndex = oTD.cellIndex;
-		var borderWidth = parseInt(oTD.currentStyle.borderWidth);
-		if ( borderWidth%2 == 0 ) {
-			// Even
-			var borderTopWidth = borderWidth/2;
-			var borderRightWidth = borderWidth/2;
-			var borderBottomWidth = borderWidth/2;
-			var borderLeftWidth = borderWidth/2;
-		} else {
-			// Odd
-			var borderTopWidth = Math.ceil(borderWidth/2);
-			var borderLeftWidth = Math.ceil(borderWidth/2);
-			var borderBottomWidth = Math.floor(borderWidth/2);
-			var borderRightWidth = Math.floor(borderWidth/2);
-		}
-		// Top Row
-		if ( rowIndex == 0 ) {
-			oInput.style.borderTopWidth = '0px';
-		} else {
-			oInput.style.borderTopWidth = borderTopWidth;
-		}
-		// Right Boundary
-		if ( cellIndex == cells ) {
-			oInput.style.borderRightWidth = '0px';
-		} else {
-			oInput.style.borderRightWidth = borderRightWidth;
-		}
-		// Bottom
-		if ( rowIndex == rows ) {
-			oInput.style.borderBottomWidth = '0px';
-		} else {
-			oInput.style.borderBottomWidth = borderBottomWidth;
-		}
-		// Left
-		if ( cellIndex == 0 ) {
-			oInput.style.borderLeftWidth = '0px';
-		} else {
-			oInput.style.borderLeftWidth = borderLeftWidth;
-		}
-	} else {
-		oInput.style.borderWidth = oTD.currentStyle.borderWidth;
-	}
-	oInput.style.borderStyle = oTD.currentStyle.borderStyle;
-	oInput.style.borderColor = oTD.currentStyle.borderColor;
-	
-	oInput.style.marginTop = oTD.currentStyle.marginTop;
-	oInput.style.marginRight = oTD.currentStyle.marginRight;
-	oInput.style.marginBottom = oTD.currentStyle.marginBottom;
-	oInput.style.marginLeft = oTD.currentStyle.marginLeft;
-	
-	oInput.style.paddingTop = oTD.currentStyle.paddingTop;
-	oInput.style.paddingRight = oTD.currentStyle.paddingRight;
-	oInput.style.paddingBottom = oTD.currentStyle.paddingBottom;
-	oInput.style.paddingLeft = oTD.currentStyle.paddingLeft;
-	
-	oInput.style.textAlign = oTD.currentStyle.textAlign;
-	oInput.style.verticalAlign = oTD.currentStyle.verticalAlign;
-	oInput.style.fontSize = oTD.currentStyle.fontSize;
-	oInput.style.fontFamily = oTD.currentStyle.fontFamily;
-	if ( oTD.currentStyle.backgroundColor=='transparent' )	{
-		oInput.style.backgroundColor='white';
-	} else {
-		oInput.style.backgroundColor=oTD.currentStyle.backgroundColor;
-	}	
-	
-	oInput.style.pixelWidth = oTD.offsetWidth;
-	oInput.style.pixelHeight = oTD.offsetHeight;
-	oInput.style.pixelTop = getContainerPixelTop(oTD);
-	oInput.style.pixelLeft = getContainerPixelLeft(oTD);
-	oInput.style.visibility = 'visible';
+  var borderTopWidth = parseInt(cell.css('border-top-width'));
+  var borderRightWidth = parseInt(cell.css('border-right-width'));
+  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
+  var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-	oComboDiv.style.borderColor=oTD.currentStyle.borderColor;
-	oComboDiv.style.paddingLeft = oTD.currentStyle.paddingLeft;
-	oComboDiv.style.paddingRight = oTD.currentStyle.paddingRight;
-	oComboDiv.style.width = oInput.offsetWidth;
-	oComboDiv.style.height = 150;
-	oComboDiv.style.pixelTop = getPixelTop(oInput) + oInput.offsetHeight;
-	// I think IE has a bug that prevents offsetLeft/offsetParent from
-	// correctly calculating position. The width of the container div border
-	// is 3 pixels hence the hack.
-	oComboDiv.style.pixelLeft = getPixelLeft(oInput)+3;
-	
-	if ( searchURL == undefined ) { throw "searchURL must be defined" }
-	if ( boundName == undefined ) { throw "boundName must be defined" }
-	if ( name == undefined ) { throw "name must be defined" }
-	_name = name;
-	_value = value;
-	lastValue = value;
-	_searchURL = searchURL;
-	_boundName = boundName;
-	_boundValue = boundValue;
-	oInput.value = value;
-}
+  var borderTopColor = cell.css('border-top-color');
+  var borderRightColor = cell.css('border-right-style');
+  var borderBottomColor = cell.css('border-bottom-color');
+  var borderLeftColor = cell.css('border-left-color');
 
-function hide() {
-	oComboDiv.style.visibility='hidden';
-	oInput.style.visibility = 'hidden';
-}
 
-function getValue() {
-	return _value;
-}
+  if ( table.css('border-collapse') == 'collapse' ) {
+    if ( borderTopWidth%2 == 0 ) {
+      var borderTopWidth = borderTopWidth/2;
+    } else {
+      var borderTopWidth = Math.ceil(borderTopWidth/2);
+    }
+    
+    if ( borderRightWidth%2 == 0 ) {
+      var borderRightWidth = borderRightWidth/2;
+    } else {
+      var borderRightWidth = Math.ceil(borderRightWidth/2);
+    }
 
-function getBoundName() {
-	return _boundName;
-}
+    if ( borderBottomWidth%2 == 0 ) {
+      var borderBottomWidth = borderBottomWidth/2;
+    } else {
+      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
+    }
 
-function getBoundValue() {
-	return _boundValue;
-}
+    if ( borderLeftWidth%2 == 0 ) {
+      var borderLeftWidth = borderLeftWidth/2;
+    } else {
+      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
+    }
 
-function selectText() {
-	var rng = oInput.createTextRange();
-	rng.select();
-}
+    top -=  borderTopWidth;
+    left -= borderLeftWidth;
+    height +=  borderTopWidth;
+    width +=  borderLeftWidth;
+  } 
 
-function inputOnKeyDown(e) {
-	// Decide whether to callback event.
-	if (currentItem != undefined ) {
-		active = true;
-	} else {
-		active = false;
-	} 
-	if (e.keyCode == 38) {
-		// Up Arrow
-		if (active) {
-			var idx = getNodeIndex(currentItem);
-			if ( idx !=0 ) {
-				highlight(idx-1);
-			}
-		} else {
-			callback(e);
-		}
-	}
-	if (e.keyCode == 40) {
-		// Down Arrow
-		if (active) {
-			var idx = getNodeIndex(currentItem);
-			if ( idx != oComboDiv.children.length -1  ) {
-				highlight(idx+1);
-			}
-		} else {
-			callback(e);
-		}
-	}
-	if (e.keyCode == 37 && atEditStart(oInput)) {
-		// Left Arrow
-		callback(e);
-	}
-	if (e.keyCode == 39 && atEditEnd(oInput) ) {
-		// Right Arrow
-		callback(e);
-	}
-	if (e.keyCode == 9 || e.keyCode == 13) {
-		// TAB or Return
-		callback(e);
-	}
-	if (e.keyCode == 46) {
-		// Delete
-		callback(e)
-	}
-	if ( e.keyCode == 83 && e.ctrlKey ) {
-		// Ctrl+S
-		callback(e);
-	}
-}
+  var paddingTop = cell.css('padding-top');
+  var paddingRight = cell.css('padding-right');
+  var paddingBottom = cell.css('padding-bottom');
+  var paddingLeft = cell.css('padding-left');
 
-function inputOnKeyUp() {
-	if ( oInput.value != lastValue ) {
-		lastValue = oInput.value;
-		search();
-		callback(window.event)
-	}
-}
+  // get styles applied to td
+  var comboStyles = {
+    'border-top-width': borderTopWidth,
+    'border-right-width': borderRightWidth,
+    'border-bottom-width': borderBottomWidth,
+    'border-left-width': borderLeftWidth,
 
-function inputOnBlur() {
-	var elmt = document.activeElement;
-	if ( elmt!=oComboDiv && ! oComboDiv.contains(elmt)  ) {
-		comboDivHide();
-		currentItem = undefined;
-	}
-}
+    'border-top-style': cell.css('border-top-style'),
+    'border-right-style': borderRightColor,
+    'border-bottom-style': cell.css('border-bottom-style'),
+    'border-left-style': cell.css('border-left-style'),
 
-function comboDivHide() {
-	oComboDiv.style.visibility='hidden';
-	currentItem = undefined;
-}
+    'border-top-color': borderTopColor,
+    'border-right-color': borderRightColor,
+    'border-bottom-color': borderBottomColor,
+    'border-left-color': borderLeftColor,
 
-function comboDivShow() {
-	oComboDiv.style.display='block';
-	oComboDiv.style.visibility='visible';
-}
+    'margin-top': cell.css('margin-top'),
+    'margin-right': cell.css('margin-right'),
+    'margin-bottom': cell.css('margin-bottom'),
+    'margin-left': cell.css('margin-left'),
+    
+    'padding-top': paddingTop,
+    'padding-right': paddingRight,
+    'padding-bottom': paddingBottom,
+    'padding-left': paddingLeft,
+    
+    'text-align': cell.css('text-align'),
+    'vertical-align': cell.css('vertical-align'),
+    'font-size': cell.css('font-size'),
+    'font-family': cell.css('font-family'),
 
-function comboDivOnClick() {
-	var elmt = window.event.srcElement;
-	if (elmt != oComboDiv ) {
-		var idx = getNodeIndex(elmt);
-		select(idx);
-	}
-}
-function comboDivOnMouseOver() {
-	var elmt = window.event.srcElement;
-	if (elmt != oComboDiv ) {
-		var idx = getNodeIndex(elmt);
-		highlight(idx);
-	}
-}
+    'top': top,
+    'left': left,
+    'width': width,
+    
+    'background-color': backgroundColor,
 
-function select(idx) {
-	oInput.value = _value;
-	lastValue = oInput.value;
-	comboDivHide();
-	// Move cursor to end of Input
-	var rng = oInput.createTextRange();
-	rng.collapse(false);
-	rng.select();
-}
+    'visibility': 'visible'
+  };
+  // copy td styles onto combo
+  combo.css(comboStyles);
+  // adjust padding & height css properties to make combo the same height as the cell.
+  // If we use only height property we can not vertical align text inside combo element
+  var comboVerticalAlign = combo.css('vertical-align')
+  if ( comboVerticalAlign == 'top' ) {
+    combo.css('padding-bottom', parseInt(cell.css('padding-bottom')) + parseInt(cell.css('height')) - parseInt(combo.css('height')));
+  } else if ( comboVerticalAlign == 'bottom' ) {
+    combo.css('padding-top', parseInt(cell.css('padding-top')) + parseInt(cell.css('height')) - parseInt(combo.css('height'))) ;
+  } else {
+    combo.css('height', height);
+  }
 
-function highlight(idx) {
-	var recs = xmlDoc.selectSingleNode('records');
-	var rec = recs.childNodes[idx];
-	_value = rec.selectSingleNode(_name).text;
-	_boundValue = rec.selectSingleNode(_boundName).text;
-	currentItem.runtimeStyle.background = '';
-	currentItem.runtimeStyle.color = '';
-	currentItem = oComboDiv.children[idx];
-	currentItem.runtimeStyle.background = 'highlight';
-	currentItem.runtimeStyle.color = 'highlighttext';
-}
+  var comboDivStyles = {
+    'border-top-color': borderTopColor,
+    'border-right-color': borderRightColor,
+    'border-bottom-color': borderBottomColor,
+    'border-left-color': borderLeftColor,
 
-function search() {
-	currentItem = undefined;
-	oComboDiv.innerText = "Searching ..."
-	comboDivShow();
-	oComboDiv.detachEvent('onclick',comboDivOnClick);
-	oComboDiv.detachEvent('onmouseover',comboDivOnMouseOver);
-	var url = _searchURL;
-	url = urlSet(url,'name',_name);
-	url = urlSet(url,'value',oInput.value);
-	url = urlSet(url,'boundName',_boundName);
-	xmlDoc = new ActiveXObject("Msxml2.DOMDocument");
-	xmlDoc.onreadystatechange = searchReturn;
-	xmlDoc.load(url);
-}
-function searchReturn() {
-	if (xmlDoc.readyState == 4) {
-		// ERROR
-		var xmlError = xmlDoc.parseError;
-		if (xmlError.errorCode != 0) {
-			var error = "Software Bug ! " + xmlError.reason;
-			oComboDiv.innerText = error;
-		} else {
-			var rec = xmlDoc.selectSingleNode('error');
-			if ( rec ) {
-				var error=rec.text;
-				oComboDiv.innerText = error;
-			} else {
-				var recs = xmlDoc.selectNodes('records/record');
-				if ( recs.length > 0 ) {
-					updateList(recs);
-				} else {
-					// No Matches
-					oComboDiv.innerText = "No Matches";
-					_value = "";
-					_boundValue = "";
-				}
-			}
-		}
-	}
-}
+    'padding-right': paddingRight,
+    'padding-left': paddingLeft,
 
-function updateList(recs) {
-	oComboDiv.innerHTML = '';
-	oComboDiv.attachEvent('onclick',comboDivOnClick);
-	oComboDiv.attachEvent('onmouseover',comboDivOnMouseOver);
-	for(var i=0;i<recs.length;i++) {
-		var rec = recs[i];
-		for(var j=0;j<rec.childNodes.length;j++) {
-			var field = rec.childNodes[j];
-			var name= field.nodeName;
-			var value = field.text;
-			if (name == _name ) {
-				var oItem = oInput.document.createElement('DIV');
-				oItem.style.width = "100%";
-				oItem.style.cursor = 'pointer';
-				oItem.innerText = value;
-				oComboDiv.appendChild(oItem);
-			}
-		}
-	}
-	
-	currentItem = oComboDiv.children[0];
-	highlight(0);
-}
+    'width': width,
+    'height': 150,
 
-function getContainerPixelLeft(elem) {
-	var left = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		left += elem.offsetLeft - elem.scrollLeft;
-		elem = elem.offsetParent;
-	}
-	return left;
-}
-function getContainerPixelTop(elem) {
-	var top = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		top += elem.offsetTop - elem.scrollTop;
-		elem = elem.offsetParent;
-	}
-	return top;
-}
+    'top': top + height,
+    'left': left
+  };
+  // copy td styles onto comboDiv
+  comboDiv.css(comboDivStyles);
 
-function destroy() {
-	oInput.removeNode(true);
-	oComboDiv.removeNode(true);
-}
+  if ( searchURL == undefined ) { throw "searchURL must be defined" }
+  if ( boundName == undefined ) { throw "boundName must be defined" }
+  if ( name == undefined ) { throw "name must be defined" }
+  this._name = name;
+  this._value = value;
+  this.lastValue = value;
+  this._searchURL = searchURL;
+  this._boundName = boundName;
+  this._boundValue = boundValue;
+  
+  combo.val(value);
+};
+DbGridCombo.prototype.hide = function() {
+  this.combo.css('visibility','hidden');
+  this.comboDiv.css('visibility','hidden');
+};
+DbGridCombo.prototype.selectText = function(option) {
+  if ( option == 'end') {
+    this.combo.textrange('set', 'end');
+  }
+  if ( option == 'start' ) {
+    this.combo.textrange('set', 'start');
+  }
+  if ( option == undefined || option == 'all' ) {
+    this.combo.textrange('set', 'all');
+  }
+};
+DbGridCombo.prototype.inputOnKeyDown = function(e) {
+  // Decide whether to callback event.
+  if ( this.currentItem.size() ) {
+    active = true;
+  } else {
+    active = false;
+  } 
+  var textrangeData = this.combo.textrange('get');
+  if ( e.which == 38 ) {
+    // Up Arrow
+    if ( active ) {
+      var idx = this.currentItem.index();
+      if ( idx !=0 ) {
+	this.highlight(idx-1);
+      }
+    } else {
+      this.callback(e);
+    }
+  }
+  if ( e.which == 40 ) {
+    // Down Arrow
+    if ( active ) {
+      var idx = this.currentItem.index();
+      if ( idx != this.comboDiv.children().size() -1 ) {
+	this.highlight(idx+1);
+      }
+    } else {
+      this.callback(e);
+    }
+  }
+  if ( e.which == 37 && textrangeData.selectionAtStart ) {
+    // Left Arrow
+    this.callback(e);
+  }
+  if ( e.which == 39 && textrangeData.selectionAtEnd ) {
+    // Right Arrow
+    this.callback(e);
+  }
+  if ( e.which == 9 || e.which == 13 ) {
+    // TAB or Return
+    this.callback(e);
+  }
+  if ( e.which == 46 ) {
+    // Delete
+    this.callback(e)
+  }
+  if ( e.which == 83 && e.ctrlKey ) {
+    // Ctrl+S
+    this.callback(e);
+  }
+};
+DbGridCombo.prototype.inputOnKeyUp = function(e) {
+  if ( this.combo.val() != this.lastValue ) {
+    this.lastValue = this.combo.val();
+    this.search();
+  }
+  this.callback(e)  
+};
+DbGridCombo.prototype.inputOnBlur = function(e) {
+  var activeElmt = jQuery(document.activeElement);
+  if ( !this.comboDiv.is(activeElmt) && !this.comboDiv.find(activeElmt).size()  ) {
+    if ( this.currentItem.size() ) {
+      var idx = this.currentItem.index();
+      this.select(idx);
+      // trigger key up event to set row to dirty
+      this.combo.trigger('keyup.dbGridCombo');
+    }
+    this.comboDivHide();
+    this.currentItem = jQuery([]);
+  }
+};
+DbGridCombo.prototype.comboDivHide = function() {
+  this.comboDiv.css('visibility','hidden');
+  this.currentItem = jQuery([]);
+};
+DbGridCombo.prototype.comboDivShow = function() {
+  this.comboDiv.css({
+    'visibility':'visible',
+    'display':'block'
+  });
+};
+DbGridCombo.prototype.comboDivOnClick = function(e) {
+  var targetElmt = jQuery(e.target);
+  if ( !targetElmt.is(this.comboDiv) ) {
+    var idx = targetElmt.index();
+    this.select(idx);
+    // trigger key up event to set row to dirty
+    this.combo.trigger('keyup.dbGridCombo');
+  }
+};
+DbGridCombo.prototype.comboDivOnMouseOver = function(e) {
+  var targetElmt = jQuery(e.target);
+  if ( !targetElmt.is(this.comboDiv) ) {
+    var idx = targetElmt.index();
+    this.highlight(idx);
+  }
+};
+DbGridCombo.prototype.select = function(idx) {
+  this.combo.val(this._value);
+  this.lastValue = this._value;
+  this.comboDivHide();
+  // Move cursor to end of Input
+  this.selectText('end');
+};
+DbGridCombo.prototype.highlight = function(idx) {
+  var rec = jQuery('records record', this.xmlDoc).eq(idx);
+  this._value = jQuery(this._name + ':first', rec).text();
+  this._boundValue = jQuery(this._boundName + ':first', rec).text();
 
-//
-}
+  this.currentItem.css({
+    'background-color': '',
+    'color':''
+  });
+  this.currentItem = this.comboDiv.children().eq(idx);
+  this.currentItem.css({
+    'background-color':'highlight',
+    'color':'highlighttext'
+  });
+};
+DbGridCombo.prototype.search = function() {
+  //TODO
+  dbGridCombo = this;
+  comboDiv = dbGridCombo.comboDiv;
+
+  dbGridCombo.currentItem = jQuery([]);
+  comboDiv.text("Searching ...");
+  dbGridCombo.comboDivShow();
+
+  comboDiv.off('click.dbGridCombo');
+  comboDiv.off('mouseover.dbGridCombo');
+ 
+  jQuery.ajax({
+    url: dbGridCombo._searchURL,
+    data: {
+      name: dbGridCombo._name,
+      value: dbGridCombo.combo.val(),
+      boundName: dbGridCombo._boundName
+    },
+    dataType: 'xml',
+    async: false,
+    cache: false,
+    success: function(data) {
+      dbGridCombo.searchReturn(data)
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      comboDiv.text("Software Bug ! " + textStatus + ': ' + errorThrown);
+    }   
+  });
+};
+DbGridCombo.prototype.searchReturn = function(xmlDoc) {
+  this.xmlDoc = xmlDoc;
+  var rec = jQuery('error:first', xmlDoc);
+  if ( rec.size() ) {
+    // Error returned by Server
+    var error=rec.text;
+    this.comboDiv.text(rec.text());
+  } else {
+    // Success
+    var recs = jQuery('records record', xmlDoc);
+    if ( recs.size() ) {
+      // Matches Found
+      this.updateList(recs);
+    } else {
+      // No Matches
+      this.comboDiv.text("No Matches");
+      this._value = "";
+      this._boundValue = "";
+    }
+  }
+};
+DbGridCombo.prototype.updateList = function(recs) {
+  dbGridCombo = this;
+  comboDiv = dbGridCombo.comboDiv;
+
+  comboDiv.html('');
+
+  comboDiv.on('click.dbGridCombo', function(e) {
+    dbGridCombo.comboDivOnClick(e);
+  });
+  comboDiv.on('mouseover.dbGridCombo', function(e) {
+    dbGridCombo.comboDivOnMouseOver(e);
+  });
+  for(var i=0;i<recs.size();i++) {
+    var rec = recs.eq(i);
+    for(var j=0;j<rec.children().size();j++) {
+      var field = rec.children().eq(j);
+      var name= field.prop("nodeName");
+      var value = field.text();
+      if (name == dbGridCombo._name ) {
+	var item = jQuery('<div>');
+	item.css({
+	  'width': '100%',
+	  'cursor': 'pointer'
+	});
+	item.text(value);
+	comboDiv.append(item);
+      }
+    }
+  }
+  
+  dbGridCombo.currentItem = comboDiv.children().first();
+  dbGridCombo.highlight(0);
+};
+DbGridCombo.prototype.destroy = function() {
+  this.combo.remove();
+  this.comboDiv.remove();
+};
+/**********************************
+ * Public DbGridCombo Methods End
+ **********************************/

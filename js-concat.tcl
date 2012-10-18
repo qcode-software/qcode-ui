@@ -9,7 +9,7 @@ set last_major_version 1
 set last_minor_version 0
 foreach filename [glob $dir/qcode-?*.?*.js] {
     regexp {qcode-([0-9]+)\.([0-9]+).js} $filename -> major_version minor_version
-    if { $major_version >= $last_major_version && $minor_version > $last_minor_version } {
+    if { ( $major_version > $last_major_version ) || ( $major_version == $last_major_version && $minor_version > $last_minor_version ) } {
 	set last_minor_version $minor_version
 	set last_major_version $major_version
     }

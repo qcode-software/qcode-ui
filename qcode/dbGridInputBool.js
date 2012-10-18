@@ -1,243 +1,240 @@
-function dbGridInputBool(callback) {
+// DbGridInputBool Class Constructor 
+var DbGridInputBool = function(callback, container) {
+  var dbGridInputBool = this;
 
-// vars
-var oHTMLArea;
-var callback;
+  var inputBool = jQuery('<div>');
+  inputBool.attr('contentEditable',true);
+  inputBool.css({
+    'position':'absolute',
+    'visibility':'hidden'
+  });
+  container.append(inputBool);
 
-// Init
-oHTMLArea = document.createElement('DIV');
-oHTMLArea.contentEditable = true;
-oHTMLArea.style.position = 'absolute';
-oHTMLArea.style.visibility = 'hidden';
+  // Properties
+  dbGridInputBool.callback = callback;
+  dbGridInputBool.inputBool = inputBool;
+  
+  // Events
+  inputBool.on('keyup.dbGridInputBool', function(e) {
+    dbGridInputBool.inputOnKeyUp(e)    
+  });
+  inputBool.on('keydown.dbGridInputBool', function(e) {
+    dbGridInputBool.inputOnKeyDown(e)
+  }); 
+};
 
-oHTMLArea.attachEvent('onkeydown',inputOnKeyDown);
-oHTMLArea.attachEvent('onkeyup',inputOnKeyUp);
+/************************************
+ * Public DbGridInputBool Methods Start
+ ************************************/
+DbGridInputBool.prototype.getType = function() {
+  return 'bool';
+};
+DbGridInputBool.prototype.getValue = function() {
+  return parseBoolean(stripHTML(this.inputBool.html()));
+};
+DbGridInputBool.prototype.getElmt = function() {
+  return this.inputBool;
+};
+DbGridInputBool.prototype.setTrue = function() {
+  this.inputBool.html('<span class=clsTrue>Yes</span>');
+};
+DbGridInputBool.prototype.setFalse = function() {
+  this.inputBool.html('<span class=clsFalse>No</span>');
+};
+DbGridInputBool.prototype.inputOnKeyDown = function(e) {
+  // decide whether to propagate the event to the cell
+  // using the callback function passed in
+  var textrangeData = this.inputBool.textrange('get'); 
+  out: {
+    if ( e.which == 9 || e.which == 46 ) {
+      // TAB or Delete
+      this.callback(e)
+      break out;
+    }
+    if ( e.which == 13 && ! e.shiftKey ) {
+      // Return no shift
+      this.callback(e)
+      break out;
+    }
+    if ( e.which == 37 && textrangeData.selectionAtStart ) {
+      // Left Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 38 && textrangeData.selectionAtStart ) {
+      // Up Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
+      // Right Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 40 && textrangeData.selectionAtEnd ) {
+      // Down Arrow
+      this.callback(e);
+      break out;
+    }
+    if ( e.which == 83 && e.ctrlKey ) {
+      // Ctrl+S
+      this.callback(e);
+      break out;
+    }
+    // Default 
+    // don't propagate
+  }
+};
+DbGridInputBool.prototype.inputOnKeyUp = function(e) {
+  out: {
+    if ( e.which == 32 ) {
+      // Spacebar
+      if ( parseBoolean(stripHTML(oHTMLArea.innerHTML))) {
+	this.setFalse();
+      } else {
+	this.setTrue();
+      }
+      break out;
+    }
+    
+    if (  e.which==97 || e.which==49 || e.which==84 || e.which==89 ) {
+      // keypad 1 or 1 or t or y
+      this.setTrue();
+      break out;
+    }
+    if (  e.which==96 || e.which==48 || e.which==70 || e.which==78 ) {
+      // 0 or f or n
+      this.setFalse();
+      break out;
+    }
+  }
+  // allways propagate
+  this.callback(e);
+};
+DbGridInputBool.prototype.selectText = function(option) {
+  if ( option == undefined || option == 'end') {
+    this.inputBool.textrange('set', 'end');
+  }
+  if ( option == 'start' ) {
+    this.inputBool.textrange('set', 'start');
+  }
+  if ( option == 'all' ) {
+    this.inputBool.textrange('set', 'all');
+  }
+};
+DbGridInputBool.prototype.show = function(cell,value) {
+  var row = cell.closest('tr');
+  var table = row.closest('table');
+  var container = table.closest('div');
+  var inputBool = this.inputBool;
 
-// Set up handlers
-oHTMLArea.getType = getType;
-oHTMLArea.getValue = getValue;
-oHTMLArea.show = show;
-oHTMLArea.hide = hide;
-oHTMLArea.selectText = selectText;
-oHTMLArea.destroy = destroy;
+  var top = cell.position().top + container.scrollTop() ;
+  var left =  cell.position().left + container.scrollLeft();
+  height = cell.height();
+  width = cell.width();
+  
+  if ( cell.css('backgroundColor') != 'transparent' ) {
+    backgroundColor = cell.css('background-color');
+  } else if ( row.css('background-color') != 'transparent' ) {
+    backgroundColor = row.css('background-color');
+  } else {
+    backgroundColor = 'white';
+  }
 
-return oHTMLArea;
+  var borderTopWidth = parseInt(cell.css('border-top-width'));
+  var borderRightWidth = parseInt(cell.css('border-right-width'));
+  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
+  var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-function getType() {
-	return 'bool';
-}
+  if ( table.css('border-collapse') == 'collapse' ) {
+    if ( borderTopWidth%2 == 0 ) {
+      var borderTopWidth = borderTopWidth/2;
+    } else {
+      var borderTopWidth = Math.ceil(borderTopWidth/2);
+    }
+    
+    if ( borderRightWidth%2 == 0 ) {
+      var borderRightWidth = borderRightWidth/2;
+    } else {
+      var borderRightWidth = Math.ceil(borderRightWidth/2);
+    }
 
-function getValue() {
-	return parseBoolean(stripHTML(oHTMLArea.innerHTML));
-}
+    if ( borderBottomWidth%2 == 0 ) {
+      var borderBottomWidth = borderBottomWidth/2;
+    } else {
+      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
+    }
 
-function selectText(option) {
-	var rng = document.body.createTextRange();
-	rng.moveToElementText(oHTMLArea);
-	if ( option == undefined || option == 'end') {
-		rng.collapse(false);
-		rng.select();
-	}
-	if ( option == 'start' ) {
-		rng.collapse(true);
-		rng.select();
-	}
-	if ( option == 'all' ) {
-		rng.select();
-	}
-}
+    if ( borderLeftWidth%2 == 0 ) {
+      var borderLeftWidth = borderLeftWidth/2;
+    } else {
+      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
+    }
 
-function show(oTD,value) {
-	// copy the style of oTD onto oHTMLArea
-	var oTable = getContainingElmt(oTD,'TABLE');
-	if ( oTable.currentStyle.borderCollapse == 'collapse' ) {
-		// BORDER COLLAPSE
-		var oTBody = getContainingElmt(oTD,"TBODY");
-		var oRow = getContainingElmt(oTD,"TR");
-		var rows = oTable.rows.length - 1;
-		var cells = oRow.cells.length - 1;
-		var rowIndex = oRow.rowIndex;
-		var cellIndex = oTD.cellIndex;
-		var borderWidth = parseInt(oTD.currentStyle.borderWidth);
-		if ( borderWidth%2 == 0 ) {
-			// Even
-			var borderTopWidth = borderWidth/2;
-			var borderRightWidth = borderWidth/2;
-			var borderBottomWidth = borderWidth/2;
-			var borderLeftWidth = borderWidth/2;
-		} else {
-			// Odd
-			var borderTopWidth = Math.ceil(borderWidth/2);
-			var borderLeftWidth = Math.ceil(borderWidth/2);
-			var borderBottomWidth = Math.ceil(borderWidth/2);
-			var borderRightWidth = Math.ceil(borderWidth/2);
-		}
-		// Top Row
-		if ( rowIndex == 0 ) {
-			oHTMLArea.style.borderTopWidth = '0px';
-		} else {
-			oHTMLArea.style.borderTopWidth = borderTopWidth;
-		}
-		// Right Boundary
-		oHTMLArea.style.borderRightWidth = borderRightWidth;
-		
-		// Bottom
-		oHTMLArea.style.borderBottomWidth = borderBottomWidth;
-		
-		// Left
-		if ( cellIndex == 0 ) {
-			oHTMLArea.style.borderLeftWidth = '0px';
-		} else {
-			oHTMLArea.style.borderLeftWidth = borderLeftWidth;
-		}
-	} else {
-		oHTMLArea.style.borderWidth = oTD.currentStyle.borderWidth;
-	}
-	oHTMLArea.style.borderStyle = oTD.currentStyle.borderStyle;
-	oHTMLArea.style.borderColor = oTD.currentStyle.borderColor;
-	//oHTMLArea.style.borderColor = 'pink';
-	
-	oHTMLArea.style.marginTop = oTD.currentStyle.marginTop;
-	oHTMLArea.style.marginRight = oTD.currentStyle.marginRight;
-	oHTMLArea.style.marginBottom = oTD.currentStyle.marginBottom;
-	oHTMLArea.style.marginLeft = oTD.currentStyle.marginLeft;
-	
-	oHTMLArea.style.paddingTop = oTD.currentStyle.paddingTop;
-	oHTMLArea.style.paddingRight = oTD.currentStyle.paddingRight;
-	oHTMLArea.style.paddingBottom = oTD.currentStyle.paddingBottom;
-	oHTMLArea.style.paddingLeft = oTD.currentStyle.paddingLeft;
-	
-	oHTMLArea.style.textAlign = oTD.currentStyle.textAlign;
-	oHTMLArea.style.verticalAlign = oTD.currentStyle.verticalAlign;
-	oHTMLArea.style.fontSize = oTD.currentStyle.fontSize;
-	oHTMLArea.style.fontFamily = oTD.currentStyle.fontFamily;
-	if ( oTD.currentStyle.backgroundColor=='transparent' )	{
-		oHTMLArea.style.backgroundColor='white';
-	} else {
-		oHTMLArea.style.backgroundColor=oTD.currentStyle.backgroundColor;
-	}
-	
-	oHTMLArea.style.pixelWidth = oTD.offsetWidth+parseInt(borderRightWidth);
-	oHTMLArea.style.pixelHeight = oTD.offsetHeight+parseInt(borderBottomWidth);
-	
-	oHTMLArea.style.pixelTop = getContainerPixelTop(oTD);
-	oHTMLArea.style.pixelLeft = getContainerPixelLeft(oTD);
-	
-	oHTMLArea.style.visibility = 'visible';
-	if ( parseBoolean(value) ) {
-	  setTrue();
-	} else {
-	  setFalse();
-	}
-}
+    top -=  borderTopWidth;
+    left -= borderLeftWidth;
+    height +=  borderTopWidth;
+    width +=  borderLeftWidth;
+  } 
 
-function hide() {
-  oHTMLArea.style.visibility = 'hidden';
-}
+  // get styles applied to td
+  var styles = {
+    'border-top-width': borderTopWidth,
+    'border-right-width': borderRightWidth,
+    'border-bottom-width': borderBottomWidth,
+    'border-left-width': borderLeftWidth,
 
-function setTrue() {
-  oHTMLArea.innerHTML='<span class=clsTrue>Yes</span>';
+    'border-top-style': cell.css('border-top-style'),
+    'border-right-style': cell.css('border-right-style'),
+    'border-bottom-style': cell.css('border-bottom-style'),
+    'border-left-style': cell.css('border-left-style'),
 
-}
+    'border-top-color': cell.css('border-top-color'),
+    'border-right-color': cell.css('border-right-color'),
+    'border-bottom-color': cell.css('border-bottom-color'),
+    'border-left-color': cell.css('border-left-color'),
 
-function setFalse() {
-  oHTMLArea.innerHTML='<span class=clsFalse>No</span>';
+    'margin-top': cell.css('margin-top'),
+    'margin-right': cell.css('margin-right'),
+    'margin-bottom': cell.css('margin-bottom'),
+    'margin-left': cell.css('margin-left'),
+    
+    'padding-top': cell.css('padding-top'),
+    'padding-right': cell.css('padding-right'),
+    'padding-bottom': cell.css('padding-bottom'),
+    'padding-left': cell.css('padding-left'),
+    
+    'text-align': cell.css('text-align'),
+    'vertical-align': cell.css('vertical-align'),
+    'font-size': cell.css('font-size'),
+    'font-family': cell.css('font-family'),
 
-}
+    'top': top,
+    'left': left,
+    'width': width,
+    'height': height,
 
-function inputOnKeyDown() {
-	// decide whether to propagate the event to the cell
-	// using the callback function passed in
-	var e = window.event;
-	out: {
-		if (e.keyCode == 9 || e.keyCode == 46) {
-			// TAB or Delete
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 13 && ! e.shiftKey) {
-			// Return no shift
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 37 && atEditStart(oHTMLArea)) {
-			// Left Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 38 && atEditStart(oHTMLArea)) {
-			// Up Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 39 && atEditEnd(oHTMLArea)) {
-			// Right Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 40 && atEditEnd(oHTMLArea)) {
-			// Down Arrow
-			callback(e);
-			break out;
-		}
-		if ( e.keyCode == 83 && e.ctrlKey ) {
-			// Ctrl+S
-			callback(e);
-			break out;
-		}
-		// Default 
-		// don't propagate
-	}
-}
+    'background-color': backgroundColor,
 
-function inputOnKeyUp() {
-   var e = window.event;
- out: {
-     if ( e.keyCode == 32 ) {
-       // Spacebar
-       if ( parseBoolean(stripHTML(oHTMLArea.innerHTML))) {
-	 setFalse();
-       } else {
-	 setTrue();
-       }
-       break out;
-     }
-		
-     if (  e.keyCode==97 || e.keyCode==49 || e.keyCode==84 || e.keyCode==89 ) {
-       // keypad 1 or 1 or t or y
-       setTrue();
-       break out;
-     }
-     if (  e.keyCode==96 || e.keyCode==48 || e.keyCode==70 || e.keyCode==78 ) {
-       // 0 or f or n
-       setFalse();
-       break out;
-     }
-   }
-   // allways propagate
-   callback(e);
-}
+    'visibility': 'visible'
+  };
+  
+  // copy td styles onto inputBool
+  inputBool.css(styles);
 
-function getContainerPixelLeft(elem) {
-	var left = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		left += elem.offsetLeft - elem.scrollLeft;
-		elem = elem.offsetParent;
-	}
-	return left;
-}
-function getContainerPixelTop(elem) {
-	var top = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		top += elem.offsetTop - elem.scrollTop;
-		elem = elem.offsetParent;
-	}
-	return top;
-}
+  if ( parseBoolean(value) ) {
+    this.setTrue();
+  } else {
+    this.setFalse();
+  }
+};
 
-function destroy() {
-	oHTMLArea.removeNode(true);
-}
-
-//
-}
+DbGridInputBool.prototype.hide = function() {
+  this.inputBool.css('visibility','hidden');
+};
+DbGridInputBool.prototype.destroy = function() {
+  this.inputBool.remove();
+};
+/**********************************
+ * Public DbGridInputBool Methods End
+ **********************************/
