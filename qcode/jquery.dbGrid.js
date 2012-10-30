@@ -9,6 +9,7 @@
     var statusTable = jQuery([]);
     var currentCell = jQuery([]);
     // Input Controls
+      var dbGridInput;
     var dbGridInputCtl;
     var dbGridHTMLArea;
     var dbGridCombo;
