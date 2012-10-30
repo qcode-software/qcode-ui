@@ -55,7 +55,7 @@
 	    var form = this.input.closest('form');
 	    var record = $(this.xmlDoc).find('record').eq(index);
 	    form.find('[name="' + this.settings.boundName + '"]').val( $(record).find(this.settings.boundName).text() );
-	    this.input.val( $(record).find('[name="'+this.input.attr('name')+'"]').text() );
+	    this.input.val( $(record).find(this.input.attr('name')).text() );
 	    this.lastValue = this.input.val();
 	    this.hide();
 	    this.currentItem = "undefined";
