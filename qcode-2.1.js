@@ -7657,12 +7657,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}
     }
     function divOnClick(event) {
-	if ( event.target != this.div ) {
+	if ( ! this.div.is(event.target) ) {
 	    this.select($(event.target).index());
 	}
     }
     function divOnMouseOver(event) {
-	if ( event.target != this.div ) {
+	if ( ! this.div.is(event.target) ) {
 	    this.highlight($(event.target).index());
 	}
     }
