@@ -9437,7 +9437,6 @@ function dbFormHTMLArea(oDiv) {
 	    th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
 	    $(element).css('width', width - parseInt($(element).css('padding-left')) - parseInt($(element).css('padding-right')));
 	}.bind(this));
-	this.table.find('col, colgroup').css('width', '');
 
 	// Apply css
 	this.wrapper.css({
