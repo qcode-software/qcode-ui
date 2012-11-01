@@ -63,22 +63,28 @@ function httpPost(url,data,handler,errorHandler,async) {
     });
 }
 
-(function($){
-    $.fn.columnCells = function(selector) {
-	var $cells = $([]);
-	if ( $(this).is('tr') ) {
-	    var $rows = $(this);
-	} else {
-	    var $rows = $(this).find('tr');
-	}
-	$rows.closest('table').each(function(){
-	    var $table = $(this);
-	    $table.find('col').filter(selector).each(function(index){
-		var $col = $(this);
-		var n = $col.index() + 1;
-		$cells = $cells.add($table.find($rows).find('td:nth-child('+n+')'));
-	    });
+(function ($) {
+    $.fn.disable = function () {
+	return $(this).each(function () { 
+	    switch($(this)[0].nodeName.toUpperCase()) {
+	    case "A":
+		jQuery.data($(this)[0],"href",$(this).attr("href"));
+		$(this).removeAttr('href');
+	    default:
+		$(this).attr('disabled', 'disabled').addClass('disabled');
+	    }
 	});
-	return $cells;
-    }
+    };
+    $.fn.enable = function () {
+	return $(this).each(function () { 
+	    switch($(this)[0].nodeName.toUpperCase()) {
+	    case "A":
+		if ( typeof jQuery.data($(this)[0],"href")!="undefined" ) {
+		    $(this).attr("href",jQuery.data($(this)[0],"href"));
+		}
+	    default:
+		$(this).removeAttr('disabled').removeClass("disabled"); 
+	    }
+	});
+    };
 })(jQuery);
