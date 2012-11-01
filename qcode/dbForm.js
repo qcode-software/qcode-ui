@@ -9,7 +9,7 @@ oForm.find=find;
 oForm.del=del;
 
 // Parameters
-if (dbFormData.formType == undefined) { dbFormData.formType = 'update' } 
+if (oForm.formType == undefined) { oForm.formType = 'update' } 
 if (oForm.enabled == undefined) { oForm.enabled = "true" }
 if (oForm.checkOnExit == undefined) { oForm.checkOnExit = "true" }
 if (oForm.initialFocus == undefined) { oForm.initialFocus = "true" }
@@ -38,9 +38,20 @@ function init() {
     }
   }
   
-    $(oForm).find('input, select, textarea').each(function(){
-	elmts.push($(this)[0]);
-    });
+  var e = oForm.getElementsByTagName('INPUT');
+  for(var i=0;i<e.length;i++) {
+    elmts.push(e[i]);
+  }
+  
+  var e = oForm.getElementsByTagName('SELECT');
+  for(var i=0;i<e.length;i++) {
+    elmts.push(e[i]);
+  }
+  
+  var e = oForm.getElementsByTagName('TEXTAREA');
+  for(var i=0;i<e.length;i++) {
+    elmts.push(e[i]);
+  }
   
   var e = oForm.getElementsByTagName('DIV');
   for(var i=0;i<e.length;i++) {
@@ -49,10 +60,10 @@ function init() {
     }
   }
   
-  if ( dbFormData.dataURL !=undefined ) {
+  if ( oForm.dataURL !=undefined ) {
     formAction('requery',oForm.dataURL);
   }
-  if ( dbFormData.qryURL !=undefined ) {
+  if ( oForm.qryURL !=undefined ) {
     nav('FIRST');
   }
   // Look for dropdowns and attach onchange behavior
@@ -70,7 +81,7 @@ function init() {
   }
   
   // document unload
-  if ( oForm.checkOnExit == "true" && dbFormData.formType=="update") {
+  if ( oForm.checkOnExit == "true" && oForm.formType=="update") {
     window.attachEvent('onbeforeunload',onBeforeUnload);
   }
   oForm.attachEvent('onkeydown',onKeyDown);
@@ -105,7 +116,7 @@ function focus() {
 function onBeforeUnload() {
    if ( state == 'dirty' ) {
      if (window.confirm('Do you want to save your changes?')) {
-       oForm.save();
+       save();
        if (state == 'error' ) {
 	 event.returnValue = "Your changes could not been saved.\nStay on the current page to correct.";
        }
@@ -117,7 +128,7 @@ function onBeforeUnload() {
 }
 
 function onSubmit() {
-  if ( dbFormData.formType == 'submit' ) {
+  if ( oForm.formType == 'submit' ) {
     return true;
   }
   return false;
@@ -127,7 +138,7 @@ function onKeyDown() {
   var e = window.event;
   if ( e.keyCode == 83 && e.ctrlKey ) {
     // Ctrl+S
-    oForm.save();
+    save();
     e.returnValue = false;
   }
   // Backspace
@@ -150,7 +161,7 @@ function setState(newState) {
      var span ='<span style="color:blue;cursor:hand;text-decoration:underline" onclick="' + oForm.id + '.save()">save</span>';
      setStatus('Editing ... To ' + span + ' type Ctrl+S');
      if ( oForm.nav_new) {
-       if ( dbFormData.addURL ) {
+       if ( oForm.addURL ) {
 	 oForm.nav_new.disabled=false;
        } else {
 	 oForm.nav_new.disabled=true;
@@ -186,17 +197,17 @@ function setState(newState) {
 }
 
 function save(async) {
-  if ( dbFormData.formType == 'update' ) {
+  if ( oForm.formType == 'update' ) {
     setState('updating');
-    formAction('update',dbFormData.updateURL);
+    formAction('update',oForm.updateURL);
   }
-  if ( dbFormData.formType == 'add' ) {
+  if ( oForm.formType == 'add' ) {
     setState('updating');
-    formAction('add',dbFormData.addURL);
+    formAction('add',oForm.addURL);
   }
-  if ( dbFormData.formType == 'submit' ) {
+  if ( oForm.formType == 'submit' ) {
     // oForm submit
-    oForm.action = dbFormData.submitURL;		
+    oForm.action = oForm.submitURL;		
     for(var i=0;i<elmts.length;i++) {
       var elmt = elmts[i];
       if ( elmt.tagName=='DIV' && elmt.className == 'clsDbFormHTMLArea' ) {
@@ -221,30 +232,30 @@ function save(async) {
 function del() {
   if ( window.confirm('Delete the current record?') ) {
     setState('deleting');
-    formAction('delete',dbFormData.deleteURL);
+    formAction('delete',oForm.deleteURL);
   }
 }
 
 function nav(navTo) {
    oForm.navTo.value = navTo;
    if ( state=='dirty' ) {
-     oForm.save();
+     save();
    } else {
      setState('loading');
-     formAction('qry',dbFormData.qryURL);
+     formAction('qry',oForm.qryURL);
    }
 }
 
-function find() {
+function find(name,value) {
   if ( state=='dirty' ) {
-    oForm.save();
+    save();
   } else {
     setState('loading');
   }
   handler = formActionReturn;
-  var url = dbFormData.searchURL;
+  var url = oForm.searchURL;
   var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.open("POST",url,false);
+  xmlhttp.Open("POST",url,false);
   var action = new Object;
   action.type = 'search';
   action.xmlhttp = xmlhttp;
@@ -252,10 +263,7 @@ function find() {
   xmlhttp.onreadystatechange = function() {
     if (xmlhttp.readyState == 4) handler(action);
   }
-    var data = "action=search";
-    for(var i = 0; i < arguments.length; i += 2){
-	data = data + "&" + encodeURIComponent(arguments[i]) + "=" + encodeURIComponent(arguments[i+1]);
-    }
+  var data = encodeURIComponent(name) + "=" + encodeURIComponent(value)
   xmlhttp.Send(data);
 }
 
@@ -267,7 +275,7 @@ function formAction(type,url,handler,async) {
     async = false;
   }
   var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.open("POST",url,async);
+  xmlhttp.Open("POST",url,async);
   var action = new Object;
   action.type = type;
   action.xmlhttp = xmlhttp;
@@ -350,19 +358,19 @@ function formActionReturn(action) {
     }
     if ( recordNumber==0 ) {
       // New Record
-      dbFormData.formType='add';
+      oForm.formType='add';
       oForm.nav_new.disabled=true;
       oForm.nav_prev.disabled=true;
       oForm.nav_next.disabled=true;
       oForm.nav_del.disabled=true;
     } else {
-       dbFormData.formType='update';
-       if ( dbFormData.addURL ) {
+       oForm.formType='update';
+       if ( oForm.addURL ) {
 	 oForm.nav_new.disabled=false;
        } else {
 	 oForm.nav_new.disabled=true;
        }
-       if ( dbFormData.deleteURL ) {
+       if ( oForm.deleteURL ) {
 	 oForm.nav_del.disabled=false;
        } else {
 	 oForm.nav_del.disabled=true;
@@ -380,7 +388,7 @@ function formActionReturn(action) {
 // Status Message
 function setStatus(msg) {
   if ( oDivStatus != undefined ) {
-      $(oDivStatus).html(msg);
+    setObjectValue(oDivStatus,msg);
   }
 }
 
