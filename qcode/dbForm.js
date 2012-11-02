@@ -33,7 +33,7 @@ function init() {
   var divs = oForm.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv = divs[i];
-    if ( oDiv.className == 'clsDbFormDivStatus') {
+      if ( jQuery(oDiv).hasClass('clsDbFormDivStatus') ) {
       oDivStatus = oDiv;
     }
   }
