@@ -11,7 +11,6 @@
     // Input Controls
       var dbGridInput;
     var dbGridInputCtl;
-    var dbGridHTMLArea;
     var dbGridCombo;
     var dbGridTextArea;
     var dbGridHTMLArea;
@@ -902,7 +901,7 @@
 	      jQuery('tr:first td:first', statusTable).append(
 		  jQuery("<span>save</span>")
 		      .css({"color": "blue", "cursor": "hand", "text-decoration": "underline"})
-		      .click(table.data('dbGrid').save)
+		      .click(function(){table.data('dbGrid').save()})
 	      );
 	  }
 	    break;

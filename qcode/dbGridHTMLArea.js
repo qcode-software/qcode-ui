@@ -6,8 +6,9 @@ var DbGridHTMLArea = function(callback, container) {
   HTMLArea.attr('contentEditable',true);
   HTMLArea.css({
     'position':'absolute',
-    'visibility':'hidden'
+      'visibility':'hidden'
   });
+    HTMLArea.addClass('htmlArea');
   container.append(HTMLArea);
 
   // Properties
@@ -16,10 +17,10 @@ var DbGridHTMLArea = function(callback, container) {
 
   // Events
   HTMLArea.on('keyup.dbGridHTMLArea', function(e) {
-    dbGridHTMLArea.inputOnKeyUp(e)    
+      dbGridHTMLArea.inputOnKeyUp(e);    
   });
   HTMLArea.on('keydown.dbGridHTMLArea', function(e) {
-    dbGridHTMLArea.inputOnKeyDown(e)
+      dbGridHTMLArea.inputOnKeyDown(e);
   });   
 };
 

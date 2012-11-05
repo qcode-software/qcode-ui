@@ -51,15 +51,27 @@
 	var text = this.text();
       }
 
-      var textNode = jQuery([]);
+      var textNode = jQuery(this);
       if ( window.getSelection ) {
-	contents = this.closest();
+	contents = this.contents();
 	while ( contents.size() ) {
-	  FirstNode = contents.get(0)
-	  if ( firstNode[0].nodeType == 3 ) {
-	    textNode = firstNode;
+	    firstNode = contents.get(0);
+	  if ( firstNode.nodeType == 3 ) {
+	      textNode = $(firstNode);
+	      break;
+	  } else {
+	      contents = $(firstNode).contents();
 	  }
-	  contents = firstNode.contents();
+	}
+	contents = this.contents();
+	while ( contents.size() ) {
+	    lastNode = contents.get(contents.size() - 1);
+	  if ( lastNode.nodeType == 3 ) {
+	      endNode = $(lastNode);
+	      break;
+	  } else {
+	      contents = $(lastNode).contents();
+	  }
 	}
       }
 
@@ -79,28 +91,28 @@
 	  var selectionAtEnd = false
 	}
 
-      } else if ( window.getSelection && window.getSelection.rangeCount > 0 ) { 
+      } else if ( window.getSelection && window.getSelection().rangeCount > 0 ) { 
 	var selection = window.getSelection();
 	var selectedRange = selection.getRangeAt(0);
+	var selectionStart = selectedRange.startOffset;
+	var selectionEnd = selectionStart + selectedRange.toString().length;
 
 	var elmtRange = document.createRange();   
         // aligns the selectedRange to selectionStart and selectionEnd points
         elmtRange.setStart(textNode[0], selectionStart);
-        elmtRange.setEnd(textNode[0], selectionEnd);	   
+        elmtRange.setEnd(endNode[0], selectionEnd);	   
 
-	if ( selectedRange.compareEndPoints('StartToStart',ElmtRange) == 0 ) {
+	if ( selectedRange.compareBoundaryPoints(Range.START_TO_START,elmtRange) == 0 ) {
 	  var selectionAtStart = true
 	} else {
 	  var selectionAtStart = false
 	}
-	if ( selectedRange.compareEndPoints('EndtoEnd',ElmtRange) == 0 ) {
+	if ( selectedRange.compareBoundaryPoints(Range.END_TO_END,elmtRange) == 0 ) {
 	  var selectionAtEnd = true
 	} else {
 	  var selectionAtEnd = false
 	}
 
-	var selectionStart = selectedRange.startOffset;
-	var selectionEnd = selectionStart + selectedRange.toString().length;
 	var selectionLength = selectedRange.toString().length;
 	var selectionText = selectedRange.toString();
 
@@ -157,15 +169,17 @@
     set: function(selectionStart, selectionEnd) {
       this.focus();
 
-      var textNode = jQuery([]);
+      var textNode = jQuery(this);
       if ( window.getSelection ) {
-	contents = this.closest();
+	contents = this.contents();
 	while ( contents.size() ) {
-	  FirstNode = contents.get(0)
-	  if ( firstNode[0].nodeType == 3 ) {
-	    textNode = firstNode;
+	  firstNode = contents.get(0)
+	  if ( firstNode.nodeType == 3 ) {
+	      textNode = $(firstNode);
+	      break;
+	  } else {
+	      contents = $(firstNode).contents();
 	  }
-	  contents = firstNode.contents();
 	}
       }
 
