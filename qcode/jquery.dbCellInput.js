@@ -22,12 +22,16 @@
 	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
 	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
 	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnBlur.bind(this));
+	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
+	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
     }
     $.extend(DbCellInput.prototype, {
 	pluginName: 'dbCellInput',
-	add: function(container,cells){
+	add: function(container,cells) {
 	    cells.data('dbCellControl', this);
+	},
+	remove: function(cells) {
+	    cells.removeData('dbCellControl');
 	},
 	getType: function() {
 	    return 'text';
@@ -58,7 +62,7 @@
 		.focus();
 	},
 	hide: function(cell) {
-	    this.editor.blur().hide();
+	    this.editor.trigger('blur',['hide']).hide();
 	},
 	selectText: function(cell,option) {
 	    // TO DO - figure out if there's a way to do this
@@ -68,15 +72,31 @@
 	}
     });
     function inputOnKeyDown(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
+	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 83: //S
+	    if ( ! e.ctrlKey ) break;
+	case 13: //return
+	case 9: //tab
+	    e.preventDefault();
+	case 38: //up
+	case 40: //down
+            var event = jQuery.Event(e.type,{
+		'data': e.data,
+		'ctrlKey': e.ctrlKey,
+		'altKey': e.altKey,
+		'shiftKey': e.shiftKey,
+		'which': e.which
+            });
+	    this.currentCell.trigger(event);
+	    break;
+	}
     }
     function inputOnKeyUp(e) {
         var event = jQuery.Event(e.type,{
             'data': e.data,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
             'which': e.which
         });
 	this.currentCell.trigger(event);
@@ -84,16 +104,30 @@
     function inputOnCut(e) {
         var event = jQuery.Event(e.type,{
             'data': e.data,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
             'which': e.which
         });
 	this.currentCell.trigger(event);
     }
-    function inputOnBlur(e) {
+    function inputOnPaste(e) {
         var event = jQuery.Event(e.type,{
             'data': e.data,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
             'which': e.which
         });
 	this.currentCell.trigger(event);
+    }
+    function inputOnBlur(e, source) {
+	if ( source != 'hide' ) {
+            var event = jQuery.Event(e.type,{
+		'data': e.data
+            });
+	    this.currentCell.trigger(event);
+	}
     }
     $.fn.dbCellInput = function(){
 	var returnValue;
@@ -101,20 +135,24 @@
 	var control = target.data('dbCellControl');
 	if ( ! control ) {
 	    control = target.data('dbCellInput');
-	} else if ( control.pluginName !== 'dbCellInput' ) {
-	    $.error('Cannot apply dbCellInput - element has another control already');
+	}
+	if ( arguments[0] === 'isInitialized' ) {
+	    return Boolean(control);
 	}
 	if ( ! control ) {
 	    var cells = arguments[0];
 	    var options = arguments[1];
 	    target.data('dbCellInput', new DbCellInput(target,cells,options));
 	} else {
+	    if ( control.pluginName !== 'dbCellInput' ) {
+		$.error('Cannot apply dbCellInput - element has another control already');
+	    }
 	    var method = arguments[0];
 	    if ( typeof control[method] == "function" ) {
 		var args = [target].concat(Array.prototype.slice.call(arguments,1));
 		returnValue = control[method].apply(control,args);
 	    } else {
-		$.error('Invalid method of dbCellInput');
+		$.error('Invalid method ' + method + ' of dbCellInput');
 	    }
 	}
 	if ( typeof returnValue != "undefined" ) {

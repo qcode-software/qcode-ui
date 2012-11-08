@@ -43,7 +43,12 @@
 	    .on('keyup.dbCells', cellSelector, cellOnKeyUp.bind(this))
 	    .on('cut.dbCells', cellSelector, cellOnCut.bind(this))
 	    .on('paste.dbCells', cellSelector, cellOnPaste.bind(this))
-	    .on('blur.dbCells', cellSelector, cellOnBlur.bind(this));
+	    .on('blur.dbCells', cellSelector, cellOnBlur.bind(this))
+	    .on('update.dbCells', function(){
+		if ( typeof this.currentCell != "undefined" ) {
+		    this.currentCell.dbCellControl('show', this.currentCell.dbCellControl('getValue'));
+		};
+	    }.bind(this));
 	$(window)
 	    .on('resize.dbCells', onResize.bind(this))
 	    .on('beforeunload.dbCells', onBeforeUnload.bind(this))
@@ -61,7 +66,7 @@
 	    }
 	    switch (type) {
 	    case "text":
-		if ( this.inputCells.length > 0 ) {
+		if ( this.container.dbCellInput('isInitialized') ) {
 		    this.container.dbCellInput('add',cell);
 		} else {
 		    this.container.dbCellInput(cell);
@@ -69,7 +74,7 @@
 		this.inputCells = this.inputCells.add(cell);
 		break;
 	    case "textarea":
-		if ( this.textCells.length > 0 ) {
+		if ( this.container.dbCellTextArea('isInitialized') ) {
 		    this.container.dbCellTextArea('add',cell);
 		} else {
 		    this.container.dbCellTextArea(cell);
@@ -77,7 +82,7 @@
 		this.textCells = this.textCells.add(cell);
 		break;
 	    case "htmlarea":
-		if ( this.htmlCells.length > 0 ) {
+		if ( this.container.dbCellHTMLArea('isInitialized') ) {
 		    this.container.dbCellHTMLArea('add',cell);
 		} else {
 		    this.container.dbCellHTMLArea(cell);
@@ -87,7 +92,23 @@
 	    }
 	    this.cells = this.cells.add(cell);
 	    cell.data('dbCells', this);
-	    this.currentCell.dbCellControl('show', this.currentCell.dbCellControl('getValue'));
+	},
+	remove: function(cell) {
+	    var type = this.getCellType(cell);
+	    cell.dbCellControl('remove');
+	    switch(type) {
+	    case "text":
+		this.inputCells = this.inputCells.not(cell);
+		break;
+	    case "textarea":
+		this.textCells = this.textCells.not(cell);
+		break;
+	    case "htmlarea":
+		this.htmlCells = this.htmlCells.not(cell);
+		break;
+	    }
+	    this.cells = this.cells.not(cell);
+	    cell.removeData('dbCells');
 	},
 	save: function(cell,async) {
 	    var dbCells = this;
@@ -97,8 +118,7 @@
 	    if ( cell.data('deleteWhenEmpty') && this.getCellValue(cell) === "" ) {
 		this.delete(cell,async);
 		cell.trigger('save');
-	    }
-	    if ( typeof cell.data('updateUrl') != "undefined" ) {
+	    } else if ( typeof cell.data('updateUrl') != "undefined" ) {
 		dbCells.cellAction(cell,'update',cell.data('updateUrl'),cellActionReturn.bind(dbCells,cell,'update'),async);
 		cell.trigger('save');
 	    } else if ( typeof cell.data('addUrl') != "undefined" ) {
@@ -111,7 +131,7 @@
 		var cell = this.currentCell;
 	    }
 	    if ( typeof cell.data('deleteUrl') != "undefined" ) {
-		dbCells.cellAction(cell,'delete',cell.data('deleteUrl'),cellActionReturn.bind(dbCells,cell,'delete'),async);
+		this.cellAction(cell,'delete',cell.data('deleteUrl'),cellActionReturn.bind(this,cell,'delete'),async);
 		cell.trigger('delete');
 	    }
 	},
@@ -264,9 +284,8 @@
 		async = true;
 	    }
 	    
-	    if ( type=='update' ) {
-		this.setCellState(cell,'updating');
-	    }
+	    this.setCellState(cell,'updating');
+
 	    if ( typeof this.currentCell != "undefined" ) {
 		cellWrite.call(this);
 	    }
@@ -284,7 +303,11 @@
 		data[pair.split('=')[0]] = pair.split('=')[1];
 	    });
 
-	    httpPost(url,data,handler,cellActionReturnError.bind(this,cell),async);
+	    var deferred = new jQuery.Deferred();
+	    deferred.done(handler);
+	    deferred.fail(cellActionReturnError.bind(this,cell,type));
+	    httpPost(url,data,deferred.resolve.bind(deferred),deferred.reject.bind(deferred));
+	    cell.trigger('cellAction',[type,deferred]);
 	},
 	setStatus: function(msg){
 	    this.trigger('statuschange',[msg])
@@ -292,18 +315,11 @@
     });
     function cellActionReturn(cell,type,xmlDoc) {
 	var dbCells = this;
+	dbCells.setCellState(cell,'current');
 	if ( type == "update" ) {
-	    dbCells.setCellState(cell,'current');
 	    var node = $(xmlDoc).find('records record ' + cell.data('name'));
 	    if ( node.length > 0 ) {
 		dbCells.setCellValue(cell,node.text());
-	    }
-	} else if ( type == "add" ) {
-	    dbCells.setCellState(cell,'current');
-	    if ( typeof cell.data('default') != "undefined" ) {
-		dbCells.setCellValue(cell,cell.data('default'));
-	    } else {
-		dbCells.setCellValue(cell,"");
 	    }
 	}
 	$(xmlDoc).find('calculated *').each(function(){
@@ -332,13 +348,14 @@
 	if ( $(xmlDoc).find('alert').length > 0 ) {
 	    alert($(xmlDoc).find('alert').text());
 	}
-	this.container.trigger('cellActionReturn',[cell, type, xmlDoc]);
+	cell.trigger('cellActionReturn',[type, xmlDoc]);
     }
-    function cellActionReturnError(cell,errorMessage,errorType) {
+    function cellActionReturnError(cell,type,errorMessage,errorType) {
 	this.setCellState(cell,'error');
 	if ( errorType != 'USER' ) {
 	    alert(errorMessage);
 	}
+	cell.trigger('cellActionReturnError',[type,errorMessage,errorType]);
     }
     function onBeforeUnload(event) {
 	if ( typeof this.currentCell == "undefined" ) {
@@ -364,7 +381,7 @@
 	}
     }
     function cellOnBlur(event) {
-	var activeElmt=document.activeElement;
+	/*var activeElmt=document.activeElement;
 	if ( this.container.find(activeElmt).length == 0
 	     && (oInputCtl && activeElmt!=oInputCtl)
 	     && this.currentCell) {
@@ -372,21 +389,25 @@
 		 && this.getCellState(this.currentCell) == 'dirty') {
 		this.save(this.currentCell);
 	    }
+	}*/
+	if ( this.currentCell ) {
+	    this.cellOut();
 	}
     }
     function cellOnKeyDown(event) {
+	// cell controls should only propogate key events when default dbCells behavior is desired.
 	if ( event.altKey ) {
 	    return true;
 	}
 	switch (event.which) {
 	case 37: //left
-	    //this.cellChange(moveLeft.call(this,this.curentCell));
+	    this.cellChange(moveLeft.call(this,this.curentCell));
 	    break;
 	case 38: //up
 	    this.cellChange(moveUp.call(this,this.currentCell));
 	    break;
 	case 39: //right
-	    //this.cellChange(moveRight.call(this,this.currentCell));
+	    this.cellChange(moveRight.call(this,this.currentCell));
 	    break;
 	case 40: //down
 	    this.cellChange(moveDown.call(this,this.currentCell));
@@ -409,16 +430,17 @@
 		this.save();
 	    }
 	    break;
-	/*case 46: //delete
+	case 46: //delete
 	    if ( typeof this.currentCell.data('deleteUrl') != "undefined" ) {
 		var cell = this.currentCell;
 		this.cellOut();
 		this.cellAction(cell,'delete',cell.data('deleteUrl'));
 	    }
-	    break;*/
+	    break;
 	case 83: //s
 	    if ( event.ctrlKey ) {
 		this.save();
+		event.preventDefault();
 	    }
 	}
     }
@@ -630,6 +652,7 @@
     
     $.fn.dbCells = function() {
 	var target = this;
+	var returnValue;
 	if ( typeof arguments[0] == "object" ) {
 	    var options = arguments[0];
 	}
@@ -642,9 +665,13 @@
 	if ( typeof arguments[0] == "string" ) {
 	    var method = arguments[0];
 	    if ( typeof dbCells[method] == "function" ) {
-		dbCells[method].apply(dbCells, [target].concat(Array.prototype.slice.call(arguments,1)));
+		returnValue = dbCells[method].apply(dbCells, [target].concat(Array.prototype.slice.call(arguments,1)));
 	    }
 	}
-	return target;
+	if ( typeof returnValue == "undefined" ) {
+	    return target;
+	} else {
+	    return returnValue;
+	}
     };
 })(jQuery);

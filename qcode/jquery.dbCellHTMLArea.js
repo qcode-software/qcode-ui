@@ -18,12 +18,18 @@
 	    })
 	    .hide()
 	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this));
+	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
+	    .on('cut' + eventNamespace, inputOnCut.bind(this))
+	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
+	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
     }
     $.extend(DbCellHTMLArea.prototype, {
 	pluginName: 'dbCellHTMLArea',
 	add: function(container,cells){
 	    cells.data('dbCellControl', this);
+	},
+	remove: function(cells) {
+	    cells.removeData('dbCellControl');
 	},
 	getType: function() {
 	    return 'htmlarea';
@@ -54,7 +60,7 @@
 		.focus();
 	},
 	hide: function(cell) {
-	    this.editor.hide();
+	    this.editor.trigger('blur',['hide']).hide();
 	},
 	selectText: function(cell,text) {
 	    // TO DO - figure out if there's a way to do this
@@ -64,18 +70,60 @@
 	}
     });
     function inputOnKeyDown(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
+	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 83: //S
+	    if ( ! e.ctrlKey ) break;
+	case 9: //tab
+	    e.preventDefault();
+	case 38: //up
+	case 40: //down
+            var event = jQuery.Event(e.type,{
+		'data': e.data,
+		'ctrlKey': e.ctrlKey,
+		'altKey': e.altKey,
+		'shiftKey': e.shiftKey,
+		'which': e.which
+            });
+	    this.currentCell.trigger(event);
+	}
     }
     function inputOnKeyUp(e) {
         var event = jQuery.Event(e.type,{
             'data': e.data,
+		'ctrlKey': e.ctrlKey,
+		'altKey': e.altKey,
+		'shiftKey': e.shiftKey,
             'which': e.which
         });
 	this.currentCell.trigger(event);
+    }
+    function inputOnCut(e) {
+        var event = jQuery.Event(e.type,{
+            'data': e.data,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
+            'which': e.which
+        });
+	this.currentCell.trigger(event);
+    }
+    function inputOnPaste(e) {
+        var event = jQuery.Event(e.type,{
+            'data': e.data,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
+            'which': e.which
+        });
+	this.currentCell.trigger(event);
+    }
+    function inputOnBlur(e, source) {
+	if ( source != 'hide' ) {
+            var event = jQuery.Event(e.type,{
+		'data': e.data
+            });
+	    this.currentCell.trigger(event);
+	}
     }
     $.fn.dbCellHTMLArea = function(){
 	var returnValue;
@@ -83,14 +131,18 @@
 	var control = target.data('dbCellControl');
 	if ( ! control ) {
 	    control = target.data('dbCellHTMLArea');
-	} else if ( control.pluginName !== 'dbCellHTMLArea' ) {
-	    $.error('Cannot apply dbCellHTMLArea - element has another control already');
+	}
+	if ( arguments[0] === 'isInitialized' ) {
+	    return Boolean(control);
 	}
 	if ( ! control ) {
 	    var cells = arguments[0];
 	    var options = arguments[1];
 	    target.data('dbCellHTMLArea', new DbCellHTMLArea(target,cells,options));
 	} else {
+	    if ( control.pluginName !== 'dbCellHTMLArea' ) {
+		$.error('Cannot apply dbCellHTMLArea - element has another control already');
+	    }
 	    var method = arguments[0];
 	    var args = [target].concat(Array.prototype.slice.call(arguments,1));
 	    if ( typeof control[method] == "function" ) {
