@@ -21,7 +21,7 @@
 	table.attr('class', this.settings.tableClass);
 
 	// Accounting for borders, padding, etc.
-	this.thead = jQuery('thead',this.table);
+	this.thead = this.table.children('thead');
 	this.errorY = this.thead.offset().top - this.table.offset().top - parseInt(this.table.css('margin-top'));
 	this.errorX = this.thead.offset().left - this.table.offset().left - parseInt(this.table.css('margin-left'));
 	if ( this.table.css('border-collapse') == 'collapse' ) {
@@ -43,13 +43,13 @@
 	this.scrollBox.css('min-width', 10000);
 
 	// Calculate and apply column widths
-	this.table.find('tbody tr').not(':first-child').find('td').css('width', '');
-	this.table.find('tbody tr:first-child').find('th, td').each(function(index, element){
+	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
+	this.table.children('tbody').children('tr:first-child').children('th, td').each(function(index, element){
 	    var width = parseInt($(element).innerWidth());
 	    if ( this.table.css('border-collapse') == 'collapse' ) {
 		width += parseInt($(element).css('border-left-width'));
 	    }
-	    var th = this.thead.find('tr:first-child').find('th, td').eq(index);
+	    var th = this.thead.children('tr:first-child').children('th, td').eq(index);
 	    th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
 	    $(element).css('width', width - parseInt($(element).css('padding-left')) - parseInt($(element).css('padding-right')));
 	}.bind(this));
@@ -82,7 +82,7 @@
 	    'left': this.errorX
 	});
 	if ( this.table.css('border-collapse') == 'collapse' ) {
-	    this.table.find('tr:first-child td').css('border-top-width', 0);
+	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	}
 
     };

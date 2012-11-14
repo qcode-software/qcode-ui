@@ -7,11 +7,11 @@
 	$(this).filter('table').each(function(){
 	    var table = $(this);
 
-	    table.find('col').each(function() {
+	    table.children('colgroup').andSelf().children('col').each(function() {
 		var col = $(this);
 
 		var colIndex = col.index();
-		var tds = table.find('td, th').filter(':nth-child(' + (colIndex + 1) + ')');
+		var tds = table.children('thead, tbody, tfoot').andSelf().children('tr').children('td, th').filter(':nth-child(' + (colIndex + 1) + ')');
 
 		// apply col classes to td and th elements
 		if (col.attr('class')) {

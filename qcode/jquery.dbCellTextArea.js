@@ -6,7 +6,8 @@
 			  'borderRightWidth','borderRightStyle','borderRightColor',
 			  'marginTop','marginRight','marginBottom','marginLeft',
 			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight']
+			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
+			  'width','height']
     function DbCellTextArea(container,cells,options) {
 	cells.data('dbCellControl', this);
 	this.editor = $('<textarea>')
@@ -14,7 +15,11 @@
 	    .addClass('dbCellControl dbCellTextArea')
 	    .css({
 		'position': "absolute",
-		'resize': "none"
+		'resize': "none",
+		'-moz-box-sizing': "content-box",
+		'-ms-box-sizing': "content-box",
+		'box-sizing': "content-box",
+		'overflow': "auto"
 	    })
 	    .hide()
 	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
@@ -38,29 +43,37 @@
 	    return this.editor.val();
 	},
 	show: function(cell,value){
+	    //console.log("dbCellTextArea show " + cell.text());
 	    this.currentCell = cell;
 	    var editor = this.editor;
 	    $.each(copyAttributes, function(i,name){
 		editor.css(name,cell.css(name));
 	    });
-	    if ( cell.css('backgroundColor') == 'transparent' ) {
+	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		editor.css('backgroundColor', "white");
 	    } else {
 		editor.css('backgroundColor', cell.css('backgroundColor'));
 	    }
 	    editor
-		.width(cell.innerWidth())
-		.height(cell.innerHeight())
 		.css({
 		    'top': cell.position().top + cell.offsetParent().scrollTop(),
-		    'left': cell.position().left + cell.offsetParent().scrollLeft()
+		    'left': cell.position().left + cell.offsetParent().scrollLeft(),
+		    'height': "+=1",
+		    'padding-bottom': "-=1"
 		})
 		.show()
 		.val(value)
 		.focus();
+	    //console.log("editor focus : " + editor.is(':focus'));
+	    //console.log("/show");
 	},
 	hide: function(cell) {
-	    this.editor.trigger('blur',['hide']).hide();
+	    //console.log("dbCellTextArea hide " + cell.text());
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
+	    //console.log("/hide");
 	},
 	selectText: function(cell,option) {
 	    // TO DO - figure out if there's a way to do this
@@ -70,6 +83,7 @@
 	}
     });
     function inputOnKeyDown(e) {
+	//console.log("dbCellTextArea onKeyDown " + e.which + " " + e.timeStamp + " " + e.target.nodeName);
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
 	case 83: //S
 	    if ( ! e.ctrlKey ) break;
@@ -86,8 +100,10 @@
             });
 	    this.currentCell.trigger(event);
 	}
+	//console.log("/onKeyDown");
     }
     function inputOnKeyUp(e) {
+	//console.log("dbCellTextArea keyUp " + e.which);
         var event = jQuery.Event(e.type,{
             'data': e.data,
 	    'ctrlKey': e.ctrlKey,
@@ -96,6 +112,7 @@
             'which': e.which
         });
 	this.currentCell.trigger(event);
+	//console.log("/keyUp");
     }
     function inputOnCut(e) {
         var event = jQuery.Event(e.type,{
@@ -117,13 +134,15 @@
         });
 	this.currentCell.trigger(event);
     }
-    function inputOnBlur(e, source) {
-	if ( source != 'hide' ) {
+    function inputOnBlur(e) {
+	//console.log("dbCellTextArea onBlur " + e.timeStamp + " " + e.target.nodeName);
+	if ( ! this.editor.is(':focus') ) {
             var event = jQuery.Event(e.type,{
 		'data': e.data
             });
 	    this.currentCell.trigger(event);
 	}
+	//console.log("/onBlur");
     }
     $.fn.dbCellTextArea = function(){
 	var returnValue;

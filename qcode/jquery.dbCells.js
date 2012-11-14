@@ -3,18 +3,23 @@
     function DbCells(container, options) {
 	this.container = container;
 	this.settings = $.extend({
-	    'inputCells': ".dbCell",
+	    'inputCellSelector': ".cell:not(.text, .html)",
+	    'textCellSelector': ".cell.text",
+	    'htmlCellSelector': ".cell.html",
+	    'recordSelector': ".record",
 	    'initalFocus': true,
 	    'enabled': true,
 	    'updateType': "cellOut"
 	}, options);
-	this.inputCells = $(this.settings.inputCells, this.container);
-	this.textCells = $(this.settings.textCells, this.container);
-	this.htmlCells = $(this.settings.htmlCells, this.container);
+	this.inputCells = $(this.settings.inputCellSelector, this.container);
+	this.textCells = $(this.settings.textCellSelector, this.container);
+	this.htmlCells = $(this.settings.htmlCellSelector, this.container);
+	this.records = $(this.settings.recordSelector, this.container);
 	this.cells = this.inputCells
 	    .add(this.textCells)
 	    .add(this.htmlCells);
 	this.cells.data('dbCells', this);
+	this.records.data('dbCells', this);
 
 	if ( this.inputCells.length > 0 ) {
 	    this.container.dbCellInput(this.inputCells);
@@ -27,14 +32,14 @@
 	}
 	
 	var selectors = [];
-	if ( this.settings.inputCells ) {
-	    selectors.push(this.settings.inputCells);
+	if ( this.settings.inputCellSelector ) {
+	    selectors.push(this.settings.inputCellSelector);
 	}
-	if ( this.settings.textCells ) {
-	    selectors.push(this.settings.textCells);
+	if ( this.settings.textCellSelector ) {
+	    selectors.push(this.settings.textCellSelector);
 	}
-	if ( this.settings.htmlCells ) {
-	    selectors.push(this.settings.htmlCells);
+	if ( this.settings.htmlCellSelector ) {
+	    selectors.push(this.settings.htmlCellSelector);
 	}
 	var cellSelector = selectors.join(', ');
 	this.container
@@ -55,14 +60,15 @@
 	    .on('beforeprint.dbCells', onBeforePrint.bind(this));
     }
     $.extend(DbCells.prototype, {
-	add: function(container, cell, type) {
+	add: function(cell, type) {
 	    if ( typeof type == "undefined" ) {
-		if ( cell.is(this.settings.textCells) ) {
+		if ( cell.is(this.settings.textCellSelector) ) {
 		    var type = "textarea";
-		} else if ( cell.is(this.settings.htmlCells) ) {
+		} else if ( cell.is(this.settings.htmlCellSelector) ) {
 		    var type = "htmlarea";
+		} else {
+		    var type = "text";
 		}
-		var type = "text";
 	    }
 	    switch (type) {
 	    case "text":
@@ -137,14 +143,20 @@
 	},
 	cellChange: function(newCell) {
 	    if ( typeof this.currentCell != "undefined" ) {
-		this.cellOut();
+		//console.log("Cell change from " + this.currentCell.text() + " to " + newCell.text());
+		this.cellOut(this.currentCell);
+	    } else {
+		//console.log("Cell change to " + newCell.text());
 	    }
 	    this.cellIn(newCell);
+	    //console.log("/cellChange");
 	},
 	focus: function() {
+	    //console.log("dbCells focus");
 	    if ( typeof this.currentCell != "undefined" ) {
 		this.cellIn(this.currentCell);
 	    }
+	    //console.log("/focus");
 	},
 	setDirty: function() {
 	    if ( typeof this.currentCell != "undefined" ) {
@@ -152,16 +164,17 @@
 	    }
 	},
 	cellIn: function(cell, select) {
+	    //console.log("dbCells cellIn to " + cell.text());
+	    if ( typeof cell != "object" ) {
+		$.error('cellIn requires a cell');
+	    }
+	    cell.data('focussing',true);
 	    this.currentCell = cell;
 	    this.currentCell.css('visibility', "hidden");
-	    if ( typeof this.getCellState() == "undefined" ) {
-		this.setCellState('current');
+	    if ( typeof this.getCellState(cell) == "undefined" ) {
+		this.setCellState(cell,'current');
 	    }
-	    var type = this.getCellType();
-	    var cellValue = this.getCellValue();
-	    if ( typeof type == "undefined" ) {
-		type = 'text';
-	    }
+	    var cellValue = this.getCellValue(cell);
 	    cell.dbCellControl('show',cellValue);
 
 	    if (select) {
@@ -172,20 +185,23 @@
 		cell.dbCellControl('selectText','all');
 	    }
 	    cell.trigger('cellin.dbCells');
+	    cell.removeData('focussing');
+	    //console.log("/cellIn");
 	},
 	cellOut: function(cell) {
 	    if ( typeof cell != 'object' ) {
-		var cell = this.currentCell;
+		$.error('cellOut requires a cell');
 	    }
+	    this.currentCell = undefined;
+	    //console.log("dbCells cellOut from " + cell.text());
 	    var oldValue = this.getCellValue(cell);
 	    var newValue = cell.dbCellControl('getValue');
 	    if ( oldValue != newValue ) {
 		this.setCellState(cell,'dirty');
 	    }
-	    cellWrite.call(this);
+	    cellWrite.call(this,cell);
 	    cell.css('visibility', "inherit");
 	    cell.dbCellControl('hide');
-	    this.currentCell = undefined;
 	    if ( this.settings.updateType == "onKeyUp" ) {
 		this.cancelDelayedSave();
 	    }
@@ -193,21 +209,17 @@
 		this.save(cell);
 	    }
 	    cell.trigger('cellout.dbCells');
+	    //console.log("/cellOut");
 	},
-	setCellState: function() {
-	    if ( arguments.length == 1 ) {
-		var cell = this.currentCell;
-		var state = arguments[0];
-	    } else if ( arguments.length == 2 ) {
-		var cell = arguments[0];
-		var state = arguments[1];
+	setCellState: function(cell,state) {
+	    if ( typeof cell != "object" || typeof state != "string" || states.indexOf(state) < 0 ) {
+		$.error('Invalid arguments for setCellState');
 	    }
-	    cell.removeClass(states.join(' '))
-		.addClass(state);
+	    cell.removeClass(states.join(' ')).addClass(state);
 	},
 	getCellState: function(cell) {
-	    if ( typeof cell == "undefined" ) {
-		var cell = this.currentCell;
+	    if ( typeof cell != "object" ) {
+		$.error('getCellState requires a cell');
 	    }
 	    var cellState;
 	    $.each(states, function(i, state){
@@ -218,8 +230,8 @@
 	    return cellState;
 	},
 	getCellValue: function(cell) {
-	    if ( typeof cell == "undefined" ) {
-		var cell = this.currentCell;
+	    if ( typeof cell != "object" ) {
+		$.error('getCellValue requires a cell');
 	    }
 	    switch(this.getCellType(cell)){
 	    case 'html':
@@ -231,13 +243,9 @@
 		break;
 	    }
 	},
-	setCellValue: function() {
-	    if ( arguments.length == 1 ) {
-		var cell = this.currentCell;
-		var value = arguments[0];
-	    } else if ( arguments.length == 2 ) {
-		var cell = arguments[0];
-		var value = arguments[1];
+	setCellValue: function(cell, value) {
+	    if ( typeof cell != "object" || typeof value != "string" ) {
+		$.error('Invalid arguments for setCellValue');
 	    }
 	    switch(this.getCellType(cell)){
 	    case 'html':
@@ -250,13 +258,14 @@
 	    }
 	},
 	getCellType: function(cell) {
-	    if ( typeof cell == "undefined" ) {
-		var cell = this.currentCell;
+	    if ( typeof cell != "object" ) {
+		$.error('getCellType requires a cell');
 	    }
 	    return cell.dbCellControl('getType');
 	},
 	delayedSave: function() {
-	    if ( typeof this.currentCell != "undefined" && this.getCellState() == 'dirty' ) {
+	    if ( typeof this.currentCell == "object"
+		 && this.getCellState(this.currentCell) == 'dirty' ) {
 		this.save();
 	    }
 	},
@@ -267,6 +276,9 @@
 	    }
 	},
 	isCellEditable: function(cell) {
+	    if ( typeof cell != "object" ) {
+		$.error('isCellEditable requires a cell');
+	    }	    
 	    var state = this.getCellState(cell);
 	    if ( typeof state == "undefined" ) {
 		this.setCellState(cell,'current');
@@ -389,12 +401,15 @@
 		 && this.getCellState(this.currentCell) == 'dirty') {
 		this.save(this.currentCell);
 	    }
-	}*/
-	if ( this.currentCell ) {
-	    this.cellOut();
+	    }*/
+	//console.log("dbCells cellOnBlur " + $(event.target).text());
+	if ( $(event.target).is(this.currentCell) && ! this.currentCell.data('focussing') ) {
+	    this.cellOut(this.currentCell);
 	}
+	//console.log("/cellOnBlur");
     }
     function cellOnKeyDown(event) {
+	//console.log("dbCells cellOnKeyDown " + event.which);
 	// cell controls should only propogate key events when default dbCells behavior is desired.
 	if ( event.altKey ) {
 	    return true;
@@ -419,9 +434,6 @@
 	    } else {
 		this.cellChange(moveRight.call(this,this.currentCell));
 	    }
-	    if ( this.currentCell == oldCell ) {
-		return true;
-	    }
 	    break;
 	case 13: //return
 	    var oldCell = this.currentCell;	    
@@ -433,7 +445,7 @@
 	case 46: //delete
 	    if ( typeof this.currentCell.data('deleteUrl') != "undefined" ) {
 		var cell = this.currentCell;
-		this.cellOut();
+		this.cellOut(cell);
 		this.cellAction(cell,'delete',cell.data('deleteUrl'));
 	    }
 	    break;
@@ -442,7 +454,9 @@
 		this.save();
 		event.preventDefault();
 	    }
+	    break;
 	}
+	//console.log("/cellOnKeyDown");
     }
     function cellOnMouseUp(event) {
 	var cell = $(event.target);
@@ -452,28 +466,31 @@
 	    }
 	}
     }
-    function cellWrite(event) {
-	var cell = this.currentCell;
-	var name = cell.data('name');
-	this.setCellValue(cell.dbCellControl('getValue'));
+    function cellWrite(cell) {
+	if ( typeof cell != "object" ) {
+	    $.error('cellWrite requires a cell');
+	}
+	this.setCellValue(cell,cell.dbCellControl('getValue'));
     }
     function cellOnKeyUp(event) {
-	var cell = this.currentCell;
-	var oldValue = this.getCellValue();
+	//console.log("dbCells onKeyUp " + event.which);
+	var cell = $(event.target);
+	var oldValue = this.getCellValue(cell);
 	var newValue = cell.dbCellControl('getValue');
 	if ( oldValue != newValue ) {
-	    this.setCellState('dirty');
+	    this.setCellState(cell,'dirty');
 	}
 	if ( this.settings.updateType == "onKeyUp" ) {
 	    this.cancelDelayedSave();
 	    this.keyUpTimer = setTimeout(this.delayedSave.bind(this),750);
 	}
+	//console.log("/onKeyUp");
     }
     function cellOnCut(event) {
-	this.setCellState('dirty');
+	this.setCellState(this.currentCell,'dirty');
     }
     function cellOnPaste(event) {
-	this.setCellState('dirty');
+	this.setCellState(this.currentCell,'dirty');
     }
 
     function sameRow(a,b) {
@@ -665,7 +682,11 @@
 	if ( typeof arguments[0] == "string" ) {
 	    var method = arguments[0];
 	    if ( typeof dbCells[method] == "function" ) {
-		returnValue = dbCells[method].apply(dbCells, [target].concat(Array.prototype.slice.call(arguments,1)));
+		if ( target.is(dbCells.container) ) {
+		    returnValue = dbCells[method].apply(dbCells, Array.prototype.slice.call(arguments,1));
+		} else {
+		    returnValue = dbCells[method].apply(dbCells, [target].concat(Array.prototype.slice.call(arguments,1)));
+		}
 	    }
 	}
 	if ( typeof returnValue == "undefined" ) {

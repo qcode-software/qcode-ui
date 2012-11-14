@@ -88,3 +88,38 @@ function httpPost(url,data,handler,errorHandler,async) {
 	});
     };
 })(jQuery);
+
+(function($){
+    $.fn.cycleClasses = function(classes) {
+	var nextClass = classes[0];
+	for(var i = classes.length - 1; i >= 0; i--) {
+	    thisClass = classes[i];
+	    if ( this.hasClass(thisClass) ) {
+		this.removeClass(thisClass);
+		this.addClass(nextClass);
+		return this;
+	    } else {
+		nextClass = thisClass;
+	    }
+	}
+	this.addClass(nextClass);
+	return this;
+    }
+})(jQuery);
+
+(function($){
+    $.fn.cycleText = function(labels) {
+	var nextLabel = labels[0];
+	for(var i = labels.length - 1; i >= 0; i--) {
+	    thisLabel = labels[i];
+	    if ( this.text() === thisLabel ) {
+		this.text(nextLabel);
+		return this;
+	    } else {
+		nextLabel = thisLabel;
+	    }
+	}
+	this.text(nextLabel);
+	return this;
+    }
+})(jQuery);

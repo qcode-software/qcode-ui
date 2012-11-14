@@ -6,7 +6,8 @@
 			  'borderRightWidth','borderRightStyle','borderRightColor',
 			  'marginTop','marginRight','marginBottom','marginLeft',
 			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight']
+			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
+			  'width','height']
     function DbCellInput(container,cells) {
 	cells.data('dbCellControl', this);
 	this.editor = $('<input type="text">')
@@ -16,6 +17,9 @@
 		'position': "absolute",
 		'background': "white",
 		'overflow': "visible",
+		'-moz-box-sizing': "content-box",
+		'-ms-box-sizing': "content-box",
+		'box-sizing': "content-box",
 		'z-index': 1
 	    })
 	    .hide()
@@ -45,14 +49,12 @@
 	    $.each(copyAttributes, function(i,name){
 		editor.css(name,cell.css(name));
 	    });
-	    if ( cell.css('backgroundColor') == 'transparent' ) {
+	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		editor.css('backgroundColor', "white");
 	    } else {
 		editor.css('backgroundColor', cell.css('backgroundColor'));
 	    }
 	    editor
-		.width(cell.innerWidth())
-		.height(cell.innerHeight())
 		.css({
 		    'top': cell.position().top + cell.offsetParent().scrollTop(),
 		    'left': cell.position().left + cell.offsetParent().scrollLeft()
@@ -62,7 +64,10 @@
 		.focus();
 	},
 	hide: function(cell) {
-	    this.editor.trigger('blur',['hide']).hide();
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
 	},
 	selectText: function(cell,option) {
 	    // TO DO - figure out if there's a way to do this
@@ -122,7 +127,7 @@
 	this.currentCell.trigger(event);
     }
     function inputOnBlur(e, source) {
-	if ( source != 'hide' ) {
+	if ( ! this.editor.is(':focus') ) {
             var event = jQuery.Event(e.type,{
 		'data': e.data
             });
