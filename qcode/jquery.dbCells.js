@@ -6,7 +6,6 @@
 	    'inputCellSelector': ".cell:not(.text, .html)",
 	    'textCellSelector': ".cell.text",
 	    'htmlCellSelector': ".cell.html",
-	    'recordSelector': ".record",
 	    'initalFocus': true,
 	    'enabled': true,
 	    'updateType': "cellOut"
@@ -14,12 +13,10 @@
 	this.inputCells = $(this.settings.inputCellSelector, this.container);
 	this.textCells = $(this.settings.textCellSelector, this.container);
 	this.htmlCells = $(this.settings.htmlCellSelector, this.container);
-	this.records = $(this.settings.recordSelector, this.container);
 	this.cells = this.inputCells
 	    .add(this.textCells)
 	    .add(this.htmlCells);
 	this.cells.data('dbCells', this);
-	this.records.data('dbCells', this);
 
 	if ( this.inputCells.length > 0 ) {
 	    this.container.dbCellInput(this.inputCells);
