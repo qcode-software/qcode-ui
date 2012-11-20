@@ -1,3 +1,9 @@
+function heir(p) {
+    var f = function(){};
+    f.prototype = p;
+    return new f();
+}
+
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
