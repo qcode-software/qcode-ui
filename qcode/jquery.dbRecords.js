@@ -2,33 +2,27 @@
 (function($){
 
     // Class RecordSet
+    // A page element containing records
     var RecordSet;
     (function(){
+
 	// Constructor function - takes a target DOM object which contains all the records, and an optional options object
 	// Uses jquery selectors to distinguish between various element types on the page (records, fields, etc)
 	RecordSet = function(container, options) {
-	    var recordSet = this;
 	    this.container = $(container);
 	    this.container.data('RecordSet', this);
 	    this.settings = $.extend({
-		'inputFieldSelector': '.field[type!="text"][type!="html"]',
-		'textFieldSelector': '.field[type="text"]',
-		'htmlFieldSelector': '.field[type="html"]',
+		'fieldSelector': '.field',
 		'namedSelector': "[name]",
 		'recordSelector': ".record",
-		'updateURL': container.attr('updateURL'),
-		'addURL': container.attr('addURL'),
-		'deleteURL': container.attr('deleteURL')
+		'updateURL': this.container.attr('updateURL'),
+		'addURL': this.container.attr('addURL'),
+		'deleteURL': this.container.attr('deleteURL')
 	    }, options);
 	    this.currentField = $([]);
 
-	    //
-	    var selectors = [];
-	    if ( this.settings.inputFieldSelector ) selectors.push(this.settings.inputFieldSelector);
-	    if ( this.settings.textFieldSelector ) selectors.push(this.settings.textFieldSelector);
-	    if ( this.settings.htmlFieldSelector ) selectors.push(this.settings.htmlFieldSelector);
-	    var fieldSelector = this.settings.fieldSelector = selectors.join(', ');
-
+	    // Event listeners - rather than apply a seperate event listener to each field (which would fail if new fields were added), a delegated event listener is added to the record set container, listening for propogated events on the fields within.
+	    var fieldSelector = this.settings.fieldSelector;
 	    this.container
 		.on('mouseup.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onMouseUp',event);
@@ -54,12 +48,11 @@
 		.on('beforeprint.dbRecordSet', onBeforePrint.bind(this));
 	};
 
+	// Public methods of RecordSet
 	$.extend(RecordSet.prototype,{
-	    init: function(options) {
-		$.extend(this.settings, options);
-	    },
 	    getComponentFor: function(element) {
 		// Returns an object (Field, Record or Named) representing the target element as a component of this record set
+		// Intended for internal use by the plugin only.
 		var element = $(element);
 		if ( element.data('recordSetComponent') ) {
 		    return element.data('recordSetComponent');
@@ -72,31 +65,40 @@
 		}
 	    },
 	    save: function(aysnc) {
+		// Save the current record
 		this.getCurrentRecord.dbRecords('save',async);
 	    },
 	    getCurrentRecord: function() {
+		// Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
 		return this.currentField.dbRecords('getRecord');
 	    },
 	    getCurrentField: function() {
+		// Returns the current field, or an empty jQuery object if none exists.
 		return this.currentField;
 	    },
 	    setCurrentField: function(newField) {
+		// Sets the "currentField" property - intended for internal use, use fieldChange to select a field.
 		this.currentField = $(newField);
 	    },
 	    fieldChange: function(newField) {
+		// Switch to the target field
 		this.currentField.dbRecords('fieldOut');
 		newField.dbRecords('fieldIn');
 	    },
-	    fieldInput: function() {
-		return this.container.cellInput.apply(this.container, arguments);
+	    inputEditor: function() { // nb - various optional arguments
+		// Call methods of the input box control plugin
+		return this.container.inputEditor.apply(this.container, arguments);
 	    },
-	    fieldText: function() {
-		return this.container.cellText.apply(this.container, arguments);
+	    textEditor: function() { // nb - various optional arguments
+		// Call methods of the textarea control plugin
+		return this.container.textEditor.apply(this.container, arguments);
 	    },
-	    fieldHTML: function() {
-		return this.container.cellHTML.apply(this.container, arguments);
+	    htmlEditor: function() { // nb - various optional arguments
+		// Call methods of the editable html control plugin
+		return this.container.htmlEditor.apply(this.container, arguments);
 	    },
 	    moveLeft: function(fromField) {
+		// Returns the field one step left of the target, or the target itself if none exists
 		var nextField;
 		var fromFieldLeft = fromField.offset().left;
 		var fields = this.container.find(this.settings.fieldSelector);
@@ -133,6 +135,7 @@
 		}
 	    },
 	    moveRight: function(fromField) {
+		// Returns the field one step right of the target, or the target itself if none exists
 		var nextField;
 		var fromFieldLeft = fromField.offset().left;
 		var fields = this.container.find(this.settings.fieldSelector);
@@ -169,6 +172,7 @@
 		}
 	    },
 	    moveUp: function(fromField) {
+		// Returns the field one step above the target, or the target itself if none exists
 		var nextField;
 		var fromFieldTop = fromField.offset().top;
 		var fields = this.container.find(this.settings.fieldSelector);
@@ -205,6 +209,7 @@
 		}
 	    },
 	    moveDown: function(fromField) {
+		// Returns the field one step below the target, or the target itself if none exists
 		var nextField;
 		var fromFieldTop = fromField.offset().top;
 		var fields = this.container.find(this.settings.fieldSelector);
@@ -241,6 +246,8 @@
 		}
 	    }
 	});
+
+	// Private methods of RecordSet
 	function onResize(){
 	    this.getCurrentField().dbRecords('controlOnResize');
 	}
@@ -259,33 +266,47 @@
 	    this.getCurrentField().dbRecords('fieldOut');
 	}
 	function sameRow(a,b) {
+	    // Takes two page elements and returns true if they are on the same row
 	    return (a.offset().top <= (b.offset().top + b.outerHeight()))
 		&& ((a.offset().top + a.outerHeight()) >= b.offset().top);
 	}
 	function belowRow(a,b) {
+	    // Takes two page elements and returns true if "a" is on a row below "b"
 	    return b.offset().top > (a.offset().top + a.outerHeight());
 	}
 	function aboveRow(a,b) {
+	    // Takes two page elements and returns true if "a" is on a row above "b"
 	    return (b.offset().top + b.outerHeight()) < a.offset().top;
 	}
 	function sameColumn(a,b) {
+	    // Takes two page elements and returns true if they are in the same column
 	    return (a.offset().left <= (b.offset().left + b.outerWidth()))
 		&& ((a.offset().left + a.outerWidth()) >= b.offset().left);
 	}
 	function leftOfColumn(a,b) {
+	    // Takes two page elements and returns true if "a" is in a column left of "b"
 	    return (b.offset().left + b.outerWidth()) < a.offset().left;
 	}
 	function rightOfColumn(a,b) {
+	    // Takes two page elements and returns true if "a" is in a column right of "b"
 	    return (a.offset().left + a.outerWidth()) < b.offset().left;
 	}
     })();
+    // End of class RecordSet
 
+
+
+
+
+    // Class Record
+    // A page element representing a single record - containing fields
     var Record;
     (function(){
-	Record = function(container, recordSet) {
+
+	// Constructor function
+	Record = function(container) {
 	    this.container = $(container);
 	    this.container.data('recordSetComponent', this);
-	    this.recordSet = recordSet;
 	    this.state = 'current';
 	    if ( this.container.attr('saveAction') === "add" ) {
 		this.saveAction = "add";
@@ -293,7 +314,12 @@
 		this.saveAction = "update";
 	    }
 	}
+
+	// Public methods of class Record
 	$.extend(Record.prototype,{
+	    getRecordSet: function(){
+		this.container.closest(recordSetContainers).data('RecordSet');
+	    },
 	    getState: function(){
 		return this.state;
 	    },
@@ -326,14 +352,18 @@
 		this.action('delete',url,actionReturn.bind(this,'delete'),async);
 	    },
 	    getURL: function(action) {
+		// Given the name of an action (add, update, delete), attempts to get the corresponding URL from the attributes of this record element, or the record set container.
+		// returns undefined if no such URL exists
 		var urlAttr = action + "URL";
 		var url = this.container.attr(urlAttr);
 		if ( ! url ) {
-		    url = this.recordSet.settings[urlAttr];
+		    url = this.getRecordSet().settings[urlAttr];
 		}
 		return url;
 	    },
 	    action: function(action,url,handler,async){
+		// Perform the given action (add, update, delete), by submitting record data to the server.
+		// Triggers a recordAction event, providing a deferred object for event listeners
 		if ( typeof(handler) == "undefined" ) {
 		    handler = actionReturn.bind(this,action);
 		}
@@ -365,15 +395,18 @@
 		this.container.trigger('recordAction',[action,deferred]);
 	    },
 	    getCurrentField: function(){
-		return this.container.find(this.recordSet.getCurrentField());
+		return this.container.find(this.getRecordSet().getCurrentField());
 	    },
 	    getNameds: function(){
-		return this.container.find(this.recordSet.settings.namedSelector);
+		// Returns all named elements in the record
+		return this.container.find(this.getRecordSet().settings.namedSelector);
 	    },
 	    getFields: function(){
-		return this.container.find(this.recordSet.settings.fieldSelector);
+		// Returns all editable fields in the record
+		return this.container.find(this.getRecordSet().settings.fieldSelector);
 	    },
 	    setValues: function(xmlDoc){
+		// Takes an xml document/fragment and attempts to match the nodes to named elements in the record, setting the values of those elements.
 		this.getNameds().each(function(i, named) {
 		    var node = $(xmlDoc).find('records record ' + $(named).dbRecords('getName'));
 		    if ( node.length > 0 ) {
@@ -382,6 +415,9 @@
 		});
 	    }
 	});
+
+	// Private methods of class Record
+	// Called when an action succeeds or fails
 	function actionReturn(action,xmlDoc){
 	    this.setState('current');
 	    if ( action == "update" ) {
@@ -395,15 +431,24 @@
 	    }
 	}
     })();
+    // End of class Record
 
+
+
+
+
+    // Class Named
+    // A named element of a record, non-editable by default
     var Named;
     (function(){
-	Named = function(element, recordSet) {
+	Named = function(element) {
 	    this.element = $(element);
 	    this.element.data('recordSetComponent', this);
-	    this.recordSet = recordSet;
 	}
 	$.extend(Named.prototype,{
+	    getRecordSet: function(){
+		this.container.closest(recordSetContainers).data('RecordSet');
+	    },
 	    getValue: function(){
 		if ( this.element.is('input, select, textarea') ) {
 		    return this.element.val();
@@ -423,35 +468,59 @@
 	    }
 	});
     })();
+    // End of class Named
 
+
+
+
+
+    // Class Field
+    // An editable field
     var Field;
     (function(){
-	var superProto = Named.prototype;
-	Field = function(element, recordSet) {
-	    superProto.constructor.call(this, element, recordSet);
+
+	// Constructor function
+	Field = function(element) {
+	    this.element = $(element);
+	    this.element.data('recordSetComponent', this);
 	}
-	Field.prototype = $.extend(heir(superProto),{
-	    constructor: Field,
+
+	// Public methods of class Field
+	$.extend(Field.prototype,{
+	    getRecordSet: function(){
+		this.container.closest(recordSetContainers).data('RecordSet');
+	    },
+	    getName: function() {
+		return this.element.attr('name');
+	    },
 	    getRecord: function(){
-		return this.element.closest(this.recordSet.settings.recordSelector);
+		// get the record containing this field
+		return this.element.closest(this.getRecordSet().settings.recordSelector);
 	    },
 	    getValue: function(){
+		// get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 		if ( this.getType() == "html" ) {
 		    return this.element.html();
+		} else if ( this.element.is('input, select, textarea') ) {
+		    return this.element.val();
 		} else {
-		    return superProto.getValue.call(this);
+		    return this.element.text();
 		}
 	    },
 	    setValue: function(newValue){
+		// set the current value of this field
 		if ( this.getType() == "html" ) {
 		    this.element.html(newValue);
+		} else if ( this.element.is('input, select, textarea') ) {
+		    this.element.val(newValue);
 		} else {
-		    superProto.setValue.call(this,newValue);
+		    this.element.text(newValue);
 		}
 	    },
 	    fieldIn: function(newField, select){
+		// Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 		this.lockFocusEvents = true;
-		this.recordSet.setCurrentField(this.element);
+		this.getRecordSet().setCurrentField(this.element);
 		this.element.css('visibility', "hidden");
 
 		var fieldValue = this.getValue();
@@ -464,43 +533,45 @@
 		} else {
 		    this.controlSelectText('all');
 		}
-		this.element.trigger('fieldin');
+		this.element.trigger('fieldIn');
 		this.lockFocusEvents = false;
 	    },
 	    fieldOut: function(){
+		// Stop editing this field
 		this.lockFocusEvents = true;
-		this.recordSet.setCurrentField($([]));
+		var record = this.getRecord();
+		this.getRecordSet().setCurrentField($([]));
 		if ( this.getValue() !== this.controlGetValue() ) {
-		    this.getRecord().dbRecords('setState','dirty');
+		    record.dbRecords('setState','dirty');
 		}
 		this.write();
 		this.element.css('visibility',"inherit");
 		this.controlHide();
-		if ( this.getRecord().dbRecords('getState') == "dirty" ) {
-		    this.getRecord().dbRecords('save');
+		if ( record.dbRecords('getState') == "dirty" ) {
+		    record.dbRecords('save');
 		}
-		this.element.trigger('fieldout');
+		this.element.trigger('fieldOut');
 		this.lockFocusEvents = false;
 	    },
 	    getType: function(){
+		// Returns the field type (input, text, or html)
 		return this.element.attr('type');
 	    },
 	    isEditable: function(){
+		// Returns true if the field is currently editable (ie. not updating)
 		return this.getRecord().dbRecords('getState') != "updating";
-	    },
-	    isTabStop: function(){
-		return true;
 	    },
 	    onMouseUp: function(){
 		if ( this.isEditable() ) {
-		    this.recordSet.fieldChange(this.element);
+		    this.getRecordSet().fieldChange(this.element);
 		}
 	    },
 	    onKeyDown: function(event){
+		// nb. Normally only captures key up events propagated here by the editor
 		if ( event.altKey ) {
 		    return true;
 		}
-		var records = this.recordSet;
+		var records = this.getRecordSet();
 		var field = this.element;
 		switch (event.which) {
 		case 37: //left
@@ -541,7 +612,7 @@
 			this.getRecord().dbRecords('delete');
 		    }
 		    break;
-		case 83: //s
+		case 83: //ctrl + s
 		    if ( event.ctrlKey ) {
 			this.save();
 			event.preventDefault();
@@ -561,85 +632,100 @@
 		this.getRecord().dbRecords('setState','dirty');
 	    },
 	    onBlur: function(){
+		// Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue.
 		if ( ! this.lockFocusEvents ) {
 		    this.fieldOut();
 		}
 	    },
 	    write: function(){
+		// Write the current editor contents to the field
 		this.setValue(this.controlGetValue());
 	    },
 	    controlShow: function(value){
+		// Show the appropriate editor for this field
 		getControlFunction.call(this)('show', this.element, value);
 	    },
 	    controlHide: function(){
+		// Hide the editor for this field
 		getControlFunction.call(this)('hide');
 	    },
 	    controlGetValue: function(){
+		// Get the current editor value
 		return getControlFunction.call(this)('getValue');
 	    },
 	    controlSelectText: function(option){
+		// set a text selection within the editor
 		getControlFunction.call(this)('selectText', this.element, option);
 	    },
 	    controlOnResize: function(event){
+		// Update the editor's size and position.
 		getControlFunction.call(this)('onResize', event);
 	    }
-	 });
+	});
+
+	// Private methods of class Field
 	function getControlFunction() {
+	    // Returns the function by which the editor control plugin for this element can be accessed.
 	    switch(this.getType()){
 	    case "input":
-		return this.recordSet.fieldInput.bind(this.recordSet);
+		return this.getRecordSet().inputEditor.bind(this.getRecordSet());
 		break;
 	    case "text":
-		return this.recordSet.fieldText.bind(this.recordSet);
+		return this.getRecordSet().textEditor.bind(this.getRecordSet());
 		break;
 	    case "html":
-		return this.recordSet.fieldHTML.bind(this.recordSet);
+		return this.getRecordSet().htmlEditor.bind(this.getRecordSet());
 		break;
 	    }
 	}
-     })();
+    })();
+    // End of class Field
 
-     var containers = $([]);
-     $.fn.dbRecords = function() {
-	 var target = this;
-	 var args = arguments;
-	 var returnValue;
-	 this.each(function(i, element) {
-	     var target = $(element);
-	     var RecordSetComponent = target.data('RecordSet');
 
-	     // If target is not a record set container, check to see if it is inside one
-	     if ( ! RecordSetComponent ) {
-		 var container = target.closest(containers);
-		 if ( container.length == 1 && container.data('RecordSet') ) {
-		     RecordSetComponent = container.data('RecordSet').getComponentFor(target);
-		 }
-	     }
 
-	     // No arguments or an object means either constructing a new record set or changing settings.
-	     if ( args.length == 0 || typeof args[0] == "object" ) {
-		 var options = args[0];
 
-		 // Construct a new record set with target as container
-		 if ( ! RecordSetComponent ) {
-		     new RecordSet(target, options);
-		     containers = containers.add(target);
 
-		 } else if ( options ) {
-		     // Initialize component data
-		     RecordSetComponent.init(options);
-		 }
+    // dbRecords plugin. The first time this is called should be on an element which contains all the records in a set.
+    // Afterwards being initialised, it can be called on that container or any of the record or field elements within that container.
+    // The methods made available will depend on the type of element the plugin is being called on.
+    var recordSetContainers = $([]);
+    $.fn.dbRecords = function() {
+	var target = this;
+	var args = arguments;
+	var returnValue;
+	this.each(function(i, element) {
+	    var target = $(element);
+	    var RecordSetComponent = target.data('RecordSet');
 
-	     } else if ( typeof args[0] == "string" ) {
-		 // Called with a method name, attempt to call the method
-		 var method = args[0];
-		 if ( typeof RecordSetComponent[method] == "function" ) {
-		     returnValue = RecordSetComponent[method].apply(RecordSetComponent, Array.prototype.slice.call(args,1));
-		 } else {
-		     $.error('Invalid method for dbRecords');
-		 }
-	     }
-	 });
+	    // If target is not a record set container, check to see if it is inside one
+	    if ( ! RecordSetComponent ) {
+		var container = target.closest(recordSetContainers);
+		if ( container.length == 1 && container.data('RecordSet') ) {
+		    RecordSetComponent = container.data('RecordSet').getComponentFor(target);
+		}
+	    }
+
+	    // No arguments or an object means either constructing a new record set or changing settings.
+	    if ( args.length == 0 || typeof args[0] == "object" ) {
+		var options = args[0];
+
+		// Construct a new record set with target as container
+		if ( ! RecordSetComponent ) {
+		    new RecordSet(target, options);
+		    recordSetContainers = recordSetContainers.add(target);
+
+		}
+
+	    } else if ( typeof args[0] == "string" ) {
+		// Called with a method name, attempt to call the method
+		var method = args[0];
+		if ( typeof RecordSetComponent[method] == "function" ) {
+		    returnValue = RecordSetComponent[method].apply(RecordSetComponent, Array.prototype.slice.call(args,1));
+		} else {
+		    $.error('Invalid method for dbRecords');
+		}
+	    }
+	});
 
 	if ( typeof returnValue == "undefined" ) {
 	    return this;

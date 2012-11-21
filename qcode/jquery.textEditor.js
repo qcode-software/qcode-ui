@@ -1,5 +1,5 @@
 (function($){
-    var eventNamespace = '.cellControl.cellHTML';
+    var eventNamespace = '.textEditor';
     var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
 			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
 			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
@@ -7,14 +7,18 @@
 			  'marginTop','marginRight','marginBottom','marginLeft',
 			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width']
-    function CellHTML(container) {
-	this.editor = $('<div>')
-	    .attr('contentEditable', true)
-	    .addClass('cellControl cellHTML')
+			  'width','height'];
+    function TextEditor(container) {
+	this.editor = $('<textarea>')
 	    .appendTo(container)
+	    .addClass('textEditor')
 	    .css({
-		'position': "absolute"
+		'position': "absolute",
+		'resize': "none",
+		'-moz-box-sizing': "content-box",
+		'-ms-box-sizing': "content-box",
+		'box-sizing': "content-box",
+		'overflow': "auto"
 	    })
 	    .hide()
 	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
@@ -23,54 +27,56 @@
 	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
 	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
     }
-    $.extend(CellHTML.prototype, {
+    $.extend(TextEditor.prototype, {
 	getType: function() {
-	    return 'html';
+	    return 'text';
 	},
 	getValue: function() {
-	    return this.editor.html();
+	    return this.editor.val();
 	},
-	show: function(cell,value){
-	    this.currentCell = cell;
+	show: function(element,value){
+	    this.currentElement = element;
 	    var editor = this.editor;
 	    $.each(copyAttributes, function(i,name){
-		editor.css(name,cell.css(name));
+		editor.css(name,element.css(name));
 	    });
-	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		editor.css('backgroundColor', "white");
 	    } else {
-		editor.css('backgroundColor', cell.css('backgroundColor'));
+		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 	    editor
-		.height((typeof cell.data('editorHeight') == "undefined") ? cell.height() : cell.data('editorHeight'))
 		.css({
-		    'top': cell.position().top + cell.offsetParent().scrollTop(),
-		    'left': cell.position().left + cell.offsetParent().scrollLeft()
+		    'top': element.position().top + element.offsetParent().scrollTop(),
+		    'left': element.position().left + element.offsetParent().scrollLeft(),
+		    'height': "+=1",
+		    'padding-bottom': "-=1"
 		})
 		.show()
-		.html(value)
+		.val(value)
 		.focus();
 	},
 	onResize: function() {
-	    if ( this.currentCell ) {
-		var cell = this.currentCell;
+	    if ( this.currentElement ) {
+		var element = this.currentElement;
 		var editor = this.editor;
-		editor
-		    .height((typeof cell.data('editorHeight') == "undefined") ? cell.height() : cell.data('editorHeight'))
-		    .css({
-			'width': cell.css('width'),
-			'top': cell.position().top + cell.offsetParent().scrollTop(),
-			'left': cell.position().left + cell.offsetParent().scrollLeft()
-		    });
+		$.each(['width','height'], function(i,name){
+		    editor.css(name,element.css(name));
+		});
+		editor.css({
+		    'top': element.position().top + element.offsetParent().scrollTop(),
+		    'left': element.position().left + element.offsetParent().scrollLeft(),
+		    'height': "+=1"
+		});
 	    }
 	},
-	hide: function(cell) {
+	hide: function(element) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	},
-	selectText: function(cell,text) {
+	selectText: function(element,option) {
 	    // TO DO - figure out if there's a way to do this
 	},
 	destroy: function() {
@@ -92,18 +98,18 @@
 		'shiftKey': e.shiftKey,
 		'which': e.which
             });
-	    this.currentCell.trigger(event);
+	    this.currentElement.trigger(event);
 	}
     }
     function inputOnKeyUp(e) {
         var event = jQuery.Event(e.type,{
             'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
+	    'ctrlKey': e.ctrlKey,
+	    'altKey': e.altKey,
+	    'shiftKey': e.shiftKey,
             'which': e.which
         });
-	this.currentCell.trigger(event);
+	this.currentElement.trigger(event);
     }
     function inputOnCut(e) {
         var event = jQuery.Event(e.type,{
@@ -113,7 +119,7 @@
 	    'shiftKey': e.shiftKey,
             'which': e.which
         });
-	this.currentCell.trigger(event);
+	this.currentElement.trigger(event);
     }
     function inputOnPaste(e) {
         var event = jQuery.Event(e.type,{
@@ -123,31 +129,30 @@
 	    'shiftKey': e.shiftKey,
             'which': e.which
         });
-	this.currentCell.trigger(event);
+	this.currentElement.trigger(event);
     }
-    function inputOnBlur(e, source) {
+    function inputOnBlur(e) {
 	if ( ! this.editor.is(':focus') ) {
             var event = jQuery.Event(e.type,{
 		'data': e.data
             });
-	    this.currentCell.trigger(event);
+	    this.currentElement.trigger(event);
 	}
     }
-    $.fn.cellHTML = function(){
+    $.fn.textEditor = function(){
 	var returnValue;
 	var target = $(this);
-	var control = target.data('cellHTML');
+	var control = target.data('textEditor');
 	if ( ! control ) {
-	    target.data('cellHTML', new CellHTML(target));
-	    var control = target.data('cellHTML');
+	    target.data('textEditor', new TextEditor(target));
+	    var control = target.data('textEditor');
 	}
 	if ( arguments.length > 0 ) {
 	    var method = arguments[0];
-	    var args = Array.prototype.slice.call(arguments,1);
 	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,args);
+		returnValue = control[method].apply(control,Array.prototype.slice.call(arguments,1));
 	    } else {
-		$.error('Invalid method of cellHTML');
+		$.error('Invalid method of textEditor');
 	    }
 	}
 	if ( typeof returnValue != "undefined" ) {
