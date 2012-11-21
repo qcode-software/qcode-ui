@@ -1,45 +1,51 @@
+// DbRecords Plugin
 (function($){
+
+    // Class RecordSet
     var RecordSet;
     (function(){
+	// Constructor function - takes a target DOM object which contains all the records, and an optional options object
+	// Uses jquery selectors to distinguish between various element types on the page (records, fields, etc)
 	RecordSet = function(container, options) {
 	    var recordSet = this;
 	    this.container = $(container);
 	    this.container.data('RecordSet', this);
 	    this.settings = $.extend({
-		'inputCellSelector': '.cell[type!="text"][type!="html"]',
-		'textCellSelector': '.cell[type="text"]',
-		'htmlCellSelector': '.cell[type="html"]',
-		'fieldSelector': "[name]",
+		'inputFieldSelector': '.field[type!="text"][type!="html"]',
+		'textFieldSelector': '.field[type="text"]',
+		'htmlFieldSelector': '.field[type="html"]',
+		'namedSelector': "[name]",
 		'recordSelector': ".record",
 		'updateURL': container.attr('updateURL'),
 		'addURL': container.attr('addURL'),
 		'deleteURL': container.attr('deleteURL')
 	    }, options);
-	    this.currentCell = $([]);
+	    this.currentField = $([]);
 
+	    //
 	    var selectors = [];
-	    if ( this.settings.inputCellSelector ) selectors.push(this.settings.inputCellSelector);
-	    if ( this.settings.textCellSelector ) selectors.push(this.settings.textCellSelector);
-	    if ( this.settings.htmlCellSelector ) selectors.push(this.settings.htmlCellSelector);
-	    var cellSelector = this.settings.cellSelector = selectors.join(', ');
+	    if ( this.settings.inputFieldSelector ) selectors.push(this.settings.inputFieldSelector);
+	    if ( this.settings.textFieldSelector ) selectors.push(this.settings.textFieldSelector);
+	    if ( this.settings.htmlFieldSelector ) selectors.push(this.settings.htmlFieldSelector);
+	    var fieldSelector = this.settings.fieldSelector = selectors.join(', ');
 
 	    this.container
-		.on('mouseup.dbRecordSet', cellSelector, function(event){
+		.on('mouseup.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onMouseUp',event);
 		})
-		.on('keydown.dbRecordSet', cellSelector, function(event){
+		.on('keydown.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onKeyDown',event);
 		})
-		.on('keyup.dbRecordSet', cellSelector, function(event){
+		.on('keyup.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onKeyUp',event);
 		})
-		.on('cut.dbRecordSet', cellSelector, function(event){
+		.on('cut.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onCut',event);
 		})
-		.on('paste.dbRecordSet', cellSelector, function(event){
+		.on('paste.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onPaste',event);
 		})
-		.on('blur.dbRecordSet', cellSelector, function(event){
+		.on('blur.dbRecordSet', fieldSelector, function(event){
 		    $(event.target).dbRecords('onBlur',event);
 		});
 	    $(window)
@@ -53,190 +59,190 @@
 		$.extend(this.settings, options);
 	    },
 	    getComponentFor: function(element) {
-		// Returns an object (Cell, Record or Field) representing the target element as a component of this record set
+		// Returns an object (Field, Record or Named) representing the target element as a component of this record set
 		var element = $(element);
 		if ( element.data('recordSetComponent') ) {
 		    return element.data('recordSetComponent');
 		} else if ( element.is(this.settings.recordSelector) ) {
 		    return new Record(element, this);
-		} else if ( element.is(this.settings.cellSelector) ) {
-		    return new Cell(element, this);
 		} else if ( element.is(this.settings.fieldSelector) ) {
 		    return new Field(element, this);
+		} else if ( element.is(this.settings.namedSelector) ) {
+		    return new Named(element, this);
 		}
 	    },
 	    save: function(aysnc) {
 		this.getCurrentRecord.dbRecords('save',async);
 	    },
 	    getCurrentRecord: function() {
-		return this.currentCell.dbRecords('getRecord');
+		return this.currentField.dbRecords('getRecord');
 	    },
-	    getCurrentCell: function() {
-		return this.currentCell;
+	    getCurrentField: function() {
+		return this.currentField;
 	    },
-	    setCurrentCell: function(newCell) {
-		this.currentCell = $(newCell);
+	    setCurrentField: function(newField) {
+		this.currentField = $(newField);
 	    },
-	    cellChange: function(newCell) {
-		this.currentCell.dbRecords('cellOut');
-		newCell.dbRecords('cellIn');
+	    fieldChange: function(newField) {
+		this.currentField.dbRecords('fieldOut');
+		newField.dbRecords('fieldIn');
 	    },
-	    inputControl: function() {
+	    fieldInput: function() {
 		return this.container.cellInput.apply(this.container, arguments);
 	    },
-	    textControl: function() {
-		return this.container.cellTextArea.apply(this.container, arguments);
+	    fieldText: function() {
+		return this.container.cellText.apply(this.container, arguments);
 	    },
-	    htmlControl: function() {
-		return this.container.cellHTMLArea.apply(this.container, arguments);
+	    fieldHTML: function() {
+		return this.container.cellHTML.apply(this.container, arguments);
 	    },
-	    moveLeft: function(fromCell) {
-		var nextCell;
-		var fromCellLeft = fromCell.offset().left;
-		var cells = this.container.find(this.settings.cellSelector);
-		cells.each(function() {
-		    var cell = $(this);
-		    var cellLeft = cell.offset().left;
-		    if ( sameRow(cell,fromCell)
-			 && cellLeft < fromCellLeft
-			 && ( typeof nextCell == "undefined" || cellLeft > nextCellLeft )
+	    moveLeft: function(fromField) {
+		var nextField;
+		var fromFieldLeft = fromField.offset().left;
+		var fields = this.container.find(this.settings.fieldSelector);
+		fields.each(function() {
+		    var field = $(this);
+		    var fieldLeft = field.offset().left;
+		    if ( sameRow(field,fromField)
+			 && fieldLeft < fromFieldLeft
+			 && ( typeof nextField == "undefined" || fieldLeft > nextFieldLeft )
 		       ) {
-			nextCell = cell;
-			nextCellLeft = cellLeft;
+			nextField = field;
+			nextFieldLeft = fieldLeft;
 		    }
 		});
-		if ( typeof nextCell == "undefined" ) {
-		    cells.each(function() {
-			var cell = $(this);
-			var cellLeft = $(cell).offset().left;
-			if ( aboveRow(fromCell,cell)
-			     && (typeof nextCell == "undefined"
-				 || belowRow(nextCell,cell)
-				 || (sameRow(cell,nextCell) && cellLeft > nextCellLeft )
+		if ( typeof nextField == "undefined" ) {
+		    fields.each(function() {
+			var field = $(this);
+			var fieldLeft = $(field).offset().left;
+			if ( aboveRow(fromField,field)
+			     && (typeof nextField == "undefined"
+				 || belowRow(nextField,field)
+				 || (sameRow(field,nextField) && fieldLeft > nextFieldLeft )
 				)
 			   ) {
-			    nextCell = cell;
-			    nextCellLeft = cellLeft;
+			    nextField = field;
+			    nextFieldLeft = fieldLeft;
 			}
 		    });
 		}
-		if ( typeof nextCell == "undefined" ) {
-		    return fromCell;
+		if ( typeof nextField == "undefined" ) {
+		    return fromField;
 		} else {
-		    return nextCell;
+		    return nextField;
 		}
 	    },
-	    moveRight: function(fromCell) {
-		var nextCell;
-		var fromCellLeft = fromCell.offset().left;
-		var cells = this.container.find(this.settings.cellSelector);
-		cells.each(function() {
-		    var cell = $(this);
-		    var cellLeft = cell.offset().left;
-		    if ( sameRow(cell,fromCell)
-			 && cellLeft > fromCellLeft
-			 && ( typeof nextCell == "undefined" || cellLeft < nextCellLeft )
+	    moveRight: function(fromField) {
+		var nextField;
+		var fromFieldLeft = fromField.offset().left;
+		var fields = this.container.find(this.settings.fieldSelector);
+		fields.each(function() {
+		    var field = $(this);
+		    var fieldLeft = field.offset().left;
+		    if ( sameRow(field,fromField)
+			 && fieldLeft > fromFieldLeft
+			 && ( typeof nextField == "undefined" || fieldLeft < nextFieldLeft )
 		       ) {
-			nextCell = cell;
-			nextCellLeft = cellLeft;
+			nextField = field;
+			nextFieldLeft = fieldLeft;
 		    }
 		});
-		if ( typeof nextCell == "undefined" ) {
-		    cells.each(function() {
-			var cell = $(this);
-			var cellLeft = $(cell).offset().left;
-			if ( belowRow(fromCell,cell)
-			     && (typeof nextCell == "undefined"
-				 || aboveRow(nextCell,cell)
-				 || (sameRow(cell,nextCell) && cellLeft < nextCellLeft)
+		if ( typeof nextField == "undefined" ) {
+		    fields.each(function() {
+			var field = $(this);
+			var fieldLeft = $(field).offset().left;
+			if ( belowRow(fromField,field)
+			     && (typeof nextField == "undefined"
+				 || aboveRow(nextField,field)
+				 || (sameRow(field,nextField) && fieldLeft < nextFieldLeft)
 				)
 			   ) {
-			    nextCell = cell;
-			    nextCellLeft = cellLeft;
+			    nextField = field;
+			    nextFieldLeft = fieldLeft;
 			}
 		    });
 		}
-		if ( typeof nextCell == "undefined" ) {
-		    return fromCell;
+		if ( typeof nextField == "undefined" ) {
+		    return fromField;
 		} else {
-		    return nextCell;
+		    return nextField;
 		}
 	    },
-	    moveUp: function(fromCell) {
-		var nextCell;
-		var fromCellTop = fromCell.offset().top;
-		var cells = this.container.find(this.settings.cellSelector);
-		cells.each(function() {
-		    var cell = $(this);
-		    var cellTop = cell.offset().top;
-		    if ( sameColumn(fromCell,cell)
-			 && cellTop < fromCellTop
-			 && (typeof nextCell == "undefined" || cellTop > nextCellTop)
+	    moveUp: function(fromField) {
+		var nextField;
+		var fromFieldTop = fromField.offset().top;
+		var fields = this.container.find(this.settings.fieldSelector);
+		fields.each(function() {
+		    var field = $(this);
+		    var fieldTop = field.offset().top;
+		    if ( sameColumn(fromField,field)
+			 && fieldTop < fromFieldTop
+			 && (typeof nextField == "undefined" || fieldTop > nextFieldTop)
 		       ) {
-			nextCell = cell;
-			nextCellTop = cellTop;
+			nextField = field;
+			nextFieldTop = fieldTop;
 		    }
 		});
-		if ( typeof nextCell == "undefined" ) {
-		    cells.each(function() {
-			var cell = $(this);
-			var cellTop = cell.offset().top;
-			if ( leftOfColumn(fromCell,cell)
-			     && (typeof nextCell == "undefined"
-				 || rightOfColumn(nextCell,cell)
-				 || (sameColumn(cell,nextCell) && cellTop > nextCellTop)
+		if ( typeof nextField == "undefined" ) {
+		    fields.each(function() {
+			var field = $(this);
+			var fieldTop = field.offset().top;
+			if ( leftOfColumn(fromField,field)
+			     && (typeof nextField == "undefined"
+				 || rightOfColumn(nextField,field)
+				 || (sameColumn(field,nextField) && fieldTop > nextFieldTop)
 				)
 			   ) {
-			    nextCell = cell;
-			    nextCellTop = cellTop;
+			    nextField = field;
+			    nextFieldTop = fieldTop;
 			};
 		    });
 		}
-		if ( typeof nextCell == "undefined" ) {
-		    return fromCell;
+		if ( typeof nextField == "undefined" ) {
+		    return fromField;
 		} else {
-		    return nextCell;
+		    return nextField;
 		}
 	    },
-	    moveDown: function(fromCell) {
-		var nextCell;
-		var fromCellTop = fromCell.offset().top;
-		var cells = this.container.find(this.settings.cellSelector);
-		cells.each(function() {
-		    var cell = $(this);
-		    var cellTop = cell.offset().top;
-		    if ( sameColumn(fromCell,cell)
-			 && cellTop > fromCellTop
-			 && ( typeof nextCell == "undefined" || cellTop < nextCellTop )
+	    moveDown: function(fromField) {
+		var nextField;
+		var fromFieldTop = fromField.offset().top;
+		var fields = this.container.find(this.settings.fieldSelector);
+		fields.each(function() {
+		    var field = $(this);
+		    var fieldTop = field.offset().top;
+		    if ( sameColumn(fromField,field)
+			 && fieldTop > fromFieldTop
+			 && ( typeof nextField == "undefined" || fieldTop < nextFieldTop )
 		       ) {
-			nextCell = cell;
-			nextCellTop = cellTop;
+			nextField = field;
+			nextFieldTop = fieldTop;
 		    }
 		});
-		if ( typeof nextCell == "undefined" ) {
-		    cells.each(function() {
-			var cell = $(this);
-			var cellTop = cell.offset().top;
-			if ( rightOfColumn(fromCell,cell)
-			     && ( typeof nextCell == "undefined"
-				  || leftOfColumn(nextCell,cell)
-				  || (sameColumn(cell,nextCell) && cellTop < nextCellTop)
+		if ( typeof nextField == "undefined" ) {
+		    fields.each(function() {
+			var field = $(this);
+			var fieldTop = field.offset().top;
+			if ( rightOfColumn(fromField,field)
+			     && ( typeof nextField == "undefined"
+				  || leftOfColumn(nextField,field)
+				  || (sameColumn(field,nextField) && fieldTop < nextFieldTop)
 				)
 			   ) {
-			    nextCell = cell;
-			    nextCellTop = cellTop;
+			    nextField = field;
+			    nextFieldTop = fieldTop;
 			}
 		    });
 		}
-		if ( typeof nextCell == "undefined" ) {
-		    return fromCell;
+		if ( typeof nextField == "undefined" ) {
+		    return fromField;
 		} else {
-		    return nextCell;
+		    return nextField;
 		}
 	    }
 	});
 	function onResize(){
-	    this.getCurrentCell().dbRecords('cellOut');
+	    this.getCurrentField().dbRecords('controlOnResize');
 	}
 	function onBeforeUnload(){
 	    var record = this.getCurrentRecord();
@@ -250,7 +256,7 @@
 	    }
 	}
 	function onBeforePrint(){
-	    this.getCurrentCell().dbRecords('cellOut');
+	    this.getCurrentField().dbRecords('fieldOut');
 	}
 	function sameRow(a,b) {
 	    return (a.offset().top <= (b.offset().top + b.outerHeight()))
@@ -335,12 +341,12 @@
 		    async = true;
 		}
 		this.setState('updating');
-		this.getCurrentCell().dbRecords('write');
+		this.getCurrentField().dbRecords('write');
 
 		var data = {};
-		this.getFields().each(function(i, field) {
-		    var name = $(field).dbRecords('getName');
-		    var value = $(field).dbRecords('getValue');
+		this.getNameds().each(function(i, named) {
+		    var name = $(named).dbRecords('getName');
+		    var value = $(named).dbRecords('getValue');
 		    data[name] = value;
 		});
 
@@ -358,25 +364,28 @@
 		httpPost(url,data,deferred.resolve.bind(deferred),deferred.reject.bind(deferred));
 		this.container.trigger('recordAction',[action,deferred]);
 	    },
-	    getCurrentCell: function(){
-		return this.container.find(this.recordSet.getCurrentCell());
+	    getCurrentField: function(){
+		return this.container.find(this.recordSet.getCurrentField());
+	    },
+	    getNameds: function(){
+		return this.container.find(this.recordSet.settings.namedSelector);
 	    },
 	    getFields: function(){
 		return this.container.find(this.recordSet.settings.fieldSelector);
 	    },
-	    getCells: function(){
-		return this.container.find(this.recordSet.settings.cellSelector);
+	    setValues: function(xmlDoc){
+		this.getNameds().each(function(i, named) {
+		    var node = $(xmlDoc).find('records record ' + $(named).dbRecords('getName'));
+		    if ( node.length > 0 ) {
+			$(named).dbRecords('setValue',node.text());
+		    }
+		});
 	    }
 	});
 	function actionReturn(action,xmlDoc){
 	    this.setState('current');
 	    if ( action == "update" ) {
-		this.getFields().each(function(i, field) {
-		    var node = $(xmlDoc).find('records record ' + $(field).dbRecords('getName'));
-		    if ( node.length > 0 ) {
-			$(field).dbRecords('setValue',node.text());
-		    }
-		});
+		this.setValues(xmlDoc);
 	    }
 	}
 	function actionReturnError(action,message,type){
@@ -387,14 +396,14 @@
 	}
     })();
 
-    var Field;
+    var Named;
     (function(){
-	Field = function(element, recordSet) {
+	Named = function(element, recordSet) {
 	    this.element = $(element);
 	    this.element.data('recordSetComponent', this);
 	    this.recordSet = recordSet;
 	}
-	$.extend(Field.prototype,{
+	$.extend(Named.prototype,{
 	    getValue: function(){
 		if ( this.element.is('input, select, textarea') ) {
 		    return this.element.val();
@@ -415,62 +424,62 @@
 	});
     })();
 
-    var Cell;
+    var Field;
     (function(){
-	var superProto = Field.prototype;
-	Cell = function(element, recordSet) {
+	var superProto = Named.prototype;
+	Field = function(element, recordSet) {
 	    superProto.constructor.call(this, element, recordSet);
 	}
-	Cell.prototype = $.extend(heir(superProto),{
-	    constructor: Cell,
+	Field.prototype = $.extend(heir(superProto),{
+	    constructor: Field,
 	    getRecord: function(){
 		return this.element.closest(this.recordSet.settings.recordSelector);
 	    },
 	    getValue: function(){
-		if ( this.getType() == "htmlarea" ) {
+		if ( this.getType() == "html" ) {
 		    return this.element.html();
 		} else {
-		    return unescapeHTML(this.element.html());
+		    return superProto.getValue.call(this);
 		}
 	    },
 	    setValue: function(newValue){
-		if ( this.getType() == "htmlarea" ) {
+		if ( this.getType() == "html" ) {
 		    this.element.html(newValue);
 		} else {
-		    this.element.html(escapeHTML(newValue));
+		    superProto.setValue.call(this,newValue);
 		}
 	    },
-	    cellIn: function(newCell, select){
+	    fieldIn: function(newField, select){
 		this.lockFocusEvents = true;
-		this.recordSet.setCurrentCell(this.element);
+		this.recordSet.setCurrentField(this.element);
 		this.element.css('visibility', "hidden");
 
-		var cellValue = this.getValue();
-		this.cellControl('show',cellValue);
+		var fieldValue = this.getValue();
+		this.controlShow(fieldValue);
 
 		if (select) {
-		    this.cellControl('selectText',select);
-		} else if ( this.element.attr('cellInSelect') != null ) {
-		    this.cellControl('selectText',this.element.attr('cellInSelect'));
+		    this.controlSelectText(select);
+		} else if ( this.element.attr('fieldInSelect') != null ) {
+		    this.controlSelectText(this.element.attr('fieldInSelect'));
 		} else {
-		    this.cellControl('selectText','all');
+		    this.controlSelectText('all');
 		}
-		this.element.trigger('cellin');
+		this.element.trigger('fieldin');
 		this.lockFocusEvents = false;
 	    },
-	    cellOut: function(){
+	    fieldOut: function(){
 		this.lockFocusEvents = true;
-		this.recordSet.setCurrentCell($([]));
-		if ( this.getValue() !== this.cellControl('getValue') ) {
+		this.recordSet.setCurrentField($([]));
+		if ( this.getValue() !== this.controlGetValue() ) {
 		    this.getRecord().dbRecords('setState','dirty');
 		}
 		this.write();
 		this.element.css('visibility',"inherit");
-		this.cellControl('hide');
+		this.controlHide();
 		if ( this.getRecord().dbRecords('getState') == "dirty" ) {
 		    this.getRecord().dbRecords('save');
 		}
-		this.element.trigger('cellout');
+		this.element.trigger('fieldout');
 		this.lockFocusEvents = false;
 	    },
 	    getType: function(){
@@ -484,7 +493,7 @@
 	    },
 	    onMouseUp: function(){
 		if ( this.isEditable() ) {
-		    this.recordSet.cellChange(this.element);
+		    this.recordSet.fieldChange(this.element);
 		}
 	    },
 	    onKeyDown: function(event){
@@ -492,43 +501,43 @@
 		    return true;
 		}
 		var records = this.recordSet;
-		var cell = this.element;
+		var field = this.element;
 		switch (event.which) {
 		case 37: //left
-		    records.cellChange(records.moveLeft(cell));
+		    records.fieldChange(records.moveLeft(field));
 		    break;
 		case 38: //up
-		    records.cellChange(records.moveUp(cell));
+		    records.fieldChange(records.moveUp(field));
 		    break;
 		case 39: //right
-		    records.cellChange(records.moveRight(cell));
+		    records.fieldChange(records.moveRight(field));
 		    break;
 		case 40: //down
-		    records.cellChange(records.moveDown(cell));
+		    records.fieldChange(records.moveDown(field));
 		    break;
 		case 9: //tab
 		    if ( event.shiftKey ) {
-			var newCell = records.moveLeft(cell);
+			var newField = records.moveLeft(field);
 		    } else {
-			var newCell = records.moveRight(cell);
+			var newField = records.moveRight(field);
 		    }
-		    if ( newCell == cell ) {
+		    if ( newField == field ) {
 			this.getRecord().dbRecords('save');
 		    } else {
-			records.cellChange(newCell);
+			records.fieldChange(newField);
 		    }
 		    break;
 		case 13: //return
-		    var newCell = records.moveRight(cell);
-		    if ( newCell == cell ) {
+		    var newField = records.moveRight(field);
+		    if ( newField == field ) {
 			this.getRecord().dbRecords('save');
 		    } else {
-			records.cellChange(newCell);
+			records.fieldChange(newField);
 		    }
 		    break;
 		case 46: //delete
 		    if ( this.getRecord().dbRecords('getUrl','delete') ) {
-			this.cellOut();
+			this.fieldOut();
 			this.getRecord().dbRecords('delete');
 		    }
 		    break;
@@ -541,7 +550,7 @@
 		}
 	    },
 	    onKeyUp: function(event){
-		if ( this.getValue() !== this.cellControl('getValue') ) {
+		if ( this.getValue() !== this.controlGetValue() ) {
 		    this.getRecord().dbRecords('setState','dirty');
 		}
 	    },
@@ -553,27 +562,41 @@
 	    },
 	    onBlur: function(){
 		if ( ! this.lockFocusEvents ) {
-		    this.cellOut();
+		    this.fieldOut();
 		}
 	    },
 	    write: function(){
-		this.setValue(this.cellControl('getValue'));
+		this.setValue(this.controlGetValue());
 	    },
-	    cellControl: function(method){
-		var args = [method, this.element].concat(Array.prototype.slice.call(arguments,1));
-		switch(this.getType()){
-		case "input":
-		    return this.recordSet.inputControl.apply(this.recordSet,args);
-		    break;
-		case "textarea":
-		    return this.recordSet.textControl.apply(this.recordSet,args);
-		    break;
-		case "htmlarea":
-		    return this.recordSet.htmlControl.apply(this.recordSet,args);
-		    break;
-		}
+	    controlShow: function(value){
+		getControlFunction.call(this)('show', this.element, value);
+	    },
+	    controlHide: function(){
+		getControlFunction.call(this)('hide');
+	    },
+	    controlGetValue: function(){
+		return getControlFunction.call(this)('getValue');
+	    },
+	    controlSelectText: function(option){
+		getControlFunction.call(this)('selectText', this.element, option);
+	    },
+	    controlOnResize: function(event){
+		getControlFunction.call(this)('onResize', event);
 	    }
 	 });
+	function getControlFunction() {
+	    switch(this.getType()){
+	    case "input":
+		return this.recordSet.fieldInput.bind(this.recordSet);
+		break;
+	    case "text":
+		return this.recordSet.fieldText.bind(this.recordSet);
+		break;
+	    case "html":
+		return this.recordSet.fieldHTML.bind(this.recordSet);
+		break;
+	    }
+	}
      })();
 
      var containers = $([]);

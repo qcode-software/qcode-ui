@@ -56,6 +56,19 @@
 		.val(value)
 		.focus();
 	},
+	onResize: function() {
+	    if ( this.currentCell ) {
+		var cell = this.currentCell;
+		var editor = this.editor;
+		$.each(['width','height'], function(i,name){
+		    editor.css(name,cell.css(name));
+		});
+		editor.css({
+		    'top': cell.position().top + cell.offsetParent().scrollTop(),
+		    'left': cell.position().left + cell.offsetParent().scrollLeft()
+		});
+	    }
+	},
 	hide: function(cell) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');

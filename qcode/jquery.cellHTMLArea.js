@@ -1,5 +1,5 @@
 (function($){
-    var eventNamespace = '.cellControl.cellHTMLArea';
+    var eventNamespace = '.cellControl.cellHTML';
     var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
 			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
 			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
@@ -8,10 +8,10 @@
 			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
 			  'width']
-    function CellHTMLArea(container) {
+    function CellHTML(container) {
 	this.editor = $('<div>')
 	    .attr('contentEditable', true)
-	    .addClass('cellControl cellHTMLArea')
+	    .addClass('cellControl cellHTML')
 	    .appendTo(container)
 	    .css({
 		'position': "absolute"
@@ -23,9 +23,9 @@
 	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
 	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
     }
-    $.extend(CellHTMLArea.prototype, {
+    $.extend(CellHTML.prototype, {
 	getType: function() {
-	    return 'htmlarea';
+	    return 'html';
 	},
 	getValue: function() {
 	    return this.editor.html();
@@ -50,6 +50,19 @@
 		.show()
 		.html(value)
 		.focus();
+	},
+	onResize: function() {
+	    if ( this.currentCell ) {
+		var cell = this.currentCell;
+		var editor = this.editor;
+		editor
+		    .height((typeof cell.data('editorHeight') == "undefined") ? cell.height() : cell.data('editorHeight'))
+		    .css({
+			'width': cell.css('width'),
+			'top': cell.position().top + cell.offsetParent().scrollTop(),
+			'left': cell.position().left + cell.offsetParent().scrollLeft()
+		    });
+	    }
 	},
 	hide: function(cell) {
 	    if ( this.editor.is(':focus') ) {
@@ -120,13 +133,13 @@
 	    this.currentCell.trigger(event);
 	}
     }
-    $.fn.cellHTMLArea = function(){
+    $.fn.cellHTML = function(){
 	var returnValue;
 	var target = $(this);
-	var control = target.data('cellHTMLArea');
+	var control = target.data('cellHTML');
 	if ( ! control ) {
-	    target.data('cellHTMLArea', new CellHTMLArea(target));
-	    var control = target.data('cellHTMLArea');
+	    target.data('cellHTML', new CellHTML(target));
+	    var control = target.data('cellHTML');
 	}
 	if ( arguments.length > 0 ) {
 	    var method = arguments[0];
@@ -134,7 +147,7 @@
 	    if ( typeof control[method] == "function" ) {
 		returnValue = control[method].apply(control,args);
 	    } else {
-		$.error('Invalid method of cellHTMLArea');
+		$.error('Invalid method of cellHTML');
 	    }
 	}
 	if ( typeof returnValue != "undefined" ) {

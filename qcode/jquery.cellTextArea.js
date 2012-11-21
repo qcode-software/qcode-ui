@@ -1,5 +1,5 @@
 (function($){
-    var eventNamespace = '.cellControl.cellHTMLArea';
+    var eventNamespace = '.cellControl.cellText';
     var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
 			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
 			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
@@ -8,10 +8,10 @@
 			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
 			  'width','height']
-    function CellTextArea(container) {
+    function CellText(container) {
 	this.editor = $('<textarea>')
 	    .appendTo(container)
-	    .addClass('cellControl cellTextArea')
+	    .addClass('cellControl cellText')
 	    .css({
 		'position': "absolute",
 		'resize': "none",
@@ -27,15 +27,14 @@
 	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
 	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
     }
-    $.extend(CellTextArea.prototype, {
+    $.extend(CellText.prototype, {
 	getType: function() {
-	    return 'textarea';
+	    return 'text';
 	},
 	getValue: function() {
 	    return this.editor.val();
 	},
 	show: function(cell,value){
-	    //console.log("dbCellTextArea show " + cell.text());
 	    this.currentCell = cell;
 	    var editor = this.editor;
 	    $.each(copyAttributes, function(i,name){
@@ -56,16 +55,26 @@
 		.show()
 		.val(value)
 		.focus();
-	    //console.log("editor focus : " + editor.is(':focus'));
-	    //console.log("/show");
+	},
+	onResize: function() {
+	    if ( this.currentCell ) {
+		var cell = this.currentCell;
+		var editor = this.editor;
+		$.each(['width','height'], function(i,name){
+		    editor.css(name,cell.css(name));
+		});
+		editor.css({
+		    'top': cell.position().top + cell.offsetParent().scrollTop(),
+		    'left': cell.position().left + cell.offsetParent().scrollLeft(),
+		    'height': "+=1"
+		});
+	    }
 	},
 	hide: function(cell) {
-	    //console.log("dbCellTextArea hide " + cell.text());
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
-	    //console.log("/hide");
 	},
 	selectText: function(cell,option) {
 	    // TO DO - figure out if there's a way to do this
@@ -75,7 +84,6 @@
 	}
     });
     function inputOnKeyDown(e) {
-	//console.log("dbCellTextArea onKeyDown " + e.which + " " + e.timeStamp + " " + e.target.nodeName);
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
 	case 83: //S
 	    if ( ! e.ctrlKey ) break;
@@ -92,10 +100,8 @@
             });
 	    this.currentCell.trigger(event);
 	}
-	//console.log("/onKeyDown");
     }
     function inputOnKeyUp(e) {
-	//console.log("dbCellTextArea keyUp " + e.which);
         var event = jQuery.Event(e.type,{
             'data': e.data,
 	    'ctrlKey': e.ctrlKey,
@@ -104,7 +110,6 @@
             'which': e.which
         });
 	this.currentCell.trigger(event);
-	//console.log("/keyUp");
     }
     function inputOnCut(e) {
         var event = jQuery.Event(e.type,{
@@ -127,29 +132,27 @@
 	this.currentCell.trigger(event);
     }
     function inputOnBlur(e) {
-	//console.log("dbCellTextArea onBlur " + e.timeStamp + " " + e.target.nodeName);
 	if ( ! this.editor.is(':focus') ) {
             var event = jQuery.Event(e.type,{
 		'data': e.data
             });
 	    this.currentCell.trigger(event);
 	}
-	//console.log("/onBlur");
     }
-    $.fn.cellTextArea = function(){
+    $.fn.cellText = function(){
 	var returnValue;
 	var target = $(this);
-	var control = target.data('cellTextArea');
+	var control = target.data('cellText');
 	if ( ! control ) {
-	    target.data('cellTextArea', new CellTextArea(target));
-	    var control = target.data('cellTextArea');
+	    target.data('cellText', new CellText(target));
+	    var control = target.data('cellText');
 	}
 	if ( arguments.length > 0 ) {
 	    var method = arguments[0];
 	    if ( typeof control[method] == "function" ) {
 		returnValue = control[method].apply(control,Array.prototype.slice.call(arguments,1));
 	    } else {
-		$.error('Invalid method of cellTextArea');
+		$.error('Invalid method of cellText');
 	    }
 	}
 	if ( typeof returnValue != "undefined" ) {
