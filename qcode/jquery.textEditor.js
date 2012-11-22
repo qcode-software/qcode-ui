@@ -9,6 +9,7 @@
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
 			  'width','height'];
     function TextEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
 	this.editor = $('<textarea>')
 	    .appendTo(container)
 	    .addClass('textEditor')
@@ -56,20 +57,6 @@
 		.val(value)
 		.focus();
 	},
-	onResize: function() {
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width','height'], function(i,name){
-		    editor.css(name,element.css(name));
-		});
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft(),
-		    'height': "+=1"
-		});
-	    }
-	},
 	hide: function(element) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
@@ -77,18 +64,46 @@
 	    this.editor.hide();
 	},
 	selectText: function(element,option) {
-	    // TO DO - figure out if there's a way to do this
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set',"start","start");
+		break;
+	    case "end":
+		this.editor.textrange('set',"end","end");
+		break;
+	    case "all":
+		this.editor.textrange('set',"all");
+		break;
+	    }
 	},
 	destroy: function() {
 	    this.editor.remove();
 	}
     });
+    function onResize(event) {
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    $.each(['width','height'], function(i,name){
+		editor.css(name,element.css(name));
+	    });
+	    editor.css({
+		'top': element.position().top + element.offsetParent().scrollTop(),
+		'left': element.position().left + element.offsetParent().scrollLeft(),
+		'height': "+=1"
+	    });
+	}
+    }
     function inputOnKeyDown(e) {
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
 	case 83: //S
-	    if ( ! e.ctrlKey ) break;
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
 	case 9: //tab
-	    e.preventDefault();
 	case 38: //up
 	case 40: //down
             var event = jQuery.Event(e.type,{
@@ -98,6 +113,7 @@
 		'shiftKey': e.shiftKey,
 		'which': e.which
             });
+	    e.preventDefault();
 	    this.currentElement.trigger(event);
 	}
     }

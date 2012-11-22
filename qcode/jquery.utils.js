@@ -3,7 +3,27 @@ function heir(p) {
     f.prototype = p;
     return new f();
 }
-
+function coalesce() {
+    for(var i = 0; i < arguments.length; i++){
+	if ( typeof arguments[i] != "undefined" ) {
+	    return arguments[i];
+	}
+    }
+}
+function splitURL(url) {
+    var re = /([^\?]+)\??(.*)/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    var data = {};
+    $.each(queryString.split('&'),function(i, pair){
+	data[pair.split('=')[0]] = pair.split('=')[1];
+    });
+    return {
+	'path': path,
+	'data': data
+    }
+}
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
