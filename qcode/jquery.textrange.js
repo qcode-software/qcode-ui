@@ -1,225 +1,158 @@
-/**
- * jquery-textrange
- * A jQuery plugin for getting, setting and replacing the selected text in input fields and textareas.
- *
- * (c) 2012 Daniel Imhoff <dwieeb@gmail.com> - danielimhoff.com
- */
+/* ==== jquery.textrange.js ==== */
 (function($) {
+    var textrange = {
+        get: function(property) {
+            var selectionText="";
+            var selectionAtStart=false;
+            var selectionAtEnd=false;
+            var selectionStart;
+            var selectionEnd
+            var text = this.is(':input') ?  this.val() :  this.text();
 
-  var textrange = {
-    get: function(property) {
-      return _textrange.get.apply(this, [property]);
-    },
+            if (this.is(':input') && this[0].selectionStart != undefined) {
+                // Standards compliant input elements
+                selectionStart = this[0].selectionStart;
+                selectionEnd = this[0].selectionEnd;
+                selectionText = text.substring(this[0].selectionStart, this[0].selectionEnd);
+                if (selectionStart == 0) {
+                    selectionAtStart = true
+                } else {
+                    selectionAtStart = false
+                }
+                if (selectionEnd == text.length) {
+                    selectionAtEnd = true
+                } else {
+                    selectionAtEnd = false
+                }
+            } else {
+                // Content editable HTML areas
+                var selection =  window.getSelection();
+                if (selection.rangeCount>0) {
+                    var selectedRange = selection.getRangeAt(0);
+                    var elmtRange = document.createRange();
+		    elmtRange.selectNodeContents(this[0]);
 
-    set: function(selectionStart, selectionEnd) {
-      var text = this.val();
-      if ( ! text ) {
-	var text = this.text();
-      }
+		    if (elmtRange.toString().search(/\S/)!=-1) {
+			// Find the index of the first text not markup or whitespace.
+			var editStartPosition = getRangePosition(this,elmtRange.toString().search(/\S/));
+		    } else {
+			var editStartPosition = getRangePosition(this,0);
+		    }
+		    if (elmtRange.toString().search(/\s+$/)!=-1) {
+			// index of whitespace at the end of the string
+			editEndPosition = getRangePosition(this,elmtRange.toString().search(/\s+$/));
+		    } else {
+			editEndPosition = getRangePosition(this,elmtRange.toString().length);
+		    }
 
-      if(selectionStart === 'all') {
-        selectionStart = 0;
-        selectionEnd = text.length;
-      } 
-      else if(selectionStart === 'start') {
-        selectionStart = 0;
-  	selectionEnd = 0;
-      }
-      else if(selectionStart === 'end') {
-        selectionStart = text.length;
-  	selectionEnd = text.length;
-      }
+		    // editRange spans the editable text
+		    editRange  = document.createRange();
+		    editRange.setStart(editStartPosition.node,editStartPosition.offset);
+		    editRange.setEnd(editEndPosition.node,editEndPosition.offset);
 
-      if(typeof selectionStart === 'undefined') {
-        selectionStart = 0;
-      } 
-      if(typeof selectionEnd === 'undefined') {
-        selectionEnd = selectionStart;
-      }       
+		    // At edit start or edit end
+		    selectionAtStart = Boolean(selectedRange.compareBoundaryPoints(Range.START_TO_START,editRange)<=0);
+		    selectionAtEnd = Boolean(selectedRange.compareBoundaryPoints(Range.END_TO_END,editRange)>=0);
 
-      _textrange.set.apply(this, [selectionStart, selectionEnd]);
+                    // selectionStart
+                    var myRange = document.createRange();
+                    myRange.setStart(elmtRange.startContainer,elmtRange.startOffset);
+                    myRange.setEnd(selectedRange.startContainer,selectedRange.startOffset);
+                    selectionStart = myRange.toString().length;
+                    // selectionEnd
+                    myRange.setStart(selectedRange.endContainer,selectedRange.endOffset);
+                    myRange.setEnd(elmtRange.endContainer,elmtRange.endOffset);
+                    selectionEnd = elmtRange.toString().length - myRange.toString().length;
+                    // selectedText
+                    selectionText = selectedRange.toString();
+                }
+            }
+            
+            var props = {
+                selectionText: selectionText,
+                selectionAtStart: selectionAtStart,
+                selectionAtEnd: selectionAtEnd,
+                selectionStart: selectionStart,
+                selectionEnd: selectionEnd,
+                text: text
 
-      return this;
+            };
+
+            return typeof property === 'undefined' ? props : props[property];
+        },
+
+        set: function(selectionStart, selectionEnd) {
+            this.focus();
+            var text = this.is(':input') ?  this.val() :  this.text();
+            if (selectionStart === 'start') {
+                selectionStart = 0;
+            } 
+            if (selectionStart === 'end') {
+                selectionStart = text.length;
+            }
+            if (selectionEnd === 'start') {
+                selectionEnd = 0;
+            }
+            if (selectionEnd === 'end') {
+                selectionEnd = text.length;
+            }
+            if (selectionStart === 'all' && selectionEnd===undefined ) {
+                selectionStart=0
+                selectionEnd = text.length;
+            }
+            if (this.is(':input') && this[0].selectionStart != undefined) {
+                // Standards compliant input elements
+                this[0].selectionStart = selectionStart;
+                this[0].selectionEnd = selectionEnd;
+            } else if (this.is('[contenteditable=true]') && window.getSelection && window.getSelection().rangeCount > 0) {
+                // Content editable
+                var selection = window.getSelection();
+                var range = document.createRange();
+
+                var startPosition = getRangePosition(this, selectionStart);
+                var endPosition = getRangePosition(this, selectionEnd);
+
+                range.setStart(startPosition.node, startPosition.offset);
+                range.setEnd(endPosition.node, endPosition.offset);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } 
+            return this;
+        }
+    };
+    function getRangePosition(node, index) {
+        // Find the text node (possibly nested) and corresponding offset on the left of 
+	// character at index from start of this node
+        var childNodes = node.contents();
+	var myRange =  document.createRange();
+        if (childNodes.size()) {
+            for (var i = 0; i < childNodes.size(); i++) {
+                var childNode = childNodes.eq(i);
+		myRange.selectNode(childNode[0]);
+                textLength = myRange.toString().length;
+                if ((textLength > 0 && index < textLength) || (i==childNodes.size()-1 && index==textLength)) {
+		    // The point we are looking for is in this child
+                    return getRangePosition(childNode, index);
+                }
+                index -= textLength;
+            }
+        } else {
+            return {
+                node: node[0],
+                offset: index
+            }
+        }
     }
-  };
 
-  var _textrange = {
-    get: function(property) {
+    $.fn.textrange = function(method) {
+        if (!this.is(':input') && !this.is('[contenteditable=true]')) {
+            $.error('jQuery.textrange requires that only input or contenteditable elements are contained in the jQuery object');
+        }
 
-      var text = this.val();
-      if ( ! text ) {
-	var text = this.text();
-      }
-
-      var textNode = jQuery(this);
-      if ( window.getSelection ) {
-	contents = this.contents();
-	while ( contents.size() ) {
-	    firstNode = contents.get(0);
-	  if ( firstNode.nodeType == 3 ) {
-	      textNode = $(firstNode);
-	      break;
-	  } else {
-	      contents = $(firstNode).contents();
-	  }
-	}
-	contents = this.contents();
-	while ( contents.size() ) {
-	    lastNode = contents.get(contents.size() - 1);
-	  if ( lastNode.nodeType == 3 ) {
-	      endNode = $(lastNode);
-	      break;
-	  } else {
-	      contents = $(lastNode).contents();
-	  }
-	}
-      }
-
-      if ( this[0].selectionStart != undefined ) { 
-        var selectionStart = this[0].selectionStart;
-        var selectionEnd = this[0].selectionEnd;
-        var selectionLength = this[0].selectionEnd - this[0].selectionStart;
-        var selectionText = text.substring(this[0].selectionStart, this[0].selectionEnd);
-	if ( selectionStart == 0 ) {
-	  var selectionAtStart = true
-	} else {
-	  var selectionAtStart = false
-	}
-	if ( selectionEnd == text.length ) {
-	  var selectionAtEnd = true
-	} else {
-	  var selectionAtEnd = false
-	}
-
-      } else if ( window.getSelection && window.getSelection().rangeCount > 0 ) { 
-	var selection = window.getSelection();
-	var selectedRange = selection.getRangeAt(0);
-	var selectionStart = selectedRange.startOffset;
-	var selectionEnd = selectionStart + selectedRange.toString().length;
-
-	var elmtRange = document.createRange();   
-        // aligns the selectedRange to selectionStart and selectionEnd points
-        elmtRange.setStart(textNode[0], selectionStart);
-        elmtRange.setEnd(endNode[0], selectionEnd);	   
-
-	if ( selectedRange.compareBoundaryPoints(Range.START_TO_START,elmtRange) == 0 ) {
-	  var selectionAtStart = true
-	} else {
-	  var selectionAtStart = false
-	}
-	if ( selectedRange.compareBoundaryPoints(Range.END_TO_END,elmtRange) == 0 ) {
-	  var selectionAtEnd = true
-	} else {
-	  var selectionAtEnd = false
-	}
-
-	var selectionLength = selectedRange.toString().length;
-	var selectionText = selectedRange.toString();
-
-      } else if ( document.selection && document.selection.createRange ) {
-	var selectedRange = document.selection.createRange();
-	if ( this[0].createTextRange ) {
-	  var elmtRange = this[0].createTextRange(); 
-	} else {
-	  var elmtRange = document.body.createTextRange(); 
-	  elmtRange.moveToElementText(this[0]);
-	}
-
-	if ( selectedRange.compareEndPoints('StartToStart',elmtRange) == 0 ) {
-	  var selectionAtStart = true
-	} else {
-	  var selectionAtStart = false
-	}
-	if ( selectedRange.compareEndPoints('EndtoEnd',elmtRange) == 0 ) {
-	  var selectionAtEnd = true
-	} else {
-	  var selectionAtEnd = false
-	}
-
-	elmtRangeCopy = elmtRange.duplicate();
-	elmtRange.moveToBookmark(selectedRange.getBookmark());
-	elmtRangeCopy.setEndPoint('EndToStart', elmtRange);
-
-	var selectionStart = elmtRangeCopy.text.length;
-	var selectionEnd = selectionStart + selectedRange.text.length;
-	var selectionLength = selectedRange.text.length;
-	var selectionText = selectedRange.text;
-      } else {
-	var selectionStart = 0;
-	var selectionEnd = 0;
-	var selectionLength = 0;
-	var selectionText = '';
-	var selectionAtStart = false
-	var selectionAtEnd = false;
-      }
-      
-      var props = {
-        selectionStart: selectionStart,
-        selectionEnd: selectionEnd,
-        selectionLength: selectionLength,
-        selectionText: selectionText,
-	selectionAtStart: selectionAtStart,
-	selectionAtEnd: selectionAtEnd,
-	text: text
-      };
-
-      return typeof property === 'undefined' ? props : props[property];
-    },
-
-    set: function(selectionStart, selectionEnd) {
-      this.focus();
-
-      var textNode = jQuery(this);
-      if ( window.getSelection ) {
-	contents = this.contents();
-	while ( contents.size() ) {
-	  firstNode = contents.get(0)
-	  if ( firstNode.nodeType == 3 ) {
-	      textNode = $(firstNode);
-	      break;
-	  } else {
-	      contents = $(firstNode).contents();
-	  }
-	}
-      }
-
-      if ( this[0].selectionStart ) { 
-	this[0].selectionStart = selectionStart;
-        this[0].selectionEnd = selectionEnd;
-      } else if ( window.getSelection && textNode.size() ) { 
-        var selection = window.getSelection();
-        var range = document.createRange();   
-        // aligns the range to selectionStart and selectionEnd points
-        range.setStart(textNode[0], selectionStart);
-        range.setEnd(textNode[0], selectionEnd);	    
-	selection.removeAllRanges();
-        selection.addRange(range);
-      } else if ( this[0].createTextRange ) { 
-        var elmtRange = this[0].createTextRange(); 
-	elmtRange.collapse(true); 
-        elmtRange.moveStart('character', selectionStart); 
-        elmtRange.moveEnd('character', selectionEnd-selectionStart); 
-	elmtRange.select(); 
-      } else if ( document.body.createTextRange ) { 
-        var elmtRange = document.body.createTextRange(); 
-	elmtRange.moveToElementText(this[0]);
-	elmtRange.collapse(true); 
-        elmtRange.moveStart('character', selectionStart); 
-        elmtRange.moveEnd('character', selectionEnd-selectionStart); 
-	elmtRange.select(); 
-      }
-    }        
-  };
-
-  $.fn.textrange = function(method) {
-    if(typeof method === 'undefined' || typeof method !== 'string') {
-      return textrange.get.apply(this);
-    }
-    else if(typeof textrange[method] === 'function') {
-      return textrange[method].apply(this, Array.prototype.slice.call(arguments, 1));
-    }
-    else {
-      $.error("Method " + method + " does not exist in jQuery.textrange");
-    }
-  };
-})(jQuery);
+	if (typeof textrange[method] === 'function') {
+            return textrange[method].apply(this, Array.prototype.slice.call(arguments, 1));
+        } else {
+            $.error("Method " + method + " does not exist in jQuery.textrange");
+        }
+    };
+})(jQuery);​
