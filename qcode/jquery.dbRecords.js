@@ -1,35 +1,66 @@
-// DbRecords Plugin
+// DbRecords Plugins
 (function($){
 
+    // Navigation functions
+    function sameRow(a, b) {
+	// Takes two elements and returns true if they are on the same row
+	return (a.offset().top <= (b.offset().top + b.outerHeight()))
+	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
+    }
+    function belowRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row below "b"
+	return b.offset().top > (a.offset().top + a.outerHeight());
+    }
+    function aboveRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row above "b"
+	return (b.offset().top + b.outerHeight()) < a.offset().top;
+    }
+    function sameColumn(a, b) {
+	// Takes two elements and returns true if they are in the same column
+	return (a.offset().left <= (b.offset().left + b.outerWidth()))
+	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
+    }
+    function leftOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column left of "b"
+	return (b.offset().left + b.outerWidth()) < a.offset().left;
+    }
+    function rightOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column right of "b"
+	return (a.offset().left + a.outerWidth()) < b.offset().left;
+    }
+
+
+
+
+
     // Class RecordSet
-    // A page element containing records
     var RecordSet;
     (function(){
 
-	// Constructor function - takes a target DOM object which contains all the records
+	// Constructor function
 	RecordSet = function(element) {
 	    this.element = $(element);
 	    this.currentField = $([]);
 
-	    // Event listeners - rather than apply a seperate event listener to each field (which would fail if new fields were added), a delegated event listener is added to the record set container, listening for propogated events on the fields within.
+	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    this.element
-		.on('mouseup.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onMouseUp',event);
+		.on('mousedown.dbRecordSet', '.editable', function(event){
+		    $(event.target).dbField('onMouseDown', event);
 		})
 		.on('keydown.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onKeyDown',event);
+		    $(event.target).dbField('onKeyDown', event);
 		})
 		.on('keyup.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onKeyUp',event);
+		    $(event.target).dbField('onKeyUp', event);
 		})
 		.on('cut.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onCut',event);
+		    $(event.target).dbField('onCut', event);
 		})
 		.on('paste.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onPaste',event);
+		    $(event.target).dbField('onPaste', event);
 		})
 		.on('blur.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onBlur',event);
+		    $(event.target).dbField('onBlur', event);
 		});
 	    $(window)
 		.on('beforeunload.dbRecordSet', onBeforeUnload.bind(this))
@@ -37,44 +68,36 @@
 	};
 
 	// Public methods of RecordSet
-	$.extend(RecordSet.prototype,{
-	    getComponentFor: function(element) {
-		// Returns an object (Field or Record) representing the target element as a component of this record set
-		// Intended for internal use by the plugin only.
-		var element = $(element);
-		if ( element.data('record') ) {
-		    return element.data('record');
-		} else if ( element.data('field') ) {
-		    return element.data('field');
-		} else if ( element.is('.record') ) {
-		    element.data('record', new Record(element, this));
-		    return element.data('record');
-		} else if ( element.is('[name]') ) {
-		    element.data('field', new Field(element, this));
-		    return element.data('field');
-		}
-	    },
+	$.extend(RecordSet.prototype, {
 	    save: function(aysnc) {
 		// Save the current record
-		this.getCurrentRecord.dbRecords('save',async);
-	    },
+		this.getCurrentRecord.dbRecord('save', async);
+	    }, 
 	    getCurrentRecord: function() {
 		// Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
-		return this.currentField.dbRecords('getRecord');
-	    },
+		return this.currentField.dbField('getRecord');
+	    }, 
 	    getCurrentField: function() {
 		// Returns the current field, or an empty jQuery object if none exists.
 		return this.currentField;
-	    },
+	    }, 
 	    setCurrentField: function(newField) {
-		// Sets the "currentField" property - intended for internal use, use fieldChange to select a field.
+		// Sets the "currentField" property - this is intended for internal use, please use fieldChange to change the current field.
 		this.currentField = $(newField);
-	    },
+	    }, 
 	    fieldChange: function(newField) {
 		// Switch to the target field
-		this.currentField.dbRecords('fieldOut');
-		newField.dbRecords('fieldIn');
-	    },
+		var currentRecord = this.currentField.dbField('getRecord');
+		var newRecord = newField.dbField('getRecord');
+		this.currentField.dbField('fieldOut');
+		if ( ! currentRecord.is(newRecord) ) {
+		    currentRecord.dbRecord('recordOut');
+		}
+		newField.dbField('fieldIn');
+		if ( ! currentRecord.is(newRecord) ) {
+		    newRecord.dbRecord('recordIn');
+		}
+	    }, 
 	    moveLeft: function(fromField) {
 		// Returns the field one step left of the target, or the target itself if none exists
 		var nextField;
@@ -83,7 +106,7 @@
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
-		    if ( sameRow(field,fromField)
+		    if ( sameRow(field, fromField)
 			 && fieldLeft < fromFieldLeft
 			 && ( typeof nextField == "undefined" || fieldLeft > nextFieldLeft )
 		       ) {
@@ -95,10 +118,10 @@
 		    fields.each(function() {
 			var field = $(this);
 			var fieldLeft = $(field).offset().left;
-			if ( aboveRow(fromField,field)
+			if ( aboveRow(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || belowRow(nextField,field)
-				 || (sameRow(field,nextField) && fieldLeft > nextFieldLeft )
+				 || belowRow(nextField, field)
+				 || (sameRow(field, nextField) && fieldLeft > nextFieldLeft )
 				)
 			   ) {
 			    nextField = field;
@@ -111,7 +134,7 @@
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveRight: function(fromField) {
 		// Returns the field one step right of the target, or the target itself if none exists
 		var nextField;
@@ -120,7 +143,7 @@
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
-		    if ( sameRow(field,fromField)
+		    if ( sameRow(field, fromField)
 			 && fieldLeft > fromFieldLeft
 			 && ( typeof nextField == "undefined" || fieldLeft < nextFieldLeft )
 		       ) {
@@ -132,10 +155,10 @@
 		    fields.each(function() {
 			var field = $(this);
 			var fieldLeft = $(field).offset().left;
-			if ( belowRow(fromField,field)
+			if ( belowRow(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || aboveRow(nextField,field)
-				 || (sameRow(field,nextField) && fieldLeft < nextFieldLeft)
+				 || aboveRow(nextField, field)
+				 || (sameRow(field, nextField) && fieldLeft < nextFieldLeft)
 				)
 			   ) {
 			    nextField = field;
@@ -148,7 +171,7 @@
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveUp: function(fromField) {
 		// Returns the field one step above the target, or the target itself if none exists
 		var nextField;
@@ -157,7 +180,7 @@
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
-		    if ( sameColumn(fromField,field)
+		    if ( sameColumn(fromField, field)
 			 && fieldTop < fromFieldTop
 			 && (typeof nextField == "undefined" || fieldTop > nextFieldTop)
 		       ) {
@@ -169,10 +192,10 @@
 		    fields.each(function() {
 			var field = $(this);
 			var fieldTop = field.offset().top;
-			if ( leftOfColumn(fromField,field)
+			if ( leftOfColumn(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || rightOfColumn(nextField,field)
-				 || (sameColumn(field,nextField) && fieldTop > nextFieldTop)
+				 || rightOfColumn(nextField, field)
+				 || (sameColumn(field, nextField) && fieldTop > nextFieldTop)
 				)
 			   ) {
 			    nextField = field;
@@ -185,7 +208,7 @@
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveDown: function(fromField) {
 		// Returns the field one step below the target, or the target itself if none exists
 		var nextField;
@@ -194,7 +217,7 @@
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
-		    if ( sameColumn(fromField,field)
+		    if ( sameColumn(fromField, field)
 			 && fieldTop > fromFieldTop
 			 && ( typeof nextField == "undefined" || fieldTop < nextFieldTop )
 		       ) {
@@ -206,10 +229,10 @@
 		    fields.each(function() {
 			var field = $(this);
 			var fieldTop = field.offset().top;
-			if ( rightOfColumn(fromField,field)
+			if ( rightOfColumn(fromField, field)
 			     && ( typeof nextField == "undefined"
-				  || leftOfColumn(nextField,field)
-				  || (sameColumn(field,nextField) && fieldTop < nextFieldTop)
+				  || leftOfColumn(nextField, field)
+				  || (sameColumn(field, nextField) && fieldTop < nextFieldTop)
 				)
 			   ) {
 			    nextField = field;
@@ -226,45 +249,20 @@
 	});
 
 	// Private methods of RecordSet
-	function onBeforeUnload(){
+	function onBeforeUnload(event){
 	    var record = this.getCurrentRecord();
-	    if ( record.dbRecords('getState') == 'dirty' ) {
+	    if ( record.dbRecord('getState') == 'dirty' ) {
 		if ( window.confirm('Do you want to save your changes?') ) {
-		    record.dbRecords('save',false);
-		    if ( record.dbRecords('getState') == 'error' ) {
+		    record.dbRecord('save', false);
+		    if ( record.dbRecord('getState') == 'error' ) {
 			return "Your changes could not be saved.\nStay on the current page to correct.";
 		    }
 		}
 	    }
 	}
-	function onBeforePrint(){
-	    this.getCurrentField().dbRecords('fieldOut');
-	}
-	function sameRow(a,b) {
-	    // Takes two elements and returns true if they are on the same row
-	    return (a.offset().top <= (b.offset().top + b.outerHeight()))
-		&& ((a.offset().top + a.outerHeight()) >= b.offset().top);
-	}
-	function belowRow(a,b) {
-	    // Takes two elements and returns true if "a" is on a row below "b"
-	    return b.offset().top > (a.offset().top + a.outerHeight());
-	}
-	function aboveRow(a,b) {
-	    // Takes two elements and returns true if "a" is on a row above "b"
-	    return (b.offset().top + b.outerHeight()) < a.offset().top;
-	}
-	function sameColumn(a,b) {
-	    // Takes two elements and returns true if they are in the same column
-	    return (a.offset().left <= (b.offset().left + b.outerWidth()))
-		&& ((a.offset().left + a.outerWidth()) >= b.offset().left);
-	}
-	function leftOfColumn(a,b) {
-	    // Takes two elements and returns true if "a" is in a column left of "b"
-	    return (b.offset().left + b.outerWidth()) < a.offset().left;
-	}
-	function rightOfColumn(a,b) {
-	    // Takes two elements and returns true if "a" is in a column right of "b"
-	    return (a.offset().left + a.outerWidth()) < b.offset().left;
+	function onBeforePrint(event){
+	    this.getCurrentField().dbField('fieldOut');
+	    this.getCurrentRecord().dbRecord('recordOut');
 	}
     })();
     // End of class RecordSet
@@ -290,14 +288,17 @@
 	}
 
 	// Public methods of class Record
-	$.extend(Record.prototype,{
+	$.extend(Record.prototype, {
 	    getRecordSet: function(){
-		return this.element.closest('.recordSet').data('RecordSet');
-	    },
+		// Get the record-set element for this record
+		return this.element.closest('.recordSet');
+	    }, 
 	    getState: function(){
+		// Get the state of this record
 		return this.state;
-	    },
+	    }, 
 	    setState: function(newState){
+		// Set the state of this record
 		switch(newState) {
 		case "updating":
 		case "error":
@@ -310,74 +311,75 @@
 		default:
 		    $.error('Invalid state');
 		}
-	    },
+	    }, 
 	    save: function(async){
+		// Save this record, using an add or update url as appropriate
 		if ( this.getState() === "updating" ) return false;
-		var url = this.getRecordSet().element.attr(this.saveAction + "URL");
+		var url = this.getRecordSet().attr(this.saveAction + "URL");
 		if ( ! url ) {
 		    $.error('Could not '+this.saveAction+' record - no url provided');
 		}
-		this.action(this.saveAction,url,actionReturn.bind(this,this.saveAction),async);
-	    },
+		this.action(this.saveAction, url, async);
+	    }, 
 	    delete: function(async){
+		// Delete this record, by sending a delete request to the server
 		if ( this.getState() === "updating" ) return false;
-		var url = this.getRecordSet().element.attr('deleteURL');
+		var url = this.getRecordSet().attr('deleteURL');
 		if ( ! url ) {
 		    $.error('Could not delete record - no url provided');
 		}
-		this.action('delete',url,actionReturn.bind(this,'delete'),async);
-	    },
-	    action: function(action,url,handler,async){
+		this.action('delete', url, async);
+	    }, 
+	    action: function(action, url, async){
 		// Perform the given action (add, update, delete), by submitting record data to the server.
-		// Triggers a recordAction event, providing a deferred object for event listeners
-		var handler = coalesce(handler, actionReturn.bind(this, action));
 		var async = coalesce(async, true);
 
 		this.setState('updating');
-		this.getCurrentField().dbRecords('write');
+		this.getCurrentField().dbField('write');
 
 		var urlPieces = splitURL(url);
 		var path = urlPieces.path;
 		var data = urlPieces.data;
 		this.element.find('[name]').each(function(i, field) {
-		    var name = $(field).dbRecords('getName');
-		    var value = $(field).dbRecords('getValue');
+		    var name = $(field).dbField('getName');
+		    var value = $(field).dbField('getValue');
 		    data[name] = value;
 		});
 
-		var deferred = new jQuery.Deferred();
-		deferred.done(handler);
-		deferred.fail(actionReturnError.bind(this,action));
-
-		httpPost(path, data, function(data, textStatus, jqXHR) {
-		    deferred.resolve(data, textStatus, jqXHR);
-		}, function(jqXHR, textStatus, errorThrown) {
-		    deferred.reject(jqXHR, textStatus, errorThrown);
-		});
-		this.element.trigger('recordAction', [action, deferred]);
-	    },
+		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action));
+		this.element.trigger('recordAction', [action]);
+	    }, 
 	    getCurrentField: function(){
-		return this.element.find(this.getRecordSet().getCurrentField());
-	    },
+		return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
+	    }, 
 	    getFields: function(){
 		// Returns all editable fields in the record
 		return this.element.find('.editable');
-	    },
+	    }, 
 	    setValues: function(xmlDoc){
 		// Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 		this.element.find('[name]').each(function(i, field) {
-		    var node = $(xmlDoc).find('records record ' + $(field).dbRecords('getName'));
+		    var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		    if ( node.length > 0 ) {
-			$(field).dbRecords('setValue',node.text());
+			$(field).dbField('setValue', node.text());
 		    }
 		});
 		this.element.trigger('resize');
+	    }, 
+	    recordIn: function(){
+		this.element.trigger('recordIn');
+	    }, 
+	    recordOut: function(){
+		if ( this.getState() === "dirty" ) {
+		    this.save();
+		}
+		this.element.trigger('recordOut');
 	    }
 	});
 
 	// Private methods of class Record
 	// Called when an action succeeds or fails
-	function actionReturn(action,xmlDoc){
+	function actionReturn(action, xmlDoc, status, jqXHR){
 	    this.setState('current');
 	    switch(action){
 	    case "update":
@@ -389,15 +391,17 @@
 		break;
 	    case "delete":
 		this.element.remove();
-		this.getRecordSet().element.trigger('resize');
+		this.getRecordSet().trigger('resize');
 		break;
 	    }
+	    this.element.trigger('recordActionReturn', [action, xmlDoc, status, jqXHR]);
 	}
-	function actionReturnError(action,message,type){
+	function actionReturnError(action, message, type, error){
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
 	    }
+	    this.element.trigger('recordActionReturnError', [action, message, type, error]);
 	}
     })();
     // End of class Record
@@ -417,17 +421,17 @@
 	}
 
 	// Public methods of class Field
-	$.extend(Field.prototype,{
+	$.extend(Field.prototype, {
 	    getRecordSet: function(){
-		return this.element.closest('.recordSet').data('RecordSet');
-	    },
+		return this.element.closest('.recordSet');
+	    }, 
 	    getName: function() {
 		return this.element.attr('name');
-	    },
+	    }, 
 	    getRecord: function(){
 		// get the record containing this field
 		return this.element.closest('.record');
-	    },
+	    }, 
 	    getValue: function(){
 		// get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 		if ( this.getType() == "html" ) {
@@ -437,7 +441,7 @@
 		} else {
 		    return this.element.text();
 		}
-	    },
+	    }, 
 	    setValue: function(newValue){
 		// set the current value of this field
 		if ( this.getType() == "html" ) {
@@ -447,11 +451,11 @@
 		} else {
 		    this.element.text(newValue);
 		}
-	    },
+	    }, 
 	    fieldIn: function(newField, select){
 		// Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 		this.lockFocusEvents = true;
-		this.getRecordSet().setCurrentField(this.element);
+		this.getRecordSet().dbRecordSet('setCurrentField', this.element);
 		this.element.css('visibility', "hidden");
 
 		var fieldValue = this.getValue();
@@ -466,143 +470,146 @@
 		}
 		this.element.trigger('fieldIn');
 		this.lockFocusEvents = false;
-	    },
+	    }, 
 	    fieldOut: function(){
 		// Stop editing this field
 		this.lockFocusEvents = true;
 		var record = this.getRecord();
-		this.getRecordSet().setCurrentField($([]));
+		this.getRecordSet().dbRecordSet('setCurrentField', $([]));
 		if ( this.getValue() !== this.controlGetValue() ) {
-		    record.dbRecords('setState','dirty');
+		    record.dbRecord('setState', 'dirty');
 		}
 		this.write();
-		this.element.css('visibility',"inherit");
+		this.element.css('visibility', "inherit");
 		this.controlHide();
-		if ( record.dbRecords('getState') == "dirty" ) {
-		    record.dbRecords('save');
-		}
 		this.element.trigger('fieldOut');
 		this.lockFocusEvents = false;
-	    },
+	    }, 
 	    getType: function(){
 		// Returns the field type (input, text, or html)
 		return this.element.attr('type');
-	    },
+	    }, 
 	    isEditable: function(){
 		// Returns true if the field is currently editable (ie. not updating)
-		return (this.element.is('.editable') && this.getRecord().dbRecords('getState') != "updating");
-	    },
-	    onMouseUp: function(){
+		return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
+	    }, 
+	    onMouseDown: function(event){
 		if ( this.isEditable() ) {
-		    this.getRecordSet().fieldChange(this.element);
+		    this.getRecordSet().dbRecordSet('fieldChange', this.element);
+		    event.preventDefault();
 		}
-	    },
+	    }, 
 	    onKeyDown: function(event){
 		// nb. Normally only captures key up events propagated here by the editor
 		if ( event.altKey ) {
 		    return true;
 		}
-		var records = this.getRecordSet();
+		var recordSet = this.getRecordSet();
 		var field = this.element;
 		switch (event.which) {
 		case 37: //left
-		    records.fieldChange(records.moveLeft(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
 		    break;
 		case 38: //up
-		    records.fieldChange(records.moveUp(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
 		    break;
 		case 39: //right
-		    records.fieldChange(records.moveRight(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
 		    break;
 		case 40: //down
-		    records.fieldChange(records.moveDown(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
 		    break;
 		case 9: //tab
 		    if ( event.shiftKey ) {
-			var newField = records.moveLeft(field);
+			var newField = recordSet.dbRecords('moveLeft', field);
 		    } else {
-			var newField = records.moveRight(field);
+			var newField = recordSet.dbRecords('moveRight', field);
 		    }
 		    if ( newField == field ) {
-			this.getRecord().dbRecords('save');
+			this.getRecord().dbRecord('save');
 		    } else {
-			records.fieldChange(newField);
+			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
 		case 13: //return
-		    var newField = records.moveRight(field);
+		    var newField = recordSet.dbRecordSet('moveRight', field);
 		    if ( newField == field ) {
-			this.getRecord().dbRecords('save');
+			this.getRecord().dbRecord('save');
 		    } else {
-			records.fieldChange(newField);
+			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
 		case 46: //delete
-		    if ( this.getRecord().dbRecords('getUrl','delete') ) {
-			this.fieldOut();
-			this.getRecord().dbRecords('delete');
+		    if ( this.getRecord().dbRecord('getUrl', 'delete') ) {
+			this.getRecord().dbRecord('delete');
 		    }
 		    break;
 		case 83: //ctrl + s
 		    if ( event.ctrlKey ) {
-			this.save();
+			this.getRecord().dbRecord('save');
 			event.preventDefault();
 		    }
 		    break;
 		}
-	    },
+	    }, 
 	    onKeyUp: function(event){
 		if ( this.getValue() !== this.controlGetValue() ) {
-		    this.getRecord().dbRecords('setState','dirty');
+		    this.getRecord().dbRecord('setState', 'dirty');
 		}
-	    },
+	    }, 
 	    onCut: function(){
-		this.getRecord().dbRecords('setState','dirty');
-	    },
+		this.getRecord().dbRecord('setState', 'dirty');
+	    }, 
 	    onPaste: function(){
-		this.getRecord().dbRecords('setState','dirty');
-	    },
+		this.getRecord().dbRecord('setState', 'dirty');
+	    }, 
 	    onBlur: function(){
 		// Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue.
 		if ( ! this.lockFocusEvents ) {
 		    this.fieldOut();
+		    this.getRecord().dbRecord('recordOut');
 		}
-	    },
+	    }, 
 	    write: function(){
 		// Write the current editor contents to the field
 		this.setValue(this.controlGetValue());
-	    },
+	    }, 
 	    controlShow: function(value){
 		// Show the appropriate editor for this field
-		getEditorPlugin.call(this)('show', this.element, value);
-	    },
+		var editorPlugin = getEditorPlugin.call(this);
+		editorPlugin('show', this.element, value);
+	    }, 
 	    controlHide: function(){
 		// Hide the editor for this field
-		getEditorPlugin.call(this)('hide');
-	    },
+		var editorPlugin = getEditorPlugin.call(this)
+		editorPlugin('hide');
+	    }, 
 	    controlGetValue: function(){
 		// Get the current editor value
-		return getEditorPlugin.call(this)('getValue');
-	    },
+ 		var editorPlugin = getEditorPlugin.call(this);
+		return editorPlugin('getValue');
+	    }, 
 	    controlSelectText: function(option){
 		// set a text selection within the editor
-		getEditorPlugin.call(this)('selectText', this.element, option);
+		var editorPlugin = getEditorPlugin.call(this);
+		editorPlugin('selectText', this.element, option);
 	    }
 	});
 
 	// Private methods of class Field
 	function getEditorPlugin() {
-	    // Returns a function which calls the appropriate editor plugin for this field on the record set container.
-	    var container = this.getRecordSet().element;
+	    // Determines the appropriate editor plugin for this field, 
+	    // then returns a function which calls that plugin on the record set element.
+	    var container = this.getRecordSet();
 	    switch(this.getType()){
 	    case "input":
-		return container.inputEditor.bind(container);
+		return container.dbEditorinput.bind(container);
 		break;
 	    case "text":
-		return container.textEditor.bind(container);
+		return container.dbEditorText.bind(container);
 		break;
 	    case "html":
-		return container.htmlEditor.bind(container);
+		return container.dbEditorHTML.bind(container);
 		break;
 	    }
 	}
@@ -613,52 +620,102 @@
 
 
 
-    // dbRecords plugin. The first time this is called should be on an element which contains all the records in a set.
-    // Afterwards being initialised, it can be called on that element or any of the record or field elements within that element.
-    // The methods made available will depend on the type of element the plugin is being called on.
-    $.fn.dbRecords = function() {
+    // dbRecordSet plugin
+    $.fn.dbRecordSet = function() {
 	var target = this;
 	var args = arguments;
 	var returnValue;
-	this.each(function(i, element) {
-	    var target = $(element);
-	    var RecordSetComponent = target.data('RecordSet');
 
-	    // If target is not a record set container, check to see if it is inside one
-	    if ( ! RecordSetComponent ) {
-		var container = target.closest('.recordSet');
-		if ( container.length == 1 && container.data('RecordSet') ) {
-		    RecordSetComponent = container.data('RecordSet').getComponentFor(target);
-		}
-	    }
+	if ( target.length > 1 ) $.error('dbRecordSet does not support multiple elements');
+	if ( target.length == 0 ) return target;
 
-	    // No arguments means constructing a new record set.
-	    if ( args.length == 0 ) {
-
-		// Construct a new record set with target as container
-		if ( ! RecordSetComponent ) {
-		    target.data('RecordSet', new RecordSet(target));
-		}
-
-	    } else if ( typeof args[0] == "string" ) {
-		// Called with a method name, attempt to call the method
-		var method = args[0];
-		if ( typeof RecordSetComponent[method] == "function" ) {
-		    returnValue = RecordSetComponent[method].apply(RecordSetComponent, Array.prototype.slice.call(args,1));
-		} else {
-		    $.error('Invalid method for dbRecords');
-		}
-	    }
-	});
-
-	if ( typeof returnValue == "undefined" ) {
-	    return this;
-	} else {
-	    return returnValue;
+	if ( ! target.data('recordSet') ) {
+	    target.data('recordSet', new RecordSet(target));
+	    target.addClass('recordSet');
 	}
+	var recordSet = target.data('recordSet');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof recordSet[method] == "function" ) {
+		returnValue = recordSet[method].apply(recordSet, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbRecordSet');
+	    }
+	}
+
+	return coalesce(returnValue, target);
     };
+
+    // dbRecord plugin
+    $.fn.dbRecord = function() {
+	var target = this;
+	var args = arguments;
+	var returnValue;
+
+	if ( target.length > 1 ) $.error('dbRecord does not support multiple elements');
+	if ( target.length == 0 ) {
+	    if ( args[0] === 'getState' ) {
+		return undefined;
+	    } else {
+		return target;
+	    }
+	}
+
+	if ( ! target.data('record') ) {
+	    target.data('record', new Record(target));
+	    target.addClass('record');
+	}
+	var record = target.data('record');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof record[method] == "function" ) {
+		returnValue = record[method].apply(record, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbRecord');
+	    }
+	}
+
+	return coalesce(returnValue, target);
+    };
+
+    // dbField plugin
+    $.fn.dbField = function() {
+	var target = this;
+	var args = arguments;
+	var returnValue;
+
+	if ( target.length > 1 ) $.error('dbField does not support multiple elements');
+	if ( target.length == 0 ) {
+	    if ( ['getName', 'getValue', 'getType', 'controlGetValue'].indexOf(args[0]) > -1 ) {
+		return undefined;
+	    } else {
+		return target;
+	    }
+	}
+
+	if ( ! target.data('field') ) {
+	    target.data('field', new Field(target));
+	}
+	var field = target.data('field');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof field[method] == "function" ) {
+		returnValue = field[method].apply(field, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbField');
+	    }
+	}
+
+	return coalesce(returnValue, target);
+    }
 })(jQuery);
 
 jQuery(function(){
-    jQuery('.recordSet').dbRecords();
+    jQuery('.recordSet').dbRecordSet();
 });

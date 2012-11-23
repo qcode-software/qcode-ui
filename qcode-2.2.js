@@ -6347,6 +6347,611 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     };
 })(jQuery);
 
+/* ==== jquery.dbEditorHTML.js ==== */
+// dbEditorHTML plugin
+// A hovering editor for multi-line input with a contentEditable div to allow html markup
+(function($){
+
+    // Namespace for event handlers
+    var eventNamespace = 'dbEditorHTML';
+
+    // css attributes to copy from target elements to the editor when editor is shown
+    var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
+			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
+			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
+			  'borderRightWidth', 'borderRightStyle', 'borderRightColor', 
+			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
+			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
+			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
+			  'width'];
+
+    // class HTMLEditor
+    // constructor function - takes container which the editor is to be appended to as an argument.
+    function HTMLEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
+	this.editor = $('<div>')
+	    .attr('contentEditable', true)
+	    .addClass('dbEditorHTML')
+	    .appendTo(container)
+	    .css({
+		'position': "absolute"
+	    })
+	    .hide()
+	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
+	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
+	    .on('cut' + eventNamespace, inputOnCut.bind(this))
+	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
+	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
+    }
+
+    // Public methods for class HTMLEditor
+    $.extend(HTMLEditor.prototype, {
+	getValue: function() {
+	    return this.editor.html();
+	}, 
+	show: function(element, value){
+	    // Show this editor over the target element and set the value
+	    this.currentElement = element;
+	    var editor = this.editor;
+
+	    // Copy various style from the target element to the editor
+	    $.each(copyAttributes, function(i, name){
+		editor.css(name, element.css(name));
+	    });
+	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		editor.css('backgroundColor', "white");
+	    } else {
+		editor.css('backgroundColor', element.css('backgroundColor'));
+	    }
+
+	    // Different browsers return different css for transparent elements
+	    editor
+		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		.css({
+		    'top': element.position().top + element.offsetParent().scrollTop(), 
+		    'left': element.position().left + element.offsetParent().scrollLeft()
+		})
+		.show()
+		.html(value)
+		.focus();
+	}, 
+	hide: function(element) {
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
+	}, 
+	selectText: function(element, option) {
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set', "start", "start");
+		break;
+	    case "end":
+		this.editor.textrange('set', "end", "end");
+		break;
+	    case "all":
+		this.editor.textrange('set', "all");
+		break;
+	    }
+	}, 
+	destroy: function() {
+	    this.editor.remove();
+	}
+    });
+
+    // Private methods for class HTMLEditor
+    function onResize(event) {
+	// Any event that might change the size or position of the editor's target needs to trigger this.
+	// It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    editor
+		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		.css({
+		    'width': element.css('width'), 
+		    'top': element.position().top + element.offsetParent().scrollTop(), 
+		    'left': element.position().left + element.offsetParent().scrollLeft()
+		});
+	}
+    }
+    function inputOnKeyDown(e) {
+	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
+	case 83: //S
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
+	case 9: //tab
+	case 38: //up
+	case 40: //down
+            var event = jQuery.Event(e.type, {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
+	}
+    }
+    function inputOnKeyUp(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnCut(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnPaste(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnBlur(e, source) {
+	if ( ! this.editor.is(':focus') ) {
+            var event = jQuery.Event(e.type, {
+		'data': e.data
+            });
+	    this.currentElement.trigger(event);
+	}
+    }
+
+    // dbEditorHTML plugin function
+    $.fn.dbEditorHTML = function(){
+	var returnValue;
+	var target = $(this);
+	var control = target.data('dbEditorHTML');
+	if ( ! control ) {
+	    target.data('dbEditorHTML', new HTMLEditor(target));
+	    var control = target.data('dbEditorHTML');
+	}
+	if ( arguments.length > 0 ) {
+	    var method = arguments[0];
+	    var args = Array.prototype.slice.call(arguments, 1);
+	    if ( typeof control[method] == "function" ) {
+		returnValue = control[method].apply(control, args);
+	    } else {
+		$.error('Invalid method of dbEditorHTML');
+	    }
+	}
+	if ( typeof returnValue != "undefined" ) {
+	    return returnValue;
+	} else {
+	    return target;
+	}
+    }
+})(jQuery);
+
+/* ==== jquery.dbEditorInput.js ==== */
+// dbEditorInput plugin
+// A hovering editor for single-line input
+(function($){
+
+    // Namespace for event handlers
+    var eventNamespace = '.dbEditorInput';
+
+    // css attributes to copy from target elements to the editor when editor is shown
+    var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
+			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
+			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
+			  'borderRightWidth', 'borderRightStyle', 'borderRightColor', 
+			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
+			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
+			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
+			  'width', 'height'];
+
+    // class InputEditor
+    // constructor function - takes container which the editor is to be appended to as an argument.
+    function InputEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
+	this.editor = $('<input type="text">')
+	    .addClass('dbEditorInput')
+	    .appendTo(container)
+	    .css({
+		'position': "absolute", 
+		'background': "white", 
+		'overflow': "visible", 
+		'-moz-box-sizing': "content-box", 
+		'-ms-box-sizing': "content-box", 
+		'box-sizing': "content-box", 
+		'z-index': 1
+	    })
+	    .hide()
+	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
+	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
+	    .on('cut' + eventNamespace, inputOnCut.bind(this))
+	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
+	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
+    }
+
+    // Public methods for class dbEditorInput
+    $.extend(InputEditor.prototype, {
+	getValue: function() {
+	    return this.editor.val();
+	}, 
+	show: function(element, value){
+	    // Show this editor over the target element and set the value
+	    this.currentElement = element;
+	    var editor = this.editor;
+
+	    // Copy various style from the target element to the editor
+	    $.each(copyAttributes, function(i, name){
+		editor.css(name, element.css(name));
+	    });
+
+	    // Different browsers return different css for transparent elements
+	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		editor.css('backgroundColor', "white");
+	    } else {
+		editor.css('backgroundColor', element.css('backgroundColor'));
+	    }
+
+	    // Assumes that the editor's container is the target element's offset parent.
+	    editor
+		.css({
+		    'top': element.position().top + element.offsetParent().scrollTop(), 
+		    'left': element.position().left + element.offsetParent().scrollLeft()
+		})
+		.show()
+		.val(value)
+		.focus();
+	}, 
+	hide: function(element) {
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
+	}, 
+	selectText: function(element, option) {
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set', "start", "start");
+		break;
+	    case "end":
+		this.editor.textrange('set', "end", "end");
+		break;
+	    case "all":
+		this.editor.textrange('set', "all");
+		break;
+	    }
+	}, 
+	destroy: function() {
+	    this.editor.remove();
+	}
+    });
+
+    // Private methods for class dbEditorInput
+    function onResize(event) {
+	// Any event that might change the size or position of the editor's target needs to trigger this.
+	// It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    $.each(['width', 'height'], function(i, name){
+		editor.css(name, element.css(name));
+	    });
+	    editor.css({
+		'top': element.position().top + element.offsetParent().scrollTop(), 
+		'left': element.position().left + element.offsetParent().scrollLeft()
+	    });
+	}
+    }
+    function inputOnKeyDown(e) {
+	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
+	case 83: //S
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
+	case 13: //return
+	case 9: //tab
+	case 38: //up
+	case 40: //down
+            var event = jQuery.Event(e.type, {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
+	    break;
+	}
+    }
+    function inputOnKeyUp(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnCut(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnPaste(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnBlur(e, source) {
+	if ( ! this.editor.is(':focus') ) {
+            var event = jQuery.Event(e.type, {
+		'data': e.data
+            });
+	    this.currentElement.trigger(event);
+	}
+    }
+
+    // dbEditorInput plugin function
+    $.fn.dbEditorInput = function(){
+	var returnValue;
+	var target = $(this);
+	var control = target.data('dbEditorInput');
+	if ( ! control ) {
+	    target.data('dbEditorInput', new InputEditor(target));
+	    var control = target.data('dbEditorInput');
+	}
+	if ( arguments.length > 0 ) {
+	    var method = arguments[0];
+	    if ( typeof control[method] == "function" ) {
+		returnValue = control[method].apply(control, Array.prototype.slice.call(arguments, 1));
+	    } else {
+		$.error('Invalid method ' + method + ' of dbEditorInput');
+	    }
+	}
+	if ( typeof returnValue != "undefined" ) {
+	    return returnValue;
+	} else {
+	    return target;
+	}
+    }
+})(jQuery);
+
+/* ==== jquery.dbEditorText.js ==== */
+// dbEditorText plugin
+// A hovering editor for multi-line input (text)
+(function($){
+
+    // Namespace for event handlers
+    var eventNamespace = '.dbEditorText';
+
+    // css attributes to copy from target elements to the editor when editor is shown
+    var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
+			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
+			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
+			  'borderRightWidth', 'borderRightStyle', 'borderRightColor', 
+			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
+			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
+			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
+			  'width', 'height'];
+
+    // class TextEditor
+    // constructor function - takes container which the editor is to be appended to as an argument.
+    function TextEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
+	this.editor = $('<textarea>')
+	    .appendTo(container)
+	    .addClass('dbEditorText')
+	    .css({
+		'position': "absolute", 
+		'resize': "none", 
+		'-moz-box-sizing': "content-box", 
+		'-ms-box-sizing': "content-box", 
+		'box-sizing': "content-box", 
+		'overflow': "auto"
+	    })
+	    .hide()
+	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
+	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
+	    .on('cut' + eventNamespace, inputOnCut.bind(this))
+	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
+	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
+    }
+
+    // Public methods for class TextEditor
+    $.extend(TextEditor.prototype, {
+	getValue: function() {
+	    return this.editor.val();
+	}, 
+	show: function(element, value){
+	    // Show this editor over the target element and set the value
+	    this.currentElement = element;
+	    var editor = this.editor;
+
+	    // Copy various style from the target element to the editor
+	    $.each(copyAttributes, function(i, name){
+		editor.css(name, element.css(name));
+	    });
+
+	    // Different browsers return different css for transparent elements
+	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		editor.css('backgroundColor', "white");
+	    } else {
+		editor.css('backgroundColor', element.css('backgroundColor'));
+	    }
+
+	    // Assumes that the editor's container is the target element's offset parent.
+	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+	    editor
+		.css({
+		    'top': element.position().top + element.offsetParent().scrollTop(), 
+		    'left': element.position().left + element.offsetParent().scrollLeft(), 
+		    'height': "+=1", 
+		    'padding-bottom': "-=1"
+		})
+		.show()
+		.val(value)
+		.focus();
+	}, 
+	hide: function(element) {
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
+	}, 
+	selectText: function(element, option) {
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set', "start", "start");
+		break;
+	    case "end":
+		this.editor.textrange('set', "end", "end");
+		break;
+	    case "all":
+		this.editor.textrange('set', "all");
+		break;
+	    }
+	}, 
+	destroy: function() {
+	    this.editor.remove();
+	}
+    });
+
+    // Private methods for class TextEditor
+    function onResize(event) {
+	// Any event that might change the size or position of the editor's target needs to trigger this.
+	// It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    $.each(['width', 'height'], function(i, name){
+		editor.css(name, element.css(name));
+	    });
+
+	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+	    editor.css({
+		'top': element.position().top + element.offsetParent().scrollTop(), 
+		'left': element.position().left + element.offsetParent().scrollLeft(), 
+		'height': "+=1"
+	    });
+	}
+    }
+    function inputOnKeyDown(e) {
+	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
+	case 83: //S
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
+	case 9: //tab
+	case 38: //up
+	case 40: //down
+            var event = jQuery.Event(e.type, {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
+	}
+    }
+    function inputOnKeyUp(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnCut(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnPaste(e) {
+        var event = jQuery.Event(e.type, {
+            'data': e.data, 
+	    'ctrlKey': e.ctrlKey, 
+	    'altKey': e.altKey, 
+	    'shiftKey': e.shiftKey, 
+            'which': e.which
+        });
+	this.currentElement.trigger(event);
+    }
+    function inputOnBlur(e) {
+	if ( ! this.editor.is(':focus') ) {
+            var event = jQuery.Event(e.type, {
+		'data': e.data
+            });
+	    this.currentElement.trigger(event);
+	}
+    }
+
+    // dbEditorText plugin function
+    $.fn.dbEditorText = function(){
+	var returnValue;
+	var target = $(this);
+	var control = target.data('dbEditorText');
+	if ( ! control ) {
+	    target.data('dbEditorText', new TextEditor(target));
+	    var control = target.data('dbEditorText');
+	}
+	if ( arguments.length > 0 ) {
+	    var method = arguments[0];
+	    if ( typeof control[method] == "function" ) {
+		returnValue = control[method].apply(control, Array.prototype.slice.call(arguments, 1));
+	    } else {
+		$.error('Invalid method of dbEditorText');
+	    }
+	}
+	if ( typeof returnValue != "undefined" ) {
+	    return returnValue;
+	} else {
+	    return target;
+	}
+    }
+})(jQuery);
+
 /* ==== jquery.dbForm.js ==== */
 (function($){
     function DbForm(form) {
@@ -8259,38 +8864,69 @@ function dbFormHTMLArea(oDiv) {
 }) (jQuery);
 
 /* ==== jquery.dbRecords.js ==== */
-// DbRecords Plugin
+// DbRecords Plugins
 (function($){
 
+    // Navigation functions
+    function sameRow(a, b) {
+	// Takes two elements and returns true if they are on the same row
+	return (a.offset().top <= (b.offset().top + b.outerHeight()))
+	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
+    }
+    function belowRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row below "b"
+	return b.offset().top > (a.offset().top + a.outerHeight());
+    }
+    function aboveRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row above "b"
+	return (b.offset().top + b.outerHeight()) < a.offset().top;
+    }
+    function sameColumn(a, b) {
+	// Takes two elements and returns true if they are in the same column
+	return (a.offset().left <= (b.offset().left + b.outerWidth()))
+	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
+    }
+    function leftOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column left of "b"
+	return (b.offset().left + b.outerWidth()) < a.offset().left;
+    }
+    function rightOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column right of "b"
+	return (a.offset().left + a.outerWidth()) < b.offset().left;
+    }
+
+
+
+
+
     // Class RecordSet
-    // A page element containing records
     var RecordSet;
     (function(){
 
-	// Constructor function - takes a target DOM object which contains all the records
+	// Constructor function
 	RecordSet = function(element) {
 	    this.element = $(element);
 	    this.currentField = $([]);
 
-	    // Event listeners - rather than apply a seperate event listener to each field (which would fail if new fields were added), a delegated event listener is added to the record set container, listening for propogated events on the fields within.
+	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    this.element
-		.on('mouseup.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onMouseUp',event);
+		.on('mousedown.dbRecordSet', '.editable', function(event){
+		    $(event.target).dbField('onMouseDown', event);
 		})
 		.on('keydown.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onKeyDown',event);
+		    $(event.target).dbField('onKeyDown', event);
 		})
 		.on('keyup.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onKeyUp',event);
+		    $(event.target).dbField('onKeyUp', event);
 		})
 		.on('cut.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onCut',event);
+		    $(event.target).dbField('onCut', event);
 		})
 		.on('paste.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onPaste',event);
+		    $(event.target).dbField('onPaste', event);
 		})
 		.on('blur.dbRecordSet', '.editable', function(event){
-		    $(event.target).dbRecords('onBlur',event);
+		    $(event.target).dbField('onBlur', event);
 		});
 	    $(window)
 		.on('beforeunload.dbRecordSet', onBeforeUnload.bind(this))
@@ -8298,44 +8934,36 @@ function dbFormHTMLArea(oDiv) {
 	};
 
 	// Public methods of RecordSet
-	$.extend(RecordSet.prototype,{
-	    getComponentFor: function(element) {
-		// Returns an object (Field or Record) representing the target element as a component of this record set
-		// Intended for internal use by the plugin only.
-		var element = $(element);
-		if ( element.data('record') ) {
-		    return element.data('record');
-		} else if ( element.data('field') ) {
-		    return element.data('field');
-		} else if ( element.is('.record') ) {
-		    element.data('record', new Record(element, this));
-		    return element.data('record');
-		} else if ( element.is('[name]') ) {
-		    element.data('field', new Field(element, this));
-		    return element.data('field');
-		}
-	    },
+	$.extend(RecordSet.prototype, {
 	    save: function(aysnc) {
 		// Save the current record
-		this.getCurrentRecord.dbRecords('save',async);
-	    },
+		this.getCurrentRecord.dbRecord('save', async);
+	    }, 
 	    getCurrentRecord: function() {
 		// Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
-		return this.currentField.dbRecords('getRecord');
-	    },
+		return this.currentField.dbField('getRecord');
+	    }, 
 	    getCurrentField: function() {
 		// Returns the current field, or an empty jQuery object if none exists.
 		return this.currentField;
-	    },
+	    }, 
 	    setCurrentField: function(newField) {
-		// Sets the "currentField" property - intended for internal use, use fieldChange to select a field.
+		// Sets the "currentField" property - this is intended for internal use, please use fieldChange to change the current field.
 		this.currentField = $(newField);
-	    },
+	    }, 
 	    fieldChange: function(newField) {
 		// Switch to the target field
-		this.currentField.dbRecords('fieldOut');
-		newField.dbRecords('fieldIn');
-	    },
+		var currentRecord = this.currentField.dbField('getRecord');
+		var newRecord = newField.dbField('getRecord');
+		this.currentField.dbField('fieldOut');
+		if ( ! currentRecord.is(newRecord) ) {
+		    currentRecord.dbRecord('recordOut');
+		}
+		newField.dbField('fieldIn');
+		if ( ! currentRecord.is(newRecord) ) {
+		    newRecord.dbRecord('recordIn');
+		}
+	    }, 
 	    moveLeft: function(fromField) {
 		// Returns the field one step left of the target, or the target itself if none exists
 		var nextField;
@@ -8344,7 +8972,7 @@ function dbFormHTMLArea(oDiv) {
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
-		    if ( sameRow(field,fromField)
+		    if ( sameRow(field, fromField)
 			 && fieldLeft < fromFieldLeft
 			 && ( typeof nextField == "undefined" || fieldLeft > nextFieldLeft )
 		       ) {
@@ -8356,10 +8984,10 @@ function dbFormHTMLArea(oDiv) {
 		    fields.each(function() {
 			var field = $(this);
 			var fieldLeft = $(field).offset().left;
-			if ( aboveRow(fromField,field)
+			if ( aboveRow(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || belowRow(nextField,field)
-				 || (sameRow(field,nextField) && fieldLeft > nextFieldLeft )
+				 || belowRow(nextField, field)
+				 || (sameRow(field, nextField) && fieldLeft > nextFieldLeft )
 				)
 			   ) {
 			    nextField = field;
@@ -8372,7 +9000,7 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveRight: function(fromField) {
 		// Returns the field one step right of the target, or the target itself if none exists
 		var nextField;
@@ -8381,7 +9009,7 @@ function dbFormHTMLArea(oDiv) {
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
-		    if ( sameRow(field,fromField)
+		    if ( sameRow(field, fromField)
 			 && fieldLeft > fromFieldLeft
 			 && ( typeof nextField == "undefined" || fieldLeft < nextFieldLeft )
 		       ) {
@@ -8393,10 +9021,10 @@ function dbFormHTMLArea(oDiv) {
 		    fields.each(function() {
 			var field = $(this);
 			var fieldLeft = $(field).offset().left;
-			if ( belowRow(fromField,field)
+			if ( belowRow(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || aboveRow(nextField,field)
-				 || (sameRow(field,nextField) && fieldLeft < nextFieldLeft)
+				 || aboveRow(nextField, field)
+				 || (sameRow(field, nextField) && fieldLeft < nextFieldLeft)
 				)
 			   ) {
 			    nextField = field;
@@ -8409,7 +9037,7 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveUp: function(fromField) {
 		// Returns the field one step above the target, or the target itself if none exists
 		var nextField;
@@ -8418,7 +9046,7 @@ function dbFormHTMLArea(oDiv) {
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
-		    if ( sameColumn(fromField,field)
+		    if ( sameColumn(fromField, field)
 			 && fieldTop < fromFieldTop
 			 && (typeof nextField == "undefined" || fieldTop > nextFieldTop)
 		       ) {
@@ -8430,10 +9058,10 @@ function dbFormHTMLArea(oDiv) {
 		    fields.each(function() {
 			var field = $(this);
 			var fieldTop = field.offset().top;
-			if ( leftOfColumn(fromField,field)
+			if ( leftOfColumn(fromField, field)
 			     && (typeof nextField == "undefined"
-				 || rightOfColumn(nextField,field)
-				 || (sameColumn(field,nextField) && fieldTop > nextFieldTop)
+				 || rightOfColumn(nextField, field)
+				 || (sameColumn(field, nextField) && fieldTop > nextFieldTop)
 				)
 			   ) {
 			    nextField = field;
@@ -8446,7 +9074,7 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    return nextField;
 		}
-	    },
+	    }, 
 	    moveDown: function(fromField) {
 		// Returns the field one step below the target, or the target itself if none exists
 		var nextField;
@@ -8455,7 +9083,7 @@ function dbFormHTMLArea(oDiv) {
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
-		    if ( sameColumn(fromField,field)
+		    if ( sameColumn(fromField, field)
 			 && fieldTop > fromFieldTop
 			 && ( typeof nextField == "undefined" || fieldTop < nextFieldTop )
 		       ) {
@@ -8467,10 +9095,10 @@ function dbFormHTMLArea(oDiv) {
 		    fields.each(function() {
 			var field = $(this);
 			var fieldTop = field.offset().top;
-			if ( rightOfColumn(fromField,field)
+			if ( rightOfColumn(fromField, field)
 			     && ( typeof nextField == "undefined"
-				  || leftOfColumn(nextField,field)
-				  || (sameColumn(field,nextField) && fieldTop < nextFieldTop)
+				  || leftOfColumn(nextField, field)
+				  || (sameColumn(field, nextField) && fieldTop < nextFieldTop)
 				)
 			   ) {
 			    nextField = field;
@@ -8487,45 +9115,20 @@ function dbFormHTMLArea(oDiv) {
 	});
 
 	// Private methods of RecordSet
-	function onBeforeUnload(){
+	function onBeforeUnload(event){
 	    var record = this.getCurrentRecord();
-	    if ( record.dbRecords('getState') == 'dirty' ) {
+	    if ( record.dbRecord('getState') == 'dirty' ) {
 		if ( window.confirm('Do you want to save your changes?') ) {
-		    record.dbRecords('save',false);
-		    if ( record.dbRecords('getState') == 'error' ) {
+		    record.dbRecord('save', false);
+		    if ( record.dbRecord('getState') == 'error' ) {
 			return "Your changes could not be saved.\nStay on the current page to correct.";
 		    }
 		}
 	    }
 	}
-	function onBeforePrint(){
-	    this.getCurrentField().dbRecords('fieldOut');
-	}
-	function sameRow(a,b) {
-	    // Takes two elements and returns true if they are on the same row
-	    return (a.offset().top <= (b.offset().top + b.outerHeight()))
-		&& ((a.offset().top + a.outerHeight()) >= b.offset().top);
-	}
-	function belowRow(a,b) {
-	    // Takes two elements and returns true if "a" is on a row below "b"
-	    return b.offset().top > (a.offset().top + a.outerHeight());
-	}
-	function aboveRow(a,b) {
-	    // Takes two elements and returns true if "a" is on a row above "b"
-	    return (b.offset().top + b.outerHeight()) < a.offset().top;
-	}
-	function sameColumn(a,b) {
-	    // Takes two elements and returns true if they are in the same column
-	    return (a.offset().left <= (b.offset().left + b.outerWidth()))
-		&& ((a.offset().left + a.outerWidth()) >= b.offset().left);
-	}
-	function leftOfColumn(a,b) {
-	    // Takes two elements and returns true if "a" is in a column left of "b"
-	    return (b.offset().left + b.outerWidth()) < a.offset().left;
-	}
-	function rightOfColumn(a,b) {
-	    // Takes two elements and returns true if "a" is in a column right of "b"
-	    return (a.offset().left + a.outerWidth()) < b.offset().left;
+	function onBeforePrint(event){
+	    this.getCurrentField().dbField('fieldOut');
+	    this.getCurrentRecord().dbRecord('recordOut');
 	}
     })();
     // End of class RecordSet
@@ -8551,14 +9154,17 @@ function dbFormHTMLArea(oDiv) {
 	}
 
 	// Public methods of class Record
-	$.extend(Record.prototype,{
+	$.extend(Record.prototype, {
 	    getRecordSet: function(){
-		return this.element.closest('.recordSet').data('RecordSet');
-	    },
+		// Get the record-set element for this record
+		return this.element.closest('.recordSet');
+	    }, 
 	    getState: function(){
+		// Get the state of this record
 		return this.state;
-	    },
+	    }, 
 	    setState: function(newState){
+		// Set the state of this record
 		switch(newState) {
 		case "updating":
 		case "error":
@@ -8571,74 +9177,75 @@ function dbFormHTMLArea(oDiv) {
 		default:
 		    $.error('Invalid state');
 		}
-	    },
+	    }, 
 	    save: function(async){
+		// Save this record, using an add or update url as appropriate
 		if ( this.getState() === "updating" ) return false;
-		var url = this.getRecordSet().element.attr(this.saveAction + "URL");
+		var url = this.getRecordSet().attr(this.saveAction + "URL");
 		if ( ! url ) {
 		    $.error('Could not '+this.saveAction+' record - no url provided');
 		}
-		this.action(this.saveAction,url,actionReturn.bind(this,this.saveAction),async);
-	    },
+		this.action(this.saveAction, url, async);
+	    }, 
 	    delete: function(async){
+		// Delete this record, by sending a delete request to the server
 		if ( this.getState() === "updating" ) return false;
-		var url = this.getRecordSet().element.attr('deleteURL');
+		var url = this.getRecordSet().attr('deleteURL');
 		if ( ! url ) {
 		    $.error('Could not delete record - no url provided');
 		}
-		this.action('delete',url,actionReturn.bind(this,'delete'),async);
-	    },
-	    action: function(action,url,handler,async){
+		this.action('delete', url, async);
+	    }, 
+	    action: function(action, url, async){
 		// Perform the given action (add, update, delete), by submitting record data to the server.
-		// Triggers a recordAction event, providing a deferred object for event listeners
-		var handler = coalesce(handler, actionReturn.bind(this, action));
 		var async = coalesce(async, true);
 
 		this.setState('updating');
-		this.getCurrentField().dbRecords('write');
+		this.getCurrentField().dbField('write');
 
 		var urlPieces = splitURL(url);
 		var path = urlPieces.path;
 		var data = urlPieces.data;
 		this.element.find('[name]').each(function(i, field) {
-		    var name = $(field).dbRecords('getName');
-		    var value = $(field).dbRecords('getValue');
+		    var name = $(field).dbField('getName');
+		    var value = $(field).dbField('getValue');
 		    data[name] = value;
 		});
 
-		var deferred = new jQuery.Deferred();
-		deferred.done(handler);
-		deferred.fail(actionReturnError.bind(this,action));
-
-		httpPost(path, data, function(data, textStatus, jqXHR) {
-		    deferred.resolve(data, textStatus, jqXHR);
-		}, function(jqXHR, textStatus, errorThrown) {
-		    deferred.reject(jqXHR, textStatus, errorThrown);
-		});
-		this.element.trigger('recordAction', [action, deferred]);
-	    },
+		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action));
+		this.element.trigger('recordAction', [action]);
+	    }, 
 	    getCurrentField: function(){
-		return this.element.find(this.getRecordSet().getCurrentField());
-	    },
+		return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
+	    }, 
 	    getFields: function(){
 		// Returns all editable fields in the record
 		return this.element.find('.editable');
-	    },
+	    }, 
 	    setValues: function(xmlDoc){
 		// Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 		this.element.find('[name]').each(function(i, field) {
-		    var node = $(xmlDoc).find('records record ' + $(field).dbRecords('getName'));
+		    var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		    if ( node.length > 0 ) {
-			$(field).dbRecords('setValue',node.text());
+			$(field).dbField('setValue', node.text());
 		    }
 		});
 		this.element.trigger('resize');
+	    }, 
+	    recordIn: function(){
+		this.element.trigger('recordIn');
+	    }, 
+	    recordOut: function(){
+		if ( this.getState() === "dirty" ) {
+		    this.save();
+		}
+		this.element.trigger('recordOut');
 	    }
 	});
 
 	// Private methods of class Record
 	// Called when an action succeeds or fails
-	function actionReturn(action,xmlDoc){
+	function actionReturn(action, xmlDoc, status, jqXHR){
 	    this.setState('current');
 	    switch(action){
 	    case "update":
@@ -8650,15 +9257,17 @@ function dbFormHTMLArea(oDiv) {
 		break;
 	    case "delete":
 		this.element.remove();
-		this.getRecordSet().element.trigger('resize');
+		this.getRecordSet().trigger('resize');
 		break;
 	    }
+	    this.element.trigger('recordActionReturn', [action, xmlDoc, status, jqXHR]);
 	}
-	function actionReturnError(action,message,type){
+	function actionReturnError(action, message, type, error){
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
 	    }
+	    this.element.trigger('recordActionReturnError', [action, message, type, error]);
 	}
     })();
     // End of class Record
@@ -8678,17 +9287,17 @@ function dbFormHTMLArea(oDiv) {
 	}
 
 	// Public methods of class Field
-	$.extend(Field.prototype,{
+	$.extend(Field.prototype, {
 	    getRecordSet: function(){
-		return this.element.closest('.recordSet').data('RecordSet');
-	    },
+		return this.element.closest('.recordSet');
+	    }, 
 	    getName: function() {
 		return this.element.attr('name');
-	    },
+	    }, 
 	    getRecord: function(){
 		// get the record containing this field
 		return this.element.closest('.record');
-	    },
+	    }, 
 	    getValue: function(){
 		// get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 		if ( this.getType() == "html" ) {
@@ -8698,7 +9307,7 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    return this.element.text();
 		}
-	    },
+	    }, 
 	    setValue: function(newValue){
 		// set the current value of this field
 		if ( this.getType() == "html" ) {
@@ -8708,11 +9317,11 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    this.element.text(newValue);
 		}
-	    },
+	    }, 
 	    fieldIn: function(newField, select){
 		// Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 		this.lockFocusEvents = true;
-		this.getRecordSet().setCurrentField(this.element);
+		this.getRecordSet().dbRecordSet('setCurrentField', this.element);
 		this.element.css('visibility', "hidden");
 
 		var fieldValue = this.getValue();
@@ -8727,143 +9336,146 @@ function dbFormHTMLArea(oDiv) {
 		}
 		this.element.trigger('fieldIn');
 		this.lockFocusEvents = false;
-	    },
+	    }, 
 	    fieldOut: function(){
 		// Stop editing this field
 		this.lockFocusEvents = true;
 		var record = this.getRecord();
-		this.getRecordSet().setCurrentField($([]));
+		this.getRecordSet().dbRecordSet('setCurrentField', $([]));
 		if ( this.getValue() !== this.controlGetValue() ) {
-		    record.dbRecords('setState','dirty');
+		    record.dbRecord('setState', 'dirty');
 		}
 		this.write();
-		this.element.css('visibility',"inherit");
+		this.element.css('visibility', "inherit");
 		this.controlHide();
-		if ( record.dbRecords('getState') == "dirty" ) {
-		    record.dbRecords('save');
-		}
 		this.element.trigger('fieldOut');
 		this.lockFocusEvents = false;
-	    },
+	    }, 
 	    getType: function(){
 		// Returns the field type (input, text, or html)
 		return this.element.attr('type');
-	    },
+	    }, 
 	    isEditable: function(){
 		// Returns true if the field is currently editable (ie. not updating)
-		return (this.element.is('.editable') && this.getRecord().dbRecords('getState') != "updating");
-	    },
-	    onMouseUp: function(){
+		return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
+	    }, 
+	    onMouseDown: function(event){
 		if ( this.isEditable() ) {
-		    this.getRecordSet().fieldChange(this.element);
+		    this.getRecordSet().dbRecordSet('fieldChange', this.element);
+		    event.preventDefault();
 		}
-	    },
+	    }, 
 	    onKeyDown: function(event){
 		// nb. Normally only captures key up events propagated here by the editor
 		if ( event.altKey ) {
 		    return true;
 		}
-		var records = this.getRecordSet();
+		var recordSet = this.getRecordSet();
 		var field = this.element;
 		switch (event.which) {
 		case 37: //left
-		    records.fieldChange(records.moveLeft(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
 		    break;
 		case 38: //up
-		    records.fieldChange(records.moveUp(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
 		    break;
 		case 39: //right
-		    records.fieldChange(records.moveRight(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
 		    break;
 		case 40: //down
-		    records.fieldChange(records.moveDown(field));
+		    recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
 		    break;
 		case 9: //tab
 		    if ( event.shiftKey ) {
-			var newField = records.moveLeft(field);
+			var newField = recordSet.dbRecords('moveLeft', field);
 		    } else {
-			var newField = records.moveRight(field);
+			var newField = recordSet.dbRecords('moveRight', field);
 		    }
 		    if ( newField == field ) {
-			this.getRecord().dbRecords('save');
+			this.getRecord().dbRecord('save');
 		    } else {
-			records.fieldChange(newField);
+			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
 		case 13: //return
-		    var newField = records.moveRight(field);
+		    var newField = recordSet.dbRecordSet('moveRight', field);
 		    if ( newField == field ) {
-			this.getRecord().dbRecords('save');
+			this.getRecord().dbRecord('save');
 		    } else {
-			records.fieldChange(newField);
+			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
 		case 46: //delete
-		    if ( this.getRecord().dbRecords('getUrl','delete') ) {
-			this.fieldOut();
-			this.getRecord().dbRecords('delete');
+		    if ( this.getRecord().dbRecord('getUrl', 'delete') ) {
+			this.getRecord().dbRecord('delete');
 		    }
 		    break;
 		case 83: //ctrl + s
 		    if ( event.ctrlKey ) {
-			this.save();
+			this.getRecord().dbRecord('save');
 			event.preventDefault();
 		    }
 		    break;
 		}
-	    },
+	    }, 
 	    onKeyUp: function(event){
 		if ( this.getValue() !== this.controlGetValue() ) {
-		    this.getRecord().dbRecords('setState','dirty');
+		    this.getRecord().dbRecord('setState', 'dirty');
 		}
-	    },
+	    }, 
 	    onCut: function(){
-		this.getRecord().dbRecords('setState','dirty');
-	    },
+		this.getRecord().dbRecord('setState', 'dirty');
+	    }, 
 	    onPaste: function(){
-		this.getRecord().dbRecords('setState','dirty');
-	    },
+		this.getRecord().dbRecord('setState', 'dirty');
+	    }, 
 	    onBlur: function(){
 		// Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue.
 		if ( ! this.lockFocusEvents ) {
 		    this.fieldOut();
+		    this.getRecord().dbRecord('recordOut');
 		}
-	    },
+	    }, 
 	    write: function(){
 		// Write the current editor contents to the field
 		this.setValue(this.controlGetValue());
-	    },
+	    }, 
 	    controlShow: function(value){
 		// Show the appropriate editor for this field
-		getEditorPlugin.call(this)('show', this.element, value);
-	    },
+		var editorPlugin = getEditorPlugin.call(this);
+		editorPlugin('show', this.element, value);
+	    }, 
 	    controlHide: function(){
 		// Hide the editor for this field
-		getEditorPlugin.call(this)('hide');
-	    },
+		var editorPlugin = getEditorPlugin.call(this)
+		editorPlugin('hide');
+	    }, 
 	    controlGetValue: function(){
 		// Get the current editor value
-		return getEditorPlugin.call(this)('getValue');
-	    },
+ 		var editorPlugin = getEditorPlugin.call(this);
+		return editorPlugin('getValue');
+	    }, 
 	    controlSelectText: function(option){
 		// set a text selection within the editor
-		getEditorPlugin.call(this)('selectText', this.element, option);
+		var editorPlugin = getEditorPlugin.call(this);
+		editorPlugin('selectText', this.element, option);
 	    }
 	});
 
 	// Private methods of class Field
 	function getEditorPlugin() {
-	    // Returns a function which calls the appropriate editor plugin for this field on the record set container.
-	    var container = this.getRecordSet().element;
+	    // Determines the appropriate editor plugin for this field, 
+	    // then returns a function which calls that plugin on the record set element.
+	    var container = this.getRecordSet();
 	    switch(this.getType()){
 	    case "input":
-		return container.inputEditor.bind(container);
+		return container.dbEditorinput.bind(container);
 		break;
 	    case "text":
-		return container.textEditor.bind(container);
+		return container.dbEditorText.bind(container);
 		break;
 	    case "html":
-		return container.htmlEditor.bind(container);
+		return container.dbEditorHTML.bind(container);
 		break;
 	    }
 	}
@@ -8874,427 +9486,105 @@ function dbFormHTMLArea(oDiv) {
 
 
 
-    // dbRecords plugin. The first time this is called should be on an element which contains all the records in a set.
-    // Afterwards being initialised, it can be called on that element or any of the record or field elements within that element.
-    // The methods made available will depend on the type of element the plugin is being called on.
-    $.fn.dbRecords = function() {
+    // dbRecordSet plugin
+    $.fn.dbRecordSet = function() {
 	var target = this;
 	var args = arguments;
 	var returnValue;
-	this.each(function(i, element) {
-	    var target = $(element);
-	    var RecordSetComponent = target.data('RecordSet');
 
-	    // If target is not a record set container, check to see if it is inside one
-	    if ( ! RecordSetComponent ) {
-		var container = target.closest('.recordSet');
-		if ( container.length == 1 && container.data('RecordSet') ) {
-		    RecordSetComponent = container.data('RecordSet').getComponentFor(target);
-		}
-	    }
+	if ( target.length > 1 ) $.error('dbRecordSet does not support multiple elements');
+	if ( target.length == 0 ) return target;
 
-	    // No arguments means constructing a new record set.
-	    if ( args.length == 0 ) {
-
-		// Construct a new record set with target as container
-		if ( ! RecordSetComponent ) {
-		    target.data('RecordSet', new RecordSet(target));
-		}
-
-	    } else if ( typeof args[0] == "string" ) {
-		// Called with a method name, attempt to call the method
-		var method = args[0];
-		if ( typeof RecordSetComponent[method] == "function" ) {
-		    returnValue = RecordSetComponent[method].apply(RecordSetComponent, Array.prototype.slice.call(args,1));
-		} else {
-		    $.error('Invalid method for dbRecords');
-		}
-	    }
-	});
-
-	if ( typeof returnValue == "undefined" ) {
-	    return this;
-	} else {
-	    return returnValue;
+	if ( ! target.data('recordSet') ) {
+	    target.data('recordSet', new RecordSet(target));
+	    target.addClass('recordSet');
 	}
+	var recordSet = target.data('recordSet');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof recordSet[method] == "function" ) {
+		returnValue = recordSet[method].apply(recordSet, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbRecordSet');
+	    }
+	}
+
+	return coalesce(returnValue, target);
     };
+
+    // dbRecord plugin
+    $.fn.dbRecord = function() {
+	var target = this;
+	var args = arguments;
+	var returnValue;
+
+	if ( target.length > 1 ) $.error('dbRecord does not support multiple elements');
+	if ( target.length == 0 ) {
+	    if ( args[0] === 'getState' ) {
+		return undefined;
+	    } else {
+		return target;
+	    }
+	}
+
+	if ( ! target.data('record') ) {
+	    target.data('record', new Record(target));
+	    target.addClass('record');
+	}
+	var record = target.data('record');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof record[method] == "function" ) {
+		returnValue = record[method].apply(record, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbRecord');
+	    }
+	}
+
+	return coalesce(returnValue, target);
+    };
+
+    // dbField plugin
+    $.fn.dbField = function() {
+	var target = this;
+	var args = arguments;
+	var returnValue;
+
+	if ( target.length > 1 ) $.error('dbField does not support multiple elements');
+	if ( target.length == 0 ) {
+	    if ( ['getName', 'getValue', 'getType', 'controlGetValue'].indexOf(args[0]) > -1 ) {
+		return undefined;
+	    } else {
+		return target;
+	    }
+	}
+
+	if ( ! target.data('field') ) {
+	    target.data('field', new Field(target));
+	}
+	var field = target.data('field');
+
+	if ( typeof args[0] == "string" ) {
+	    // Called with a method name, attempt to call the method
+	    var method = args[0];
+	    if ( typeof field[method] == "function" ) {
+		returnValue = field[method].apply(field, Array.prototype.slice.call(args, 1));
+	    } else {
+		$.error('Invalid method for dbField');
+	    }
+	}
+
+	return coalesce(returnValue, target);
+    }
 })(jQuery);
 
 jQuery(function(){
-    jQuery('.recordSet').dbRecords();
+    jQuery('.recordSet').dbRecordSet();
 });
-
-/* ==== jquery.htmlEditor.js ==== */
-(function($){
-    var eventNamespace = 'htmlEditor';
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width'];
-    function HTMLEditor(container) {
-	$(window).on('resize' + eventNamespace, onResize.bind(this));
-	this.editor = $('<div>')
-	    .attr('contentEditable', true)
-	    .addClass('htmlEditor')
-	    .appendTo(container)
-	    .css({
-		'position': "absolute"
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-    $.extend(HTMLEditor.prototype, {
-	getType: function() {
-	    return 'html';
-	},
-	getValue: function() {
-	    return this.editor.html();
-	},
-	show: function(element,value){
-	    this.currentElement = element;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,element.css(name));
-	    });
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		})
-		.show()
-		.html(value)
-		.focus();
-	},
-	hide: function(element) {
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	},
-	selectText: function(element,option) {
-	    switch(option) {
-	    case "start":
-		this.editor.textrange('set',"start","start");
-		break;
-	    case "end":
-		this.editor.textrange('set',"end","end");
-		break;
-	    case "all":
-		this.editor.textrange('set',"all");
-		break;
-	    }
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-    function onResize(event) {
-	if ( this.currentElement ) {
-	    var element = this.currentElement;
-	    var editor = this.editor;
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css({
-		    'width': element.css('width'),
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		});
-	}
-    }
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 37: // left
-	case 39: //right
-	    var selection = this.editor.textrange('get');
-	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	case 83: //S
-	    if ( e.which == 83 && ! e.ctrlKey ) break;
-	case 9: //tab
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    e.preventDefault();
-	    this.currentElement.trigger(event);
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnBlur(e, source) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentElement.trigger(event);
-	}
-    }
-    $.fn.htmlEditor = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('htmlEditor');
-	if ( ! control ) {
-	    target.data('htmlEditor', new HTMLEditor(target));
-	    var control = target.data('htmlEditor');
-	}
-	if ( arguments.length > 0 ) {
-	    var method = arguments[0];
-	    var args = Array.prototype.slice.call(arguments,1);
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,args);
-	    } else {
-		$.error('Invalid method of htmlEditor');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
-
-/* ==== jquery.inputEditor.js ==== */
-// inputEditor plugin
-(function($){
-    // Namespace for event handlers
-    var eventNamespace = '.inputEditor';
-
-    // css attributes to copy from target elements to the editor when editor is shown
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width','height'];
-
-    // class InputEditor
-    // constructor function - takes container which the editor is to be appended to as an argument.
-    function InputEditor(container) {
-	$(window).on('resize' + eventNamespace, onResize.bind(this));
-	this.editor = $('<input type="text">')
-	    .addClass('inputEditor')
-	    .appendTo(container)
-	    .css({
-		'position': "absolute",
-		'background': "white",
-		'overflow': "visible",
-		'-moz-box-sizing': "content-box",
-		'-ms-box-sizing': "content-box",
-		'box-sizing': "content-box",
-		'z-index': 1
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-
-    // Public methods for class inputEditor
-    $.extend(InputEditor.prototype, {
-	getType: function() {
-	    return 'text';
-	},
-	getValue: function() {
-	    return this.editor.val();
-	},
-	show: function(element,value){
-	    this.currentElement = element;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,element.css(name));
-	    });
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-	    editor
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		})
-		.show()
-		.val(value)
-		.focus();
-	},
-	hide: function(element) {
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	},
-	selectText: function(element,option) {
-	    switch(option) {
-	    case "start":
-		this.editor.textrange('set',"start","start");
-		break;
-	    case "end":
-		this.editor.textrange('set',"end","end");
-		break;
-	    case "all":
-		this.editor.textrange('set',"all");
-		break;
-	    }
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-
-    // Private methods for class inputEditor
-    function onResize(event) {
-	if ( this.currentElement ) {
-	    var element = this.currentElement;
-	    var editor = this.editor;
-	    $.each(['width','height'], function(i,name){
-		editor.css(name,element.css(name));
-	    });
-	    editor.css({
-		'top': element.position().top + element.offsetParent().scrollTop(),
-		'left': element.position().left + element.offsetParent().scrollLeft()
-	    });
-	}
-    }
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 37: // left
-	case 39: //right
-	    var selection = this.editor.textrange('get');
-	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	case 83: //S
-	    if ( e.which == 83 && ! e.ctrlKey ) break;
-	case 13: //return
-	case 9: //tab
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    e.preventDefault();
-	    this.currentElement.trigger(event);
-	    break;
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnBlur(e, source) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentElement.trigger(event);
-	}
-    }
-
-    // inputEditor plugin function
-    $.fn.inputEditor = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('inputEditor');
-	if ( ! control ) {
-	    target.data('inputEditor', new InputEditor(target));
-	    var control = target.data('inputEditor');
-	}
-	if ( arguments.length > 0 ) {
-	    var method = arguments[0];
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,Array.prototype.slice.call(arguments,1));
-	    } else {
-		$.error('Invalid method ' + method + ' of inputEditor');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
 
 /* ==== jquery.resizeableHeight.js ==== */
 (function($){
@@ -9372,188 +9662,6 @@ jQuery(function(){
   };
 
 }) (jQuery);
-
-/* ==== jquery.textEditor.js ==== */
-(function($){
-    var eventNamespace = '.textEditor';
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width','height'];
-    function TextEditor(container) {
-	$(window).on('resize' + eventNamespace, onResize.bind(this));
-	this.editor = $('<textarea>')
-	    .appendTo(container)
-	    .addClass('textEditor')
-	    .css({
-		'position': "absolute",
-		'resize': "none",
-		'-moz-box-sizing': "content-box",
-		'-ms-box-sizing': "content-box",
-		'box-sizing': "content-box",
-		'overflow': "auto"
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-    $.extend(TextEditor.prototype, {
-	getType: function() {
-	    return 'text';
-	},
-	getValue: function() {
-	    return this.editor.val();
-	},
-	show: function(element,value){
-	    this.currentElement = element;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,element.css(name));
-	    });
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-	    editor
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft(),
-		    'height': "+=1",
-		    'padding-bottom': "-=1"
-		})
-		.show()
-		.val(value)
-		.focus();
-	},
-	hide: function(element) {
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	},
-	selectText: function(element,option) {
-	    switch(option) {
-	    case "start":
-		this.editor.textrange('set',"start","start");
-		break;
-	    case "end":
-		this.editor.textrange('set',"end","end");
-		break;
-	    case "all":
-		this.editor.textrange('set',"all");
-		break;
-	    }
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-    function onResize(event) {
-	if ( this.currentElement ) {
-	    var element = this.currentElement;
-	    var editor = this.editor;
-	    $.each(['width','height'], function(i,name){
-		editor.css(name,element.css(name));
-	    });
-	    editor.css({
-		'top': element.position().top + element.offsetParent().scrollTop(),
-		'left': element.position().left + element.offsetParent().scrollLeft(),
-		'height': "+=1"
-	    });
-	}
-    }
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 37: // left
-	case 39: //right
-	    var selection = this.editor.textrange('get');
-	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	case 83: //S
-	    if ( e.which == 83 && ! e.ctrlKey ) break;
-	case 9: //tab
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    e.preventDefault();
-	    this.currentElement.trigger(event);
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnBlur(e) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentElement.trigger(event);
-	}
-    }
-    $.fn.textEditor = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('textEditor');
-	if ( ! control ) {
-	    target.data('textEditor', new TextEditor(target));
-	    var control = target.data('textEditor');
-	}
-	if ( arguments.length > 0 ) {
-	    var method = arguments[0];
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,Array.prototype.slice.call(arguments,1));
-	    } else {
-		$.error('Invalid method of textEditor');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
 
 /* ==== jquery.textrange.js ==== */
 /* ==== jquery.textrange.js ==== */
@@ -9849,6 +9957,32 @@ jQuery(function(){
 
 
 /* ==== jquery.utils.js ==== */
+// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+	if (typeof this !== "function") {
+	    // closest thing possible to the ECMAScript 5 internal IsCallable function
+	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+	}
+	
+	var aArgs = Array.prototype.slice.call(arguments, 1), 
+	fToBind = this, 
+	fNOP = function () {},
+	fBound = function () {
+	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
+	    return fToBind.apply(this instanceof fNOP && oThis
+				 ? this
+				 : oThis,
+				 aArgs.concat(Array.prototype.slice.call(arguments)));
+	};
+	
+	// The bound function prototype inherits from the original function prototype
+	fNOP.prototype = this.prototype;
+	fBound.prototype = new fNOP();
+	
+	return fBound;
+    };
+}
 function heir(p) {
     var f = function(){};
     f.prototype = p;
