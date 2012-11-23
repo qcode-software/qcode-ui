@@ -155,4 +155,4 @@
             $.error("Method " + method + " does not exist in jQuery.textrange");
         }
     };
-})(jQuery);​
+})(jQuery);

@@ -413,6 +413,7 @@
 	// Constructor function
 	Field = function(element) {
 	    this.element = $(element);
+	    this.lockFocusEvents = false;
 	}
 
 	// Public methods of class Field

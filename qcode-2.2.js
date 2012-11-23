@@ -8267,44 +8267,32 @@ function dbFormHTMLArea(oDiv) {
     var RecordSet;
     (function(){
 
-	// Constructor function - takes a target DOM object which contains all the records, and an optional options object
-	// Uses jquery selectors to distinguish between various element types on the page (records, fields, etc)
-	RecordSet = function(container, options) {
-	    this.container = $(container);
-	    this.container.data('RecordSet', this);
-	    this.settings = $.extend({
-		'fieldSelector': '.field',
-		'namedSelector': "[name]",
-		'recordSelector': ".record",
-		'updateURL': this.container.attr('updateURL'),
-		'addURL': this.container.attr('addURL'),
-		'deleteURL': this.container.attr('deleteURL')
-	    }, options);
+	// Constructor function - takes a target DOM object which contains all the records
+	RecordSet = function(element) {
+	    this.element = $(element);
 	    this.currentField = $([]);
 
 	    // Event listeners - rather than apply a seperate event listener to each field (which would fail if new fields were added), a delegated event listener is added to the record set container, listening for propogated events on the fields within.
-	    var fieldSelector = this.settings.fieldSelector;
-	    this.container
-		.on('mouseup.dbRecordSet', fieldSelector, function(event){
+	    this.element
+		.on('mouseup.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onMouseUp',event);
 		})
-		.on('keydown.dbRecordSet', fieldSelector, function(event){
+		.on('keydown.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onKeyDown',event);
 		})
-		.on('keyup.dbRecordSet', fieldSelector, function(event){
+		.on('keyup.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onKeyUp',event);
 		})
-		.on('cut.dbRecordSet', fieldSelector, function(event){
+		.on('cut.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onCut',event);
 		})
-		.on('paste.dbRecordSet', fieldSelector, function(event){
+		.on('paste.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onPaste',event);
 		})
-		.on('blur.dbRecordSet', fieldSelector, function(event){
+		.on('blur.dbRecordSet', '.editable', function(event){
 		    $(event.target).dbRecords('onBlur',event);
 		});
 	    $(window)
-		.on('resize.dbRecordSet', onResize.bind(this))
 		.on('beforeunload.dbRecordSet', onBeforeUnload.bind(this))
 		.on('beforeprint.dbRecordSet', onBeforePrint.bind(this));
 	};
@@ -8312,17 +8300,19 @@ function dbFormHTMLArea(oDiv) {
 	// Public methods of RecordSet
 	$.extend(RecordSet.prototype,{
 	    getComponentFor: function(element) {
-		// Returns an object (Field, Record or Named) representing the target element as a component of this record set
+		// Returns an object (Field or Record) representing the target element as a component of this record set
 		// Intended for internal use by the plugin only.
 		var element = $(element);
-		if ( element.data('recordSetComponent') ) {
-		    return element.data('recordSetComponent');
-		} else if ( element.is(this.settings.recordSelector) ) {
-		    return new Record(element, this);
-		} else if ( element.is(this.settings.fieldSelector) ) {
-		    return new Field(element, this);
-		} else if ( element.is(this.settings.namedSelector) ) {
-		    return new Named(element, this);
+		if ( element.data('record') ) {
+		    return element.data('record');
+		} else if ( element.data('field') ) {
+		    return element.data('field');
+		} else if ( element.is('.record') ) {
+		    element.data('record', new Record(element, this));
+		    return element.data('record');
+		} else if ( element.is('[name]') ) {
+		    element.data('field', new Field(element, this));
+		    return element.data('field');
 		}
 	    },
 	    save: function(aysnc) {
@@ -8346,23 +8336,11 @@ function dbFormHTMLArea(oDiv) {
 		this.currentField.dbRecords('fieldOut');
 		newField.dbRecords('fieldIn');
 	    },
-	    inputEditor: function() { // nb - various optional arguments
-		// Call methods of the input box control plugin
-		return this.container.inputEditor.apply(this.container, arguments);
-	    },
-	    textEditor: function() { // nb - various optional arguments
-		// Call methods of the textarea control plugin
-		return this.container.textEditor.apply(this.container, arguments);
-	    },
-	    htmlEditor: function() { // nb - various optional arguments
-		// Call methods of the editable html control plugin
-		return this.container.htmlEditor.apply(this.container, arguments);
-	    },
 	    moveLeft: function(fromField) {
 		// Returns the field one step left of the target, or the target itself if none exists
 		var nextField;
 		var fromFieldLeft = fromField.offset().left;
-		var fields = this.container.find(this.settings.fieldSelector);
+		var fields = this.element.find('.editable');
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
@@ -8399,7 +8377,7 @@ function dbFormHTMLArea(oDiv) {
 		// Returns the field one step right of the target, or the target itself if none exists
 		var nextField;
 		var fromFieldLeft = fromField.offset().left;
-		var fields = this.container.find(this.settings.fieldSelector);
+		var fields = this.element.find('.editable');
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldLeft = field.offset().left;
@@ -8436,7 +8414,7 @@ function dbFormHTMLArea(oDiv) {
 		// Returns the field one step above the target, or the target itself if none exists
 		var nextField;
 		var fromFieldTop = fromField.offset().top;
-		var fields = this.container.find(this.settings.fieldSelector);
+		var fields = this.element.find('.editable');
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
@@ -8473,7 +8451,7 @@ function dbFormHTMLArea(oDiv) {
 		// Returns the field one step below the target, or the target itself if none exists
 		var nextField;
 		var fromFieldTop = fromField.offset().top;
-		var fields = this.container.find(this.settings.fieldSelector);
+		var fields = this.element.find('.editable');
 		fields.each(function() {
 		    var field = $(this);
 		    var fieldTop = field.offset().top;
@@ -8509,9 +8487,6 @@ function dbFormHTMLArea(oDiv) {
 	});
 
 	// Private methods of RecordSet
-	function onResize(){
-	    this.getCurrentField().dbRecords('controlOnResize');
-	}
 	function onBeforeUnload(){
 	    var record = this.getCurrentRecord();
 	    if ( record.dbRecords('getState') == 'dirty' ) {
@@ -8527,29 +8502,29 @@ function dbFormHTMLArea(oDiv) {
 	    this.getCurrentField().dbRecords('fieldOut');
 	}
 	function sameRow(a,b) {
-	    // Takes two page elements and returns true if they are on the same row
+	    // Takes two elements and returns true if they are on the same row
 	    return (a.offset().top <= (b.offset().top + b.outerHeight()))
 		&& ((a.offset().top + a.outerHeight()) >= b.offset().top);
 	}
 	function belowRow(a,b) {
-	    // Takes two page elements and returns true if "a" is on a row below "b"
+	    // Takes two elements and returns true if "a" is on a row below "b"
 	    return b.offset().top > (a.offset().top + a.outerHeight());
 	}
 	function aboveRow(a,b) {
-	    // Takes two page elements and returns true if "a" is on a row above "b"
+	    // Takes two elements and returns true if "a" is on a row above "b"
 	    return (b.offset().top + b.outerHeight()) < a.offset().top;
 	}
 	function sameColumn(a,b) {
-	    // Takes two page elements and returns true if they are in the same column
+	    // Takes two elements and returns true if they are in the same column
 	    return (a.offset().left <= (b.offset().left + b.outerWidth()))
 		&& ((a.offset().left + a.outerWidth()) >= b.offset().left);
 	}
 	function leftOfColumn(a,b) {
-	    // Takes two page elements and returns true if "a" is in a column left of "b"
+	    // Takes two elements and returns true if "a" is in a column left of "b"
 	    return (b.offset().left + b.outerWidth()) < a.offset().left;
 	}
 	function rightOfColumn(a,b) {
-	    // Takes two page elements and returns true if "a" is in a column right of "b"
+	    // Takes two elements and returns true if "a" is in a column right of "b"
 	    return (a.offset().left + a.outerWidth()) < b.offset().left;
 	}
     })();
@@ -8565,11 +8540,10 @@ function dbFormHTMLArea(oDiv) {
     (function(){
 
 	// Constructor function
-	Record = function(container) {
-	    this.container = $(container);
-	    this.container.data('recordSetComponent', this);
+	Record = function(element) {
+	    this.element = $(element);
 	    this.state = 'current';
-	    if ( this.container.attr('saveAction') === "add" ) {
+	    if ( this.element.attr('saveAction') === "add" ) {
 		this.saveAction = "add";
 	    } else {
 		this.saveAction = "update";
@@ -8579,7 +8553,7 @@ function dbFormHTMLArea(oDiv) {
 	// Public methods of class Record
 	$.extend(Record.prototype,{
 	    getRecordSet: function(){
-		this.container.closest(recordSetContainers).data('RecordSet');
+		return this.element.closest('.recordSet').data('RecordSet');
 	    },
 	    getState: function(){
 		return this.state;
@@ -8590,8 +8564,8 @@ function dbFormHTMLArea(oDiv) {
 		case "error":
 		case "current":
 		case "dirty":
-		    this.container.removeClass(this.state);
-		    this.container.addClass(newState);
+		    this.element.removeClass("current dirty updating error");
+		    this.element.addClass(newState);
 		    this.state = newState;
 		    break;
 		default:
@@ -8599,81 +8573,66 @@ function dbFormHTMLArea(oDiv) {
 		}
 	    },
 	    save: function(async){
-		var url = this.getURL(this.saveAction);
+		if ( this.getState() === "updating" ) return false;
+		var url = this.getRecordSet().element.attr(this.saveAction + "URL");
 		if ( ! url ) {
 		    $.error('Could not '+this.saveAction+' record - no url provided');
 		}
 		this.action(this.saveAction,url,actionReturn.bind(this,this.saveAction),async);
 	    },
 	    delete: function(async){
-		var url = this.getURL('delete');
+		if ( this.getState() === "updating" ) return false;
+		var url = this.getRecordSet().element.attr('deleteURL');
 		if ( ! url ) {
 		    $.error('Could not delete record - no url provided');
 		}
 		this.action('delete',url,actionReturn.bind(this,'delete'),async);
 	    },
-	    getURL: function(action) {
-		// Given the name of an action (add, update, delete), attempts to get the corresponding URL from the attributes of this record element, or the record set container.
-		// returns undefined if no such URL exists
-		var urlAttr = action + "URL";
-		var url = this.container.attr(urlAttr);
-		if ( ! url ) {
-		    url = this.getRecordSet().settings[urlAttr];
-		}
-		return url;
-	    },
 	    action: function(action,url,handler,async){
 		// Perform the given action (add, update, delete), by submitting record data to the server.
 		// Triggers a recordAction event, providing a deferred object for event listeners
-		if ( typeof(handler) == "undefined" ) {
-		    handler = actionReturn.bind(this,action);
-		}
-		if (typeof(async) == "undefined") {
-		    async = true;
-		}
+		var handler = coalesce(handler, actionReturn.bind(this, action));
+		var async = coalesce(async, true);
+
 		this.setState('updating');
 		this.getCurrentField().dbRecords('write');
 
-		var data = {};
-		this.getNameds().each(function(i, named) {
-		    var name = $(named).dbRecords('getName');
-		    var value = $(named).dbRecords('getValue');
+		var urlPieces = splitURL(url);
+		var path = urlPieces.path;
+		var data = urlPieces.data;
+		this.element.find('[name]').each(function(i, field) {
+		    var name = $(field).dbRecords('getName');
+		    var value = $(field).dbRecords('getValue');
 		    data[name] = value;
-		});
-
-		var re = /([^\?]+)\??(.*)/;
-		re.exec(url);
-		var path = RegExp.$1;
-		var queryString = RegExp.$2;
-		$.each(queryString.split('&'),function(i, pair){
-		    data[pair.split('=')[0]] = pair.split('=')[1];
 		});
 
 		var deferred = new jQuery.Deferred();
 		deferred.done(handler);
 		deferred.fail(actionReturnError.bind(this,action));
-		httpPost(url,data,deferred.resolve.bind(deferred),deferred.reject.bind(deferred));
-		this.container.trigger('recordAction',[action,deferred]);
+
+		httpPost(path, data, function(data, textStatus, jqXHR) {
+		    deferred.resolve(data, textStatus, jqXHR);
+		}, function(jqXHR, textStatus, errorThrown) {
+		    deferred.reject(jqXHR, textStatus, errorThrown);
+		});
+		this.element.trigger('recordAction', [action, deferred]);
 	    },
 	    getCurrentField: function(){
-		return this.container.find(this.getRecordSet().getCurrentField());
-	    },
-	    getNameds: function(){
-		// Returns all named elements in the record
-		return this.container.find(this.getRecordSet().settings.namedSelector);
+		return this.element.find(this.getRecordSet().getCurrentField());
 	    },
 	    getFields: function(){
 		// Returns all editable fields in the record
-		return this.container.find(this.getRecordSet().settings.fieldSelector);
+		return this.element.find('.editable');
 	    },
 	    setValues: function(xmlDoc){
-		// Takes an xml document/fragment and attempts to match the nodes to named elements in the record, setting the values of those elements.
-		this.getNameds().each(function(i, named) {
-		    var node = $(xmlDoc).find('records record ' + $(named).dbRecords('getName'));
+		// Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
+		this.element.find('[name]').each(function(i, field) {
+		    var node = $(xmlDoc).find('records record ' + $(field).dbRecords('getName'));
 		    if ( node.length > 0 ) {
-			$(named).dbRecords('setValue',node.text());
+			$(field).dbRecords('setValue',node.text());
 		    }
 		});
+		this.element.trigger('resize');
 	    }
 	});
 
@@ -8681,8 +8640,18 @@ function dbFormHTMLArea(oDiv) {
 	// Called when an action succeeds or fails
 	function actionReturn(action,xmlDoc){
 	    this.setState('current');
-	    if ( action == "update" ) {
+	    switch(action){
+	    case "update":
 		this.setValues(xmlDoc);
+		break;
+	    case "add":
+		this.saveAction = "update";
+		this.setValues(xmlDoc);
+		break;
+	    case "delete":
+		this.element.remove();
+		this.getRecordSet().element.trigger('resize');
+		break;
 	    }
 	}
 	function actionReturnError(action,message,type){
@@ -8698,71 +8667,33 @@ function dbFormHTMLArea(oDiv) {
 
 
 
-    // Class Named
-    // A named element of a record, non-editable by default
-    var Named;
-    (function(){
-	Named = function(element) {
-	    this.element = $(element);
-	    this.element.data('recordSetComponent', this);
-	}
-	$.extend(Named.prototype,{
-	    getRecordSet: function(){
-		this.container.closest(recordSetContainers).data('RecordSet');
-	    },
-	    getValue: function(){
-		if ( this.element.is('input, select, textarea') ) {
-		    return this.element.val();
-		} else {
-		    return this.element.text();
-		}
-	    },
-	    setValue: function(newValue){
-		if ( this.element.is('input, select, textarea') ) {
-		    this.element.val(newValue);
-		} else {
-		    this.element.text(newValue);
-		}
-	    },
-	    getName: function() {
-		return this.element.attr('name');
-	    }
-	});
-    })();
-    // End of class Named
-
-
-
-
-
     // Class Field
-    // An editable field
     var Field;
     (function(){
 
 	// Constructor function
 	Field = function(element) {
 	    this.element = $(element);
-	    this.element.data('recordSetComponent', this);
+	    this.lockFocusEvents = false;
 	}
 
 	// Public methods of class Field
 	$.extend(Field.prototype,{
 	    getRecordSet: function(){
-		this.container.closest(recordSetContainers).data('RecordSet');
+		return this.element.closest('.recordSet').data('RecordSet');
 	    },
 	    getName: function() {
 		return this.element.attr('name');
 	    },
 	    getRecord: function(){
 		// get the record containing this field
-		return this.element.closest(this.getRecordSet().settings.recordSelector);
+		return this.element.closest('.record');
 	    },
 	    getValue: function(){
 		// get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 		if ( this.getType() == "html" ) {
 		    return this.element.html();
-		} else if ( this.element.is('input, select, textarea') ) {
+		} else if ( this.element.is(':input') ) {
 		    return this.element.val();
 		} else {
 		    return this.element.text();
@@ -8772,7 +8703,7 @@ function dbFormHTMLArea(oDiv) {
 		// set the current value of this field
 		if ( this.getType() == "html" ) {
 		    this.element.html(newValue);
-		} else if ( this.element.is('input, select, textarea') ) {
+		} else if ( this.element.is(':input') ) {
 		    this.element.val(newValue);
 		} else {
 		    this.element.text(newValue);
@@ -8820,7 +8751,7 @@ function dbFormHTMLArea(oDiv) {
 	    },
 	    isEditable: function(){
 		// Returns true if the field is currently editable (ie. not updating)
-		return this.getRecord().dbRecords('getState') != "updating";
+		return (this.element.is('.editable') && this.getRecord().dbRecords('getState') != "updating");
 	    },
 	    onMouseUp: function(){
 		if ( this.isEditable() ) {
@@ -8904,38 +8835,35 @@ function dbFormHTMLArea(oDiv) {
 	    },
 	    controlShow: function(value){
 		// Show the appropriate editor for this field
-		getControlFunction.call(this)('show', this.element, value);
+		getEditorPlugin.call(this)('show', this.element, value);
 	    },
 	    controlHide: function(){
 		// Hide the editor for this field
-		getControlFunction.call(this)('hide');
+		getEditorPlugin.call(this)('hide');
 	    },
 	    controlGetValue: function(){
 		// Get the current editor value
-		return getControlFunction.call(this)('getValue');
+		return getEditorPlugin.call(this)('getValue');
 	    },
 	    controlSelectText: function(option){
 		// set a text selection within the editor
-		getControlFunction.call(this)('selectText', this.element, option);
-	    },
-	    controlOnResize: function(event){
-		// Update the editor's size and position.
-		getControlFunction.call(this)('onResize', event);
+		getEditorPlugin.call(this)('selectText', this.element, option);
 	    }
 	});
 
 	// Private methods of class Field
-	function getControlFunction() {
-	    // Returns the function by which the editor control plugin for this element can be accessed.
+	function getEditorPlugin() {
+	    // Returns a function which calls the appropriate editor plugin for this field on the record set container.
+	    var container = this.getRecordSet().element;
 	    switch(this.getType()){
 	    case "input":
-		return this.getRecordSet().inputEditor.bind(this.getRecordSet());
+		return container.inputEditor.bind(container);
 		break;
 	    case "text":
-		return this.getRecordSet().textEditor.bind(this.getRecordSet());
+		return container.textEditor.bind(container);
 		break;
 	    case "html":
-		return this.getRecordSet().htmlEditor.bind(this.getRecordSet());
+		return container.htmlEditor.bind(container);
 		break;
 	    }
 	}
@@ -8947,9 +8875,8 @@ function dbFormHTMLArea(oDiv) {
 
 
     // dbRecords plugin. The first time this is called should be on an element which contains all the records in a set.
-    // Afterwards being initialised, it can be called on that container or any of the record or field elements within that container.
+    // Afterwards being initialised, it can be called on that element or any of the record or field elements within that element.
     // The methods made available will depend on the type of element the plugin is being called on.
-    var recordSetContainers = $([]);
     $.fn.dbRecords = function() {
 	var target = this;
 	var args = arguments;
@@ -8960,21 +8887,18 @@ function dbFormHTMLArea(oDiv) {
 
 	    // If target is not a record set container, check to see if it is inside one
 	    if ( ! RecordSetComponent ) {
-		var container = target.closest(recordSetContainers);
+		var container = target.closest('.recordSet');
 		if ( container.length == 1 && container.data('RecordSet') ) {
 		    RecordSetComponent = container.data('RecordSet').getComponentFor(target);
 		}
 	    }
 
-	    // No arguments or an object means either constructing a new record set or changing settings.
-	    if ( args.length == 0 || typeof args[0] == "object" ) {
-		var options = args[0];
+	    // No arguments means constructing a new record set.
+	    if ( args.length == 0 ) {
 
 		// Construct a new record set with target as container
 		if ( ! RecordSetComponent ) {
-		    new RecordSet(target, options);
-		    recordSetContainers = recordSetContainers.add(target);
-
+		    target.data('RecordSet', new RecordSet(target));
 		}
 
 	    } else if ( typeof args[0] == "string" ) {
@@ -8996,6 +8920,10 @@ function dbFormHTMLArea(oDiv) {
     };
 })(jQuery);
 
+jQuery(function(){
+    jQuery('.recordSet').dbRecords();
+});
+
 /* ==== jquery.htmlEditor.js ==== */
 (function($){
     var eventNamespace = 'htmlEditor';
@@ -9008,6 +8936,7 @@ function dbFormHTMLArea(oDiv) {
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
 			  'width'];
     function HTMLEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
 	this.editor = $('<div>')
 	    .attr('contentEditable', true)
 	    .addClass('htmlEditor')
@@ -9050,38 +8979,52 @@ function dbFormHTMLArea(oDiv) {
 		.html(value)
 		.focus();
 	},
-	onResize: function() {
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		editor
-		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		    .css({
-			'width': element.css('width'),
-			'top': element.position().top + element.offsetParent().scrollTop(),
-			'left': element.position().left + element.offsetParent().scrollLeft()
-		    });
-	    }
-	},
 	hide: function(element) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	},
-	selectText: function(element,text) {
-	    // TO DO - figure out if there's a way to do this
+	selectText: function(element,option) {
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set',"start","start");
+		break;
+	    case "end":
+		this.editor.textrange('set',"end","end");
+		break;
+	    case "all":
+		this.editor.textrange('set',"all");
+		break;
+	    }
 	},
 	destroy: function() {
 	    this.editor.remove();
 	}
     });
+    function onResize(event) {
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    editor
+		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		.css({
+		    'width': element.css('width'),
+		    'top': element.position().top + element.offsetParent().scrollTop(),
+		    'left': element.position().left + element.offsetParent().scrollLeft()
+		});
+	}
+    }
     function inputOnKeyDown(e) {
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
 	case 83: //S
-	    if ( ! e.ctrlKey ) break;
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
 	case 9: //tab
-	    e.preventDefault();
 	case 38: //up
 	case 40: //down
             var event = jQuery.Event(e.type,{
@@ -9091,6 +9034,7 @@ function dbFormHTMLArea(oDiv) {
 		'shiftKey': e.shiftKey,
 		'which': e.which
             });
+	    e.preventDefault();
 	    this.currentElement.trigger(event);
 	}
     }
@@ -9176,7 +9120,7 @@ function dbFormHTMLArea(oDiv) {
     // class InputEditor
     // constructor function - takes container which the editor is to be appended to as an argument.
     function InputEditor(container) {
-	this.container = container;
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
 	this.editor = $('<input type="text">')
 	    .addClass('inputEditor')
 	    .appendTo(container)
@@ -9225,19 +9169,6 @@ function dbFormHTMLArea(oDiv) {
 		.val(value)
 		.focus();
 	},
-	onResize: function() {
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width','height'], function(i,name){
-		    editor.css(name,element.css(name));
-		});
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		});
-	    }
-	},
 	hide: function(element) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
@@ -9245,7 +9176,17 @@ function dbFormHTMLArea(oDiv) {
 	    this.editor.hide();
 	},
 	selectText: function(element,option) {
-	    // TO DO - figure out if there's a way to do this
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set',"start","start");
+		break;
+	    case "end":
+		this.editor.textrange('set',"end","end");
+		break;
+	    case "all":
+		this.editor.textrange('set',"all");
+		break;
+	    }
 	},
 	destroy: function() {
 	    this.editor.remove();
@@ -9253,13 +9194,30 @@ function dbFormHTMLArea(oDiv) {
     });
 
     // Private methods for class inputEditor
+    function onResize(event) {
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    $.each(['width','height'], function(i,name){
+		editor.css(name,element.css(name));
+	    });
+	    editor.css({
+		'top': element.position().top + element.offsetParent().scrollTop(),
+		'left': element.position().left + element.offsetParent().scrollLeft()
+	    });
+	}
+    }
     function inputOnKeyDown(e) {
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
 	case 83: //S
-	    if ( ! e.ctrlKey ) break;
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
 	case 13: //return
 	case 9: //tab
-	    e.preventDefault();
 	case 38: //up
 	case 40: //down
             var event = jQuery.Event(e.type,{
@@ -9269,6 +9227,7 @@ function dbFormHTMLArea(oDiv) {
 		'shiftKey': e.shiftKey,
 		'which': e.which
             });
+	    e.preventDefault();
 	    this.currentElement.trigger(event);
 	    break;
 	}
@@ -9426,6 +9385,7 @@ function dbFormHTMLArea(oDiv) {
 			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
 			  'width','height'];
     function TextEditor(container) {
+	$(window).on('resize' + eventNamespace, onResize.bind(this));
 	this.editor = $('<textarea>')
 	    .appendTo(container)
 	    .addClass('textEditor')
@@ -9473,20 +9433,6 @@ function dbFormHTMLArea(oDiv) {
 		.val(value)
 		.focus();
 	},
-	onResize: function() {
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width','height'], function(i,name){
-		    editor.css(name,element.css(name));
-		});
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(),
-		    'left': element.position().left + element.offsetParent().scrollLeft(),
-		    'height': "+=1"
-		});
-	    }
-	},
 	hide: function(element) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
@@ -9494,18 +9440,46 @@ function dbFormHTMLArea(oDiv) {
 	    this.editor.hide();
 	},
 	selectText: function(element,option) {
-	    // TO DO - figure out if there's a way to do this
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set',"start","start");
+		break;
+	    case "end":
+		this.editor.textrange('set',"end","end");
+		break;
+	    case "all":
+		this.editor.textrange('set',"all");
+		break;
+	    }
 	},
 	destroy: function() {
 	    this.editor.remove();
 	}
     });
+    function onResize(event) {
+	if ( this.currentElement ) {
+	    var element = this.currentElement;
+	    var editor = this.editor;
+	    $.each(['width','height'], function(i,name){
+		editor.css(name,element.css(name));
+	    });
+	    editor.css({
+		'top': element.position().top + element.offsetParent().scrollTop(),
+		'left': element.position().left + element.offsetParent().scrollLeft(),
+		'height': "+=1"
+	    });
+	}
+    }
     function inputOnKeyDown(e) {
 	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	case 37: // left
+	case 39: //right
+	    var selection = this.editor.textrange('get');
+	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
 	case 83: //S
-	    if ( ! e.ctrlKey ) break;
+	    if ( e.which == 83 && ! e.ctrlKey ) break;
 	case 9: //tab
-	    e.preventDefault();
 	case 38: //up
 	case 40: //down
             var event = jQuery.Event(e.type,{
@@ -9515,6 +9489,7 @@ function dbFormHTMLArea(oDiv) {
 		'shiftKey': e.shiftKey,
 		'which': e.which
             });
+	    e.preventDefault();
 	    this.currentElement.trigger(event);
 	}
     }
@@ -9738,8 +9713,7 @@ function dbFormHTMLArea(oDiv) {
             $.error("Method " + method + " does not exist in jQuery.textrange");
         }
     };
-})(jQuery);​
-
+})(jQuery);
 
 /* ==== jquery.theadFixed.js ==== */
 (function($){
@@ -9880,7 +9854,27 @@ function heir(p) {
     f.prototype = p;
     return new f();
 }
-
+function coalesce() {
+    for(var i = 0; i < arguments.length; i++){
+	if ( typeof arguments[i] != "undefined" ) {
+	    return arguments[i];
+	}
+    }
+}
+function splitURL(url) {
+    var re = /([^\?]+)\??(.*)/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    var data = {};
+    $.each(queryString.split('&'),function(i, pair){
+	data[pair.split('=')[0]] = pair.split('=')[1];
+    });
+    return {
+	'path': path,
+	'data': data
+    }
+}
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
