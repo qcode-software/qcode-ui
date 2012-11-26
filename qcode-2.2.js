@@ -9387,9 +9387,9 @@ function dbFormHTMLArea(oDiv) {
 		    break;
 		case 9: //tab
 		    if ( event.shiftKey ) {
-			var newField = recordSet.dbRecords('moveLeft', field);
+			var newField = recordSet.dbRecordSet('moveLeft', field);
 		    } else {
-			var newField = recordSet.dbRecords('moveRight', field);
+			var newField = recordSet.dbRecordSet('moveRight', field);
 		    }
 		    if ( newField == field ) {
 			this.getRecord().dbRecord('save');
@@ -9582,6 +9582,7 @@ function dbFormHTMLArea(oDiv) {
     }
 })(jQuery);
 
+// dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
 jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
