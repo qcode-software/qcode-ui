@@ -7,7 +7,10 @@ var DbGridInput = function(callback, container) {
   input.css({
     'position':'absolute',
     'visibility':'hidden',
-    'background-color':'white'
+      'background-color':'white',
+      '-moz-box-sizing': "content-box", 
+      '-ms-box-sizing': "content-box", 
+      'box-sizing': "content-box"
   });
   container.append(input);
 
@@ -131,12 +134,12 @@ DbGridInput.prototype.show = function(cell,value) {
 
   var top = cell.position().top + container.scrollTop() ;
   var left =  cell.position().left + container.scrollLeft();
-  height = cell.height();
-  width = cell.width();
+    height = cell.height();
+    width = cell.width();
   
-  if ( cell.css('backgroundColor') != 'transparent' ) {
+    if ( cell.css('backgroundColor') != 'transparent' && cell.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
     backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
+  } else if ( row.css('background-color') != 'transparent' && row.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
     backgroundColor = row.css('background-color');
   } else {
     backgroundColor = 'white';
@@ -147,7 +150,7 @@ DbGridInput.prototype.show = function(cell,value) {
   var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
   var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-  if ( table.css('border-collapse') == 'collapse' ) {
+/*  if ( table.css('border-collapse') == 'collapse' ) {
     if ( borderTopWidth%2 == 0 ) {
       var borderTopWidth = borderTopWidth/2;
     } else {
@@ -176,7 +179,7 @@ DbGridInput.prototype.show = function(cell,value) {
     left -= borderLeftWidth;
     height +=  borderTopWidth;
     width +=  borderLeftWidth;
-  } 
+  } */
   
   // get styles applied to td
   var styles = {

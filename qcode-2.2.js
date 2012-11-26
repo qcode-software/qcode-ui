@@ -3991,7 +3991,10 @@ var DbGridInput = function(callback, container) {
   input.css({
     'position':'absolute',
     'visibility':'hidden',
-    'background-color':'white'
+      'background-color':'white',
+      '-moz-box-sizing': "content-box", 
+      '-ms-box-sizing': "content-box", 
+      'box-sizing': "content-box"
   });
   container.append(input);
 
@@ -4115,12 +4118,12 @@ DbGridInput.prototype.show = function(cell,value) {
 
   var top = cell.position().top + container.scrollTop() ;
   var left =  cell.position().left + container.scrollLeft();
-  height = cell.height();
-  width = cell.width();
+    height = cell.height();
+    width = cell.width();
   
-  if ( cell.css('backgroundColor') != 'transparent' ) {
+    if ( cell.css('backgroundColor') != 'transparent' && cell.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
     backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
+  } else if ( row.css('background-color') != 'transparent' && row.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
     backgroundColor = row.css('background-color');
   } else {
     backgroundColor = 'white';
@@ -4131,7 +4134,7 @@ DbGridInput.prototype.show = function(cell,value) {
   var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
   var borderLeftWidth = parseInt(cell.css('border-left-width'));
 
-  if ( table.css('border-collapse') == 'collapse' ) {
+/*  if ( table.css('border-collapse') == 'collapse' ) {
     if ( borderTopWidth%2 == 0 ) {
       var borderTopWidth = borderTopWidth/2;
     } else {
@@ -4160,7 +4163,7 @@ DbGridInput.prototype.show = function(cell,value) {
     left -= borderLeftWidth;
     height +=  borderTopWidth;
     width +=  borderLeftWidth;
-  } 
+  } */
   
   // get styles applied to td
   var styles = {
@@ -5018,6 +5021,46 @@ function dynamicResize(oContainer) {
     }
 }
 
+
+/* ==== jquery.borderCollapse.js ==== */
+(function($){
+    $.fn.borderCollapse = function(){
+	var tables = $(this).filter('table').filter(function(){return $(this).css('border-collapse') == "collapse";});
+	tables.each(function(i, element) {
+	    var table = $(element);
+	    table.css({
+		'border-collapse': "separate",
+		'border-spacing': 0
+	    });
+	    var rows = $(table).find('tr:visible');
+	    if ( parseInt(table.css('border-top-width')) > 0 ) {
+		rows.eq(0).find('th, td').filter(':visible').css('border-top-width', 0);
+	    }
+	    if ( parseInt(table.css('border-left-width')) > 0 ) {
+		rows.each(function(j, element) {
+		    var row = $(element);
+		    row.find('th, td').filter(':visible').eq(0).css('border-left-width', 0);
+		});
+	    }
+	    if ( parseInt(table.css('border-right-width')) > 0 ) {
+		rows.each(function(j, element) {
+		    var row = $(element);
+		    row.find('th, td').filter(':visible').eq(-1).css('border-right-width', 0);
+		});
+	    }
+	    if ( parseInt(table.css('border-bottom-width')) > 0 ) {
+		rows.eq(-1).find('th, td').filter(':visible').css('border-bottom-width', 0);
+	    }
+	    rows.each(function(i, element){
+		var row = $(element);
+		var cells = row.find('td, th').filter(':visible');
+		cells.not(cells.eq(0)).css('border-left-width', 0);
+	    });
+	    rows.not(rows.eq(0)).find('th, td').css('border-top-width', 0);
+	});
+	
+    }
+})(jQuery);
 
 /* ==== jquery.colInherit.js ==== */
 (function($) {
@@ -9912,6 +9955,18 @@ jQuery(function(){
 	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	}
 
+	this.thead.css({
+	    'border-top-style': this.table.css('border-top-style'),
+	    'border-top-width': this.table.css('border-top-width'),
+	    'border-top-color': this.table.css('border-top-color'),
+	    'border-left-style': this.table.css('border-left-style'),
+	    'border-left-width': this.table.css('border-left-width'),
+	    'border-left-color': this.table.css('border-left-color'),
+	    'border-right-style': this.table.css('border-right-style'),
+	    'border-right-width': this.table.css('border-right-width'),
+	    'border-right-color': this.table.css('border-right-color')
+	});
+	this.table.css('border-top-width', 0);
     };
     $.extend(TheadFixed.prototype, {
 	setHeight: function(newHeight) {

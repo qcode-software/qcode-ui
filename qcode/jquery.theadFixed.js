@@ -85,6 +85,18 @@
 	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	}
 
+	this.thead.css({
+	    'border-top-style': this.table.css('border-top-style'),
+	    'border-top-width': this.table.css('border-top-width'),
+	    'border-top-color': this.table.css('border-top-color'),
+	    'border-left-style': this.table.css('border-left-style'),
+	    'border-left-width': this.table.css('border-left-width'),
+	    'border-left-color': this.table.css('border-left-color'),
+	    'border-right-style': this.table.css('border-right-style'),
+	    'border-right-width': this.table.css('border-right-width'),
+	    'border-right-color': this.table.css('border-right-color')
+	});
+	this.table.css('border-top-width', 0);
     };
     $.extend(TheadFixed.prototype, {
 	setHeight: function(newHeight) {
