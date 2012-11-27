@@ -346,7 +346,7 @@
 		    data[name] = value;
 		});
 
-		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action));
+		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action), async);
 		this.element.trigger('recordAction', [action]);
 	    }, 
 	    getCurrentField: function(){
@@ -459,14 +459,14 @@
 		this.element.css('visibility', "hidden");
 
 		var fieldValue = this.getValue();
-		this.controlShow(fieldValue);
+		this.editorShow(fieldValue);
 
 		if (select) {
-		    this.controlSelectText(select);
+		    this.editorSelectText(select);
 		} else if ( this.element.attr('fieldInSelect') != null ) {
-		    this.controlSelectText(this.element.attr('fieldInSelect'));
+		    this.editorSelectText(this.element.attr('fieldInSelect'));
 		} else {
-		    this.controlSelectText('all');
+		    this.editorSelectText('all');
 		}
 		this.element.trigger('fieldIn');
 		this.lockFocusEvents = false;
@@ -476,12 +476,12 @@
 		this.lockFocusEvents = true;
 		var record = this.getRecord();
 		this.getRecordSet().dbRecordSet('setCurrentField', $([]));
-		if ( this.getValue() !== this.controlGetValue() ) {
+		if ( this.getValue() !== this.editorGetValue() ) {
 		    record.dbRecord('setState', 'dirty');
 		}
 		this.write();
 		this.element.css('visibility', "inherit");
-		this.controlHide();
+		this.editorHide();
 		this.element.trigger('fieldOut');
 		this.lockFocusEvents = false;
 	    }, 
@@ -539,11 +539,6 @@
 			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
-		case 46: //delete
-		    if ( this.getRecord().dbRecord('getUrl', 'delete') ) {
-			this.getRecord().dbRecord('delete');
-		    }
-		    break;
 		case 83: //ctrl + s
 		    if ( event.ctrlKey ) {
 			this.getRecord().dbRecord('save');
@@ -553,7 +548,7 @@
 		}
 	    }, 
 	    onKeyUp: function(event){
-		if ( this.getValue() !== this.controlGetValue() ) {
+		if ( this.getValue() !== this.editorGetValue() ) {
 		    this.getRecord().dbRecord('setState', 'dirty');
 		}
 	    }, 
@@ -572,24 +567,24 @@
 	    }, 
 	    write: function(){
 		// Write the current editor contents to the field
-		this.setValue(this.controlGetValue());
+		this.setValue(this.editorGetValue());
 	    }, 
-	    controlShow: function(value){
+	    editorShow: function(value){
 		// Show the appropriate editor for this field
 		var editorPlugin = getEditorPlugin.call(this);
 		editorPlugin('show', this.element, value);
 	    }, 
-	    controlHide: function(){
+	    editorHide: function(){
 		// Hide the editor for this field
 		var editorPlugin = getEditorPlugin.call(this)
 		editorPlugin('hide');
 	    }, 
-	    controlGetValue: function(){
+	    editorGetValue: function(){
 		// Get the current editor value
  		var editorPlugin = getEditorPlugin.call(this);
 		return editorPlugin('getValue');
 	    }, 
-	    controlSelectText: function(option){
+	    editorSelectText: function(option){
 		// set a text selection within the editor
 		var editorPlugin = getEditorPlugin.call(this);
 		editorPlugin('selectText', this.element, option);
@@ -602,13 +597,13 @@
 	    // then returns a function which calls that plugin on the record set element.
 	    var container = this.getRecordSet();
 	    switch(this.getType()){
-	    case "input":
+	    case "text":
 		return container.dbEditorinput.bind(container);
 		break;
-	    case "text":
+	    case "textarea":
 		return container.dbEditorText.bind(container);
 		break;
-	    case "html":
+	    case "htmlarea":
 		return container.dbEditorHTML.bind(container);
 		break;
 	    }
@@ -690,7 +685,7 @@
 
 	if ( target.length > 1 ) $.error('dbField does not support multiple elements');
 	if ( target.length == 0 ) {
-	    if ( ['getName', 'getValue', 'getType', 'controlGetValue'].indexOf(args[0]) > -1 ) {
+	    if ( ['getName', 'getValue', 'getType', 'editorGetValue'].indexOf(args[0]) > -1 ) {
 		return undefined;
 	    } else {
 		return target;

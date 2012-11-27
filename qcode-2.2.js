@@ -5062,6 +5062,10 @@ function dynamicResize(oContainer) {
     }
 })(jQuery);
 
+$(function(){
+    $('table:not(:has(tfoot))').css('border-bottom-width', 0);
+});
+
 /* ==== jquery.colInherit.js ==== */
 (function($) {
     $.fn.colInherit = function(options) {
@@ -9448,11 +9452,6 @@ function dbFormHTMLArea(oDiv) {
 			recordSet.dbRecordSet('fieldChange', newField);
 		    }
 		    break;
-		case 46: //delete
-		    if ( this.getRecord().dbRecord('getUrl', 'delete') ) {
-			this.getRecord().dbRecord('delete');
-		    }
-		    break;
 		case 83: //ctrl + s
 		    if ( event.ctrlKey ) {
 			this.getRecord().dbRecord('save');
@@ -9511,13 +9510,13 @@ function dbFormHTMLArea(oDiv) {
 	    // then returns a function which calls that plugin on the record set element.
 	    var container = this.getRecordSet();
 	    switch(this.getType()){
-	    case "input":
+	    case "text":
 		return container.dbEditorinput.bind(container);
 		break;
-	    case "text":
+	    case "textarea":
 		return container.dbEditorText.bind(container);
 		break;
-	    case "html":
+	    case "htmlarea":
 		return container.dbEditorHTML.bind(container);
 		break;
 	    }
@@ -9630,6 +9629,109 @@ jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
 
+/* ==== jquery.hoverScroller.js ==== */
+// Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover.
+(function($){
+    $.fn.hoverScroller = function(options){
+	// scrollbox is the box to scroll,
+	// container is the element to add the controls to (normally the scrollbox's parent)
+	// scrollSpeed is measured in pixels/millisecond and determines how fast the box scrolls (only a single fixed speed is currently supported)
+	var settings = $.extend({
+	    scrollBox: $(this),
+	    container: $(this).parent(),
+	    scrollSpeed: 0.3
+	}, options);
+	var scrollBox = settings.scrollBox;
+	var container = settings.container;
+	var scrollSpeed = settings.scrollSpeed;
+
+	// A div which appears at the bottom of the container, which scrolls the scrollBox down when you hover the mouse over it
+	var downScroller = $('<div>')
+	    .appendTo(container)
+	    .addClass('down scroller')
+	    .on('mouseenter', function(){
+		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
+		downScroller.stop().fadeTo(0, 0.5);
+		upScroller.stop().fadeTo(0, 0.1);
+		var scrollTo = scrollBox.prop('scrollHeight') - scrollBox.height();
+		var duration = (scrollTo - scrollBox.scrollTop()) / scrollSpeed;
+		scrollBox.addClass('scrolling')
+		    .animate(
+			{ 'scrollTop': scrollTo },
+			duration,
+			function() {
+			    // When scrolling is finished (reaches the bottom), hide the downwards scroller
+			    downScroller.stop().fadeOut();
+			    scrollBox.removeClass('scrolling');
+			}
+		    );
+	    })
+	    .on('mouseleave', function(){
+		if ( scrollBox.is('.scrolling') ) {
+		    // If the mouse leaves the downwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
+		    downScroller.stop().fadeTo(0, 0.1);
+		    scrollBox.stop();
+		}
+	    });
+
+	// A div which appears at the top of the container, which scrolls the scrollBox up when you hover the mouse over it
+	var upScroller = $('<div>')
+	    .appendTo(container)
+	    .addClass('up scroller')
+	    .on('mouseenter', function(){
+		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
+		upScroller.stop().fadeTo(0, 0.5);
+		downScroller.stop().fadeTo(0, 0.1);
+		var duration = scrollBox.scrollTop() / scrollSpeed;
+		scrollBox.addClass('scrolling')
+		    .animate(
+			{ 'scrollTop': 0 },
+			duration,
+			function(){
+			    // When scrolling is finished (reaches the top), hide the upwards scroller
+			    upScroller.stop().fadeOut();
+			    scrollBox.removeClass('scrolling');
+			}
+		    );
+	    })
+	    .on('mouseleave', function(){
+		if ( scrollBox.is('.scrolling') ) {
+		    // If the mouse leaves the upwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
+		    upScroller.stop().fadeTo(0, 0.1);
+		    scrollBox.stop();
+		}
+	    });
+
+
+	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
+	$(window).on('resize.hoverScroller', function(){
+	    if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
+		upScroller.add(downScroller).stop().fadeOut(0);
+	    } else {
+		if ( scrollBox.scrollTop() > 0 ) {
+		    upScroller.fadeTo(0, 0.1);
+		}
+		if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
+		    downScroller.fadeTo(0, 0.1);
+		}
+	    }
+	});
+	$(window).triggerHandler('resize.hoverScroller');
+
+	// Hide scrollbars.
+	// TO DO: extend this to work for other layouts, use a wrapper if needed
+	if ( scrollBox.css('left') !== "auto"
+	     && scrollBox.css('right') === "0px"
+	     && settings.container.css('overflow-x') === "hidden" ) {
+	    var scrollBarWidth = scrollBox.width() - scrollBox[0].scrollWidth;
+	    scrollBox.css('right', 0 - scrollBarWidth);
+	}
+
+	// End of hover scroller plugin; return original target for jQuery chainability
+	return this;
+    }
+})(jQuery);
+
 /* ==== jquery.resizeableHeight.js ==== */
 (function($){
   // ResizeableHeight Class Constructor - vertical resize on bottom border
@@ -9706,6 +9808,121 @@ jQuery(function(){
   };
 
 }) (jQuery);
+
+/* ==== jquery.sidebar.js ==== */
+// Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
+(function($){
+
+    // class Sidebar - an object to handle all the plugin functionality
+    function Sidebar(element) {
+	// Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
+	$('body').css('margin-right', "+=35px");
+
+	var sidebar = this.sidebar = $(element);
+	var toolbar = this.toolbar = sidebar.find('.toolbar');
+	var initialWidth = sidebar.width();
+
+	// An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
+	var handle = this.handle = $('<div>')
+	    .addClass('handle')
+	    .prependTo(sidebar)
+	    .on('mousedown.resizer',dragStart) // The dragStart function will bind additional event listeners to trigger drag events
+	    .on('dragStart', function(event, data) {
+		initialWidth = sidebar.width();
+		sidebar.trigger('resizeStart');
+	    })
+	    .on('drag', function(event, data) {
+		sidebar.width(initialWidth - data.offset);
+		sidebar.width(sidebar.width()); // Ensures that the css "width" property matches the actual calculated width
+		sidebar.trigger('resize');
+	    })
+	    .on('dragEnd', function(event, data) {
+		initialWidth = sidebar.width();
+		sidebar.trigger('resizeEnd');
+	    });
+
+	// Button to collapse the sidebar
+	var collapseButton = this.collapseButton = $('<button>')
+	    .text('\u21e5')
+	    .addClass('collapse')
+	    .prependTo(toolbar)
+	    .on('click', this.collapse.bind(this));
+
+	// Button to restore a collapsed sidebar
+	var restoreButton = this.restoreButton = $('<button>')
+	    .text('\u21e4')
+	    .addClass('restore')
+	    .prependTo(toolbar)
+	    .hide()
+	    .on('click', this.restore.bind(this));
+    }
+
+    // Public methods of class Sidebar
+    $.extend(Sidebar.prototype, {
+	collapse: function() {
+	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
+	    this.handle.off('.resizer').css('cursor', 'auto');
+	    this.collapseButton.hide();
+	    this.restoreButton.show();
+	    this.sidebar.stop().animate({
+		'right': 25 - this.sidebar.width()
+	    });
+	},
+	restore: function() {
+	    // Restore a collapsed sidebar
+	    this.handle.on('mousedown.resizer',dragStart).css('cursor', "w-resize");
+	    this.restoreButton.hide();
+	    this.collapseButton.show();
+	    this.sidebar.stop().animate({
+		'right': 0
+	    });
+	}
+    });
+    // End of class Sidebar
+
+
+
+    // Drag events.
+    // Typical use is to call dragStart in response to a mousedown event, then listen for dragStart, drag and dragEnd events.
+    // Once called, dragStart will add listeners and call the other functions appropriately.
+    function dragStart(event){
+	var target = $(event.target);
+	event.preventDefault();
+	$('body')
+	    .on('mousemove.dragEvent',drag.bind(this,target))
+	    .on('mouseup.dragEvent',dragEnd.bind(this,target))
+	    .on('mouseleave.dragEvent',dragEnd.bind(this,target));
+	target
+	    .data({
+		'initialX': event.pageX
+	    })
+	    .trigger('dragStart');
+    }
+    function drag(target, event){
+	event.preventDefault();
+	target.trigger('drag', [{
+	    'offset': event.pageX - target.data('initialX')
+	}]);
+    }
+    function dragEnd(target, event){
+	$('body').off('.dragEvent');
+	target.trigger('dragEnd');
+    }
+
+
+
+    // sidebar plugin function
+    $.fn.sidebar = function(){
+	$(this).each(function(){
+	    var sidebar = $(this).data('sidebar');
+	    if ( typeof sidebar != "object" ) {
+		$(this).data('sidebar', new Sidebar(this));
+		sidebar = $(this).data('sidebar');
+	    }
+	});
+	return this;
+    }
+})(jQuery);
 
 /* ==== jquery.textrange.js ==== */
 /* ==== jquery.textrange.js ==== */
@@ -9946,6 +10163,9 @@ jQuery(function(){
 	    'height': "100%",
 	    'min-width': this.table.outerWidth() + scrollBarWidth
 	});
+
+	this.errorX -= parseInt(this.table.css('border-left-width'));
+
 	this.thead.css({
 	    'position': "absolute",
 	    'bottom': "100%",
@@ -9955,17 +10175,25 @@ jQuery(function(){
 	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	}
 
-	this.thead.css({
+	this.thead.find('tr').eq(0).find('th, td').css({
 	    'border-top-style': this.table.css('border-top-style'),
 	    'border-top-width': this.table.css('border-top-width'),
-	    'border-top-color': this.table.css('border-top-color'),
-	    'border-left-style': this.table.css('border-left-style'),
-	    'border-left-width': this.table.css('border-left-width'),
-	    'border-left-color': this.table.css('border-left-color'),
-	    'border-right-style': this.table.css('border-right-style'),
-	    'border-right-width': this.table.css('border-right-width'),
-	    'border-right-color': this.table.css('border-right-color')
+	    'border-top-color': this.table.css('border-top-color')
 	});
+	this.thead.find('tr').each(function(i, row){
+	    var cells = $(row).find('th, td').filter(':visible');
+	    cells.eq(0).css({
+		'border-left-style': table.css('border-left-style'),
+		'border-left-width': table.css('border-left-width'),
+		'border-left-color': table.css('border-left-color')
+	    });
+	    cells.eq(-1).css({
+		'border-right-style': table.css('border-right-style'),
+		'border-right-width': table.css('border-right-width'),
+		'border-right-color': table.css('border-right-color')
+	    });
+	});
+
 	this.table.css('border-top-width', 0);
     };
     $.extend(TheadFixed.prototype, {
@@ -10188,6 +10416,72 @@ function httpPost(url,data,handler,errorHandler,async) {
 	}
 	this.text(nextLabel);
 	return this;
+    }
+})(jQuery);
+
+// Bug fix for table border width detection in ie9
+(function($){
+    //if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
+        var oldCssFunction = $.fn.css;
+        $.fn.css = function() {
+            if ( this.first().is('table') && arguments.length == 1 ) {
+		var table = this.first();
+                switch(arguments[0]){
+                case "border-left-width":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-left-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-left-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-right-width":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-right-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-right-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-top-width":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-top-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-top-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-bottom-width":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-bottom-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-bottom-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                default:
+                    return oldCssFunction.apply(this,arguments);
+                }
+            } else {
+                return oldCssFunction.apply(this,arguments);
+            }
+        };
+    //}
+    function getInnerWidth(table) {
+        var borderSpacing = table.css('border-spacing');
+        var horizontalSpacing = borderSpacing.split(' ').shift();
+        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
+    }
+    function getInnerHeight(table) {
+        var borderSpacing = table.css('border-spacing');
+        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
+        var totalHeight = verticalSpacing;
+        table.find('thead, tbody, tfoot').each(function(){
+            if ( $(this).css('position') != "absolute" ) {
+                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
+            }
+        });
+        return totalHeight;
     }
 })(jQuery);
 

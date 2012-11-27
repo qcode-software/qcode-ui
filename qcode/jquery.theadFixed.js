@@ -76,6 +76,9 @@
 	    'height': "100%",
 	    'min-width': this.table.outerWidth() + scrollBarWidth
 	});
+
+	this.errorX -= parseInt(this.table.css('border-left-width'));
+
 	this.thead.css({
 	    'position': "absolute",
 	    'bottom': "100%",
@@ -85,17 +88,25 @@
 	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	}
 
-	this.thead.css({
+	this.thead.find('tr').eq(0).find('th, td').css({
 	    'border-top-style': this.table.css('border-top-style'),
 	    'border-top-width': this.table.css('border-top-width'),
-	    'border-top-color': this.table.css('border-top-color'),
-	    'border-left-style': this.table.css('border-left-style'),
-	    'border-left-width': this.table.css('border-left-width'),
-	    'border-left-color': this.table.css('border-left-color'),
-	    'border-right-style': this.table.css('border-right-style'),
-	    'border-right-width': this.table.css('border-right-width'),
-	    'border-right-color': this.table.css('border-right-color')
+	    'border-top-color': this.table.css('border-top-color')
 	});
+	this.thead.find('tr').each(function(i, row){
+	    var cells = $(row).find('th, td').filter(':visible');
+	    cells.eq(0).css({
+		'border-left-style': table.css('border-left-style'),
+		'border-left-width': table.css('border-left-width'),
+		'border-left-color': table.css('border-left-color')
+	    });
+	    cells.eq(-1).css({
+		'border-right-style': table.css('border-right-style'),
+		'border-right-width': table.css('border-right-width'),
+		'border-right-color': table.css('border-right-color')
+	    });
+	});
+
 	this.table.css('border-top-width', 0);
     };
     $.extend(TheadFixed.prototype, {
