@@ -568,7 +568,7 @@
 	    write: function(){
 		// Write the current editor contents to the field
 		this.setValue(this.editorGetValue());
-	    }, 
+	    },
 	    editorShow: function(value){
 		// Show the appropriate editor for this field
 		var editorPlugin = getEditorPlugin.call(this);
@@ -576,7 +576,7 @@
 	    }, 
 	    editorHide: function(){
 		// Hide the editor for this field
-		var editorPlugin = getEditorPlugin.call(this)
+		var editorPlugin = getEditorPlugin.call(this);
 		editorPlugin('hide');
 	    }, 
 	    editorGetValue: function(){
@@ -598,7 +598,7 @@
 	    var container = this.getRecordSet();
 	    switch(this.getType()){
 	    case "text":
-		return container.dbEditorinput.bind(container);
+		return container.dbEditorInput.bind(container);
 		break;
 	    case "textarea":
 		return container.dbEditorText.bind(container);

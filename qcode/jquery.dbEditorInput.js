@@ -55,7 +55,8 @@
 	    });
 
 	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+	    if ( element.css('backgroundColor') == 'transparent'
+		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		editor.css('backgroundColor', "white");
 	    } else {
 		editor.css('backgroundColor', element.css('backgroundColor'));

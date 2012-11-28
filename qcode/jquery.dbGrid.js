@@ -329,61 +329,65 @@
       }
     };
 
-    function cellIn(cell,select) {
-      currentCell = cell;
-      // Hide the cell
-      cell.css('visibility','hidden');
-      // Decide which inputControl to use
-      var col = colgroup.children('col').eq(cell.index());
-      var colType = col.attr('type');
-      var row = cell.closest('tr');
-      var cellValue = getCellValue(row, col.attr('name'));
-      if (  ! colType ) {
-	colType = 'text';
-      }
-      if ( colType == 'text' ) {
-	dbGridInputCtl = dbGridInput;
-	dbGridInputCtl.show(cell,cellValue);
-      }
-      if ( colType == 'textarea' ) {
-	  var editorHeight = parseInt(col.attr('editorHeight'));
-	dbGridInputCtl = dbGridTextArea;
-	dbGridInputCtl.show(cell,cellValue,editorHeight);
-      }
-      if ( colType == 'htmlarea') {
-	  var editorHeight = parseInt(col.attr('editorHeight'));
-	dbGridInputCtl = dbGridHTMLArea;
-	dbGridInputCtl.show(cell,cellValue,editorHeight);
-      }
-      if ( colType == 'FCKeditor' ) {
-	// TODO: Implement FCKeditor
-	//var editorHeight = parseInt(col.attr('editorHeight'));
-	//oInputCtl = oFCKeditor;
-	//oInputCtl.show(cell[0],cellValue,editorHeight);
-      }
-      if ( colType == 'combo' ) {
-	dbGridInputCtl = dbGridCombo;
-	var searchURL = col.attr('searchURL');
-	var name = col.attr('name');
-	var boundName = col.attr('boundName');
-	var boundValue = getCellValue(row,boundName);
-	dbGridInputCtl.show(cell,name,cellValue,boundName,boundValue,searchURL);
-      }
-      if ( colType == 'bool') {
-	dbGridInputCtl = dbGridInputBool;
-	dbGridInputCtl.show(cell,cellValue);
-      }
+      function cellIn(cell,select) {
+	  currentCell = cell;
+	  // Hide the cell
+	  cell.css('visibility','hidden');
+	  // Decide which inputControl to use
+	  var col = colgroup.children('col').eq(cell.index());
+	  var colType = col.attr('type');
+	  var row = cell.closest('tr');
+	  var cellValue = getCellValue(row, col.attr('name'));
+	  if (  ! colType ) {
+	      colType = 'text';
+	  }
+	  if ( colType == 'text' ) {
+	      dbGridInputCtl = dbGridInput;
+	      dbGridInputCtl.show(cell,cellValue);
+	  }
+	  if ( colType == 'textarea' ) {
+	      if ( col.attr('editorHeight') !== undefined ) {
+		  var editorHeight = parseInt(col.attr('editorHeight'));
+	      }
+	      dbGridInputCtl = dbGridTextArea;
+	      dbGridInputCtl.show(cell,cellValue,editorHeight);
+	  }
+	  if ( colType == 'htmlarea') {
+	      if ( col.attr('editorHeight') !== undefined ) {
+		  var editorHeight = parseInt(col.attr('editorHeight'));
+	      }
+	      dbGridInputCtl = dbGridHTMLArea;
+	      dbGridInputCtl.show(cell,cellValue,editorHeight);
+	  }
+	  if ( colType == 'FCKeditor' ) {
+	      // TODO: Implement FCKeditor
+	      //var editorHeight = parseInt(col.attr('editorHeight'));
+	      //oInputCtl = oFCKeditor;
+	      //oInputCtl.show(cell[0],cellValue,editorHeight);
+	  }
+	  if ( colType == 'combo' ) {
+	      dbGridInputCtl = dbGridCombo;
+	      var searchURL = col.attr('searchURL');
+	      var name = col.attr('name');
+	      var boundName = col.attr('boundName');
+	      var boundValue = getCellValue(row,boundName);
+	      dbGridInputCtl.show(cell,name,cellValue,boundName,boundValue,searchURL);
+	  }
+	  if ( colType == 'bool') {
+	      dbGridInputCtl = dbGridInputBool;
+	      dbGridInputCtl.show(cell,cellValue);
+	  }
 
-      if (select) {
-	dbGridInputCtl.selectText(select);
-      } else {
-	if ( col.attr('cellInSelect') ) {
-	  dbGridInputCtl.selectText(col.attr('cellInSelect'));
-	} else {
-	  dbGridInputCtl.selectText('all');
-	}
-      }
-    };
+	  if (select) {
+	      dbGridInputCtl.selectText(select);
+	  } else {
+	      if ( col.attr('cellInSelect') ) {
+		  dbGridInputCtl.selectText(col.attr('cellInSelect'));
+	      } else {
+		  dbGridInputCtl.selectText('all');
+	      }
+	  }
+      };
     
     function cellOut(cell) {
       // Custom Event: Trigger any cellOut events bound to this table

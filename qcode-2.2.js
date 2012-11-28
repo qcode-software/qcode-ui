@@ -7917,61 +7917,65 @@ function dbFormHTMLArea(oDiv) {
       }
     };
 
-    function cellIn(cell,select) {
-      currentCell = cell;
-      // Hide the cell
-      cell.css('visibility','hidden');
-      // Decide which inputControl to use
-      var col = colgroup.children('col').eq(cell.index());
-      var colType = col.attr('type');
-      var row = cell.closest('tr');
-      var cellValue = getCellValue(row, col.attr('name'));
-      if (  ! colType ) {
-	colType = 'text';
-      }
-      if ( colType == 'text' ) {
-	dbGridInputCtl = dbGridInput;
-	dbGridInputCtl.show(cell,cellValue);
-      }
-      if ( colType == 'textarea' ) {
-	  var editorHeight = parseInt(col.attr('editorHeight'));
-	dbGridInputCtl = dbGridTextArea;
-	dbGridInputCtl.show(cell,cellValue,editorHeight);
-      }
-      if ( colType == 'htmlarea') {
-	  var editorHeight = parseInt(col.attr('editorHeight'));
-	dbGridInputCtl = dbGridHTMLArea;
-	dbGridInputCtl.show(cell,cellValue,editorHeight);
-      }
-      if ( colType == 'FCKeditor' ) {
-	// TODO: Implement FCKeditor
-	//var editorHeight = parseInt(col.attr('editorHeight'));
-	//oInputCtl = oFCKeditor;
-	//oInputCtl.show(cell[0],cellValue,editorHeight);
-      }
-      if ( colType == 'combo' ) {
-	dbGridInputCtl = dbGridCombo;
-	var searchURL = col.attr('searchURL');
-	var name = col.attr('name');
-	var boundName = col.attr('boundName');
-	var boundValue = getCellValue(row,boundName);
-	dbGridInputCtl.show(cell,name,cellValue,boundName,boundValue,searchURL);
-      }
-      if ( colType == 'bool') {
-	dbGridInputCtl = dbGridInputBool;
-	dbGridInputCtl.show(cell,cellValue);
-      }
+      function cellIn(cell,select) {
+	  currentCell = cell;
+	  // Hide the cell
+	  cell.css('visibility','hidden');
+	  // Decide which inputControl to use
+	  var col = colgroup.children('col').eq(cell.index());
+	  var colType = col.attr('type');
+	  var row = cell.closest('tr');
+	  var cellValue = getCellValue(row, col.attr('name'));
+	  if (  ! colType ) {
+	      colType = 'text';
+	  }
+	  if ( colType == 'text' ) {
+	      dbGridInputCtl = dbGridInput;
+	      dbGridInputCtl.show(cell,cellValue);
+	  }
+	  if ( colType == 'textarea' ) {
+	      if ( col.attr('editorHeight') !== undefined ) {
+		  var editorHeight = parseInt(col.attr('editorHeight'));
+	      }
+	      dbGridInputCtl = dbGridTextArea;
+	      dbGridInputCtl.show(cell,cellValue,editorHeight);
+	  }
+	  if ( colType == 'htmlarea') {
+	      if ( col.attr('editorHeight') !== undefined ) {
+		  var editorHeight = parseInt(col.attr('editorHeight'));
+	      }
+	      dbGridInputCtl = dbGridHTMLArea;
+	      dbGridInputCtl.show(cell,cellValue,editorHeight);
+	  }
+	  if ( colType == 'FCKeditor' ) {
+	      // TODO: Implement FCKeditor
+	      //var editorHeight = parseInt(col.attr('editorHeight'));
+	      //oInputCtl = oFCKeditor;
+	      //oInputCtl.show(cell[0],cellValue,editorHeight);
+	  }
+	  if ( colType == 'combo' ) {
+	      dbGridInputCtl = dbGridCombo;
+	      var searchURL = col.attr('searchURL');
+	      var name = col.attr('name');
+	      var boundName = col.attr('boundName');
+	      var boundValue = getCellValue(row,boundName);
+	      dbGridInputCtl.show(cell,name,cellValue,boundName,boundValue,searchURL);
+	  }
+	  if ( colType == 'bool') {
+	      dbGridInputCtl = dbGridInputBool;
+	      dbGridInputCtl.show(cell,cellValue);
+	  }
 
-      if (select) {
-	dbGridInputCtl.selectText(select);
-      } else {
-	if ( col.attr('cellInSelect') ) {
-	  dbGridInputCtl.selectText(col.attr('cellInSelect'));
-	} else {
-	  dbGridInputCtl.selectText('all');
-	}
-      }
-    };
+	  if (select) {
+	      dbGridInputCtl.selectText(select);
+	  } else {
+	      if ( col.attr('cellInSelect') ) {
+		  dbGridInputCtl.selectText(col.attr('cellInSelect'));
+	      } else {
+		  dbGridInputCtl.selectText('all');
+	      }
+	  }
+      };
     
     function cellOut(cell) {
       // Custom Event: Trigger any cellOut events bound to this table
@@ -9259,7 +9263,7 @@ function dbFormHTMLArea(oDiv) {
 		    data[name] = value;
 		});
 
-		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action));
+		httpPost(path, data, actionReturn.bind(this, action), actionReturnError.bind(this, action), async);
 		this.element.trigger('recordAction', [action]);
 	    }, 
 	    getCurrentField: function(){
@@ -9372,14 +9376,14 @@ function dbFormHTMLArea(oDiv) {
 		this.element.css('visibility', "hidden");
 
 		var fieldValue = this.getValue();
-		this.controlShow(fieldValue);
+		this.editorShow(fieldValue);
 
 		if (select) {
-		    this.controlSelectText(select);
+		    this.editorSelectText(select);
 		} else if ( this.element.attr('fieldInSelect') != null ) {
-		    this.controlSelectText(this.element.attr('fieldInSelect'));
+		    this.editorSelectText(this.element.attr('fieldInSelect'));
 		} else {
-		    this.controlSelectText('all');
+		    this.editorSelectText('all');
 		}
 		this.element.trigger('fieldIn');
 		this.lockFocusEvents = false;
@@ -9389,12 +9393,12 @@ function dbFormHTMLArea(oDiv) {
 		this.lockFocusEvents = true;
 		var record = this.getRecord();
 		this.getRecordSet().dbRecordSet('setCurrentField', $([]));
-		if ( this.getValue() !== this.controlGetValue() ) {
+		if ( this.getValue() !== this.editorGetValue() ) {
 		    record.dbRecord('setState', 'dirty');
 		}
 		this.write();
 		this.element.css('visibility', "inherit");
-		this.controlHide();
+		this.editorHide();
 		this.element.trigger('fieldOut');
 		this.lockFocusEvents = false;
 	    }, 
@@ -9461,7 +9465,7 @@ function dbFormHTMLArea(oDiv) {
 		}
 	    }, 
 	    onKeyUp: function(event){
-		if ( this.getValue() !== this.controlGetValue() ) {
+		if ( this.getValue() !== this.editorGetValue() ) {
 		    this.getRecord().dbRecord('setState', 'dirty');
 		}
 	    }, 
@@ -9480,24 +9484,24 @@ function dbFormHTMLArea(oDiv) {
 	    }, 
 	    write: function(){
 		// Write the current editor contents to the field
-		this.setValue(this.controlGetValue());
+		this.setValue(this.editorGetValue());
 	    }, 
-	    controlShow: function(value){
+	    editorShow: function(value){
 		// Show the appropriate editor for this field
 		var editorPlugin = getEditorPlugin.call(this);
 		editorPlugin('show', this.element, value);
 	    }, 
-	    controlHide: function(){
+	    editorHide: function(){
 		// Hide the editor for this field
 		var editorPlugin = getEditorPlugin.call(this)
 		editorPlugin('hide');
 	    }, 
-	    controlGetValue: function(){
+	    editorGetValue: function(){
 		// Get the current editor value
  		var editorPlugin = getEditorPlugin.call(this);
 		return editorPlugin('getValue');
 	    }, 
-	    controlSelectText: function(option){
+	    editorSelectText: function(option){
 		// set a text selection within the editor
 		var editorPlugin = getEditorPlugin.call(this);
 		editorPlugin('selectText', this.element, option);
@@ -9598,7 +9602,7 @@ function dbFormHTMLArea(oDiv) {
 
 	if ( target.length > 1 ) $.error('dbField does not support multiple elements');
 	if ( target.length == 0 ) {
-	    if ( ['getName', 'getValue', 'getType', 'controlGetValue'].indexOf(args[0]) > -1 ) {
+	    if ( ['getName', 'getValue', 'getType', 'editorGetValue'].indexOf(args[0]) > -1 ) {
 		return undefined;
 	    } else {
 		return target;
@@ -10132,13 +10136,19 @@ jQuery(function(){
 	// Calculate and apply column widths
 	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
 	this.table.children('tbody').children('tr:first-child').children('th, td').each(function(index, element){
-	    var width = parseInt($(element).innerWidth());
-	    if ( this.table.css('border-collapse') == 'collapse' ) {
-		width += parseInt($(element).css('border-left-width'));
-	    }
+	    var td = $(element);
 	    var th = this.thead.children('tr:first-child').children('th, td').eq(index);
+	    var width = Math.ceil(td.innerWidth());
+
+	    // Ensures that default padding will be preserved when the thead is removed
+	    th.css({
+		'padding-top': th.css('padding-top'),
+		'padding-right': th.css('padding-right'),
+		'padding-bottom': th.css('padding-bottom'),
+		'padding-left': th.css('padding-left')
+	    });
 	    th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-	    $(element).css('width', width - parseInt($(element).css('padding-left')) - parseInt($(element).css('padding-right')));
+	    td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
 	}.bind(this));
 
 	// Apply css

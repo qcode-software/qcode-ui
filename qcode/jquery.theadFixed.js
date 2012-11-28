@@ -45,13 +45,19 @@
 	// Calculate and apply column widths
 	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
 	this.table.children('tbody').children('tr:first-child').children('th, td').each(function(index, element){
-	    var width = parseInt($(element).innerWidth());
-	    if ( this.table.css('border-collapse') == 'collapse' ) {
-		width += parseInt($(element).css('border-left-width'));
-	    }
+	    var td = $(element);
 	    var th = this.thead.children('tr:first-child').children('th, td').eq(index);
+	    var width = Math.ceil(td.innerWidth());
+
+	    // Ensures that default padding will be preserved when the thead is removed
+	    th.css({
+		'padding-top': th.css('padding-top'),
+		'padding-right': th.css('padding-right'),
+		'padding-bottom': th.css('padding-bottom'),
+		'padding-left': th.css('padding-left')
+	    });
 	    th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-	    $(element).css('width', width - parseInt($(element).css('padding-left')) - parseInt($(element).css('padding-right')));
+	    td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
 	}.bind(this));
 
 	// Apply css
