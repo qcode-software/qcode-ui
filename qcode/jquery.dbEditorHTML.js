@@ -1,9 +1,6 @@
 // dbEditorHTML plugin
 // A hovering editor for multi-line input with a contentEditable div to allow html markup
-(function($){
-
-    // Namespace for event handlers
-    var eventNamespace = 'dbEditorHTML';
+;(function($, window, undefined){
 
     // css attributes to copy from target elements to the editor when editor is shown
     var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
@@ -15,27 +12,27 @@
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width'];
 
-    // class HTMLEditor
-    // constructor function - takes container which the editor is to be appended to as an argument.
-    function HTMLEditor(container) {
-	$(window).on('resize' + eventNamespace, onResize.bind(this));
-	this.editor = $('<div>')
-	    .attr('contentEditable', true)
-	    .addClass('dbEditorHTML')
-	    .appendTo(container)
-	    .css({
-		'position': "absolute"
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-
-    // Public methods for class HTMLEditor
-    $.extend(HTMLEditor.prototype, {
+    $.widget('qcode.dbEditorHTML', {
+	_create: function() {
+	    this._on(window, {
+		'resize': this._onResize.bind(this)
+	    });
+	    this.editor = $('<div>')
+		.attr('contentEditable', true)
+		.addClass('dbEditorHTML')
+		.appendTo(this.element)
+		.css({
+		    'position': "absolute"
+		})
+		.hide();
+	    this._on(this.editor, {
+		'keydown': this._inputOnKeyDown.bind(this),
+		'keyup': this._inputOnKeyUp.bind(this),
+		'cut': this._inputOnCut.bind(this),
+		'paste': this._inputOnPaste.bind(this),
+		'blur': this._inputOnBlur.bind(this)
+	    });
+	},
 	getValue: function() {
 	    return this.editor.html();
 	}, 
@@ -65,13 +62,13 @@
 		.html(value)
 		.focus();
 	}, 
-	hide: function(element) {
+	hide: function() {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	}, 
-	selectText: function(element, option) {
+	selectText: function(option) {
 	    switch(option) {
 	    case "start":
 		this.editor.textrange('set', "start", "start");
@@ -86,37 +83,46 @@
 	}, 
 	destroy: function() {
 	    this.editor.remove();
-	}
-    });
-
-    // Private methods for class HTMLEditor
-    function onResize(event) {
-	// Any event that might change the size or position of the editor's target needs to trigger this.
-	// It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	if ( this.currentElement ) {
-	    var element = this.currentElement;
-	    var editor = this.editor;
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css({
-		    'width': element.css('width'), 
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
+	},
+	_onResize: function(event) {
+	    // Any event that might change the size or position of the editor's target needs to trigger this.
+	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
+	    if ( this.currentElement ) {
+		var element = this.currentElement;
+		var editor = this.editor;
+		editor
+		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		    .css({
+			'width': element.css('width'), 
+			'top': element.position().top + element.offsetParent().scrollTop(), 
+			'left': element.position().left + element.offsetParent().scrollLeft()
+		    });
+	    }
+	},
+	_inputOnKeyDown: function(e) {
+	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    case 37: // left
+	    case 39: //right
+		var selection = this.editor.textrange('get');
+		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
+	    case 83: //S
+		if ( e.which == 83 && ! e.ctrlKey ) break;
+	    case 9: //tab
+	    case 38: //up
+	    case 40: //down
+		var event = jQuery.Event(e.type, {
+		    'data': e.data, 
+		    'ctrlKey': e.ctrlKey, 
+		    'altKey': e.altKey, 
+		    'shiftKey': e.shiftKey, 
+		    'which': e.which
 		});
-	}
-    }
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 37: // left
-	case 39: //right
-	    var selection = this.editor.textrange('get');
-	    if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-	    if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	case 83: //S
-	    if ( e.which == 83 && ! e.ctrlKey ) break;
-	case 9: //tab
-	case 38: //up
-	case 40: //down
+		e.preventDefault();
+		this.currentElement.trigger(event);
+	    }
+	},
+	_inputOnKeyUp: function(e) {
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -124,71 +130,35 @@
 		'shiftKey': e.shiftKey, 
 		'which': e.which
             });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type, {
-            'data': e.data, 
+	},
+	_inputOnCut: function(e) {
+            var event = jQuery.Event(e.type, {
+		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
 		'shiftKey': e.shiftKey, 
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type, {
-            'data': e.data, 
-	    'ctrlKey': e.ctrlKey, 
-	    'altKey': e.altKey, 
-	    'shiftKey': e.shiftKey, 
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type, {
-            'data': e.data, 
-	    'ctrlKey': e.ctrlKey, 
-	    'altKey': e.altKey, 
-	    'shiftKey': e.shiftKey, 
-            'which': e.which
-        });
-	this.currentElement.trigger(event);
-    }
-    function inputOnBlur(e, source) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type, {
-		'data': e.data
+		'which': e.which
             });
 	    this.currentElement.trigger(event);
-	}
-    }
-
-    // dbEditorHTML plugin function
-    $.fn.dbEditorHTML = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('dbEditorHTML');
-	if ( ! control ) {
-	    target.data('dbEditorHTML', new HTMLEditor(target));
-	    var control = target.data('dbEditorHTML');
-	}
-	if ( arguments.length > 0 ) {
-	    var method = arguments[0];
-	    var args = Array.prototype.slice.call(arguments, 1);
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control, args);
-	    } else {
-		$.error('Invalid method of dbEditorHTML');
+	},
+	_inputOnPaste: function(e) {
+            var event = jQuery.Event(e.type, {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnBlur: function(e, source) {
+	    if ( ! this.editor.is(':focus') ) {
+		var event = jQuery.Event(e.type, {
+		    'data': e.data
+		});
+		this.currentElement.trigger(event);
 	    }
 	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
+    });
+})(jQuery, window);
