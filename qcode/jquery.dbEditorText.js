@@ -30,11 +30,11 @@
 		})
 		.hide();
 	    this._on(this.editor, {
-		'keydown': inputOnKeyDown.bind(this),
-		'keyup': inputOnKeyUp.bind(this),
-		'cut': inputOnCut.bind(this),
-		'paste': inputOnPaste.bind(this),
-		'blur': inputOnBlur.bind(this)
+		'keydown': this._inputOnKeyDown.bind(this),
+		'keyup': this._inputOnKeyUp.bind(this),
+		'cut': this._inputOnCut.bind(this),
+		'paste': this._inputOnPaste.bind(this),
+		'blur': this._inputOnBlur.bind(this)
 	    });
 	},
 	getValue: function() {

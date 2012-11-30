@@ -6768,11 +6768,11 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		})
 		.hide();
 	    this._on(this.editor, {
-		'keydown': inputOnKeyDown.bind(this),
-		'keyup': inputOnKeyUp.bind(this),
-		'cut': inputOnCut.bind(this),
-		'paste': inputOnPaste.bind(this),
-		'blur': inputOnBlur.bind(this)
+		'keydown': this._inputOnKeyDown.bind(this),
+		'keyup': this._inputOnKeyUp.bind(this),
+		'cut': this._inputOnCut.bind(this),
+		'paste': this._inputOnPaste.bind(this),
+		'blur': this._inputOnBlur.bind(this)
 	    });
 	},
 	getValue: function() {
@@ -8827,70 +8827,47 @@ function dbFormHTMLArea(oDiv) {
 
 }) (jQuery);
 
-/* ==== jquery.dbRecords.js ==== */
+/* ==== jquery.dbRecordSet.js ==== */
+// dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
+jQuery(function(){
+    jQuery('.recordSet').dbRecordSet();
+});
+
 // DbRecords Plugins
-;(function($, window, undefined){
-
-    // Navigation functions
-    function sameRow(a, b) {
-	// Takes two elements and returns true if they are on the same row
-	return (a.offset().top <= (b.offset().top + b.outerHeight()))
-	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
-    }
-    function belowRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row below "b"
-	return b.offset().top > (a.offset().top + a.outerHeight());
-    }
-    function aboveRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row above "b"
-	return (b.offset().top + b.outerHeight()) < a.offset().top;
-    }
-    function sameColumn(a, b) {
-	// Takes two elements and returns true if they are in the same column
-	return (a.offset().left <= (b.offset().left + b.outerWidth()))
-	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
-    }
-    function leftOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column left of "b"
-	return (b.offset().left + b.outerWidth()) < a.offset().left;
-    }
-    function rightOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column right of "b"
-	return (a.offset().left + a.outerWidth()) < b.offset().left;
-    }
-
-
+(function($, window, undefined){
     $.widget('qcode.dbRecordSet', {
 	_create: function(){
 	    this.currentField = $([]);
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
-	    this.element
-		.on('mousedown.dbRecordSet', '.editable', function(event){
+	    this._on({
+		'mousedown .editable': function(event){
 		    $(event.target).dbField('onMouseDown', event);
-		})
-		.on('keydown.dbRecordSet', '.editable', function(event){
+		},
+		'keydown .editable': function(event){
 		    $(event.target).dbField('onKeyDown', event);
-		})
-		.on('keyup.dbRecordSet', '.editable', function(event){
+		},
+		'keyup .editable': function(event){
 		    $(event.target).dbField('onKeyUp', event);
-		})
-		.on('cut.dbRecordSet', '.editable', function(event){
+		},
+		'cut .editable': function(event){
 		    $(event.target).dbField('onCut', event);
-		})
-		.on('paste.dbRecordSet', '.editable', function(event){
+		},
+		'paste .editable': function(event){
 		    $(event.target).dbField('onPaste', event);
-		})
-		.on('blur.dbRecordSet', '.editable', function(event){
+		},
+		'blur .editable': function(event){
 		    $(event.target).dbField('onBlur', event);
-		});
-	    $(window)
-		.on('beforeunload.dbRecordSet', this._onBeforeUnload.bind(this))
-		.on('beforeprint.dbRecordSet', this._onBeforePrint.bind(this));
+		}
+	    });
+	    this._on(window, {
+		'beforeunload': this._onBeforeUnload,
+		'beforeprint': this._onBeforePrint,
+	    });
 	},
 	save: function(aysnc) {
 	    // Save the current record
-	    this.getCurrentRecord.dbRecord('save', async);
+	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
 	    // Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
@@ -9082,130 +9059,39 @@ function dbFormHTMLArea(oDiv) {
 	}
     });
 
-
-    $.widget('qcode.dbRecord', {
-	_create: function(){
-	    this.state = 'current';
-	    if ( this.element.attr('saveAction') === "add" ) {
-		this.saveAction = "add";
-	    } else {
-		this.saveAction = "update";
-	    }
-	},
-	getRecordSet: function(){
-	    // Get the record-set element for this record
-	    return this.element.closest('.recordSet');
-	}, 
-	getState: function(){
-	    // Get the state of this record
-	    return this.state;
-	}, 
-	setState: function(newState){
-	    // Set the state of this record
-	    switch(newState) {
-	    case "updating":
-	    case "error":
-	    case "current":
-	    case "dirty":
-		this.element.removeClass("current dirty updating error");
-		this.element.addClass(newState);
-		this.state = newState;
-		break;
-	    default:
-		$.error('Invalid state');
-	    }
-	}, 
-	save: function(async){
-	    // Save this record, using an add or update url as appropriate
-	    if ( this.getState() === "updating" ) return false;
-	    var url = this.getRecordSet().attr(this.saveAction + "URL");
-	    if ( ! url ) {
-		$.error('Could not '+this.saveAction+' record - no url provided');
-	    }
-	    this.action(this.saveAction, url, async);
-	}, 
-	delete: function(async){
-	    // Delete this record, by sending a delete request to the server
-	    if ( this.getState() === "updating" ) return false;
-	    var url = this.getRecordSet().attr('deleteURL');
-	    if ( ! url ) {
-		$.error('Could not delete record - no url provided');
-	    }
-	    this.action('delete', url, async);
-	}, 
-	action: function(action, url, async){
-	    // Perform the given action (add, update, delete), by submitting record data to the server.
-	    var async = coalesce(async, true);
-
-	    this.setState('updating');
-	    this.getCurrentField().dbField('write');
-
-	    var urlPieces = splitURL(url);
-	    var path = urlPieces.path;
-	    var data = urlPieces.data;
-	    this.element.find('[name]').each(function(i, field) {
-		var name = $(field).dbField('getName');
-		var value = $(field).dbField('getValue');
-		data[name] = value;
-	    });
-
-	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
-	    this.element.trigger('recordAction', [action]);
-	}, 
-	getCurrentField: function(){
-	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
-	}, 
-	getFields: function(){
-	    // Returns all editable fields in the record
-	    return this.element.find('.editable');
-	}, 
-	setValues: function(xmlDoc){
-	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
-	    this.element.find('[name]').each(function(i, field) {
-		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
-		if ( node.length > 0 ) {
-		    $(field).dbField('setValue', node.text());
-		}
-	    });
-	    this.element.trigger('resize');
-	}, 
-	recordIn: function(){
-	    this.element.trigger('recordIn');
-	}, 
-	recordOut: function(){
-	    if ( this.getState() === "dirty" ) {
-		this.save();
-	    }
-	    this.element.trigger('recordOut');
-	},
-	_actionReturn: function(action, xmlDoc, status, jqXHR){
-	    this.setState('current');
-	    switch(action){
-	    case "update":
-		this.setValues(xmlDoc);
-		break;
-	    case "add":
-		this.saveAction = "update";
-		this.setValues(xmlDoc);
-		break;
-	    case "delete":
-		this.element.remove();
-		this.getRecordSet().trigger('resize');
-		break;
-	    }
-	    this.element.trigger('recordActionReturn', [action, xmlDoc, status, jqXHR]);
-	},
-	_actionReturnError: function(action, message, type, error){
-	    this.setState('error');
-	    if ( type != 'USER' ) {
-		alert(message);
-	    }
-	    this.element.trigger('recordActionReturnError', [action, message, type, error]);
-	}
-    });
+    // Navigation functions
+    function sameRow(a, b) {
+	// Takes two elements and returns true if they are on the same row
+	return (a.offset().top <= (b.offset().top + b.outerHeight()))
+	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
+    }
+    function belowRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row below "b"
+	return b.offset().top > (a.offset().top + a.outerHeight());
+    }
+    function aboveRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row above "b"
+	return (b.offset().top + b.outerHeight()) < a.offset().top;
+    }
+    function sameColumn(a, b) {
+	// Takes two elements and returns true if they are in the same column
+	return (a.offset().left <= (b.offset().left + b.outerWidth()))
+	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
+    }
+    function leftOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column left of "b"
+	return (b.offset().left + b.outerWidth()) < a.offset().left;
+    }
+    function rightOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column right of "b"
+	return (a.offset().left + a.outerWidth()) < b.offset().left;
+    }
+})(jQuery, window);
 
 
-    $.widget( "qcode.dbField", {
+/* ==== jquery.dbRecordsField.js ==== */
+;(function($, undefined){
+$.widget( "qcode.dbField", {
 	_create: function(){
 	    this.lockFocusEvents = false;
 	},
@@ -9258,7 +9144,7 @@ function dbFormHTMLArea(oDiv) {
 	    } else {
 		recordSet[plugin]('selectText', 'all');
 	    }
-	    this.element.trigger('fieldIn');
+	    this.element.trigger('dbFieldIn');
 	    this.lockFocusEvents = false;
 	}, 
 	fieldOut: function(){
@@ -9279,7 +9165,7 @@ function dbFormHTMLArea(oDiv) {
 
 	    recordSet[plugin]('hide');
 
-	    this.element.trigger('fieldOut');
+	    this.element.trigger('dbFieldOut');
 	    this.lockFocusEvents = false;
 	}, 
 	getType: function(){
@@ -9375,8 +9261,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.setValue(editorValue);
 	},
 	_getEditorPluginName: function() {
-	    // Determines the appropriate editor plugin for this field, 
-	    // then returns a function which calls that plugin on the record set element.
+	    // Returns the name of the appropriate plugin for editing this field
 	    switch(this.getType()){
 	    case "text":
 		return "dbEditorInput";
@@ -9390,16 +9275,138 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	}
     });
-})(jQuery, window);
+})(jQuery);
 
-// dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
-jQuery(function(){
-    jQuery('.recordSet').dbRecordSet();
-});
+/* ==== jquery.dbRecordsRecord.js ==== */
+// dbRecord plugin
+// Part of a dbRecordSet, a dbRecord represents a collection of dbFields which need to be added, updated, or deleted together.
+;(function($, undefined){
+    $.widget('qcode.dbRecord', {
+	_create: function(){
+	    this.state = 'current';
+	    if ( this.element.attr('saveAction') === "add" ) {
+		this.saveAction = "add";
+	    } else {
+		this.saveAction = "update";
+	    }
+	},
+	getRecordSet: function(){
+	    // Get the record-set element for this record
+	    return this.element.closest('.recordSet');
+	}, 
+	getState: function(){
+	    // Get the state of this record
+	    return this.state;
+	}, 
+	setState: function(newState){
+	    // Set the state of this record
+	    switch(newState) {
+	    case "updating":
+	    case "error":
+	    case "current":
+	    case "dirty":
+		this.element.removeClass("current dirty updating error");
+		this.element.addClass(newState);
+		this.state = newState;
+		this.element.trigger('dbRecordStateChange');
+		break;
+	    default:
+		$.error('Invalid state');
+	    }
+	}, 
+	save: function(async){
+	    // Save this record, using an add or update url as appropriate
+	    if ( this.getState() === "updating" ) return false;
+	    var url = this.getRecordSet().attr(this.saveAction + "URL");
+	    if ( ! url ) {
+		$.error('Could not '+this.saveAction+' record - no url provided');
+	    }
+	    this.action(this.saveAction, url, async);
+	}, 
+	delete: function(async){
+	    // Delete this record, by sending a delete request to the server
+	    if ( this.getState() === "updating" ) return false;
+	    var url = this.getRecordSet().attr('deleteURL');
+	    if ( ! url ) {
+		$.error('Could not delete record - no url provided');
+	    }
+	    this.action('delete', url, async);
+	}, 
+	action: function(action, url, async){
+	    // Perform the given action (add, update, delete), by submitting record data to the server.
+	    var async = coalesce(async, true);
+
+	    this.setState('updating');
+	    this.getCurrentField().dbField('write');
+
+	    var urlPieces = splitURL(url);
+	    var path = urlPieces.path;
+	    var data = urlPieces.data;
+	    this.element.find('[name]').each(function(i, field) {
+		var name = $(field).dbField('getName');
+		var value = $(field).dbField('getValue');
+		data[name] = value;
+	    });
+
+	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
+	    this.element.trigger('dbRecordAction', [action]);
+	}, 
+	getCurrentField: function(){
+	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
+	}, 
+	getFields: function(){
+	    // Returns all editable fields in the record
+	    return this.element.find('.editable');
+	}, 
+	setValues: function(xmlDoc){
+	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
+	    this.element.find('[name]').each(function(i, field) {
+		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
+		if ( node.length > 0 ) {
+		    $(field).dbField('setValue', node.text());
+		}
+	    });
+	    this.element.trigger('resize');
+	}, 
+	recordIn: function(event){
+	    this.element.trigger('dbRecordIn', event);
+	}, 
+	recordOut: function(event){
+	    if ( this.getState() === "dirty" ) {
+		this.save();
+	    }
+	    this.element.trigger('dbRecordOut', event);
+	},
+	_actionReturn: function(action, xmlDoc, status, jqXHR){
+	    this.setState('current');
+	    switch(action){
+	    case "update":
+		this.setValues(xmlDoc);
+		break;
+	    case "add":
+		this.saveAction = "update";
+		this.setValues(xmlDoc);
+		break;
+	    }
+	    this.element.trigger('dbRecordActionReturn', [action, xmlDoc, status, jqXHR]);
+	    if ( action == "delete" ) {
+		this.element.remove();
+		this.getRecordSet().trigger('resize');
+	    }
+	},
+	_actionReturnError: function(action, message, type, error){
+	    this.setState('error');
+	    if ( type != 'USER' ) {
+		alert(message);
+	    }
+	    this.element.trigger('dbRecordActionReturnError', [action, message, type, error]);
+	}
+    });
+})(jQuery);
 
 /* ==== jquery.hoverScroller.js ==== */
 // Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover.
-(function($){
+;(function($, undefined){
     $.fn.hoverScroller = function(options){
 	// scrollbox is the box to scroll,
 	// container is the element to add the controls to (normally the scrollbox's parent)
@@ -9579,117 +9586,99 @@ jQuery(function(){
 
 /* ==== jquery.sidebar.js ==== */
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
-(function($){
+;(function($, undefined){
+    $.widget('qcode.sidebar', {
+	_create: function(){
+	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
+	    $('body').css('margin-right', "+=35px");
 
-    // class Sidebar - an object to handle all the plugin functionality
-    function Sidebar(element) {
-	// Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
-	$('body').css('margin-right', "+=35px");
+	    var sidebar = this.element,
+	    toolbar = this.toolbar = sidebar.find('.toolbar'),
+	    initialWidth = sidebar.width();
 
-	var sidebar = this.sidebar = $(element);
-	var toolbar = this.toolbar = sidebar.find('.toolbar');
-	var initialWidth = sidebar.width();
+	    // An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
+	    var handle = this.handle = $('<div>')
+		.addClass('handle')
+		.prependTo(sidebar);
 
-	// An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
-	var handle = this.handle = $('<div>')
-	    .addClass('handle')
-	    .prependTo(sidebar)
-	    .on('mousedown.resizer',dragStart) // The dragStart function will bind additional event listeners to trigger drag events
-	    .on('dragStart', function(event, data) {
-		initialWidth = sidebar.width();
-		sidebar.trigger('resizeStart');
-	    })
-	    .on('drag', function(event, data) {
-		sidebar.width(initialWidth - data.offset);
-		sidebar.width(sidebar.width()); // Ensures that the css "width" property matches the actual calculated width
-		sidebar.trigger('resize');
-	    })
-	    .on('dragEnd', function(event, data) {
-		initialWidth = sidebar.width();
-		sidebar.trigger('resizeEnd');
+	    this._on(handle, {
+		'mousedown': this._dragStart,
+		'dragStart': function(event, data) {
+		    initialWidth = sidebar.width();
+		},
+		'drag': function(event, data) {
+		    sidebar.width(initialWidth - data.offset);
+		    sidebar.trigger('resize');
+		},
+		'dragEnd': function(event, data) {
+		    initialWidth = sidebar.width();
+		}
 	    });
 
-	// Button to collapse the sidebar
-	var collapseButton = this.collapseButton = $('<button>')
-	    .text('\u21e5')
-	    .addClass('collapse')
-	    .prependTo(toolbar)
-	    .on('click', this.collapse.bind(this));
+	    // Button to collapse the sidebar
+	    this.collapseButton = $('<button>')
+		.text('\u21e5')
+		.addClass('collapse')
+		.prependTo(toolbar);
 
-	// Button to restore a collapsed sidebar
-	var restoreButton = this.restoreButton = $('<button>')
-	    .text('\u21e4')
-	    .addClass('restore')
-	    .prependTo(toolbar)
-	    .hide()
-	    .on('click', this.restore.bind(this));
-    }
+	    this._on(this.collapseButton, {
+		'click': this.collapse
+	    });
 
-    // Public methods of class Sidebar
-    $.extend(Sidebar.prototype, {
+	    // Button to restore a collapsed sidebar
+	    this.restoreButton = $('<button>')
+		.text('\u21e4')
+		.addClass('restore')
+		.prependTo(toolbar)
+		.hide();
+
+	    this._on(this.restoreButton, {
+		'click': this.restore
+	    });
+	},
 	collapse: function() {
 	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
-	    this.handle.off('.resizer').css('cursor', 'auto');
+	    this._off(this.handle, '.resizer');
+	    this.handle.css('cursor', 'auto');
 	    this.collapseButton.hide();
 	    this.restoreButton.show();
-	    this.sidebar.stop().animate({
-		'right': 25 - this.sidebar.width()
+	    this.element.stop().animate({
+		'right': 25 - this.element.width()
 	    });
 	},
 	restore: function() {
 	    // Restore a collapsed sidebar
-	    this.handle.on('mousedown.resizer',dragStart).css('cursor', "w-resize");
+	    this._on(this.handle, {
+		'mousedown': this._dragStart
+	    });
+	    this.handle.css('cursor', "w-resize");
 	    this.restoreButton.hide();
 	    this.collapseButton.show();
-	    this.sidebar.stop().animate({
+	    this.element.stop().animate({
 		'right': 0
 	    });
+	},
+	_dragStart: function(event){
+	    var target = $(event.target);
+	    event.preventDefault();
+	    this._on($('body'), {
+		'mousemove': this._drag.bind(this, target, event.pageX),
+		'mouseup': this._dragEnd.bind(this, target, event.pageX),
+		'mouseleave': this._dragEnd.bind(this, target, event.pageX)
+	    });
+	    target.trigger('dragStart');
+	},
+	_drag: function(target, initialX, event){
+	    event.preventDefault();
+	    target.trigger('drag', [{
+		'offset': event.pageX - initialX
+	    }]);
+	},
+	_dragEnd: function(target, initialX, event){
+	    this._off($('body'), 'mousemove mouseup mouseleave')
+	    target.trigger('dragEnd');
 	}
     });
-    // End of class Sidebar
-
-
-
-    // Drag events.
-    // Typical use is to call dragStart in response to a mousedown event, then listen for dragStart, drag and dragEnd events.
-    // Once called, dragStart will add listeners and call the other functions appropriately.
-    function dragStart(event){
-	var target = $(event.target);
-	event.preventDefault();
-	$('body')
-	    .on('mousemove.dragEvent',drag.bind(this,target))
-	    .on('mouseup.dragEvent',dragEnd.bind(this,target))
-	    .on('mouseleave.dragEvent',dragEnd.bind(this,target));
-	target
-	    .data({
-		'initialX': event.pageX
-	    })
-	    .trigger('dragStart');
-    }
-    function drag(target, event){
-	event.preventDefault();
-	target.trigger('drag', [{
-	    'offset': event.pageX - target.data('initialX')
-	}]);
-    }
-    function dragEnd(target, event){
-	$('body').off('.dragEvent');
-	target.trigger('dragEnd');
-    }
-
-
-
-    // sidebar plugin function
-    $.fn.sidebar = function(){
-	$(this).each(function(){
-	    var sidebar = $(this).data('sidebar');
-	    if ( typeof sidebar != "object" ) {
-		$(this).data('sidebar', new Sidebar(this));
-		sidebar = $(this).data('sidebar');
-	    }
-	});
-	return this;
-    }
 })(jQuery);
 
 /* ==== jquery.textrange.js ==== */

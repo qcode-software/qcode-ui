@@ -1,113 +1,95 @@
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
-(function($){
+;(function($, undefined){
+    $.widget('qcode.sidebar', {
+	_create: function(){
+	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
+	    $('body').css('margin-right', "+=35px");
 
-    // class Sidebar - an object to handle all the plugin functionality
-    function Sidebar(element) {
-	// Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
-	$('body').css('margin-right', "+=35px");
+	    var sidebar = this.element,
+	    toolbar = this.toolbar = sidebar.find('.toolbar'),
+	    initialWidth = sidebar.width();
 
-	var sidebar = this.sidebar = $(element);
-	var toolbar = this.toolbar = sidebar.find('.toolbar');
-	var initialWidth = sidebar.width();
+	    // An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
+	    var handle = this.handle = $('<div>')
+		.addClass('handle')
+		.prependTo(sidebar);
 
-	// An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
-	var handle = this.handle = $('<div>')
-	    .addClass('handle')
-	    .prependTo(sidebar)
-	    .on('mousedown.resizer',dragStart) // The dragStart function will bind additional event listeners to trigger drag events
-	    .on('dragStart', function(event, data) {
-		initialWidth = sidebar.width();
-		sidebar.trigger('resizeStart');
-	    })
-	    .on('drag', function(event, data) {
-		sidebar.width(initialWidth - data.offset);
-		sidebar.width(sidebar.width()); // Ensures that the css "width" property matches the actual calculated width
-		sidebar.trigger('resize');
-	    })
-	    .on('dragEnd', function(event, data) {
-		initialWidth = sidebar.width();
-		sidebar.trigger('resizeEnd');
+	    this._on(handle, {
+		'mousedown': this._dragStart,
+		'dragStart': function(event, data) {
+		    initialWidth = sidebar.width();
+		},
+		'drag': function(event, data) {
+		    sidebar.width(initialWidth - data.offset);
+		    sidebar.trigger('resize');
+		},
+		'dragEnd': function(event, data) {
+		    initialWidth = sidebar.width();
+		}
 	    });
 
-	// Button to collapse the sidebar
-	var collapseButton = this.collapseButton = $('<button>')
-	    .text('\u21e5')
-	    .addClass('collapse')
-	    .prependTo(toolbar)
-	    .on('click', this.collapse.bind(this));
+	    // Button to collapse the sidebar
+	    this.collapseButton = $('<button>')
+		.text('\u21e5')
+		.addClass('collapse')
+		.prependTo(toolbar);
 
-	// Button to restore a collapsed sidebar
-	var restoreButton = this.restoreButton = $('<button>')
-	    .text('\u21e4')
-	    .addClass('restore')
-	    .prependTo(toolbar)
-	    .hide()
-	    .on('click', this.restore.bind(this));
-    }
+	    this._on(this.collapseButton, {
+		'click': this.collapse
+	    });
 
-    // Public methods of class Sidebar
-    $.extend(Sidebar.prototype, {
+	    // Button to restore a collapsed sidebar
+	    this.restoreButton = $('<button>')
+		.text('\u21e4')
+		.addClass('restore')
+		.prependTo(toolbar)
+		.hide();
+
+	    this._on(this.restoreButton, {
+		'click': this.restore
+	    });
+	},
 	collapse: function() {
 	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
-	    this.handle.off('.resizer').css('cursor', 'auto');
+	    this._off(this.handle, '.resizer');
+	    this.handle.css('cursor', 'auto');
 	    this.collapseButton.hide();
 	    this.restoreButton.show();
-	    this.sidebar.stop().animate({
-		'right': 25 - this.sidebar.width()
+	    this.element.stop().animate({
+		'right': 25 - this.element.width()
 	    });
 	},
 	restore: function() {
 	    // Restore a collapsed sidebar
-	    this.handle.on('mousedown.resizer',dragStart).css('cursor', "w-resize");
+	    this._on(this.handle, {
+		'mousedown': this._dragStart
+	    });
+	    this.handle.css('cursor', "w-resize");
 	    this.restoreButton.hide();
 	    this.collapseButton.show();
-	    this.sidebar.stop().animate({
+	    this.element.stop().animate({
 		'right': 0
 	    });
+	},
+	_dragStart: function(event){
+	    var target = $(event.target);
+	    event.preventDefault();
+	    this._on($('body'), {
+		'mousemove': this._drag.bind(this, target, event.pageX),
+		'mouseup': this._dragEnd.bind(this, target, event.pageX),
+		'mouseleave': this._dragEnd.bind(this, target, event.pageX)
+	    });
+	    target.trigger('dragStart');
+	},
+	_drag: function(target, initialX, event){
+	    event.preventDefault();
+	    target.trigger('drag', [{
+		'offset': event.pageX - initialX
+	    }]);
+	},
+	_dragEnd: function(target, initialX, event){
+	    this._off($('body'), 'mousemove mouseup mouseleave')
+	    target.trigger('dragEnd');
 	}
     });
-    // End of class Sidebar
-
-
-
-    // Drag events.
-    // Typical use is to call dragStart in response to a mousedown event, then listen for dragStart, drag and dragEnd events.
-    // Once called, dragStart will add listeners and call the other functions appropriately.
-    function dragStart(event){
-	var target = $(event.target);
-	event.preventDefault();
-	$('body')
-	    .on('mousemove.dragEvent',drag.bind(this,target))
-	    .on('mouseup.dragEvent',dragEnd.bind(this,target))
-	    .on('mouseleave.dragEvent',dragEnd.bind(this,target));
-	target
-	    .data({
-		'initialX': event.pageX
-	    })
-	    .trigger('dragStart');
-    }
-    function drag(target, event){
-	event.preventDefault();
-	target.trigger('drag', [{
-	    'offset': event.pageX - target.data('initialX')
-	}]);
-    }
-    function dragEnd(target, event){
-	$('body').off('.dragEvent');
-	target.trigger('dragEnd');
-    }
-
-
-
-    // sidebar plugin function
-    $.fn.sidebar = function(){
-	$(this).each(function(){
-	    var sidebar = $(this).data('sidebar');
-	    if ( typeof sidebar != "object" ) {
-		$(this).data('sidebar', new Sidebar(this));
-		sidebar = $(this).data('sidebar');
-	    }
-	});
-	return this;
-    }
 })(jQuery);

@@ -1,5 +1,5 @@
 // Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover.
-(function($){
+;(function($, undefined){
     $.fn.hoverScroller = function(options){
 	// scrollbox is the box to scroll,
 	// container is the element to add the controls to (normally the scrollbox's parent)
