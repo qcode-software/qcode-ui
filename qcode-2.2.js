@@ -10289,7 +10289,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 
 // Bug fix for table border width detection in ie9
 (function($){
-    //if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
+    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
         var oldCssFunction = $.fn.css;
         $.fn.css = function() {
             if ( this.first().is('table') && arguments.length == 1 ) {
@@ -10334,7 +10334,7 @@ function httpPost(url,data,handler,errorHandler,async) {
                 return oldCssFunction.apply(this,arguments);
             }
         };
-    //}
+    }
     function getInnerWidth(table) {
         var borderSpacing = table.css('border-spacing');
         var horizontalSpacing = borderSpacing.split(' ').shift();
