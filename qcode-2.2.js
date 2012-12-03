@@ -6394,8 +6394,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     };
 })(jQuery);
 
-/* ==== jquery.dbEditorHTML.js ==== */
-// dbEditorHTML plugin
+/* ==== jquery.dbEditorHTMLArea.js ==== */
+// dbEditorHTMLArea plugin
 // A hovering editor for multi-line input with a contentEditable div to allow html markup
 ;(function($, window, undefined){
 
@@ -6409,28 +6409,31 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width'];
 
-    $.widget('qcode.dbEditorHTML', {
+    // Uses the jQuery UI widget factory
+    $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
+	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize.bind(this)
+		'resize': this._onResize
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
-		.addClass('dbEditorHTML')
+		.addClass('dbEditorHTMLArea')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute"
 		})
 		.hide();
 	    this._on(this.editor, {
-		'keydown': this._inputOnKeyDown.bind(this),
-		'keyup': this._inputOnKeyUp.bind(this),
-		'cut': this._inputOnCut.bind(this),
-		'paste': this._inputOnPaste.bind(this),
-		'blur': this._inputOnBlur.bind(this)
+		'keydown': this._inputOnKeyDown,
+		'keyup': this._inputOnKeyUp,
+		'cut': this._inputOnCut,
+		'paste': this._inputOnPaste,
+		'blur': this._inputOnBlur
 	    });
 	},
 	getValue: function() {
+	    // Get the current value of the editor
 	    return this.editor.html();
 	}, 
 	show: function(element, value){
@@ -6442,13 +6445,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    $.each(copyAttributes, function(i, name){
 		editor.css(name, element.css(name));
 	    });
+
+	    // Different browsers return different css for transparent elements
 	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		editor.css('backgroundColor', "white");
 	    } else {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Different browsers return different css for transparent elements
+	    // Assumes that the editor's container is the target element's offset parent.
 	    editor
 		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		.css({
@@ -6460,12 +6465,14 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		.focus();
 	}, 
 	hide: function() {
+	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	}, 
 	selectText: function(option) {
+	    // Set the text selection / cursor position
 	    switch(option) {
 	    case "start":
 		this.editor.textrange('set', "start", "start");
@@ -6479,6 +6486,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	destroy: function() {
+	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
 	_onResize: function(event) {
@@ -6497,17 +6505,25 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyDown: function(e) {
-	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    // nb. This switch cascades; the lack of breaks is intentional
+	    switch(e.which) {
+
 	    case 37: // left
-	    case 39: //right
+	    case 39: // right
+		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
+		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
 		var selection = this.editor.textrange('get');
 		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
 		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	    case 83: //S
+
+	    case 83: // S
+		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-	    case 9: //tab
-	    case 38: //up
-	    case 40: //down
+
+	    case 9: // tab
+	    case 38: // up
+	    case 40: // down
 		var event = jQuery.Event(e.type, {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
@@ -6520,6 +6536,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyUp: function(e) {
+	    // Pass all key up events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6530,6 +6547,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+	    // Pass all cut events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6540,6 +6558,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+	    // Pass all paste events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6550,6 +6569,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e, source) {
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event(e.type, {
 		    'data': e.data
@@ -6560,12 +6581,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     });
 })(jQuery, window);
 
-/* ==== jquery.dbEditorInput.js ==== */
-// dbEditorInput plugin
+/* ==== jquery.dbEditorText.js ==== */
+// dbEditorText plugin
 // A hovering editor for single-line input
 ;(function($, window, undefined) {
 
-    // css attributes to copy from target elements to the editor when editor is shown
+    // css attributes to copy from the target element to the editor when editor is shown
     var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
 			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
 			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
@@ -6575,13 +6596,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width', 'height'];
 
-    $.widget('qcode.dbEditorInput', {
+    // Uses the jQuery UI widget factory
+    $.widget('qcode.dbEditorText', {
 	_create: function() {
+	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize.bind(this)
+		'resize': this._onResize
 	    });
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorInput')
+		.addClass('dbEditorText')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute", 
@@ -6594,18 +6617,19 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		})
 		.hide();
 	    this._on(this.editor, {
-		'keydown': this._inputOnKeyDown.bind(this),
-		'keyup': this._inputOnKeyUp.bind(this),
-		'cut': this._inputOnCut.bind(this),
-		'paste': this._inputOnPaste.bind(this),
-		'blur': this._inputOnBlur.bind(this)
+		'keydown': this._inputOnKeyDown,
+		'keyup': this._inputOnKeyUp,
+		'cut': this._inputOnCut,
+		'paste': this._inputOnPaste,
+		'blur': this._inputOnBlur
 	    });
 	},
 	getValue: function() {
+	    // Get the current value of the editor
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value
+	    // Show this editor over the target element and set the value of the editor
 	    this.currentElement = element;
 	    var editor = this.editor;
 
@@ -6622,7 +6646,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Assumes that the editor's container is the target element's offset parent.
+	    // Assumes that the editor's container is the target element's offset parent, or something similar.
 	    editor
 		.css({
 		    'top': element.position().top + element.offsetParent().scrollTop(), 
@@ -6633,12 +6657,14 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		.focus();
 	}, 
 	hide: function() {
+	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	}, 
 	selectText: function(option) {
+	    // Set the text selection / cursor position
 	    switch(option) {
 	    case "start":
 		this.editor.textrange('set', "start", "start");
@@ -6652,11 +6678,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	destroy: function() {
+	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
 	_onResize: function(event) {
 	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
+	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
+	    // Ensures that the editor is still positioned correctly over the target element.
 	    if ( this.currentElement ) {
 		var element = this.currentElement;
 		var editor = this.editor;
@@ -6670,18 +6698,26 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyDown: function(e) {
-	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    //nb. This switch cascades; the lack of breaks is intentional
+	    switch(e.which) {
+
 	    case 37: // left
-	    case 39: //right
+	    case 39: // right
+		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
+		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
 		var selection = this.editor.textrange('get');
 		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
 		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	    case 83: //S
+
+	    case 83: // S
+		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-	    case 13: //return
-	    case 9: //tab
-	    case 38: //up
-	    case 40: //down
+
+	    case 13: // return
+	    case 9: // tab
+	    case 38: // up
+	    case 40: // down
 		var event = jQuery.Event(e.type, {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
@@ -6695,6 +6731,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyUp: function(e) {
+	    // Pass all key up events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6705,6 +6742,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+	    // Pass all cut events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6715,6 +6753,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+	    // Pass all paste events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6725,6 +6764,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e, source) {
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event(e.type, {
 		    'data': e.data
@@ -6735,9 +6776,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     });
 })(jQuery, window);
 
-/* ==== jquery.dbEditorText.js ==== */
-// dbEditorText plugin
-// A hovering editor for multi-line input (text)
+/* ==== jquery.dbEditorTextArea.js ==== */
+// dbEditorTextArea plugin
+// A hovering editor for multi-line text input
 ;(function($, window, undefined){
 
     // css attributes to copy from target elements to the editor when editor is shown
@@ -6750,14 +6791,16 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width', 'height'];
 
-    $.widget( 'qcode.dbEditorText', {
+    // Uses the jQuery UI widget factory
+    $.widget( 'qcode.dbEditorTextArea', {
 	_create: function() {
+	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize.bind(this)
+		'resize': this._onResize
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
-		.addClass('dbEditorText')
+		.addClass('dbEditorTextArea')
 		.css({
 		    'position': "absolute", 
 		    'resize': "none", 
@@ -6768,14 +6811,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		})
 		.hide();
 	    this._on(this.editor, {
-		'keydown': this._inputOnKeyDown.bind(this),
-		'keyup': this._inputOnKeyUp.bind(this),
-		'cut': this._inputOnCut.bind(this),
-		'paste': this._inputOnPaste.bind(this),
-		'blur': this._inputOnBlur.bind(this)
+		'keydown': this._inputOnKeyDown,
+		'keyup': this._inputOnKeyUp,
+		'cut': this._inputOnCut,
+		'paste': this._inputOnPaste,
+		'blur': this._inputOnBlur
 	    });
 	},
 	getValue: function() {
+	    // Get the current value of the editor
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
@@ -6809,12 +6853,14 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		.focus();
 	}, 
 	hide: function() {
+	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
 	}, 
 	selectText: function(option) {
+	    // Set the text selection / cursor position
 	    switch(option) {
 	    case "start":
 		this.editor.textrange('set', "start", "start");
@@ -6828,6 +6874,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	destroy: function() {
+	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
 	_onResize: function(event) {
@@ -6849,17 +6896,24 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyDown: function(e) {
-	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    // nb. This switch cascades; the lack of breaks is intentional
+	    switch(e.which) {
+
 	    case 37: // left
-	    case 39: //right
+	    case 39: // right
+		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
+		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
 		var selection = this.editor.textrange('get');
 		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
 		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	    case 83: //S
+	    case 83: // S
+		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-	    case 9: //tab
-	    case 38: //up
-	    case 40: //down
+
+	    case 9: // tab
+	    case 38: // up
+	    case 40: // down
 		var event = jQuery.Event(e.type, {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
@@ -6872,6 +6926,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyUp: function(e) {
+	    // Pass all key up events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6882,6 +6937,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+	    // Pass all cut events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6892,6 +6948,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+	    // Pass all paste events on to the target element.
             var event = jQuery.Event(e.type, {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -6902,6 +6959,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e) {
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event(e.type, {
 		    'data': e.data
@@ -8829,17 +8888,22 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.dbRecordSet.js ==== */
 // dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
-jQuery(function(){
+;jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
 
-// DbRecords Plugins
-(function($, window, undefined){
+// dbRecordSet plugin - requires dbRecordsRecord, dbRecordsField and appropriate dbEditor plugins.
+// Call on a DOM element which contains other elements representing a database record set (multiple records each with multiple fields)
+;(function($, window, undefined){
+
+    // Uses the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	_create: function(){
-	    this.currentField = $([]);
+	    // Constructor function
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
+	    // nb - with dbEditor plugins in use, only the mousedown listener should be listening for directly user-generated events, the rest should be listening for events passed to the field by an editor.
+	    // Elements with class "editable" should be editable fields.
 	    this._on({
 		'mousedown .editable': function(event){
 		    $(event.target).dbField('onMouseDown', event);
@@ -8864,6 +8928,9 @@ jQuery(function(){
 		'beforeunload': this._onBeforeUnload,
 		'beforeprint': this._onBeforePrint,
 	    });
+
+	    // When no field is selected, currentField should be an empty jQuery object.
+	    this.currentField = $([]);
 	},
 	save: function(aysnc) {
 	    // Save the current record
@@ -8878,7 +8945,7 @@ jQuery(function(){
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the "currentField" property - this is intended for internal use, please use fieldChange to change the current field.
+	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(newField) {
@@ -9043,6 +9110,7 @@ jQuery(function(){
 	    }
 	},
 	_onBeforeUnload: function(event){
+	    // Before leaving the page, offer the user a chance to save changes.
 	    var record = this.getCurrentRecord();
 	    if ( record.dbRecord('getState') == 'dirty' ) {
 		if ( window.confirm('Do you want to save your changes?') ) {
@@ -9054,12 +9122,13 @@ jQuery(function(){
 	    }
 	},
 	_onBeforePrint: function(event){
+	    // Before printing, stop editing
 	    this.getCurrentField().dbField('fieldOut');
 	    this.getCurrentRecord().dbRecord('recordOut');
 	}
     });
 
-    // Navigation functions
+    // Navigation functions, used by the "move" functions
     function sameRow(a, b) {
 	// Takes two elements and returns true if they are on the same row
 	return (a.offset().top <= (b.offset().top + b.outerHeight()))
@@ -9090,21 +9159,27 @@ jQuery(function(){
 
 
 /* ==== jquery.dbRecordsField.js ==== */
+// dbField plugin - a field (editable or not) in a record set.
 ;(function($, undefined){
-$.widget( "qcode.dbField", {
-	_create: function(){
+
+    // Uses the jQuery UI widget factory
+    $.widget( "qcode.dbField", {
+	_create: function() {
+	    // Constructor function. This widget uses a locking strategy to handle focus/blur events, which means there's probably room for improvement.
 	    this.lockFocusEvents = false;
 	},
-	getRecordSet: function(){
+	getRecordSet: function() {
+	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
-	}, 
-	getName: function() {
-	    return this.element.attr('name');
-	}, 
+	},
 	getRecord: function(){
 	    // get the record containing this field
 	    return this.element.closest('.record');
-	}, 
+	},
+	getName: function() {
+	    // Get the name of this field
+	    return this.element.attr('name');
+	},
 	getValue: function(){
 	    // get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 	    if ( this.getType() == "html" ) {
@@ -9128,15 +9203,20 @@ $.widget( "qcode.dbField", {
 	fieldIn: function(newField, select){
 	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 	    var recordSet = this.getRecordSet();
+
+	    // Hiding this element triggers a blur event in IE, but we don't want it to respond to that
 	    this.lockFocusEvents = true;
+
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
 
 	    var fieldValue = this.getValue();
 
+	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
 	    var plugin = this._getEditorPluginName();
 	    recordSet[plugin]('show', this.element, fieldValue);
 
+	    // Optionally set the text selection
 	    if (select) {
 		recordSet[plugin]('selectText', select);
 	    } else if ( this.element.attr('fieldInSelect') != null ) {
@@ -9144,6 +9224,7 @@ $.widget( "qcode.dbField", {
 	    } else {
 		recordSet[plugin]('selectText', 'all');
 	    }
+
 	    this.element.trigger('dbFieldIn');
 	    this.lockFocusEvents = false;
 	}, 
@@ -9154,7 +9235,9 @@ $.widget( "qcode.dbField", {
 	    var record = this.getRecord();
 	    recordSet.dbRecordSet('setCurrentField', $([]));
 
+	    // Get the name of the appropriate dbEditor plugin, so that it can be called on the record set container.
  	    var plugin = this._getEditorPluginName();
+
 	    var editorValue = recordSet[plugin]('getValue');
 
 	    if ( this.getValue() !== editorValue ) {
@@ -9173,36 +9256,37 @@ $.widget( "qcode.dbField", {
 	    return this.element.attr('type');
 	}, 
 	isEditable: function(){
-	    // Returns true if the field is currently editable (ie. not updating)
+	    // Returns true if the field is currently editable (ie. normally editable, and not updating)
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
 	onMouseDown: function(event){
+	    // Behavior for a mouse down event on this field - switch to this field if it's editable
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		event.preventDefault();
 	    }
 	}, 
 	onKeyDown: function(event){
-	    // nb. Normally only captures key up events propagated here by the editor
+	    // nb. Normally only captures key down events propagated here by the editor, so defines behavior only for those events which the editor doesn't intercept.
 	    if ( event.altKey ) {
 		return true;
 	    }
 	    var recordSet = this.getRecordSet();
 	    var field = this.element;
 	    switch (event.which) {
-	    case 37: //left
+	    case 37: // left arrow key pressed - move left
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
 		break;
-	    case 38: //up
+	    case 38: // up arrow key pressed - move up
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
 		break;
-	    case 39: //right
+	    case 39: // right arrow key pressed - move right
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
 		break;
-	    case 40: //down
+	    case 40: // down arrow key pressed - move down
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
 		break;
-	    case 9: //tab
+	    case 9: // tab key pressed - move right, or left on shift+tab, save if the end of the fields in this record set has been reached
 		if ( event.shiftKey ) {
 		    var newField = recordSet.dbRecordSet('moveLeft', field);
 		} else {
@@ -9214,7 +9298,7 @@ $.widget( "qcode.dbField", {
 		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
-	    case 13: //return
+	    case 13: // return key pressed - move right, or save if the last field in this record set has been reached
 		var newField = recordSet.dbRecordSet('moveRight', field);
 		if ( newField == field ) {
 		    this.getRecord().dbRecord('save');
@@ -9222,7 +9306,7 @@ $.widget( "qcode.dbField", {
 		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
-	    case 83: //ctrl + s
+	    case 83: // Ctrl + S - save the current record.
 		if ( event.ctrlKey ) {
 		    this.getRecord().dbRecord('save');
 		    event.preventDefault();
@@ -9231,7 +9315,7 @@ $.widget( "qcode.dbField", {
 	    }
 	}, 
 	onKeyUp: function(event){
-	    // Get the current editor value
+	    // On key up, if the field's value has changed, mark as dirty.
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
 	    var editorValue = recordSet[plugin]('getValue');
@@ -9241,13 +9325,15 @@ $.widget( "qcode.dbField", {
 	    }
 	}, 
 	onCut: function(){
+	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	onPaste: function(){
+	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	onBlur: function(){
-	    // Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue.
+	    // Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue, but probably isn't the best solution.
 	    if ( ! this.lockFocusEvents ) {
 		this.fieldOut();
 		this.getRecord().dbRecord('recordOut');
@@ -9264,13 +9350,13 @@ $.widget( "qcode.dbField", {
 	    // Returns the name of the appropriate plugin for editing this field
 	    switch(this.getType()){
 	    case "text":
-		return "dbEditorInput";
-		break;
-	    case "textarea":
 		return "dbEditorText";
 		break;
+	    case "textarea":
+		return "dbEditorTextArea";
+		break;
 	    case "htmlarea":
-		return "dbEditorHTML";
+		return "dbEditorHTMLArea";
 		break;
 	    }
 	}
@@ -9281,8 +9367,11 @@ $.widget( "qcode.dbField", {
 // dbRecord plugin
 // Part of a dbRecordSet, a dbRecord represents a collection of dbFields which need to be added, updated, or deleted together.
 ;(function($, undefined){
+
+    // Uses the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function(){
+	    // Constructor function
 	    this.state = 'current';
 	    if ( this.element.attr('saveAction') === "add" ) {
 		this.saveAction = "add";
@@ -9291,7 +9380,7 @@ $.widget( "qcode.dbField", {
 	    }
 	},
 	getRecordSet: function(){
-	    // Get the record-set element for this record
+	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
 	getState: function(){
@@ -9316,7 +9405,9 @@ $.widget( "qcode.dbField", {
 	}, 
 	save: function(async){
 	    // Save this record, using an add or update url as appropriate
-	    if ( this.getState() === "updating" ) return false;
+	    if ( this.getState() === "updating" ) {
+		return false;
+	    }
 	    var url = this.getRecordSet().attr(this.saveAction + "URL");
 	    if ( ! url ) {
 		$.error('Could not '+this.saveAction+' record - no url provided');
@@ -9325,7 +9416,9 @@ $.widget( "qcode.dbField", {
 	}, 
 	delete: function(async){
 	    // Delete this record, by sending a delete request to the server
-	    if ( this.getState() === "updating" ) return false;
+	    if ( this.getState() === "updating" ) {
+		return false;
+	    }
 	    var url = this.getRecordSet().attr('deleteURL');
 	    if ( ! url ) {
 		$.error('Could not delete record - no url provided');
@@ -9352,6 +9445,7 @@ $.widget( "qcode.dbField", {
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
 	getCurrentField: function(){
+	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	}, 
 	getFields: function(){
@@ -9369,32 +9463,43 @@ $.widget( "qcode.dbField", {
 	    this.element.trigger('resize');
 	}, 
 	recordIn: function(event){
+	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
+	    // Call when done editing this record. Auto-saves if any changes were made.
 	    if ( this.getState() === "dirty" ) {
 		this.save();
 	    }
 	    this.element.trigger('dbRecordOut', event);
 	},
 	_actionReturn: function(action, xmlDoc, status, jqXHR){
+	    // Called on successfull return from a server action (add, update or delete)
 	    this.setState('current');
 	    switch(action){
 	    case "update":
 		this.setValues(xmlDoc);
 		break;
 	    case "add":
+		// Once added, a record becomes an updatable record
 		this.saveAction = "update";
 		this.setValues(xmlDoc);
 		break;
 	    }
+
+	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
 	    this.element.trigger('dbRecordActionReturn', [action, xmlDoc, status, jqXHR]);
+
 	    if ( action == "delete" ) {
+		// When a record is deleted, remove it from the DOM.
+		var recordSet = this.getRecordSet();
+		this.destroy();
 		this.element.remove();
-		this.getRecordSet().trigger('resize');
+		recordSet.trigger('resize');
 	    }
 	},
 	_actionReturnError: function(action, message, type, error){
+	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
@@ -9888,10 +9993,10 @@ $.widget( "qcode.dbField", {
 
 	// Calculate and apply column widths
 	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
-	this.table.children('tbody').children('tr:first-child').children('th, td').each(function(index, element){
-	    var td = $(element);
-	    var th = this.thead.children('tr:first-child').children('th, td').eq(index);
-	    var width = Math.ceil(td.innerWidth());
+	this.thead.children('tr:first-child').children('th, td').each(function(index, element) {
+	    var th = $(element);
+	    var td = this.table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
+	    var width = Math.ceil(th.innerWidth());
 
 	    // Ensures that default padding will be preserved when the thead is removed
 	    th.css({

@@ -1,8 +1,11 @@
 // dbRecord plugin
 // Part of a dbRecordSet, a dbRecord represents a collection of dbFields which need to be added, updated, or deleted together.
 ;(function($, undefined){
+
+    // Uses the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function(){
+	    // Constructor function
 	    this.state = 'current';
 	    if ( this.element.attr('saveAction') === "add" ) {
 		this.saveAction = "add";
@@ -11,7 +14,7 @@
 	    }
 	},
 	getRecordSet: function(){
-	    // Get the record-set element for this record
+	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
 	getState: function(){
@@ -36,7 +39,9 @@
 	}, 
 	save: function(async){
 	    // Save this record, using an add or update url as appropriate
-	    if ( this.getState() === "updating" ) return false;
+	    if ( this.getState() === "updating" ) {
+		return false;
+	    }
 	    var url = this.getRecordSet().attr(this.saveAction + "URL");
 	    if ( ! url ) {
 		$.error('Could not '+this.saveAction+' record - no url provided');
@@ -45,7 +50,9 @@
 	}, 
 	delete: function(async){
 	    // Delete this record, by sending a delete request to the server
-	    if ( this.getState() === "updating" ) return false;
+	    if ( this.getState() === "updating" ) {
+		return false;
+	    }
 	    var url = this.getRecordSet().attr('deleteURL');
 	    if ( ! url ) {
 		$.error('Could not delete record - no url provided');
@@ -72,6 +79,7 @@
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
 	getCurrentField: function(){
+	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	}, 
 	getFields: function(){
@@ -89,32 +97,43 @@
 	    this.element.trigger('resize');
 	}, 
 	recordIn: function(event){
+	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
+	    // Call when done editing this record. Auto-saves if any changes were made.
 	    if ( this.getState() === "dirty" ) {
 		this.save();
 	    }
 	    this.element.trigger('dbRecordOut', event);
 	},
 	_actionReturn: function(action, xmlDoc, status, jqXHR){
+	    // Called on successfull return from a server action (add, update or delete)
 	    this.setState('current');
 	    switch(action){
 	    case "update":
 		this.setValues(xmlDoc);
 		break;
 	    case "add":
+		// Once added, a record becomes an updatable record
 		this.saveAction = "update";
 		this.setValues(xmlDoc);
 		break;
 	    }
+
+	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
 	    this.element.trigger('dbRecordActionReturn', [action, xmlDoc, status, jqXHR]);
+
 	    if ( action == "delete" ) {
+		// When a record is deleted, remove it from the DOM.
+		var recordSet = this.getRecordSet();
+		this.destroy();
 		this.element.remove();
-		this.getRecordSet().trigger('resize');
+		recordSet.trigger('resize');
 	    }
 	},
 	_actionReturnError: function(action, message, type, error){
+	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);

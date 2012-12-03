@@ -44,10 +44,10 @@
 
 	// Calculate and apply column widths
 	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
-	this.table.children('tbody').children('tr:first-child').children('th, td').each(function(index, element){
-	    var td = $(element);
-	    var th = this.thead.children('tr:first-child').children('th, td').eq(index);
-	    var width = Math.ceil(td.innerWidth());
+	this.thead.children('tr:first-child').children('th, td').each(function(index, element) {
+	    var th = $(element);
+	    var td = this.table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
+	    var width = Math.ceil(th.innerWidth());
 
 	    // Ensures that default padding will be preserved when the thead is removed
 	    th.css({

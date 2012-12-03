@@ -1,15 +1,20 @@
 // dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
-jQuery(function(){
+;jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
 
-// DbRecords Plugins
-(function($, window, undefined){
+// dbRecordSet plugin - requires dbRecordsRecord, dbRecordsField and appropriate dbEditor plugins.
+// Call on a DOM element which contains other elements representing a database record set (multiple records each with multiple fields)
+;(function($, window, undefined){
+
+    // Uses the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	_create: function(){
-	    this.currentField = $([]);
+	    // Constructor function
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
+	    // nb - with dbEditor plugins in use, only the mousedown listener should be listening for directly user-generated events, the rest should be listening for events passed to the field by an editor.
+	    // Elements with class "editable" should be editable fields.
 	    this._on({
 		'mousedown .editable': function(event){
 		    $(event.target).dbField('onMouseDown', event);
@@ -34,6 +39,9 @@ jQuery(function(){
 		'beforeunload': this._onBeforeUnload,
 		'beforeprint': this._onBeforePrint,
 	    });
+
+	    // When no field is selected, currentField should be an empty jQuery object.
+	    this.currentField = $([]);
 	},
 	save: function(aysnc) {
 	    // Save the current record
@@ -48,7 +56,7 @@ jQuery(function(){
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the "currentField" property - this is intended for internal use, please use fieldChange to change the current field.
+	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(newField) {
@@ -213,6 +221,7 @@ jQuery(function(){
 	    }
 	},
 	_onBeforeUnload: function(event){
+	    // Before leaving the page, offer the user a chance to save changes.
 	    var record = this.getCurrentRecord();
 	    if ( record.dbRecord('getState') == 'dirty' ) {
 		if ( window.confirm('Do you want to save your changes?') ) {
@@ -224,12 +233,13 @@ jQuery(function(){
 	    }
 	},
 	_onBeforePrint: function(event){
+	    // Before printing, stop editing
 	    this.getCurrentField().dbField('fieldOut');
 	    this.getCurrentRecord().dbRecord('recordOut');
 	}
     });
 
-    // Navigation functions
+    // Navigation functions, used by the "move" functions
     function sameRow(a, b) {
 	// Takes two elements and returns true if they are on the same row
 	return (a.offset().top <= (b.offset().top + b.outerHeight()))
