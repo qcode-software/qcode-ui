@@ -92,7 +92,7 @@
 	}, 
 	getType: function(){
 	    // Returns the field type (input, text, or html)
-	    return this.element.attr('type');
+	    return coalesce(this.element.attr('type'), "text");
 	}, 
 	isEditable: function(){
 	    // Returns true if the field is currently editable (ie. normally editable, and not updating)
