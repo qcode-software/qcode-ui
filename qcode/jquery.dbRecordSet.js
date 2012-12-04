@@ -246,11 +246,11 @@
 	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
     }
     function belowRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row below "b"
+	// Takes two elements and returns true if "b" is on a row below "a"
 	return b.offset().top > (a.offset().top + a.outerHeight());
     }
     function aboveRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row above "b"
+	// Takes two elements and returns true if "b" is on a row above "a"
 	return (b.offset().top + b.outerHeight()) < a.offset().top;
     }
     function sameColumn(a, b) {
@@ -259,11 +259,11 @@
 	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
     }
     function leftOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column left of "b"
+	// Takes two elements and returns true if "b" is in a column left of "a"
 	return (b.offset().left + b.outerWidth()) < a.offset().left;
     }
     function rightOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column right of "b"
+	// Takes two elements and returns true if "b" is in a column right of "a"
 	return (a.offset().left + a.outerWidth()) < b.offset().left;
     }
 })(jQuery, window);

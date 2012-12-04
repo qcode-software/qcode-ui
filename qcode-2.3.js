@@ -25,50 +25,51 @@
 
 /* ==== 0.jquery-ui-hacks.js ==== */
 (function($){
-$.widget.bridge = function( name, object ) {
+    $.widget.bridge = function( name, object ) {
 	var fullName = object.prototype.widgetFullName || name;
 	$.fn[ name ] = function( options ) {
-		var isMethodCall = typeof options === "string",
-			args = slice.call( arguments, 1 ),
-			returnValue = this;
+	    var isMethodCall = typeof options === "string",
+	    args = slice.call( arguments, 1 ),
+	    returnValue = this;
 
-		// allow multiple hashes to be passed on init
-		options = !isMethodCall && args.length ?
-			$.widget.extend.apply( null, [ options ].concat(args) ) :
-			options;
+	    // allow multiple hashes to be passed on init
+	    options = !isMethodCall && args.length ?
+		$.widget.extend.apply( null, [ options ].concat(args) ) :
+		options;
 
-		if ( isMethodCall ) {
-			this.each(function() {
-				var methodValue,
-					instance = $.data( this, fullName );
-				if ( !instance ) {
-					$.data( this, fullName, new object( undefined, this ) );
-					instance = $.data( this, fullName );
-				}
-				if ( !$.isFunction( instance[options] ) || options.charAt( 0 ) === "_" ) {
-					return $.error( "no such method '" + options + "' for " + name + " widget instance" );
-				}
-				methodValue = instance[ options ].apply( instance, args );
-				if ( methodValue !== instance && methodValue !== undefined ) {
-					returnValue = methodValue && methodValue.jquery ?
-						returnValue.pushStack( methodValue.get() ) :
-						methodValue;
-					return false;
-				}
-			});
-		} else {
-			this.each(function() {
-				var instance = $.data( this, fullName );
-				if ( instance ) {
-					instance.option( options || {} )._init();
-				} else {
-					$.data( this, fullName, new object( options, this ) );
-				}
-			});
-		}
+	    if ( isMethodCall ) {
+		this.each(function() {
+		    var methodValue,
+		    instance = $.data( this, fullName );
+		    if ( !instance ) {
+			$.data( this, fullName, new object( undefined, this ) );
+			instance = $.data( this, fullName );
+		    }
+		    if ( !$.isFunction( instance[options] ) || options.charAt( 0 ) === "_" ) {
+			return $.error( "no such method '" + options + "' for " + name + " widget instance" );
+		    }
+		    methodValue = instance[ options ].apply( instance, args );
+		    if ( methodValue !== instance && methodValue !== undefined ) {
+			returnValue = methodValue && methodValue.jquery ?
+			    returnValue.pushStack( methodValue.get() ) :
+			    methodValue;
+			return false;
+		    }
+		});
+	    } else {
+		this.each(function() {
+		    var instance = $.data( this, fullName );
+		    if ( instance ) {
+			instance.option( options || {} )._init();
+		    } else {
+			$.data( this, fullName, new object( options, this ) );
+		    }
+		});
+	    }
 
-		return returnValue;
+	    return returnValue;
 	};
+    }
 })(jQuery);
 
 
@@ -2986,6 +2987,122 @@ function dynamicResize(oContainer) {
 	}
     }
 }
+
+
+/* ==== jQuery.tabable.js ==== */
+;(function($, window, undefined){
+    $.widget('qcode.tabable', {
+	options: {
+	    38: tabUp, // up arrow key
+	    40: tabDown, // down arrow key
+	    37: tabLeft, // left arrow key
+	    39: tabRight, // right arrow key
+	    9: tabRight, // tab key
+	    13: tabDown // enter key
+	},
+	_create: function() {
+	    this.element.addClass('tabable');
+
+	    this._on({
+		'keydown': function(event){
+		    $(event.target).tabable('onKeyDown', event);
+		}
+	    });
+	},	
+	_onKeyDown: function(event) {
+	    if ( this.options[event.which] !== undefined ) {
+		this.options[event.which]()
+		preventDefault();
+		return false;
+	    }
+	},
+	tabLeft: function(event) {
+	    var nextField;
+	    var fromField = this.element;
+	    var fromFieldLeft = fromField.offset().left;
+	    var fields = jQuery('.tablable');
+	    fields.each(function() {
+		var field = $(this);
+		var fieldLeft = field.offset().left;
+		if ( sameRow(field, fromField)
+		     && fieldLeft < fromFieldLeft
+		     && ( nextField === undefined || fieldLeft > nextFieldLeft )
+		   ) {
+		    nextField = field;
+		    nextFieldLeft = fieldLeft;
+		}
+	    });
+	    if ( nextField === undefined ) {
+		fields.each(function() {
+		    var field = $(this);
+		    var fieldLeft = $(field).offset().left;
+		    if ( aboveRow(fromField, field)
+			 && (nextField === undefined
+			     || belowRow(nextField, field)
+			     || (sameRow(field, nextField) && fieldLeft > nextFieldLeft )
+			    )
+		       ) {
+			nextField = field;
+			nextFieldLeft = fieldLeft;
+		    }
+		});
+	    }
+	    if ( nextField === undefined ) {
+		return fromField;
+	    } else {
+		return nextField;
+	    }
+
+	    this.element.focusout();
+	    nextField.focus();
+	},
+	tabRight: function(event) {
+
+	},
+	tabUp: function(event) {
+
+	},
+	tabDown: function(event) {
+
+	},
+	destroy: function() {
+	    this.element.removeClass('tabable');
+	    $.Widget.prototype.destroy.call(this);
+	}
+    });
+    
+    // Navigation functions, used by the "move" functions
+    function sameRow(a, b) {
+	// Takes two elements and returns true if they are on the same row
+	return (a.offset().top <= (b.offset().top + b.outerHeight()))
+	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
+    }
+    function belowRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row below "b"
+	return b.offset().top > (a.offset().top + a.outerHeight());
+    }
+    function aboveRow(a, b) {
+	// Takes two elements and returns true if "a" is on a row above "b"
+	return (b.offset().top + b.outerHeight()) < a.offset().top;
+    }
+    function sameColumn(a, b) {
+	// Takes two elements and returns true if they are in the same column
+	return (a.offset().left <= (b.offset().left + b.outerWidth()))
+	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
+    }
+    function leftOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column left of "b"
+	return (b.offset().left + b.outerWidth()) < a.offset().left;
+    }
+    function rightOfColumn(a, b) {
+	// Takes two elements and returns true if "a" is in a column right of "b"
+	return (a.offset().left + a.outerWidth()) < b.offset().left;
+    }
+
+} (jQuery, window)
+
+
+
 
 
 /* ==== jquery.borderCollapse.js ==== */
@@ -7101,11 +7218,11 @@ function dbFormHTMLArea(oDiv) {
 	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
     }
     function belowRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row below "b"
+	// Takes two elements and returns true if "b" is on a row below "a"
 	return b.offset().top > (a.offset().top + a.outerHeight());
     }
     function aboveRow(a, b) {
-	// Takes two elements and returns true if "a" is on a row above "b"
+	// Takes two elements and returns true if "b" is on a row above "a"
 	return (b.offset().top + b.outerHeight()) < a.offset().top;
     }
     function sameColumn(a, b) {
@@ -7114,11 +7231,11 @@ function dbFormHTMLArea(oDiv) {
 	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
     }
     function leftOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column left of "b"
+	// Takes two elements and returns true if "b" is in a column left of "a"
 	return (b.offset().left + b.outerWidth()) < a.offset().left;
     }
     function rightOfColumn(a, b) {
-	// Takes two elements and returns true if "a" is in a column right of "b"
+	// Takes two elements and returns true if "b" is in a column right of "a"
 	return (a.offset().left + a.outerWidth()) < b.offset().left;
     }
 })(jQuery, window);
