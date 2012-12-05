@@ -66,7 +66,7 @@
     // Initialise DbGridDivStatus objects for each div unless this has already been done
     for ( var i=0; i< divs.size(); i++ ) {
       var div = divs.eq(i);
-      var dbGridDivStatus = div.data('dbGrid');
+      var dbGridDivStatus = div.data('dbGridDivStatus');
 
       if ( ! dbGridDivStatus ) {
 	dbGridDivStatus = new DbGridDivStatus(div);
