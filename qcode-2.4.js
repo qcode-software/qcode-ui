@@ -7549,7 +7549,7 @@ function dbFormHTMLArea(oDiv) {
 
         // Default selector
         if (selector === undefined) {
-            selector = ':input:not(:button,:submit)';
+            this.selector = ':input:not(:button,:submit)';
         }
 
         // Events     
