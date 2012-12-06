@@ -1,5 +1,5 @@
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
-;(function($, undefined){
+;(function($, window, document, undefined){
     $.widget('qcode.sidebar', {
 	_create: function(){
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
@@ -74,10 +74,9 @@
 	_dragStart: function(event){
 	    var target = $(event.target);
 	    event.preventDefault();
-	    this._on($('body'), {
+	    this._on($(window), {
 		'mousemove': this._drag.bind(this, target, event.pageX),
-		'mouseup': this._dragEnd.bind(this, target, event.pageX),
-		'mouseleave': this._dragEnd.bind(this, target, event.pageX)
+		'mouseup': this._dragEnd.bind(this, target, event.pageX)
 	    });
 	    target.trigger('dragStart');
 	},
@@ -88,8 +87,8 @@
 	    }]);
 	},
 	_dragEnd: function(target, initialX, event){
-	    this._off($('body'), 'mousemove mouseup mouseleave')
+	    this._off($(window), 'mousemove mouseup');
 	    target.trigger('dragEnd');
 	}
     });
-})(jQuery);
+})(jQuery, window, document);

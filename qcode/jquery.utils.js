@@ -95,7 +95,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    // NORMAL COMPLETION
 	    return handler(data, textStatus, jqXHR);
 	},
-	error: function(jqXHR, textStatus, errorThrown) {
+	error: function(jqXHR, textStatus) {
 	    // HTTP ERROR
 	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
 		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;

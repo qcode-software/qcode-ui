@@ -1,158 +1,123 @@
-(function($){
+(function($) {
     var scrollBarWidth = 18;
 
-    // TheadFixed Class Constructor
-    var TheadFixed = function(table, settings) {
-	this.table = table;
-
-	// Settings
-	var defaultSettings = {
+    $.widget('qcode.theadFixed', {
+	options: {
 	    'wrapperClass': "theadFixed-wrapper",
 	    'scrollWrapperClass': "theadFixed-scrollWrapper",
 	    'scrollBoxClass': "theadFixed-scrollBox",
-	    'tableClass': this.table.attr('class')
-	};
-	if ( typeof this.table.data('height') !== "undefined" ) {
-	    defaultSettings.height = this.table.data('height');
-	}
-	this.settings = $.extend(defaultSettings, settings);
+	    'height': "500px"
+	},
+	_create function() {
+	    // TheadFixed Class Constructor
+	    if ( ! $(this.element).is('table') ) {
+		var table = $(this.element).find('table');
+		if ( table.size !== 1 ) {
+		    $.error("");
+		}
+	    }
+	    var table = this.element;
+	    var thead = table.children('thead');
 
-	table.attr('class', this.settings.tableClass);
+	    // Create wrappers and apply classes
+	    table
+		.wrap('<div>');
+	    this.scrollBox = table.parent();
+	    this.scrollBox
+		.addClass(this.options.scrollBoxClass)
+		.wrap('<div>');
+	    this.scrollWrapper = this.scrollBox.parent();
+	    this.scrollWrapper
+		.addClass(this.options.scrollWrapperClass)
+		.wrap('<div>');
+	    this.wrapper = this.scrollWrapper.parent();
+	    this.wrapper
+		.addClass(this.options.wrapperClass);
 
-	// Accounting for borders, padding, etc.
-	this.thead = this.table.children('thead');
-	this.errorY = this.thead.offset().top - this.table.offset().top - parseInt(this.table.css('margin-top'));
-	this.errorX = this.thead.offset().left - this.table.offset().left - parseInt(this.table.css('margin-left'));
-	if ( this.table.css('border-collapse') == 'collapse' ) {
-	    this.errorY++;
-	}
+	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
+	    this.scrollBox.css('min-width', 10000);
 
-	// Create wrappers and apply classes
-	this.table.wrap('<div>');
-	this.scrollBox = this.table.parent()
-	    .addClass(this.settings.scrollBoxClass)
-	    .wrap('<div>');
-	this.scrollWrapper = this.scrollBox.parent()
-	    .addClass(this.settings.scrollWrapperClass)
-	    .wrap('<div>');
-	this.wrapper = this.scrollWrapper.parent()
-	    .addClass(this.settings.wrapperClass);
+	    // If any cells besides header cells and first-row cells have a specified width, remove it.
+	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
 
-	// Temporarily give the table a lot of space to make sure that the column width calculations come out right
-	this.scrollBox.css('min-width', 10000);
+	    // Calculate and apply column widths
+	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
+		var th = $(element);
+		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
+		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
 
-	// Calculate and apply column widths
-	this.table.children('tbody').children('tr').not(':first-child').children('th, td').css('width', '');
-	this.thead.children('tr:first-child').children('th, td').each(function(index, element) {
-	    var th = $(element);
-	    var td = this.table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
-	    var width = Math.ceil(th.innerWidth());
-
-	    // Ensures that default padding will be preserved when the thead is removed
-	    th.css({
-		'padding-top': th.css('padding-top'),
-		'padding-right': th.css('padding-right'),
-		'padding-bottom': th.css('padding-bottom'),
-		'padding-left': th.css('padding-left')
+		// Ensures that default padding will be preserved when the thead is removed
+		th.css({
+		    'padding-top': th.css('padding-top'),
+		    'padding-right': th.css('padding-right'),
+		    'padding-bottom': th.css('padding-bottom'),
+		    'padding-left': th.css('padding-left')
+		});
+		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
+		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
 	    });
-	    th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-	    td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
-	}.bind(this));
 
-	// Apply css
-	this.wrapper.css({
-	    'position': "relative",
-	    'margin-top': this.table.css('margin-top'),
-	    'margin-right': this.table.css('margin-right'),
-	    'margin-bottom': this.table.css('margin-bottom'),
-	    'margin-left': this.table.css('margin-left'),
-	    'height': this.settings.height
-	});
-	this.table.css('margin', 0);
-
-	this.scrollWrapper.css({
-	    'position': "absolute",
-	    'top': this.thead.outerHeight() + this.errorY,
-	    'bottom': 0
-	});
-	this.scrollBox.css({
-	    'overflow-y': "auto",
-	    'overflow-x': 'hidden',
-	    'height': "100%",
-	    'min-width': this.table.outerWidth() + scrollBarWidth
-	});
-
-	this.errorX -= parseInt(this.table.css('border-left-width'));
-
-	this.thead.css({
-	    'position': "absolute",
-	    'bottom': "100%",
-	    'left': this.errorX
-	});
-	if ( this.table.css('border-collapse') == 'collapse' ) {
-	    this.table.children('tr:first-child').children('th, td').css('border-top-width', 0);
-	}
-
-	this.thead.find('tr').eq(0).find('th, td').css({
-	    'border-top-style': this.table.css('border-top-style'),
-	    'border-top-width': this.table.css('border-top-width'),
-	    'border-top-color': this.table.css('border-top-color')
-	});
-	this.thead.find('tr').each(function(i, row){
-	    var cells = $(row).find('th, td').filter(':visible');
-	    cells.eq(0).css({
-		'border-left-style': table.css('border-left-style'),
-		'border-left-width': table.css('border-left-width'),
-		'border-left-color': table.css('border-left-color')
+	    // Apply css
+	    this.wrapper.css({
+		'position': "relative",
+		'margin-top': table.css('margin-top'),
+		'margin-right': table.css('margin-right'),
+		'margin-bottom': table.css('margin-bottom'),
+		'margin-left': table.css('margin-left'),
+		'height': this.options.height
 	    });
-	    cells.eq(-1).css({
-		'border-right-style': table.css('border-right-style'),
-		'border-right-width': table.css('border-right-width'),
-		'border-right-color': table.css('border-right-color')
-	    });
-	});
+	    table.css('margin', 0);
 
-	this.table.css('border-top-width', 0);
-    };
-    $.extend(TheadFixed.prototype, {
-	setHeight: function(newHeight) {
-	    this.wrapper.css('height', newHeight);
+	    this.scrollWrapper.css({
+		'position': "absolute",
+		'top': thead.outerHeight(),
+		'bottom': 0
+	    });
+	    this.scrollBox.css({
+		'overflow-y': "auto",
+		'overflow-x': 'hidden',
+		'height': "100%",
+		'min-width': table.outerWidth() + scrollBarWidth
+	    });
+
+	    thead.css({
+		'position': "absolute",
+		'bottom': "100%",
+		'left': 0
+	    });
+
+	    if ( table.css('border-collapse') == 'collapse' ) {
+		table.children('tr:first-child').children('th, td').css('border-top-width', 0);
+	    }
+
+	    thead.find('tr').filter(':first-child').find('th, td').css({
+		'border-top-style': table.css('border-top-style'),
+		'border-top-width': table.css('border-top-width'),
+		'border-top-color': table.css('border-top-color')
+	    });
+	    thead.find('tr').each(function(i, row){
+		var cells = $(row).find('th, td').filter(':visible');
+		cells.eq(0).css({
+		    'border-left-style': table.css('border-left-style'),
+		    'border-left-width': table.css('border-left-width'),
+		    'border-left-color': table.css('border-left-color')
+		});
+		cells.eq(-1).css({
+		    'border-right-style': table.css('border-right-style'),
+		    'border-right-width': table.css('border-right-width'),
+		    'border-right-color': table.css('border-right-color')
+		});
+	    });
+	    table.css('border-top-width', 0);
+	},
+	wrapper: function() {
+	    return this.wrapper;
+	},
+	scrollWrapper: function() {
+	    return this.scrollWrapper;
+	},
+	scrollBox: function() {
+	    return this.scrollBox;
 	}
     });
-
-    // Make TheadFixed Class available as a jquery plugin
-    $.fn.theadFixed = function() {
-	var tables = this;
-	if ( typeof arguments[0] == "object" ) {
-	    var settings = arguments[0];
-	} else if ( typeof arguments[0] == "string" ) {
-	    var method = arguments[0];
-	}
-
-	if ( tables.not('table').size() ) {
-	    throw new Error('jQuery.theadFixed requires that only table elements are contained in the jQuery object');
-	}
-
-	// Initialise TheadFixed objects for each elmt unless this has already been done
-	for ( var i=0; i< tables.size(); i++ ) {
-	    var table = tables.eq(i);
-	    var theadFixed = table.data('theadFixed');
-
-	    if ( ! theadFixed ) {
-		theadFixed = new TheadFixed(table, settings);
-		table.data('theadFixed',theadFixed);
-	    }
-
-	    if ( method == 'wrapper' ) {
-		return theadFixed.wrapper;
-	    }
-	    if ( method == 'height' && arguments.length == 2 ) {
-		theadFixed.setHeight(arguments[1]);
-	    }
-	}
-	
-	return tables;
-    }
-
-}) (jQuery);
-
+})(jQuery);

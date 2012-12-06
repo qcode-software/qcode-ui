@@ -132,13 +132,13 @@
 		recordSet.trigger('resize');
 	    }
 	},
-	_actionReturnError: function(action, message, type, error){
+	_actionReturnError: function(action, message, type){
 	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
 	    }
-	    this.element.trigger('dbRecordActionReturnError', [action, message, type, error]);
+	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
 	}
     });
 })(jQuery);
