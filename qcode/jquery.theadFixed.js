@@ -7,7 +7,6 @@
 
 	// Settings
 	var defaultSettings = {
-	    'height': "100%",
 	    'wrapperClass': "theadFixed-wrapper",
 	    'scrollWrapperClass': "theadFixed-scrollWrapper",
 	    'scrollBoxClass': "theadFixed-scrollBox",
