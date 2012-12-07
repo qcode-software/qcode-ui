@@ -62,12 +62,8 @@
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Assumes that the editor's container is the target element's offset parent, or something similar.
 	    editor
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		})
+		.css(element.positionRelativeTo(this.element))
 		.show()
 		.val(value)
 		.focus();
@@ -107,10 +103,7 @@
 		$.each(['width', 'height'], function(i, name){
 		    editor.css(name, element.css(name));
 		});
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		});
+		editor.css(element.positionRelativeTo(this.element));
 	    }
 	},
 	_inputOnKeyDown: function(e) {

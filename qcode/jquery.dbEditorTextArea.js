@@ -60,12 +60,10 @@
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Assumes that the editor's container is the target element's offset parent.
 	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 	    editor
+		.css(element.positionRelativeTo(this.element))
 		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft(), 
 		    'height': "+=1", 
 		    'padding-bottom': "-=1"
 		})
@@ -109,11 +107,11 @@
 		});
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft(), 
-		    'height': "+=1"
-		});
+		editor
+		    .css(element.positionRelativeTo(this.element))
+		    .css({
+			'height': "+=1"
+		    });
 	    }
 	},
 	_inputOnKeyDown: function(e) {

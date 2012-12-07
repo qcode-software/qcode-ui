@@ -106,19 +106,29 @@
 
 
 	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
-	$(window).on('resize.hoverScroller', function(){
-	    if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
-		upScroller.add(downScroller).stop().fadeOut(0);
-	    } else {
-		if ( scrollBox.scrollTop() > 0 ) {
-		    upScroller.fadeTo(0, 0.1);
-		}
-		if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
-		    downScroller.fadeTo(0, 0.1);
+	function updateControls() {
+	    if ( ! scrollBox.is('.scrolling') ) {
+		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
+		    upScroller.add(downScroller).stop().fadeOut(0);
+		} else {
+		    if ( scrollBox.scrollTop() > 0 ) {
+			upScroller.fadeTo(0, 0.1);
+		    } else {
+			upScroller.fadeOut();
+		    }
+		    if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
+			downScroller.fadeTo(0, 0.1);
+		    } else {
+			downScroller.fadeOut();
+		    }
 		}
 	    }
+	}
+	scrollBox.on('scroll', function() {
+	    updateControls();
 	});
-	$(window).triggerHandler('resize.hoverScroller');
+	$(window).on('resize.hoverScroller', updateControls);
+	updateControls();
 
 	// Hide scrollbars.
 	// TO DO: extend this to work for other layouts, use a wrapper if needed

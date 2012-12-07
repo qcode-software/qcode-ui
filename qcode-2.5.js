@@ -2298,11 +2298,11 @@ DbGridInput.prototype.selectText = function(option) {
 DbGridInput.prototype.show = function(cell,value) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var input = this.input;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+    var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top ;
+  var left = relativePosition.left;
     height = cell.height();
     width = cell.width();
   
@@ -4335,10 +4335,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Assumes that the editor's container is the target element's offset parent.
 	    editor
 		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		})
+		.css(element.positionRelativeTo(this.element))
 		.show()
 		.html(value)
 		.focus();
@@ -4375,11 +4372,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		var element = this.currentElement;
 		var editor = this.editor;
 		editor
+		    .css(element.positionRelativeTo(this.element))
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		    .css({
-			'width': element.css('width'), 
-			'top': element.position().top + element.offsetParent().scrollTop(), 
-			'left': element.position().left + element.offsetParent().scrollLeft()
+			'width': element.css('width')
 		    });
 	    }
 	},
@@ -4525,12 +4521,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Assumes that the editor's container is the target element's offset parent, or something similar.
 	    editor
-		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		})
+		.css(element.positionRelativeTo(this.element))
 		.show()
 		.val(value)
 		.focus();
@@ -4570,10 +4562,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		$.each(['width', 'height'], function(i, name){
 		    editor.css(name, element.css(name));
 		});
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft()
-		});
+		editor.css(element.positionRelativeTo(this.element));
 	    }
 	},
 	_inputOnKeyDown: function(e) {
@@ -4718,12 +4707,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
-	    // Assumes that the editor's container is the target element's offset parent.
 	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 	    editor
+		.css(element.positionRelativeTo(this.element))
 		.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft(), 
 		    'height': "+=1", 
 		    'padding-bottom': "-=1"
 		})
@@ -4767,11 +4754,11 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		});
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-		editor.css({
-		    'top': element.position().top + element.offsetParent().scrollTop(), 
-		    'left': element.position().left + element.offsetParent().scrollLeft(), 
-		    'height': "+=1"
-		});
+		editor
+		    .css(element.positionRelativeTo(this.element))
+		    .css({
+			'height': "+=1"
+		    });
 	    }
 	},
 	_inputOnKeyDown: function(e) {
@@ -5922,8 +5909,9 @@ function dbFormHTMLArea(oDiv) {
 	  wantBool = true;
 	}	
       });
-
+	
 	var divContainer = $('<div>').insertBefore(table).css('position', "relative");
+	divContainer.add(table).wrapAll('<div class="wrapper">');
 
       dbGridInput = new DbGridInput(inputControlCallback, divContainer)
       
@@ -7540,19 +7528,29 @@ function dbFormHTMLArea(oDiv) {
 
 
 	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
-	$(window).on('resize.hoverScroller', function(){
-	    if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
-		upScroller.add(downScroller).stop().fadeOut(0);
-	    } else {
-		if ( scrollBox.scrollTop() > 0 ) {
-		    upScroller.fadeTo(0, 0.1);
-		}
-		if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
-		    downScroller.fadeTo(0, 0.1);
+	function updateControls() {
+	    if ( ! scrollBox.is('.scrolling') ) {
+		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
+		    upScroller.add(downScroller).stop().fadeOut(0);
+		} else {
+		    if ( scrollBox.scrollTop() > 0 ) {
+			upScroller.fadeTo(0, 0.1);
+		    } else {
+			upScroller.fadeOut();
+		    }
+		    if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
+			downScroller.fadeTo(0, 0.1);
+		    } else {
+			downScroller.fadeOut();
+		    }
 		}
 	    }
+	}
+	scrollBox.on('scroll', function() {
+	    updateControls();
 	});
-	$(window).triggerHandler('resize.hoverScroller');
+	$(window).on('resize.hoverScroller', updateControls);
+	updateControls();
 
 	// Hide scrollbars.
 	// TO DO: extend this to work for other layouts, use a wrapper if needed
@@ -9201,7 +9199,7 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.theadFixed.js ==== */
-(function($) {
+(function($, undefined) {
     var scrollBarWidth = 18;
 
     $.widget('qcode.theadFixed', {
@@ -9213,19 +9211,23 @@ function dbFormHTMLArea(oDiv) {
 	},
 	_create: function() {
 	    // TheadFixed Class Constructor
+
+	    // Attempt to handle existing wrappers sensibly.
 	    if ( ! $(this.element).is('table') ) {
-		var table = $(this.element).find('table');
-		if ( table.size !== 1 ) {
-		    $.error("");
+		this.table = $(this.element).find('table');
+		if ( this.table.length !== 1 ) {
+		    $.error("Each target element must be, or contain, a single table");
 		}
+	    } else {
+		this.table = this.element;
 	    }
-	    var table = this.element;
+	    var table = this.table;
 	    var thead = table.children('thead');
 
 	    // Create wrappers and apply classes
-	    table
+	    this.element
 		.wrap('<div>');
-	    this.scrollBox = table.parent();
+	    this.scrollBox = this.element.parent();
 	    this.scrollBox
 		.addClass(this.options.scrollBoxClass)
 		.wrap('<div>');
@@ -9321,6 +9323,9 @@ function dbFormHTMLArea(oDiv) {
 	},
 	scrollBox: function() {
 	    return this.scrollBox;
+	},
+	table: function() {
+	    return this.table;
 	}
     });
 })(jQuery);
@@ -9442,6 +9447,70 @@ function httpPost(url,data,handler,errorHandler,async) {
 	}
     });
 }
+
+// positionRelative to plugin - returns the position of the first element in the selection relative to the target.
+// nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
+(function ($, undefined) {
+    $.fn.positionRelativeTo = function(target) {
+	var target = $(target);
+	var $body = $('body');
+
+	// Find chain of offset parents from this element to body
+	var myOffsetParents = this;
+	var current = this;
+	while ( ! current.is($body) ) {
+	    current = current.offsetParent();
+	    myOffsetParents = myOffsetParents.add(current);
+	}
+
+	// Search offset parents from target element up until a common offset parent is found
+	current = target;
+	while ( ! current.is(myOffsetParents) ) {
+	    current = current.offsetParent();
+	}
+	var commonOffsetParent = current;
+
+	// Find position of this element relative to the common offset parent
+	var myPosition = {
+	    left: 0,
+	    top: 0
+	}
+	current = this;
+	while ( ! current.is(commonOffsetParent) ) {
+	    var positionOfCurrent = current.position();
+	    myPosition.left += positionOfCurrent.left;
+	    myPosition.top += positionOfCurrent.top;
+	    current = current.offsetParent();   
+	}
+	if ( ! this.is(commonOffsetParent) ) {
+	    myPosition.left += commonOffsetParent.scrollLeft();
+	    myPosition.top += commonOffsetParent.scrollTop();
+	}
+
+	// Find position of target element relative to the common offset parent
+	var targetPosition = {
+	    left: 0,
+	    top: 0
+	}
+	current = target;
+	while ( ! current.is(commonOffsetParent) ) {
+	    var positionOfCurrent = current.position();
+	    targetPosition.left += positionOfCurrent.left;
+	    targetPosition.top += positionOfCurrent.top;
+	    current = current.offsetParent();   
+	}
+	if ( ! target.is(commonOffsetParent) ) {
+	    targetPosition.left += commonOffsetParent.scrollLeft();
+	    targetPosition.top += commonOffsetParent.scrollTop();
+	}
+
+	// Return the difference of the two calculated positions
+	return {
+	    left: myPosition.left - targetPosition.left,
+	    top: myPosition.top - targetPosition.top
+	}
+    };
+})(jQuery);
 
 (function ($) {
     $.fn.disable = function () {

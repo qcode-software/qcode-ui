@@ -129,11 +129,11 @@ DbGridInput.prototype.selectText = function(option) {
 DbGridInput.prototype.show = function(cell,value) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var input = this.input;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+    var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top ;
+  var left = relativePosition.left;
     height = cell.height();
     width = cell.width();
   

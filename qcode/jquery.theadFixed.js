@@ -1,4 +1,4 @@
-(function($) {
+(function($, undefined) {
     var scrollBarWidth = 18;
 
     $.widget('qcode.theadFixed', {
@@ -10,19 +10,23 @@
 	},
 	_create: function() {
 	    // TheadFixed Class Constructor
+
+	    // Attempt to handle existing wrappers sensibly.
 	    if ( ! $(this.element).is('table') ) {
-		var table = $(this.element).find('table');
-		if ( table.size !== 1 ) {
-		    $.error("");
+		this.table = $(this.element).find('table');
+		if ( this.table.length !== 1 ) {
+		    $.error("Each target element must be, or contain, a single table");
 		}
+	    } else {
+		this.table = this.element;
 	    }
-	    var table = this.element;
+	    var table = this.table;
 	    var thead = table.children('thead');
 
 	    // Create wrappers and apply classes
-	    table
+	    this.element
 		.wrap('<div>');
-	    this.scrollBox = table.parent();
+	    this.scrollBox = this.element.parent();
 	    this.scrollBox
 		.addClass(this.options.scrollBoxClass)
 		.wrap('<div>');
@@ -118,6 +122,9 @@
 	},
 	scrollBox: function() {
 	    return this.scrollBox;
+	},
+	table: function() {
+	    return this.table;
 	}
     });
 })(jQuery);

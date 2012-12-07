@@ -278,8 +278,9 @@
 	  wantBool = true;
 	}	
       });
-
+	
 	var divContainer = $('<div>').insertBefore(table).css('position', "relative");
+	divContainer.add(table).wrapAll('<div class="wrapper">');
 
       dbGridInput = new DbGridInput(inputControlCallback, divContainer)
       
