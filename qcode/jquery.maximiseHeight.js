@@ -17,7 +17,7 @@
 	_resize: function() {
 	    var windowHeight = jQuery(window).height();
 	    var bodyHeight = jQuery('body').outerHeight(true);
-	    var elementHeight = this.element.outerHeight(true);
+	    var elementHeight = this.element.height();
 	   
 	    if (bodyHeight < windowHeight) {
 		// Entire body is visible within the window.

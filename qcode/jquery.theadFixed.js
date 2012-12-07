@@ -8,7 +8,7 @@
 	    'scrollBoxClass': "theadFixed-scrollBox",
 	    'height': "500px"
 	},
-	_create function() {
+	_create: function() {
 	    // TheadFixed Class Constructor
 	    if ( ! $(this.element).is('table') ) {
 		var table = $(this.element).find('table');
