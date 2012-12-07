@@ -1,7 +1,7 @@
 // Maximise the height of an element so that the content of a page spans the entire height of the window.  
 ;(function($, window,undefined){
     // Uses the jQuery UI widget factory.
-    $.widget('qcode.maximiseHeight', {
+    $.widget('qcode.maximizeHeight', {
 	options: {
 	    minimumHeight: 300
 	},

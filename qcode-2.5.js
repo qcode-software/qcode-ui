@@ -7572,7 +7572,7 @@ function dbFormHTMLArea(oDiv) {
 // Maximise the height of an element so that the content of a page spans the entire height of the window.  
 ;(function($, window,undefined){
     // Uses the jQuery UI widget factory.
-    $.widget('qcode.maximiseHeight', {
+    $.widget('qcode.maximizeHeight', {
 	options: {
 	    minimumHeight: 300
 	},
@@ -9317,16 +9317,16 @@ function dbFormHTMLArea(oDiv) {
 	    });
 	    table.css('border-top-width', 0);
 	},
-	wrapper: function() {
+	getWrapper: function() {
 	    return this.wrapper;
 	},
-	scrollWrapper: function() {
+	getScrollWrapper: function() {
 	    return this.scrollWrapper;
 	},
-	scrollBox: function() {
+	getScrollBox: function() {
 	    return this.scrollBox;
 	},
-	table: function() {
+	getTable: function() {
 	    return this.table;
 	}
     });
