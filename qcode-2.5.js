@@ -1574,12 +1574,12 @@ DbGridCombo.prototype.getElmt = function() {
 DbGridCombo.prototype.show = function(cell,name,value,boundName,boundValue,searchURL) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var combo = this.combo;
   var comboDiv = this.comboDiv;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   height = cell.height();
   width = cell.width();
   
@@ -2050,11 +2050,11 @@ DbGridHTMLArea.prototype.selectText = function(option) {
 DbGridHTMLArea.prototype.show = function(cell,value,editorHeight) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var HTMLArea = this.HTMLArea;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   if ( editorHeight == undefined ) {
     height = cell.height();
   } else {
@@ -2760,11 +2760,11 @@ DbGridTextArea.prototype.selectText = function(option) {
 DbGridTextArea.prototype.show = function(cell,value,editorHeight) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var textArea = this.textArea;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   if ( editorHeight == undefined ) {
     height = cell.height();
   } else {
@@ -5688,47 +5688,49 @@ function dbFormHTMLArea(oDiv) {
         createNewRow();
       }
 
-      out: {
-        if ( table.attr('initialFocus') == "end" ) {
-  	  // Focus on first editable cell in last row
-	  var lastRow = tbody.children('tr:last');
-	  var cells = lastRow.children('td');
-	  for (var i=0;i<cells.size();i++) {
- 	    cell = cells.eq(i);
-	   
-	    if ( isCellEditable(cell) && isTabStop(cell) ) { 
-	      currentCell = cell;
-	      cellIn(cell);
-	      rowIn(lastRow);
+	$('body').one('pluginsReady', function() {
+	    out: {
+		if ( table.attr('initialFocus') == "end" ) {
+  		    // Focus on first editable cell in last row
+		    var lastRow = tbody.children('tr:last');
+		    var cells = lastRow.children('td');
+		    for (var i=0;i<cells.size();i++) {
+ 			cell = cells.eq(i);
+			
+			if ( isCellEditable(cell) && isTabStop(cell) ) { 
+			    currentCell = cell;
+			    cellIn(cell);
+			    rowIn(lastRow);
 
-	      break out;
-	    }
-	  }
-  	  // Could not find an editable cell in last row
-        }
+			    break out;
+			}
+		    }
+  		    // Could not find an editable cell in last row
+		}
 
-        // Focus on first editableCell
-        if ( table.attr('initialFocus') == "true" ) {
-  	  var rows = tbody.children('tr');
-	  for (var i=0;i<rows.size();i++) {
-	    var row = rows.eq(i);					   
-	    var cells = row.children('td');			   
-	    
-	    for (var j=0;j<cells.size();j++) {
-	      var cell = cells.eq(j);
+		// Focus on first editableCell
+		if ( table.attr('initialFocus') == "true" ) {
+  		    var rows = tbody.children('tr');
+		    for (var i=0;i<rows.size();i++) {
+			var row = rows.eq(i);					   
+			var cells = row.children('td');			   
+			
+			for (var j=0;j<cells.size();j++) {
+			    var cell = cells.eq(j);
 
-	      if ( isCellEditable(cell) && isTabStop(cell) ) {
-	        currentCell = cell;
-		cellIn(cell);
-		rowIn(row);
+			    if ( isCellEditable(cell) && isTabStop(cell) ) {
+				currentCell = cell;
+				cellIn(cell);
+				rowIn(row);
 
-		break out;
-	      }
-	    }
-	  }
-        }
-        // Could not find an editable cell
-      } // end out
+				break out;
+			    }
+			}
+		    }
+		}
+		// Could not find an editable cell
+	    } // end out
+	});
     };
     
     function focus() {

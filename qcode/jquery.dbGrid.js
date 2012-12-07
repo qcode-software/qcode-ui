@@ -57,47 +57,49 @@
         createNewRow();
       }
 
-      out: {
-        if ( table.attr('initialFocus') == "end" ) {
-  	  // Focus on first editable cell in last row
-	  var lastRow = tbody.children('tr:last');
-	  var cells = lastRow.children('td');
-	  for (var i=0;i<cells.size();i++) {
- 	    cell = cells.eq(i);
-	   
-	    if ( isCellEditable(cell) && isTabStop(cell) ) { 
-	      currentCell = cell;
-	      cellIn(cell);
-	      rowIn(lastRow);
+	$('body').one('pluginsReady', function() {
+	    out: {
+		if ( table.attr('initialFocus') == "end" ) {
+  		    // Focus on first editable cell in last row
+		    var lastRow = tbody.children('tr:last');
+		    var cells = lastRow.children('td');
+		    for (var i=0;i<cells.size();i++) {
+ 			cell = cells.eq(i);
+			
+			if ( isCellEditable(cell) && isTabStop(cell) ) { 
+			    currentCell = cell;
+			    cellIn(cell);
+			    rowIn(lastRow);
 
-	      break out;
-	    }
-	  }
-  	  // Could not find an editable cell in last row
-        }
+			    break out;
+			}
+		    }
+  		    // Could not find an editable cell in last row
+		}
 
-        // Focus on first editableCell
-        if ( table.attr('initialFocus') == "true" ) {
-  	  var rows = tbody.children('tr');
-	  for (var i=0;i<rows.size();i++) {
-	    var row = rows.eq(i);					   
-	    var cells = row.children('td');			   
-	    
-	    for (var j=0;j<cells.size();j++) {
-	      var cell = cells.eq(j);
+		// Focus on first editableCell
+		if ( table.attr('initialFocus') == "true" ) {
+  		    var rows = tbody.children('tr');
+		    for (var i=0;i<rows.size();i++) {
+			var row = rows.eq(i);					   
+			var cells = row.children('td');			   
+			
+			for (var j=0;j<cells.size();j++) {
+			    var cell = cells.eq(j);
 
-	      if ( isCellEditable(cell) && isTabStop(cell) ) {
-	        currentCell = cell;
-		cellIn(cell);
-		rowIn(row);
+			    if ( isCellEditable(cell) && isTabStop(cell) ) {
+				currentCell = cell;
+				cellIn(cell);
+				rowIn(row);
 
-		break out;
-	      }
-	    }
-	  }
-        }
-        // Could not find an editable cell
-      } // end out
+				break out;
+			    }
+			}
+		    }
+		}
+		// Could not find an editable cell
+	    } // end out
+	});
     };
     
     function focus() {

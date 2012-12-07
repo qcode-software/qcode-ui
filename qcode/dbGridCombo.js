@@ -69,12 +69,12 @@ DbGridCombo.prototype.getElmt = function() {
 DbGridCombo.prototype.show = function(cell,name,value,boundName,boundValue,searchURL) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var combo = this.combo;
   var comboDiv = this.comboDiv;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   height = cell.height();
   width = cell.width();
   

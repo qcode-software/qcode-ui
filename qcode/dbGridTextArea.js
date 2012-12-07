@@ -96,11 +96,11 @@ DbGridTextArea.prototype.selectText = function(option) {
 DbGridTextArea.prototype.show = function(cell,value,editorHeight) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var textArea = this.textArea;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   if ( editorHeight == undefined ) {
     height = cell.height();
   } else {
