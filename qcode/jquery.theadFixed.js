@@ -114,16 +114,16 @@
 	    });
 	    table.css('border-top-width', 0);
 	},
-	wrapper: function() {
+	getWrapper: function() {
 	    return this.wrapper;
 	},
-	scrollWrapper: function() {
+	getScrollWrapper: function() {
 	    return this.scrollWrapper;
 	},
-	scrollBox: function() {
+	getScrollBox: function() {
 	    return this.scrollBox;
 	},
-	table: function() {
+	getTable: function() {
 	    return this.table;
 	}
     });
