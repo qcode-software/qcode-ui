@@ -5074,6 +5074,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
+	    console.log('field now hidden');
 
 	    var fieldValue = this.getValue();
 
