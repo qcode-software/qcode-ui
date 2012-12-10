@@ -4484,6 +4484,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
+	    this.hasFocus = false;
 	    this._on(window, {
 		'resize': this._onResize
 	    });
@@ -4500,7 +4501,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
 		'paste': this._inputOnPaste,
-		'blur': this._inputOnBlur
+		'blur': this._inputOnBlur,
+		'focus': this._inputOnFocus
 	    });
 	},
 	getValue: function() {
@@ -4536,7 +4538,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	hide: function() {
 	    // Hide the editor
 	    console.log('hide html editor');
-	    if ( this.editor.is(':focus') ) {
+	    if ( this.hasFocus ) {
 		console.log('blur html editor');
 		this.editor.trigger('blur');
 	    }
@@ -4641,13 +4643,17 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    if ( ! this.editor.is(':focus') ) {
+	    this.hasFocus = false;
+	    if ( ! this.hasFocus ) {
 		console.log('html editor is blurred');
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
 	    }
+	},
+	_inputOnFocus: function(e, source) {
+	    this.hasFocus = true;
 	}
     });
 })(jQuery, window);
