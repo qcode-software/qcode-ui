@@ -57,10 +57,12 @@
 	}, 
 	setCurrentField: function(newField) {
 	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
+	    console.log('current field set, length '+$(newField).length);
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(newField) {
 	    // Switch to the target field
+	    console.log('field change, current field length '+this.currentField.length);
 	    var currentRecord = this.currentField.dbField('getRecord');
 	    var newRecord = newField.dbField('getRecord');
 	    this.currentField.dbField('fieldOut');

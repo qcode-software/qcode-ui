@@ -40,6 +40,7 @@
 	    }
 	}, 
 	fieldIn: function(newField, select){
+	    console.log('field in');
 	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 	    var recordSet = this.getRecordSet();
 
@@ -68,6 +69,7 @@
 	    this.lockFocusEvents = false;
 	}, 
 	fieldOut: function(){
+	    console.log('field out');
 	    // Stop editing this field
 	    this.lockFocusEvents = true;
 	    var recordSet = this.getRecordSet();
