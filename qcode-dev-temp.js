@@ -5197,6 +5197,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
+	    console.log('editorBlur');
 	    this.fieldOut();
 	    this.getRecord().dbRecord('recordOut');
 	}, 
