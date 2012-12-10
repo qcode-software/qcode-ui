@@ -21,7 +21,7 @@
 	},
 	getValue: function(){
 	    // get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
-	    if ( this.getType() == "html" ) {
+	    if ( this.getType() == "htmlarea" ) {
 		return this.element.html();
 	    } else if ( this.element.is(':input') ) {
 		return this.element.val();
@@ -31,7 +31,7 @@
 	}, 
 	setValue: function(newValue){
 	    // set the current value of this field
-	    if ( this.getType() == "html" ) {
+	    if ( this.getType() == "htmlarea" ) {
 		this.element.html(newValue);
 	    } else if ( this.element.is(':input') ) {
 		this.element.val(newValue);
