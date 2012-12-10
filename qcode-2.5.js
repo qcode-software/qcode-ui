@@ -7318,22 +7318,22 @@ function dbFormHTMLArea(oDiv) {
 	    // Elements with class "editable" should be editable fields.
 	    this._on({
 		'mousedown .editable': function(event){
-		    $(event.target).dbField('onMouseDown', event);
+		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
 		'keydown .editable': function(event){
-		    $(event.target).dbField('onKeyDown', event);
+		    $(event.currentTarget).dbField('onKeyDown', event);
 		},
 		'keyup .editable': function(event){
-		    $(event.target).dbField('onKeyUp', event);
+		    $(event.currentTarget).dbField('onKeyUp', event);
 		},
 		'cut .editable': function(event){
-		    $(event.target).dbField('onCut', event);
+		    $(event.currentTarget).dbField('onCut', event);
 		},
 		'paste .editable': function(event){
-		    $(event.target).dbField('onPaste', event);
+		    $(event.currentTarget).dbField('onPaste', event);
 		},
 		'blur .editable': function(event){
-		    $(event.target).dbField('onBlur', event);
+		    $(event.currentTarget).dbField('onBlur', event);
 		}
 	    });
 	    this._on(window, {
