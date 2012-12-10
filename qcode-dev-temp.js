@@ -4524,6 +4524,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
+	    console.log('show html editor');
 	    // Assumes that the editor's container is the target element's offset parent.
 	    editor
 		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
@@ -4639,6 +4640,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
+		console.log('html editor is blurred');
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
@@ -4713,6 +4715,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		editor.css('backgroundColor', element.css('backgroundColor'));
 	    }
 
+	    console.log('show text editor');
 	    editor
 		.css(element.positionRelativeTo(this.element))
 		.show()
@@ -4827,6 +4830,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
+		console.log('text editor is blurred');
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
