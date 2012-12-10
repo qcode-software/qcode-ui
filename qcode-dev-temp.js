@@ -5081,6 +5081,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
 	    var plugin = this._getEditorPluginName();
 	    recordSet[plugin]('show', this.element, fieldValue);
+	    console.log('editor now shown');
 
 	    // Optionally set the text selection
 	    if (select) {
