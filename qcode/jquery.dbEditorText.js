@@ -107,26 +107,24 @@
 	    }
 	},
 	_inputOnKeyDown: function(e) {
-	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    //nb. This switch cascades; the lack of breaks is intentional
-	    switch(e.which) {
-
+	    var selection;
+	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
 	    case 37: // left
-	    case 39: // right
-		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
-		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
-		var selection = this.editor.textrange('get');
-		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-
-	    case 83: // S
-		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
+		// If selection is not empty collapse left
+		selection = this.editor.textrange('get');
+		if !( selection.selectionText === "" && selection.selectionAtStart ) break;
+	    case 39: //right
+		// If selection is not empty collapse right
+		selection = this.editor.textrange('get');
+		if !( selection.selectionText === "" && selection.selectionAtEnd ) break;
+	    case 83: //S
+		// Not Ctrl + s
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-
-	    case 13: // return
-	    case 9: // tab
-	    case 38: // up
-	    case 40: // down
+	    case 13: //return
+	    case 9: //tab
+	    case 38: //up
+	    case 40: //down
+		// Any of the above re-trigger event
 		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 

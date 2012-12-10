@@ -1,13 +1,13 @@
-// dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
+// Apply to elements with recordSet class.
 ;jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
 
-// dbRecordSet plugin - requires dbRecordsRecord, dbRecordsField and appropriate dbEditor plugins.
-// Call on a DOM element which contains other elements representing a database record set (multiple records each with multiple fields)
+// dbRecordSet plugin
+// Call on a DOM element which contains the dbRecords.
 ;(function($, window, undefined){
 
-    // Uses the jQuery UI widget factory.
+    // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	_create: function(){
 	    // Constructor function
@@ -39,7 +39,7 @@
 		'beforeprint': this._onBeforePrint,
 	    });
 
-	    // When no field is selected, currentField should be an empty jQuery object.
+	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	},
 	save: function(aysnc) {
@@ -47,7 +47,7 @@
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
+	    // Returns the current record or an empty jQuery object if none exists.
 	    return this.currentField.dbField('getRecord');
 	}, 
 	getCurrentField: function() {
@@ -58,15 +58,15 @@
 	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
 	    this.currentField = $(newField);
 	}, 
-	fieldChange: function(newField) {
-	    // Switch to the target field
+	fieldChange: function(toField) {
+	    // Move to the target field
 	    var currentRecord = this.currentField.dbField('getRecord');
-	    var newRecord = newField.dbField('getRecord');
+	    var newRecord = toField.dbField('getRecord');
 	    this.currentField.dbField('fieldOut');
 	    if ( ! currentRecord.is(newRecord) ) {
 		currentRecord.dbRecord('recordOut');
 	    }
-	    newField.dbField('fieldIn');
+	    toField.dbField('fieldIn');
 	    if ( ! currentRecord.is(newRecord) ) {
 		newRecord.dbRecord('recordIn');
 	    }

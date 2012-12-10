@@ -1,7 +1,7 @@
 // dbField plugin - a field (editable or not) in a record set.
 ;(function($, undefined){
 
-    // Uses the jQuery UI widget factory
+    // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
@@ -96,40 +96,42 @@
 	    }
 	}, 
 	editorKeyDown: function(event){
-	    // nb. Normally only captures key down events propagated here by the editor, so defines behavior only for those events which the editor doesn't intercept.
+	    // Capture key down events propagated here by the editor
 	    if ( event.altKey ) {
 		return true;
 	    }
 	    var recordSet = this.getRecordSet();
 	    var field = this.element;
 	    switch (event.which) {
-	    case 37: // left arrow key pressed - move left
+	    case 37: // left arrow
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
 		break;
-	    case 38: // up arrow key pressed - move up
+	    case 38: // up arrow
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
 		break;
-	    case 39: // right arrow key pressed - move right
+	    case 39: // right arrow
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
 		break;
-	    case 40: // down arrow key pressed - move down
+	    case 40: // down arrow
 		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
 		break;
-	    case 9: // tab key pressed - move right, or left on shift+tab, save if the end of the fields in this record set has been reached
+	    case 9: // tab key 
 		if ( event.shiftKey ) {
 		    var newField = recordSet.dbRecordSet('moveLeft', field);
 		} else {
 		    var newField = recordSet.dbRecordSet('moveRight', field);
 		}
 		if ( newField == field ) {
+		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		} else {
 		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
-	    case 13: // return key pressed - move right, or save if the last field in this record set has been reached
+	    case 13: // return key
 		var newField = recordSet.dbRecordSet('moveRight', field);
 		if ( newField == field ) {
+		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		} else {
 		    recordSet.dbRecordSet('fieldChange', newField);
@@ -144,21 +146,21 @@
 	    }
 	}, 
 	editorKeyUp: function(event){
-	    // On key up, if the field's value has changed, mark as dirty.
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
 	    var editorValue = recordSet[plugin]('getValue');
 	    
 	    if ( this.getValue() !== editorValue) {
+		// Set dirty
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
 	}, 
 	editorCut: function(){
-	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
+	    // Set as dirty
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	editorPaste: function(){
-	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
+	    // Set as dirty
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	editorBlur: function(){
@@ -167,7 +169,7 @@
 	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
-	    // Write the current editor contents to the field
+	    // Write the editor's contents to the field
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
 	    var editorValue = recordSet[plugin]('getValue');

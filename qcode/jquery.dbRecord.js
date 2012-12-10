@@ -1,8 +1,9 @@
 // dbRecord plugin
-// Part of a dbRecordSet, a dbRecord represents a collection of dbFields which need to be added, updated, or deleted together.
+// Part of a dbRecordSet. 
+// A dbRecord represents a collection of dbFields which will be added, updated, or deleted together.
 ;(function($, undefined){
 
-    // Uses the jQuery UI widget factory
+    // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function(){
 	    // Constructor function
