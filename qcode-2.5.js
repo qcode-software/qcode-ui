@@ -2945,6 +2945,159 @@ function dbHeader(oTable) {
 }
 
 
+/* ==== dynamicResize.js ==== */
+function dynamicResize(oContainer) {
+    // Dynamically resize container when window is resized.
+    window.attachEvent('onresize',resize);
+    resize();
+    function resize() {
+	var window_height = jQuery(window).height();
+	var container_height = jQuery(oContainer).height();
+	var container_position_bottom = jQuery(oContainer).position().top +  container_height;
+	var new_height;
+	var position_bottom;
+	var content_height = 0;
+
+	// Determine height of all content.
+	jQuery("body").children().each(function() {
+	    position_bottom = jQuery(this).position().top + jQuery(this).height();
+	    if (position_bottom > content_height) {
+		content_height = position_bottom;
+	    }	
+	});
+
+	if (content_height < window_height) {
+	    // All content is visible within the window.
+	    // Increase container_height so that overall content_height = window_height
+	    jQuery(oContainer).height(container_height + (window_height - content_height));
+	} else if (content_height > window_height) {
+	    // Content is only partially visible within window.
+	    // Try to decrease container_height (minimum height = 300) so that all content 
+	    // is visible within the window.
+
+	    new_height = container_height - (content_height - window_height);
+	    if (new_height > 300) {
+		// Decrease container height as long as it's new_height is greater than 300. 
+		jQuery(oContainer).height(new_height);
+	    } else {
+		// It is not possible to display all content within the window, unless we reduce the 
+		// container height below the minimum.
+		// Instead ensure that the container is completely visible within the window.
+		if (container_position_bottom > window_height) {
+		    new_height = window_height - 40;
+		    jQuery(oContainer).height(new_height);
+		}
+	    }
+	}
+    }
+}
+
+/* ==== hacks.js ==== */
+// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+	if (typeof this !== "function") {
+	    // closest thing possible to the ECMAScript 5 internal IsCallable function
+	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+	}
+	
+	var aArgs = Array.prototype.slice.call(arguments, 1), 
+	fToBind = this, 
+	fNOP = function () {},
+	fBound = function () {
+	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
+	    return fToBind.apply(this instanceof fNOP && oThis
+				 ? this
+				 : oThis,
+				 aArgs.concat(Array.prototype.slice.call(arguments)));
+	};
+	
+	// The bound function prototype inherits from the original function prototype
+	fNOP.prototype = this.prototype;
+	fBound.prototype = new fNOP();
+	
+	return fBound;
+    };
+}
+
+// Support for Object.create in earlier browsers
+if (!Object.create) {
+    Object.create = function (o) {
+        if (arguments.length > 1) {
+            throw new Error('Object.create implementation only accepts the first parameter.');
+        }
+        function F() {}
+        F.prototype = o;
+        return new F();
+    };
+}
+
+// Bug fix for table border width detection in ie9
+(function($){
+    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
+        var oldCssFunction = $.fn.css;
+        $.fn.css = function() {
+            if ( this.first().is('table') && arguments.length == 1 ) {
+		var table = this.first();
+                switch(arguments[0]){
+                case "border-left-width":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-left-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-left-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-right-width":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-right-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-right-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-top-width":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-top-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-top-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-bottom-width":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-bottom-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-bottom-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                default:
+                    return oldCssFunction.apply(this,arguments);
+                }
+            } else {
+                return oldCssFunction.apply(this,arguments);
+            }
+        };
+    }
+    function getInnerWidth(table) {
+        var borderSpacing = table.css('border-spacing');
+        var horizontalSpacing = borderSpacing.split(' ').shift();
+        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
+    }
+    function getInnerHeight(table) {
+        var borderSpacing = table.css('border-spacing');
+        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
+        var totalHeight = verticalSpacing;
+        table.find('thead, tbody, tfoot').each(function(){
+            if ( $(this).css('position') != "absolute" ) {
+                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
+            }
+        });
+        return totalHeight;
+    }
+})(jQuery);
+
 /* ==== jquery.colInherit.js ==== */
 (function($) {
     $.fn.colInherit = function(options) {
@@ -3039,6 +3192,45 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     });
 };
 
+
+/* ==== jquery.cycleClasses.js ==== */
+// cycleClasses plugin. Takes an array of classes as an argument, expects the target to be a single element with one of those classes, and replaces class with the next one in the array, looping back to the beginning when the end is reached.
+(function($){
+    $.fn.cycleClasses = function(classes) {
+	var nextClass = classes[0];
+	for(var i = classes.length - 1; i >= 0; i--) {
+	    thisClass = classes[i];
+	    if ( this.hasClass(thisClass) ) {
+		this.removeClass(thisClass);
+		this.addClass(nextClass);
+		return this;
+	    } else {
+		nextClass = thisClass;
+	    }
+	}
+	this.addClass(nextClass);
+	return this;
+    }
+})(jQuery);
+
+/* ==== jquery.cycleText.js ==== */
+// cycleText plugin. Takes an array of strings, expects the target to be a single element with text equal to one of those strings, and replaces the text on that element with the next string in the array, looping back to the beginning when the end is reached.
+(function($){
+    $.fn.cycleText = function(labels) {
+	var nextLabel = labels[0];
+	for(var i = labels.length - 1; i >= 0; i--) {
+	    thisLabel = labels[i];
+	    if ( this.text() === thisLabel ) {
+		this.text(nextLabel);
+		return this;
+	    } else {
+		nextLabel = thisLabel;
+	    }
+	}
+	this.text(nextLabel);
+	return this;
+    }
+})(jQuery);
 
 /* ==== jquery.dbCellControl.js ==== */
 (function($){
@@ -7421,6 +7613,34 @@ function dbFormHTMLArea(oDiv) {
     }
 })(jQuery, window);
 
+/* ==== jquery.enableDisable.js ==== */
+// enable and disable plugins. Enable or disable links, buttons, etc.
+(function ($) {
+    $.fn.disable = function () {
+	return $(this).each(function () { 
+	    switch($(this)[0].nodeName.toUpperCase()) {
+	    case "A":
+		jQuery.data($(this)[0],"href",$(this).attr("href"));
+		$(this).removeAttr('href');
+	    default:
+		$(this).attr('disabled', 'disabled').addClass('disabled');
+	    }
+	});
+    };
+    $.fn.enable = function () {
+	return $(this).each(function () { 
+	    switch($(this)[0].nodeName.toUpperCase()) {
+	    case "A":
+		if ( typeof jQuery.data($(this)[0],"href")!="undefined" ) {
+		    $(this).attr("href",jQuery.data($(this)[0],"href"));
+		}
+	    default:
+		$(this).removeAttr('disabled').removeClass("disabled"); 
+	    }
+	});
+    };
+})(jQuery);
+
 /* ==== jquery.hoverScroller.js ==== */
 // Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover. Clicking the controls will quickly scroll to the end.
 ;(function($, undefined){
@@ -7607,7 +7827,6 @@ function dbFormHTMLArea(oDiv) {
 	}
     });
 })(jQuery, window);
-
 
 /* ==== jquery.navigate.js ==== */
 ;(function($, window, document, undefined) {
@@ -7828,6 +8047,71 @@ function dbFormHTMLArea(oDiv) {
         return (a.offset().left + a.outerWidth()) < b.offset().left;
     }
 }(jQuery, window, document));
+
+/* ==== jquery.positionRelativeTo.js ==== */
+// positionRelative to plugin - returns the position of the first element in the selection relative to the target.
+// nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
+(function ($, undefined) {
+    $.fn.positionRelativeTo = function(target) {
+	var target = $(target);
+	var $body = $('body');
+
+	// Find chain of offset parents from this element to body
+	var myOffsetParents = this;
+	var current = this;
+	while ( ! current.is($body) ) {
+	    current = current.offsetParent();
+	    myOffsetParents = myOffsetParents.add(current);
+	}
+
+	// Search offset parents from target element up until a common offset parent is found
+	current = target;
+	while ( ! current.is(myOffsetParents) ) {
+	    current = current.offsetParent();
+	}
+	var commonOffsetParent = current;
+
+	// Find position of this element relative to the common offset parent
+	var myPosition = {
+	    left: 0,
+	    top: 0
+	}
+	current = this;
+	while ( ! current.is(commonOffsetParent) ) {
+	    var positionOfCurrent = current.position();
+	    myPosition.left += positionOfCurrent.left;
+	    myPosition.top += positionOfCurrent.top;
+	    current = current.offsetParent();   
+	}
+	if ( ! this.is(commonOffsetParent) ) {
+	    myPosition.left += commonOffsetParent.scrollLeft();
+	    myPosition.top += commonOffsetParent.scrollTop();
+	}
+
+	// Find position of target element relative to the common offset parent
+	var targetPosition = {
+	    left: 0,
+	    top: 0
+	}
+	current = target;
+	while ( ! current.is(commonOffsetParent) ) {
+	    var positionOfCurrent = current.position();
+	    targetPosition.left += positionOfCurrent.left;
+	    targetPosition.top += positionOfCurrent.top;
+	    current = current.offsetParent();   
+	}
+	if ( ! target.is(commonOffsetParent) ) {
+	    targetPosition.left += commonOffsetParent.scrollLeft();
+	    targetPosition.top += commonOffsetParent.scrollTop();
+	}
+
+	// Return the difference of the two calculated positions
+	return {
+	    left: myPosition.left - targetPosition.left,
+	    top: myPosition.top - targetPosition.top
+	}
+    };
+})(jQuery);
 
 /* ==== jquery.resizeableHeight.js ==== */
 (function($){
@@ -9333,37 +9617,12 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.utils.js ==== */
-// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
-if (!Function.prototype.bind) {
-    Function.prototype.bind = function (oThis) {
-	if (typeof this !== "function") {
-	    // closest thing possible to the ECMAScript 5 internal IsCallable function
-	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-	}
-	
-	var aArgs = Array.prototype.slice.call(arguments, 1), 
-	fToBind = this, 
-	fNOP = function () {},
-	fBound = function () {
-	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
-	    return fToBind.apply(this instanceof fNOP && oThis
-				 ? this
-				 : oThis,
-				 aArgs.concat(Array.prototype.slice.call(arguments)));
-	};
-	
-	// The bound function prototype inherits from the original function prototype
-	fNOP.prototype = this.prototype;
-	fBound.prototype = new fNOP();
-	
-	return fBound;
-    };
-}
+// Used for inheritance. Prefer Object.create
 function heir(p) {
-    var f = function(){};
-    f.prototype = p;
-    return new f();
+    return Object.create(o);
 }
+
+// Returns the first non-undefined argument
 function coalesce() {
     for(var i = 0; i < arguments.length; i++){
 	if ( typeof arguments[i] != "undefined" ) {
@@ -9371,20 +9630,26 @@ function coalesce() {
 	}
     }
 }
+
+// Takes an url with query data and splits it, returning the path (with no data) and an object representing the data as name/value pairs.
 function splitURL(url) {
     var re = /([^\?]+)\??(.*)/;
     re.exec(url);
     var path = RegExp.$1;
     var queryString = RegExp.$2;
     var data = {};
-    $.each(queryString.split('&'),function(i, pair){
-	data[pair.split('=')[0]] = pair.split('=')[1];
-    });
+    if ( queryString !== "" ) {
+	$.each(queryString.split('&'),function(i, pair){
+	    data[pair.split('=')[0]] = pair.split('=')[1];
+	});
+    }
     return {
 	'path': path,
 	'data': data
     }
 }
+
+// Focus on the first focussable element of a form. Considers all descendants regarless of depth.
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
@@ -9393,6 +9658,7 @@ function formFocus(form) {
 	}
     });
 }
+// Focus on the first focussable child of element. Only inspects immediate children (does not traverse further down the DOM).
 function focusFirstChild(element) {
     $(element).children().each(function(){
 	$(this).focus();
@@ -9401,6 +9667,7 @@ function focusFirstChild(element) {
 	}
     });
 }
+
 function stripHTML(html) {
   return html.replace(/<[^>]+>/gi,"");
 }
@@ -9449,197 +9716,6 @@ function httpPost(url,data,handler,errorHandler,async) {
 	}
     });
 }
-
-// positionRelative to plugin - returns the position of the first element in the selection relative to the target.
-// nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
-(function ($, undefined) {
-    $.fn.positionRelativeTo = function(target) {
-	var target = $(target);
-	var $body = $('body');
-
-	// Find chain of offset parents from this element to body
-	var myOffsetParents = this;
-	var current = this;
-	while ( ! current.is($body) ) {
-	    current = current.offsetParent();
-	    myOffsetParents = myOffsetParents.add(current);
-	}
-
-	// Search offset parents from target element up until a common offset parent is found
-	current = target;
-	while ( ! current.is(myOffsetParents) ) {
-	    current = current.offsetParent();
-	}
-	var commonOffsetParent = current;
-
-	// Find position of this element relative to the common offset parent
-	var myPosition = {
-	    left: 0,
-	    top: 0
-	}
-	current = this;
-	while ( ! current.is(commonOffsetParent) ) {
-	    var positionOfCurrent = current.position();
-	    myPosition.left += positionOfCurrent.left;
-	    myPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
-	}
-	if ( ! this.is(commonOffsetParent) ) {
-	    myPosition.left += commonOffsetParent.scrollLeft();
-	    myPosition.top += commonOffsetParent.scrollTop();
-	}
-
-	// Find position of target element relative to the common offset parent
-	var targetPosition = {
-	    left: 0,
-	    top: 0
-	}
-	current = target;
-	while ( ! current.is(commonOffsetParent) ) {
-	    var positionOfCurrent = current.position();
-	    targetPosition.left += positionOfCurrent.left;
-	    targetPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
-	}
-	if ( ! target.is(commonOffsetParent) ) {
-	    targetPosition.left += commonOffsetParent.scrollLeft();
-	    targetPosition.top += commonOffsetParent.scrollTop();
-	}
-
-	// Return the difference of the two calculated positions
-	return {
-	    left: myPosition.left - targetPosition.left,
-	    top: myPosition.top - targetPosition.top
-	}
-    };
-})(jQuery);
-
-(function ($) {
-    $.fn.disable = function () {
-	return $(this).each(function () { 
-	    switch($(this)[0].nodeName.toUpperCase()) {
-	    case "A":
-		jQuery.data($(this)[0],"href",$(this).attr("href"));
-		$(this).removeAttr('href');
-	    default:
-		$(this).attr('disabled', 'disabled').addClass('disabled');
-	    }
-	});
-    };
-    $.fn.enable = function () {
-	return $(this).each(function () { 
-	    switch($(this)[0].nodeName.toUpperCase()) {
-	    case "A":
-		if ( typeof jQuery.data($(this)[0],"href")!="undefined" ) {
-		    $(this).attr("href",jQuery.data($(this)[0],"href"));
-		}
-	    default:
-		$(this).removeAttr('disabled').removeClass("disabled"); 
-	    }
-	});
-    };
-})(jQuery);
-
-(function($){
-    $.fn.cycleClasses = function(classes) {
-	var nextClass = classes[0];
-	for(var i = classes.length - 1; i >= 0; i--) {
-	    thisClass = classes[i];
-	    if ( this.hasClass(thisClass) ) {
-		this.removeClass(thisClass);
-		this.addClass(nextClass);
-		return this;
-	    } else {
-		nextClass = thisClass;
-	    }
-	}
-	this.addClass(nextClass);
-	return this;
-    }
-})(jQuery);
-
-(function($){
-    $.fn.cycleText = function(labels) {
-	var nextLabel = labels[0];
-	for(var i = labels.length - 1; i >= 0; i--) {
-	    thisLabel = labels[i];
-	    if ( this.text() === thisLabel ) {
-		this.text(nextLabel);
-		return this;
-	    } else {
-		nextLabel = thisLabel;
-	    }
-	}
-	this.text(nextLabel);
-	return this;
-    }
-})(jQuery);
-
-// Bug fix for table border width detection in ie9
-(function($){
-    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
-        var oldCssFunction = $.fn.css;
-        $.fn.css = function() {
-            if ( this.first().is('table') && arguments.length == 1 ) {
-		var table = this.first();
-                switch(arguments[0]){
-                case "border-left-width":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-left-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-left-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-right-width":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-right-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-right-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-top-width":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-top-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-top-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-bottom-width":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-bottom-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-bottom-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                default:
-                    return oldCssFunction.apply(this,arguments);
-                }
-            } else {
-                return oldCssFunction.apply(this,arguments);
-            }
-        };
-    }
-    function getInnerWidth(table) {
-        var borderSpacing = table.css('border-spacing');
-        var horizontalSpacing = borderSpacing.split(' ').shift();
-        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
-    }
-    function getInnerHeight(table) {
-        var borderSpacing = table.css('border-spacing');
-        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
-        var totalHeight = verticalSpacing;
-        table.find('thead, tbody, tfoot').each(function(){
-            if ( $(this).css('position') != "absolute" ) {
-                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
-            }
-        });
-        return totalHeight;
-    }
-})(jQuery);
 
 /* ==== tabCtl.js ==== */
 function tabCtl(oCtl) {

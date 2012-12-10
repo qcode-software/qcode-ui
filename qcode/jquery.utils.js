@@ -19,9 +19,11 @@ function splitURL(url) {
     var path = RegExp.$1;
     var queryString = RegExp.$2;
     var data = {};
-    $.each(queryString.split('&'),function(i, pair){
-	data[pair.split('=')[0]] = pair.split('=')[1];
-    });
+    if ( queryString !== "" ) {
+	$.each(queryString.split('&'),function(i, pair){
+	    data[pair.split('=')[0]] = pair.split('=')[1];
+	});
+    }
     return {
 	'path': path,
 	'data': data
