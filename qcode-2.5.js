@@ -4484,6 +4484,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
+	    this.hasFocus = false;
 	    this._on(window, {
 		'resize': this._onResize
 	    });
@@ -4500,7 +4501,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
 		'paste': this._inputOnPaste,
-		'blur': this._inputOnBlur
+		'blur': this._inputOnBlur,
+		'focus': this._inputOnFocus
 	    });
 	},
 	getValue: function() {
@@ -4534,7 +4536,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	hide: function() {
 	    // Hide the editor
-	    if ( this.editor.is(':focus') ) {
+	    if ( this.hasFocus ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
@@ -4591,7 +4593,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    case 9: // tab
 	    case 38: // up
 	    case 40: // down
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
 		    'altKey': e.altKey, 
@@ -4604,7 +4606,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4615,7 +4617,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnCut: function(e) {
 	    // Pass all cut events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorCut', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4626,7 +4628,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnPaste: function(e) {
 	    // Pass all paste events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4638,12 +4640,16 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    if ( ! this.editor.is(':focus') ) {
-		var event = jQuery.Event(e.type, {
+	    if ( ! this.hasFocus ) {
+		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
 	    }
+	    this.hasFocus = false;
+	},
+	_inputOnFocus: function(e, source) {
+	    this.hasFocus = true;
 	}
     });
 })(jQuery, window);
@@ -4778,7 +4784,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    case 9: // tab
 	    case 38: // up
 	    case 40: // down
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
 		    'altKey': e.altKey, 
@@ -4792,7 +4798,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4803,7 +4809,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnCut: function(e) {
 	    // Pass all cut events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorCut', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4814,7 +4820,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnPaste: function(e) {
 	    // Pass all paste events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4827,7 +4833,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
@@ -4972,7 +4978,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    case 9: // tab
 	    case 38: // up
 	    case 40: // down
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
 		    'altKey': e.altKey, 
@@ -4985,7 +4991,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -4996,7 +5002,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnCut: function(e) {
 	    // Pass all cut events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorCut', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5007,7 +5013,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnPaste: function(e) {
 	    // Pass all paste events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5020,7 +5026,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
@@ -5035,10 +5041,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
     // Uses the jQuery UI widget factory
     $.widget( "qcode.dbField", {
-	_create: function() {
-	    // Constructor function. This widget uses a locking strategy to handle focus/blur events, which means there's probably room for improvement.
-	    this.lockFocusEvents = false;
-	},
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
@@ -5075,9 +5077,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 	    var recordSet = this.getRecordSet();
 
-	    // Hiding this element triggers a blur event in IE, but we don't want it to respond to that
-	    this.lockFocusEvents = true;
-
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
 
@@ -5097,11 +5096,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 
 	    this.element.trigger('dbFieldIn');
-	    this.lockFocusEvents = false;
 	}, 
 	fieldOut: function(){
 	    // Stop editing this field
-	    this.lockFocusEvents = true;
 	    var recordSet = this.getRecordSet();
 	    var record = this.getRecord();
 	    recordSet.dbRecordSet('setCurrentField', $([]));
@@ -5120,7 +5117,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    recordSet[plugin]('hide');
 
 	    this.element.trigger('dbFieldOut');
-	    this.lockFocusEvents = false;
 	}, 
 	getType: function(){
 	    // Returns the field type (input, text, or html)
@@ -5137,7 +5133,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		event.preventDefault();
 	    }
 	}, 
-	onKeyDown: function(event){
+	editorKeyDown: function(event){
 	    // nb. Normally only captures key down events propagated here by the editor, so defines behavior only for those events which the editor doesn't intercept.
 	    if ( event.altKey ) {
 		return true;
@@ -5185,7 +5181,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		break;
 	    }
 	}, 
-	onKeyUp: function(event){
+	editorKeyUp: function(event){
 	    // On key up, if the field's value has changed, mark as dirty.
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
@@ -5195,20 +5191,18 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
 	}, 
-	onCut: function(){
+	editorCut: function(){
 	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
-	onPaste: function(){
+	editorPaste: function(){
 	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
-	onBlur: function(){
-	    // Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue, but probably isn't the best solution.
-	    if ( ! this.lockFocusEvents ) {
-		this.fieldOut();
-		this.getRecord().dbRecord('recordOut');
-	    }
+	editorBlur: function(){
+	    // When the editor becomes blurred, move out.
+	    this.fieldOut();
+	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
 	    // Write the current editor contents to the field
@@ -7322,26 +7316,25 @@ function dbFormHTMLArea(oDiv) {
 	    // Constructor function
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
-	    // nb - with dbEditor plugins in use, only the mousedown listener should be listening for directly user-generated events, the rest should be listening for events passed to the field by an editor.
 	    // Elements with class "editable" should be editable fields.
 	    this._on({
-		'mousedown .editable': function(event){
+		'mousedown .editable': function(event) {
 		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
-		'keydown .editable': function(event){
-		    $(event.currentTarget).dbField('onKeyDown', event);
+		'editorKeyDown .editable': function(event) {
+		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
-		'keyup .editable': function(event){
-		    $(event.currentTarget).dbField('onKeyUp', event);
+		'editorKeyUp .editable': function(event) {
+		    $(event.currentTarget).dbField('editorKeyUp', event);
 		},
-		'cut .editable': function(event){
-		    $(event.currentTarget).dbField('onCut', event);
+		'editorCut .editable': function(event) {
+		    $(event.currentTarget).dbField('editorCut', event);
 		},
-		'paste .editable': function(event){
-		    $(event.currentTarget).dbField('onPaste', event);
+		'editorPaste .editable': function(event) {
+		    $(event.currentTarget).dbField('editorPaste', event);
 		},
-		'blur .editable': function(event){
-		    $(event.currentTarget).dbField('onBlur', event);
+		'editorBlur .editable': function(event) {
+		    $(event.currentTarget).dbField('editorBlur', event);
 		}
 	    });
 	    this._on(window, {

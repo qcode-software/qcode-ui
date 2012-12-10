@@ -133,7 +133,7 @@
 	    case 9: // tab
 	    case 38: // up
 	    case 40: // down
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
 		    'altKey': e.altKey, 
@@ -146,7 +146,7 @@
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -157,7 +157,7 @@
 	},
 	_inputOnCut: function(e) {
 	    // Pass all cut events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorCut', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -168,7 +168,7 @@
 	},
 	_inputOnPaste: function(e) {
 	    // Pass all paste events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -181,7 +181,7 @@
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);

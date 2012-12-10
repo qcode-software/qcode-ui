@@ -13,26 +13,25 @@
 	    // Constructor function
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
-	    // nb - with dbEditor plugins in use, only the mousedown listener should be listening for directly user-generated events, the rest should be listening for events passed to the field by an editor.
 	    // Elements with class "editable" should be editable fields.
 	    this._on({
-		'mousedown .editable': function(event){
+		'mousedown .editable': function(event) {
 		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
-		'keydown .editable': function(event){
-		    $(event.currentTarget).dbField('onKeyDown', event);
+		'editorKeyDown .editable': function(event) {
+		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
-		'keyup .editable': function(event){
-		    $(event.currentTarget).dbField('onKeyUp', event);
+		'editorKeyUp .editable': function(event) {
+		    $(event.currentTarget).dbField('editorKeyUp', event);
 		},
-		'cut .editable': function(event){
-		    $(event.currentTarget).dbField('onCut', event);
+		'editorCut .editable': function(event) {
+		    $(event.currentTarget).dbField('editorCut', event);
 		},
-		'paste .editable': function(event){
-		    $(event.currentTarget).dbField('onPaste', event);
+		'editorPaste .editable': function(event) {
+		    $(event.currentTarget).dbField('editorPaste', event);
 		},
-		'blur .editable': function(event){
-		    $(event.currentTarget).dbField('onBlur', event);
+		'editorBlur .editable': function(event) {
+		    $(event.currentTarget).dbField('editorBlur', event);
 		}
 	    });
 	    this._on(window, {
@@ -57,12 +56,10 @@
 	}, 
 	setCurrentField: function(newField) {
 	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
-	    console.log('current field set, length '+$(newField).length);
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(newField) {
 	    // Switch to the target field
-	    console.log('field change, current field length '+this.currentField.length);
 	    var currentRecord = this.currentField.dbField('getRecord');
 	    var newRecord = newField.dbField('getRecord');
 	    this.currentField.dbField('fieldOut');

@@ -106,12 +106,10 @@
 	}, 
 	recordIn: function(event){
 	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
-	    console.log('record in');
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
 	    // Call when done editing this record. Auto-saves if any changes were made.
-	    console.log('record out');
 	    if ( this.getState() === "dirty" ) {
 		this.save();
 	    }

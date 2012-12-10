@@ -3,10 +3,6 @@
 
     // Uses the jQuery UI widget factory
     $.widget( "qcode.dbField", {
-	_create: function() {
-	    // Constructor function. This widget uses a locking strategy to handle focus/blur events, which means there's probably room for improvement.
-	    this.lockFocusEvents = false;
-	},
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
@@ -40,12 +36,8 @@
 	    }
 	}, 
 	fieldIn: function(newField, select){
-	    console.log('field in');
 	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
 	    var recordSet = this.getRecordSet();
-
-	    // Hiding this element triggers a blur event in IE, but we don't want it to respond to that
-	    this.lockFocusEvents = true;
 
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
@@ -66,12 +58,9 @@
 	    }
 
 	    this.element.trigger('dbFieldIn');
-	    this.lockFocusEvents = false;
 	}, 
 	fieldOut: function(){
-	    console.log('field out');
 	    // Stop editing this field
-	    this.lockFocusEvents = true;
 	    var recordSet = this.getRecordSet();
 	    var record = this.getRecord();
 	    recordSet.dbRecordSet('setCurrentField', $([]));
@@ -90,7 +79,6 @@
 	    recordSet[plugin]('hide');
 
 	    this.element.trigger('dbFieldOut');
-	    this.lockFocusEvents = false;
 	}, 
 	getType: function(){
 	    // Returns the field type (input, text, or html)
@@ -107,7 +95,7 @@
 		event.preventDefault();
 	    }
 	}, 
-	onKeyDown: function(event){
+	editorKeyDown: function(event){
 	    // nb. Normally only captures key down events propagated here by the editor, so defines behavior only for those events which the editor doesn't intercept.
 	    if ( event.altKey ) {
 		return true;
@@ -155,7 +143,7 @@
 		break;
 	    }
 	}, 
-	onKeyUp: function(event){
+	editorKeyUp: function(event){
 	    // On key up, if the field's value has changed, mark as dirty.
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
@@ -165,21 +153,18 @@
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
 	}, 
-	onCut: function(){
+	editorCut: function(){
 	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
-	onPaste: function(){
+	editorPaste: function(){
 	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
-	onBlur: function(){
-	    // Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue, but probably isn't the best solution.
-	    console.log('onblur, lock ' + this.lockFocusEvents);
-	    if ( ! this.lockFocusEvents ) {
-		this.fieldOut();
-		this.getRecord().dbRecord('recordOut');
-	    }
+	editorBlur: function(){
+	    // When the editor becomes blurred, move out.
+	    this.fieldOut();
+	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
 	    // Write the current editor contents to the field
