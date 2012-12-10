@@ -5207,6 +5207,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	onBlur: function(){
 	    // Blur may be triggered by fieldIn, depending on the browser. Locking prevents this issue, but probably isn't the best solution.
+	    console.log('onblur, lock ' + this.lockFocusEvents);
 	    if ( ! this.lockFocusEvents ) {
 		this.fieldOut();
 		this.getRecord().dbRecord('recordOut');
