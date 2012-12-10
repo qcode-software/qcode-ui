@@ -86,11 +86,7 @@
 	getCurrentField: function(){
 	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
-	}, 
-	getFields: function(){
-	    // Returns all editable fields in the record
-	    return this.element.find('.editable');
-	}, 
+	},
 	setValues: function(xmlDoc){
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {

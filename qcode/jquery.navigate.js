@@ -122,7 +122,7 @@
         return nextField;
     };
     Navigate.prototype.prevUp = function(fromField) {
-        // Returns the field above the target, or unedfined if none exists
+        // Returns the field above the target, or undefined if none exists
         var nextField;
         var fromFieldTop = fromField.offset().top;
         var fields = jQuery(this.selector + ':visible', this.container).not(fromField);

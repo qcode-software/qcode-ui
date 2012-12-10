@@ -35,8 +35,9 @@
 		this.element.text(newValue);
 	    }
 	}, 
-	fieldIn: function(newField, select){
-	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
+	fieldIn: function(select){
+	    // Begin editing this field 
+	    // select can be one of "all", "start" or "end", and indicates the text range to select
 	    var recordSet = this.getRecordSet();
 
 	    recordSet.dbRecordSet('setCurrentField', this.element);
