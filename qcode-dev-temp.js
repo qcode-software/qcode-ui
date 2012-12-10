@@ -4643,7 +4643,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    this.hasFocus = false;
 	    if ( ! this.hasFocus ) {
 		console.log('html editor is blurred');
 		var event = jQuery.Event('editorBlur', {
@@ -4651,6 +4650,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		});
 		this.currentElement.trigger(event);
 	    }
+	    this.hasFocus = false;
 	},
 	_inputOnFocus: function(e, source) {
 	    this.hasFocus = true;
