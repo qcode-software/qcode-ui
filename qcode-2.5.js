@@ -7226,7 +7226,11 @@ function dbFormHTMLArea(oDiv) {
 	    var data = urlPieces.data;
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
-		var value = $(field).dbField('getValue');
+		if ( $(field).dbField('getType') == 'htmlarea' ) {
+		    var value = escapeHTML($(field).dbField('getValue'));
+		} else {
+		    var value = $(field).dbField('getValue');
+		}
 		data[name] = value;
 	    });
 
@@ -7246,7 +7250,11 @@ function dbFormHTMLArea(oDiv) {
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
-		    $(field).dbField('setValue', node.text());
+		    if ( $(field).dbField('getType') == 'htmlarea') {
+			$(field).dbField('setValue', unescapeHTML(node.text()));
+		    } else {
+			$(field).dbField('setValue', node.text());
+		    }
 		}
 	    });
 	    this.element.trigger('resize');
