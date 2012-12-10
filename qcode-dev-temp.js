@@ -4535,7 +4535,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	hide: function() {
 	    // Hide the editor
+	    console.log('hide html editor');
 	    if ( this.editor.is(':focus') ) {
+		console.log('blur html editor');
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
