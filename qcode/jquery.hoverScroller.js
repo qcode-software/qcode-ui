@@ -63,7 +63,7 @@
 
 	// A div which appears at the top of the container, which scrolls the scrollBox up when you hover the mouse over it
 	var upScroller = $('<div>')
-	    .appendTo(container)
+	    .prependTo(container)
 	    .addClass('up scroller')
 	    .on('mouseenter', function(){
 		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
