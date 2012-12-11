@@ -7297,10 +7297,10 @@ function dbFormHTMLArea(oDiv) {
 	_create: function(){
 	    // Constructor function
 	    this.state = 'current';
-	    if ( this.element.attr('saveAction') === "add" ) {
-		this.saveAction = "add";
+	    if ( this.element.attr('recordType') === "add" ) {
+		this.type = "add";
 	    } else {
-		this.saveAction = "update";
+		this.type = "update";
 	    }
 	},
 	getRecordSet: function(){
@@ -7332,11 +7332,11 @@ function dbFormHTMLArea(oDiv) {
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
-	    var url = this.getRecordSet().attr(this.saveAction + "URL");
+	    var url = this.getRecordSet().attr(this.type + "URL");
 	    if ( ! url ) {
-		$.error('Could not '+this.saveAction+' record - no url provided');
+		$.error('Could not '+this.type+' record - no url provided');
 	    }
-	    this.action(this.saveAction, url, async);
+	    this.action(this.type, url, async);
 	}, 
 	delete: function(async){
 	    // Delete this record, by sending a delete request to the server
@@ -7412,7 +7412,7 @@ function dbFormHTMLArea(oDiv) {
 		break;
 	    case "add":
 		// Once added, a record becomes an updatable record
-		this.saveAction = "update";
+		this.type = "update";
 		this.setValues(xmlDoc);
 		break;
 	    }
