@@ -103,24 +103,25 @@
 	    }
 	    var recordSet = this.getRecordSet();
 	    var field = this.element;
+	    var fields = recordSet.find('.editable');
 	    switch (event.which) {
 	    case 37: // left arrow
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
+		recordSet.dbRecordSet('fieldChange', field.westOf(fields));
 		break;
 	    case 38: // up arrow
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
+		recordSet.dbRecordSet('fieldChange', field.northOf(fields));
 		break;
 	    case 39: // right arrow
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
+		recordSet.dbRecordSet('fieldChange', field.eastOf(fields));
 		break;
 	    case 40: // down arrow
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
+		recordSet.dbRecordSet('fieldChange', field.southOf(fields));
 		break;
 	    case 9: // tab key 
 		if ( event.shiftKey ) {
-		    var newField = recordSet.dbRecordSet('moveLeft', field);
+		    var newField = field.westOf(fields);
 		} else {
-		    var newField = recordSet.dbRecordSet('moveRight', field);
+		    var newField = field.eastOf(fields);
 		}
 		if ( newField == field ) {
 		    // save if on last record 
@@ -130,7 +131,7 @@
 		}
 		break;
 	    case 13: // return key
-		var newField = recordSet.dbRecordSet('moveRight', field);
+		var newField = field.eastOf(fields);
 		if ( newField == field ) {
 		    // save if on last record 
 		    this.getRecord().dbRecord('save');

@@ -73,6 +73,7 @@
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
 		if ( $(field).dbField('getType') == 'htmlarea' ) {
+		    // xml cannot contain raw html, so escape/unescape it.
 		    var value = escapeHTML($(field).dbField('getValue'));
 		} else {
 		    var value = $(field).dbField('getValue');
@@ -93,6 +94,7 @@
 		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
 		    if ( $(field).dbField('getType') == 'htmlarea') {
+			// xml cannot contain raw html, so escape/unescape it.
 			$(field).dbField('setValue', unescapeHTML(node.text()));
 		    } else {
 			$(field).dbField('setValue', node.text());

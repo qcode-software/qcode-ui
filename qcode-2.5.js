@@ -3193,6 +3193,144 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 };
 
 
+/* ==== jquery.compass.js ==== */
+;(function($, window, document, undefined) {
+    $.fn.northOf = function(selection) {
+        // Returns the field above the target, or undefined if none exists
+	var fromField = $(this);
+        var nextField;
+        var fromFieldTop = fromField.offset().top;
+        var fields = $(selection).filter(':visible').not(fromField);
+        fields.each(function() {
+            var field = $(this);
+            var fieldTop = field.offset().top;
+            if (sameColumn(fromField, field) && fieldTop < fromFieldTop && (nextField === undefined || fieldTop > nextFieldTop)) {
+                nextField = field;
+                nextFieldTop = fieldTop;
+            }
+        });
+        if (nextField === undefined) {
+            fields.each(function() {
+                var field = $(this);
+                var fieldTop = field.offset().top;
+                if (leftOfColumn(fromField, field) && (nextField === undefined || rightOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop > nextFieldTop))) {
+                    nextField = field;
+                    nextFieldTop = fieldTop;
+                };
+            });
+        }
+        return nextField;
+    }
+    $.fn.eastOf = function(selection) {
+        // Returns the field right of the target, or undefined if none exists
+	var fromField = $(this);
+        var nextField;
+        var fromFieldLeft = fromField.offset().left;
+        var fields = $(selection).filter(':visible').not(fromField);
+        fields.each(function() {
+            var field = $(this);
+            var fieldLeft = field.offset().left;
+            if (sameRow(field, fromField) && fieldLeft > fromFieldLeft && (nextField === undefined || fieldLeft < nextFieldLeft)) {
+                nextField = field;
+                nextFieldLeft = fieldLeft;
+            }
+        });
+        if (nextField === undefined) {
+            fields.each(function() {
+                var field = $(this);
+                var fieldLeft = $(field).offset().left;
+                if (belowRow(fromField, field) && (nextField === undefined || aboveRow(nextField, field) || (sameRow(field, nextField) && fieldLeft < nextFieldLeft))) {
+                    nextField = field;
+                    nextFieldLeft = fieldLeft;
+                }
+            });
+        }
+        return nextField;
+    }
+    $.fn.southOf = function(selection) {
+        // Returns the field below the target, or undefined if none exists
+	var fromField = $(this);
+        var nextField;
+        var fromFieldTop = fromField.offset().top;
+        var fields = $(selection).filter(':visible').not(fromField);
+        fields.each(function() {
+            var field = $(this);
+            var fieldTop = field.offset().top;
+            if (sameColumn(fromField, field) && fieldTop > fromFieldTop && (nextField === undefined || fieldTop < nextFieldTop)) {
+                nextField = field;
+                nextFieldTop = fieldTop;
+            }
+        });
+        if (nextField === undefined) {
+            fields.each(function() {
+                var field = $(this);
+                var fieldTop = field.offset().top;
+                if (rightOfColumn(fromField, field) && (nextField === undefined || leftOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop < nextFieldTop))) {
+                    nextField = field;
+                    nextFieldTop = fieldTop;
+                }
+            });
+        }
+        return nextField;
+    }
+    $.fn.westOf = function(selection) {
+        // Returns the field left of the target, or undefined if none exists
+	var fromField = $(this);
+        var nextField;
+        var fromFieldLeft = fromField.offset().left;
+        var fields = $(selection).filter(':visible').not(fromField);
+        fields.each(function() {
+            var field = $(this);
+            var fieldLeft = field.offset().left;
+            if (sameRow(field, fromField) && fieldLeft < fromFieldLeft && (nextField === undefined || fieldLeft > nextFieldLeft)) {
+                nextField = field;
+                nextFieldLeft = fieldLeft;
+            }
+        });
+        if (nextField === undefined) {
+            fields.each(function() {
+                var field = $(this);
+                var fieldLeft = $(field).offset().left;
+                if (aboveRow(fromField, field) && (nextField === undefined || belowRow(nextField, field) || (sameRow(field, nextField) && fieldLeft > nextFieldLeft))) {
+                    nextField = field;
+                    nextFieldLeft = fieldLeft;
+                }
+            });
+        }
+        return nextField;
+    }
+
+    function sameRow(a, b) {
+        // Takes two elements and returns true if they are on the same row
+        return (a.offset().top <= (b.offset().top + b.outerHeight())) && ((a.offset().top + a.outerHeight()) >= b.offset().top);
+    }
+
+    function belowRow(a, b) {
+        // Takes two elements and returns true if "b" is on a row below "a"
+        return b.offset().top > (a.offset().top + a.outerHeight());
+    }
+
+    function aboveRow(a, b) {
+        // Takes two elements and returns true if "b" is on a row above "a"
+        return (b.offset().top + b.outerHeight()) < a.offset().top;
+    }
+
+    function sameColumn(a, b) {
+        // Takes two elements and returns true if they are in the same column
+        return (a.offset().left <= (b.offset().left + b.outerWidth())) && ((a.offset().left + a.outerWidth()) >= b.offset().left);
+    }
+
+    function leftOfColumn(a, b) {
+        // Takes two elements and returns true if "b" is in a column left of "a"
+        return (b.offset().left + b.outerWidth()) < a.offset().left;
+    }
+
+    function rightOfColumn(a, b) {
+        // Takes two elements and returns true if "b" is in a column right of "a"
+        return (a.offset().left + a.outerWidth()) < b.offset().left;
+    }
+})(jQuery, window, document);
+
 /* ==== jquery.cycleClasses.js ==== */
 // cycleClasses plugin. Takes an array of classes as an argument, expects the target to be a single element with one of those classes, and replaces class with the next one in the array, looping back to the beginning when the end is reached.
 (function($){
@@ -4764,26 +4902,24 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	_inputOnKeyDown: function(e) {
-	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    //nb. This switch cascades; the lack of breaks is intentional
-	    switch(e.which) {
-
-	    case 37: // left
-	    case 39: // right
-		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
-		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
-		var selection = this.editor.textrange('get');
-		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-
-	    case 83: // S
-		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
+	    var selection;
+	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    case 37: //left
+		// If selection is not empty collapse left
+		selection = this.editor.textrange('get');
+		if ( ! ( selection.selectionText === "" && selection.selectionAtStart )) break;
+	    case 39: //right
+		// If selection is not empty collapse right
+		selection = this.editor.textrange('get');
+		if ( e.which ==  39 && ! ( selection.selectionText === "" && selection.selectionAtEnd )) break;
+	    case 83: //S
+		// Not Ctrl + s
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-
-	    case 13: // return
-	    case 9: // tab
-	    case 38: // up
-	    case 40: // down
+	    case 13: //return
+	    case 9: //tab
+	    case 38: //up
+	    case 40: //down
+		// Any of the above re-trigger event
 		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
@@ -5039,7 +5175,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 // dbField plugin - a field (editable or not) in a record set.
 ;(function($, undefined){
 
-    // Uses the jQuery UI widget factory
+    // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
@@ -5073,8 +5209,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.element.text(newValue);
 	    }
 	}, 
-	fieldIn: function(newField, select){
-	    // Begin editing this field - display the editor, make this the recordSet's current field, trigger a fieldIn event.
+	fieldIn: function(select){
+	    // Begin editing this field 
+	    // select can be one of "all", "start" or "end", and indicates the text range to select
 	    var recordSet = this.getRecordSet();
 
 	    recordSet.dbRecordSet('setCurrentField', this.element);
@@ -5134,40 +5271,43 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	editorKeyDown: function(event){
-	    // nb. Normally only captures key down events propagated here by the editor, so defines behavior only for those events which the editor doesn't intercept.
+	    // Capture key down events propagated here by the editor
 	    if ( event.altKey ) {
 		return true;
 	    }
 	    var recordSet = this.getRecordSet();
 	    var field = this.element;
+	    var fields = recordSet.find('.editable');
 	    switch (event.which) {
-	    case 37: // left arrow key pressed - move left
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveLeft', field));
+	    case 37: // left arrow
+		recordSet.dbRecordSet('fieldChange', field.westOf(fields));
 		break;
-	    case 38: // up arrow key pressed - move up
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveUp', field));
+	    case 38: // up arrow
+		recordSet.dbRecordSet('fieldChange', field.northOf(fields));
 		break;
-	    case 39: // right arrow key pressed - move right
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveRight', field));
+	    case 39: // right arrow
+		recordSet.dbRecordSet('fieldChange', field.eastOf(fields));
 		break;
-	    case 40: // down arrow key pressed - move down
-		recordSet.dbRecordSet('fieldChange', recordSet.dbRecordSet('moveDown', field));
+	    case 40: // down arrow
+		recordSet.dbRecordSet('fieldChange', field.southOf(fields));
 		break;
-	    case 9: // tab key pressed - move right, or left on shift+tab, save if the end of the fields in this record set has been reached
+	    case 9: // tab key 
 		if ( event.shiftKey ) {
-		    var newField = recordSet.dbRecordSet('moveLeft', field);
+		    var newField = field.westOf(fields);
 		} else {
-		    var newField = recordSet.dbRecordSet('moveRight', field);
+		    var newField = field.eastOf(fields);
 		}
 		if ( newField == field ) {
+		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		} else {
 		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
-	    case 13: // return key pressed - move right, or save if the last field in this record set has been reached
-		var newField = recordSet.dbRecordSet('moveRight', field);
+	    case 13: // return key
+		var newField = field.eastOf(fields);
 		if ( newField == field ) {
+		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		} else {
 		    recordSet.dbRecordSet('fieldChange', newField);
@@ -5182,21 +5322,21 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	editorKeyUp: function(event){
-	    // On key up, if the field's value has changed, mark as dirty.
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
 	    var editorValue = recordSet[plugin]('getValue');
 	    
 	    if ( this.getValue() !== editorValue) {
+		// Set dirty
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
 	}, 
 	editorCut: function(){
-	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
+	    // Set as dirty
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	editorPaste: function(){
-	    // Cut and paste events should go to the editor, but will be passed on to here. Either will mean the field value has changed, so mark as dirty.
+	    // Set as dirty
 	    this.getRecord().dbRecord('setState', 'dirty');
 	}, 
 	editorBlur: function(){
@@ -5205,7 +5345,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
-	    // Write the current editor contents to the field
+	    // Write the editor's contents to the field
 	    var recordSet = this.getRecordSet();
  	    var plugin = this._getEditorPluginName();
 	    var editorValue = recordSet[plugin]('getValue');
@@ -7148,10 +7288,11 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.dbRecord.js ==== */
 // dbRecord plugin
-// Part of a dbRecordSet, a dbRecord represents a collection of dbFields which need to be added, updated, or deleted together.
+// Part of a dbRecordSet. 
+// A dbRecord represents a collection of dbFields which will be added, updated, or deleted together.
 ;(function($, undefined){
 
-    // Uses the jQuery UI widget factory
+    // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function(){
 	    // Constructor function
@@ -7221,6 +7362,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
 		if ( $(field).dbField('getType') == 'htmlarea' ) {
+		    // xml cannot contain raw html, so escape/unescape it.
 		    var value = escapeHTML($(field).dbField('getValue'));
 		} else {
 		    var value = $(field).dbField('getValue');
@@ -7234,17 +7376,14 @@ function dbFormHTMLArea(oDiv) {
 	getCurrentField: function(){
 	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
-	}, 
-	getFields: function(){
-	    // Returns all editable fields in the record
-	    return this.element.find('.editable');
-	}, 
+	},
 	setValues: function(xmlDoc){
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
 		    if ( $(field).dbField('getType') == 'htmlarea') {
+			// xml cannot contain raw html, so escape/unescape it.
 			$(field).dbField('setValue', unescapeHTML(node.text()));
 		    } else {
 			$(field).dbField('setValue', node.text());
@@ -7301,16 +7440,16 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.dbRecordSet.js ==== */
-// dbRecordSet is hard-coded to work with the "recordSet" class, so we may as well call it here rather than in behaviour files.
+// Apply to elements with recordSet class.
 ;jQuery(function(){
     jQuery('.recordSet').dbRecordSet();
 });
 
-// dbRecordSet plugin - requires dbRecordsRecord, dbRecordsField and appropriate dbEditor plugins.
-// Call on a DOM element which contains other elements representing a database record set (multiple records each with multiple fields)
+// dbRecordSet plugin
+// Call on a DOM element which contains the dbRecords.
 ;(function($, window, undefined){
 
-    // Uses the jQuery UI widget factory.
+    // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	_create: function(){
 	    // Constructor function
@@ -7342,7 +7481,7 @@ function dbFormHTMLArea(oDiv) {
 		'beforeprint': this._onBeforePrint,
 	    });
 
-	    // When no field is selected, currentField should be an empty jQuery object.
+	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	},
 	save: function(aysnc) {
@@ -7350,7 +7489,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record (the record containing the current field), or an empty jQuery object if none exists.
+	    // Returns the current record or an empty jQuery object if none exists.
 	    return this.currentField.dbField('getRecord');
 	}, 
 	getCurrentField: function() {
@@ -7361,165 +7500,17 @@ function dbFormHTMLArea(oDiv) {
 	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
 	    this.currentField = $(newField);
 	}, 
-	fieldChange: function(newField) {
-	    // Switch to the target field
+	fieldChange: function(toField) {
+	    // Move to the target field
 	    var currentRecord = this.currentField.dbField('getRecord');
-	    var newRecord = newField.dbField('getRecord');
+	    var newRecord = toField.dbField('getRecord');
 	    this.currentField.dbField('fieldOut');
 	    if ( ! currentRecord.is(newRecord) ) {
 		currentRecord.dbRecord('recordOut');
 	    }
-	    newField.dbField('fieldIn');
+	    toField.dbField('fieldIn');
 	    if ( ! currentRecord.is(newRecord) ) {
 		newRecord.dbRecord('recordIn');
-	    }
-	}, 
-	moveLeft: function(fromField) {
-	    // Returns the field one step left of the target, or the target itself if none exists
-	    var nextField;
-	    var fromFieldLeft = fromField.offset().left;
-	    var fields = this.element.find('.editable');
-	    fields.each(function() {
-		var field = $(this);
-		var fieldLeft = field.offset().left;
-		if ( sameRow(field, fromField)
-		     && fieldLeft < fromFieldLeft
-		     && ( nextField === undefined || fieldLeft > nextFieldLeft )
-		   ) {
-		    nextField = field;
-		    nextFieldLeft = fieldLeft;
-		}
-	    });
-	    if ( nextField === undefined ) {
-		fields.each(function() {
-		    var field = $(this);
-		    var fieldLeft = $(field).offset().left;
-		    if ( aboveRow(fromField, field)
-			 && (nextField === undefined
-			     || belowRow(nextField, field)
-			     || (sameRow(field, nextField) && fieldLeft > nextFieldLeft )
-			    )
-		       ) {
-			nextField = field;
-			nextFieldLeft = fieldLeft;
-		    }
-		});
-	    }
-	    if ( nextField === undefined ) {
-		return fromField;
-	    } else {
-		return nextField;
-	    }
-	}, 
-	moveRight: function(fromField) {
-	    // Returns the field one step right of the target, or the target itself if none exists
-	    var nextField;
-	    var fromFieldLeft = fromField.offset().left;
-	    var fields = this.element.find('.editable');
-	    fields.each(function() {
-		var field = $(this);
-		var fieldLeft = field.offset().left;
-		if ( sameRow(field, fromField)
-		     && fieldLeft > fromFieldLeft
-		     && ( nextField === undefined || fieldLeft < nextFieldLeft )
-		   ) {
-		    nextField = field;
-		    nextFieldLeft = fieldLeft;
-		}
-	    });
-	    if ( nextField === undefined ) {
-		fields.each(function() {
-		    var field = $(this);
-		    var fieldLeft = $(field).offset().left;
-		    if ( belowRow(fromField, field)
-			 && (nextField === undefined
-			     || aboveRow(nextField, field)
-			     || (sameRow(field, nextField) && fieldLeft < nextFieldLeft)
-			    )
-		       ) {
-			nextField = field;
-			nextFieldLeft = fieldLeft;
-		    }
-		});
-	    }
-	    if ( nextField === undefined ) {
-		return fromField;
-	    } else {
-		return nextField;
-	    }
-	}, 
-	moveUp: function(fromField) {
-	    // Returns the field one step above the target, or the target itself if none exists
-	    var nextField;
-	    var fromFieldTop = fromField.offset().top;
-	    var fields = this.element.find('.editable');
-	    fields.each(function() {
-		var field = $(this);
-		var fieldTop = field.offset().top;
-		if ( sameColumn(fromField, field)
-		     && fieldTop < fromFieldTop
-		     && (nextField === undefined || fieldTop > nextFieldTop)
-		   ) {
-		    nextField = field;
-		    nextFieldTop = fieldTop;
-		}
-	    });
-	    if ( nextField === undefined ) {
-		fields.each(function() {
-		    var field = $(this);
-		    var fieldTop = field.offset().top;
-		    if ( leftOfColumn(fromField, field)
-			 && (nextField === undefined
-			     || rightOfColumn(nextField, field)
-			     || (sameColumn(field, nextField) && fieldTop > nextFieldTop)
-			    )
-		       ) {
-			nextField = field;
-			nextFieldTop = fieldTop;
-		    };
-		});
-	    }
-	    if ( nextField === undefined ) {
-		return fromField;
-	    } else {
-		return nextField;
-	    }
-	}, 
-	moveDown: function(fromField) {
-	    // Returns the field one step below the target, or the target itself if none exists
-	    var nextField;
-	    var fromFieldTop = fromField.offset().top;
-	    var fields = this.element.find('.editable');
-	    fields.each(function() {
-		var field = $(this);
-		var fieldTop = field.offset().top;
-		if ( sameColumn(fromField, field)
-		     && fieldTop > fromFieldTop
-		     && ( nextField === undefined || fieldTop < nextFieldTop )
-		   ) {
-		    nextField = field;
-		    nextFieldTop = fieldTop;
-		}
-	    });
-	    if ( nextField === undefined ) {
-		fields.each(function() {
-		    var field = $(this);
-		    var fieldTop = field.offset().top;
-		    if ( rightOfColumn(fromField, field)
-			 && ( nextField === undefined
-			      || leftOfColumn(nextField, field)
-			      || (sameColumn(field, nextField) && fieldTop < nextFieldTop)
-			    )
-		       ) {
-			nextField = field;
-			nextFieldTop = fieldTop;
-		    }
-		});
-	    }
-	    if ( nextField === undefined ) {
-		return fromField;
-	    } else {
-		return nextField;
 	    }
 	},
 	_onBeforeUnload: function(event){
@@ -7540,34 +7531,6 @@ function dbFormHTMLArea(oDiv) {
 	    this.getCurrentRecord().dbRecord('recordOut');
 	}
     });
-
-    // Navigation functions, used by the "move" functions
-    function sameRow(a, b) {
-	// Takes two elements and returns true if they are on the same row
-	return (a.offset().top <= (b.offset().top + b.outerHeight()))
-	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
-    }
-    function belowRow(a, b) {
-	// Takes two elements and returns true if "b" is on a row below "a"
-	return b.offset().top > (a.offset().top + a.outerHeight());
-    }
-    function aboveRow(a, b) {
-	// Takes two elements and returns true if "b" is on a row above "a"
-	return (b.offset().top + b.outerHeight()) < a.offset().top;
-    }
-    function sameColumn(a, b) {
-	// Takes two elements and returns true if they are in the same column
-	return (a.offset().left <= (b.offset().left + b.outerWidth()))
-	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
-    }
-    function leftOfColumn(a, b) {
-	// Takes two elements and returns true if "b" is in a column left of "a"
-	return (b.offset().left + b.outerWidth()) < a.offset().left;
-    }
-    function rightOfColumn(a, b) {
-	// Takes two elements and returns true if "b" is in a column right of "a"
-	return (a.offset().left + a.outerWidth()) < b.offset().left;
-    }
 })(jQuery, window);
 
 
@@ -7708,7 +7671,7 @@ function dbFormHTMLArea(oDiv) {
 
 	// A div which appears at the top of the container, which scrolls the scrollBox up when you hover the mouse over it
 	var upScroller = $('<div>')
-	    .appendTo(container)
+	    .prependTo(container)
 	    .addClass('up scroller')
 	    .on('mouseenter', function(){
 		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
@@ -7845,35 +7808,36 @@ function dbFormHTMLArea(oDiv) {
         // Events     
         container.on('keydown', function(event) {
             var currentElement = jQuery(event.target)
-            var nextElement
+            var nextElement;
+            var fields = jQuery(this.selector, this.container);
             switch (event.which) {
             case 37:
                 // left arrow key pressed - move left (if at selectionStart)
                 if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtStart) {
-                    nextElement = navigate.prevLeft(currentElement)
+                    nextElement = currentElement.westOf(fields);
                 }
                 break;
             case 39:
                 // right arrow key pressed - move right (if at SelectionEnd) 
                 if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtEnd) {
-                    nextElement = navigate.nextRight(currentElement)
+                    nextElement = currentElement.eastOf(fields);
                 }
                 break;
             case 38:
                 // up arrow key pressed - move up 
                 if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtStart) {
-                    nextElement = navigate.prevUp(currentElement)
+                    nextElement = currentElement.northOf(fields);
                 }
                 break;
             case 40:
                 // down arrow key pressed - move down
                 if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtEnd) {
-                    nextElement = navigate.nextDown(currentElement)
+                    nextElement = currentElement.southOf(fields);
                 }
                 break;
             case 13:
                 // return key pressed - move down 
-                nextElement = navigate.nextDown(currentElement)
+                nextElement = currentElement.southOf(fields);
                 break;
             case 9:
                 // tab key pressed - default tab action
@@ -7903,106 +7867,6 @@ function dbFormHTMLArea(oDiv) {
             nextField.textrange('set','all');
         }
     };
-    Navigate.prototype.prevLeft = function(fromField) {
-        // Returns the field left of the target, or undefined if none exists
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = jQuery(this.selector + ':visible', this.container).not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft < fromFieldLeft && (nextField === undefined || fieldLeft > nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
-            }
-        });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (aboveRow(fromField, field) && (nextField === undefined || belowRow(nextField, field) || (sameRow(field, nextField) && fieldLeft > nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
-                }
-            });
-        }
-        return nextField;
-    };
-    Navigate.prototype.nextRight = function(fromField) {
-        // Returns the field right of the target, or undefined if none exists
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = jQuery(this.selector + ':visible', this.container).not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft > fromFieldLeft && (nextField === undefined || fieldLeft < nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
-            }
-        });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (belowRow(fromField, field) && (nextField === undefined || aboveRow(nextField, field) || (sameRow(field, nextField) && fieldLeft < nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
-                }
-            });
-        }
-        return nextField;
-    };
-    Navigate.prototype.prevUp = function(fromField) {
-        // Returns the field above the target, or unedfined if none exists
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = jQuery(this.selector + ':visible', this.container).not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop < fromFieldTop && (nextField === undefined || fieldTop > nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
-            }
-        });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (leftOfColumn(fromField, field) && (nextField === undefined || rightOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop > nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
-                };
-            });
-        }
-        return nextField;
-    };
-    Navigate.prototype.nextDown = function(fromField) {
-        // Returns the field below the target, or undefined if none exists
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = jQuery(this.selector + ':visible', this.container).not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop > fromFieldTop && (nextField === undefined || fieldTop < nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
-            }
-        });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (rightOfColumn(fromField, field) && (nextField === undefined || leftOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop < nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
-                }
-            });
-        }
-        return nextField;
-    };
 
     // Make Navigate Class available as a jQuery plugin   
     $.fn.navigate = function(selector) {
@@ -8015,38 +7879,6 @@ function dbFormHTMLArea(oDiv) {
         }
         return containers;
     };
-
-    // Basic Navigation functions, used by Navigate Objects
-
-    function sameRow(a, b) {
-        // Takes two elements and returns true if they are on the same row
-        return (a.offset().top <= (b.offset().top + b.outerHeight())) && ((a.offset().top + a.outerHeight()) >= b.offset().top);
-    }
-
-    function belowRow(a, b) {
-        // Takes two elements and returns true if "b" is on a row below "a"
-        return b.offset().top > (a.offset().top + a.outerHeight());
-    }
-
-    function aboveRow(a, b) {
-        // Takes two elements and returns true if "b" is on a row above "a"
-        return (b.offset().top + b.outerHeight()) < a.offset().top;
-    }
-
-    function sameColumn(a, b) {
-        // Takes two elements and returns true if they are in the same column
-        return (a.offset().left <= (b.offset().left + b.outerWidth())) && ((a.offset().left + a.outerWidth()) >= b.offset().left);
-    }
-
-    function leftOfColumn(a, b) {
-        // Takes two elements and returns true if "b" is in a column left of "a"
-        return (b.offset().left + b.outerWidth()) < a.offset().left;
-    }
-
-    function rightOfColumn(a, b) {
-        // Takes two elements and returns true if "b" is in a column right of "a"
-        return (a.offset().left + a.outerWidth()) < b.offset().left;
-    }
 }(jQuery, window, document));
 
 /* ==== jquery.positionRelativeTo.js ==== */

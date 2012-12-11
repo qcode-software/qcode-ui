@@ -109,14 +109,14 @@
 	_inputOnKeyDown: function(e) {
 	    var selection;
 	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	    case 37: // left
+	    case 37: //left
 		// If selection is not empty collapse left
 		selection = this.editor.textrange('get');
-		if !( selection.selectionText === "" && selection.selectionAtStart ) break;
+		if ( ! ( selection.selectionText === "" && selection.selectionAtStart )) break;
 	    case 39: //right
 		// If selection is not empty collapse right
 		selection = this.editor.textrange('get');
-		if !( selection.selectionText === "" && selection.selectionAtEnd ) break;
+		if ( e.which ==  39 && ! ( selection.selectionText === "" && selection.selectionAtEnd )) break;
 	    case 83: //S
 		// Not Ctrl + s
 		if ( e.which == 83 && ! e.ctrlKey ) break;
