@@ -1,4 +1,4 @@
-(function($){
+(function($, undefined){
     function DbForm(form) {
 	this.form = $(form);
 	this.elements = $([]);
@@ -89,7 +89,7 @@
 	    if ( typeof async == "undefined" ) {
 		async = false;
 	    }
-	    httpPost(url, formEncode.call(this, this.form), handler, errorHandler, async);
+	    httpPost(url, formData.call(this, this.form), handler, errorHandler, async);
 	},
 	focus: function() {
 	    this.elements.each(function(){
@@ -285,14 +285,15 @@
 	this.form.trigger('formActionError.dbForm', [errorMessage]);
     }
 
-    function formEncode(form) {
-	var list = new Array;
+    function formData(form) {
+	var data = {};
 	this.elements
 	    .filter(function(){ return $(this).prop('name') != ""; })
 	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
 	    .filter(function(){ return ! $(this).is('div.clsRadioGroup'); })
 	    .each(function(){
+		var name = $(this).attr('name');
 		var value = "";
 		if ( $(this).is('input') ) {
 		    if ( $(this).prop('type') == "checkbox" ) {
@@ -311,9 +312,16 @@
 		} else {
 		    value = $(this).html();
 		}
-		list.push(encodeURIComponent($(this).attr('name')) + "=" + encodeURIComponent(value));
+		if ( data[name] === undefined ) {
+		    data[name] = value;
+		} else if ( typeof data[name] !== 'object' ) {
+		    data[name] = new Array(data[name], value);
+		} else {
+		    data[name].push(value);
+		}
+
 	    });
-	return list.join("&");
+	return data;
     }
 
     $.fn.dbForm = function(method) {
