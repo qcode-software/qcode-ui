@@ -74,13 +74,8 @@
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.
 	    var record = this.getCurrentRecord();
-	    if ( record.dbRecord('getState') == 'dirty' ) {
-		if ( window.confirm('Do you want to save your changes?') ) {
-		    record.dbRecord('save', false);
-		    if ( record.dbRecord('getState') == 'error' ) {
-			return "Your changes could not be saved.\nStay on the current page to correct.";
-		    }
-		}
+	    if ( record.dbRecord('getState') == 'dirty' || record.dbRecord('getState') == 'error' ) {
+		return "Your changes have not been saved.\nStay on the current page to correct.";
 	    }
 	},
 	_onBeforePrint: function(event){

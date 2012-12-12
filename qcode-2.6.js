@@ -7302,7 +7302,7 @@ function dbFormHTMLArea(oDiv) {
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
-	_create: function(){
+	_create: function() {
 	    // Constructor function
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
@@ -7311,15 +7311,15 @@ function dbFormHTMLArea(oDiv) {
 		this.type = "update";
 	    }
 	},
-	getRecordSet: function(){
+	getRecordSet: function() {
 	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
-	getState: function(){
+	getState: function() {
 	    // Get the state of this record
 	    return this.state;
 	}, 
-	setState: function(newState){
+	setState: function(newState) {
 	    // Set the state of this record
 	    switch(newState) {
 	    case "updating":
@@ -7334,8 +7334,11 @@ function dbFormHTMLArea(oDiv) {
 	    default:
 		$.error('Invalid state');
 	    }
-	}, 
-	save: function(async){
+	},
+	getErrorMessage: function() {
+	    return this.error;
+	},
+	save: function(async) {
 	    // Save this record, using an add or update url as appropriate
 	    if ( this.getState() === "updating" ) {
 		return false;
@@ -7346,7 +7349,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    this.action(this.type, url, async);
 	}, 
-	delete: function(async){
+	delete: function(async) {
 	    // Delete this record, by sending a delete request to the server
 	    if ( this.getState() === "updating" ) {
 		return false;
@@ -7357,7 +7360,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    this.action('delete', url, async);
 	}, 
-	action: function(action, url, async){
+	action: function(action, url, async) {
 	    // Perform the given action (add, update, delete), by submitting record data to the server.
 	    var async = coalesce(async, true);
 
@@ -7381,11 +7384,11 @@ function dbFormHTMLArea(oDiv) {
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
-	getCurrentField: function(){
+	getCurrentField: function() {
 	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
-	setValues: function(xmlDoc){
+	setValues: function(xmlDoc) {
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
@@ -7400,7 +7403,7 @@ function dbFormHTMLArea(oDiv) {
 	    });
 	    this.element.trigger('resize');
 	}, 
-	recordIn: function(event){
+	recordIn: function(event) {
 	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
 	    this.element.trigger('dbRecordIn', event);
 	}, 
@@ -7411,9 +7414,10 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    this.element.trigger('dbRecordOut', event);
 	},
-	_actionReturn: function(action, xmlDoc, status, jqXHR){
+	_actionReturn: function(action, xmlDoc, status, jqXHR) {
 	    // Called on successfull return from a server action (add, update or delete)
 	    this.setState('current');
+	    this.error = undefined;
 	    switch(action){
 	    case "update":
 		this.setValues(xmlDoc);
@@ -7436,12 +7440,13 @@ function dbFormHTMLArea(oDiv) {
 		recordSet.trigger('resize');
 	    }
 	},
-	_actionReturnError: function(action, message, type){
+	_actionReturnError: function(action, message, type) {
 	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
 	    }
+	    this.error = message;
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
 	}
     });
@@ -7524,13 +7529,8 @@ function dbFormHTMLArea(oDiv) {
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.
 	    var record = this.getCurrentRecord();
-	    if ( record.dbRecord('getState') == 'dirty' ) {
-		if ( window.confirm('Do you want to save your changes?') ) {
-		    record.dbRecord('save', false);
-		    if ( record.dbRecord('getState') == 'error' ) {
-			return "Your changes could not be saved.\nStay on the current page to correct.";
-		    }
-		}
+	    if ( record.dbRecord('getState') == 'dirty' || record.dbRecord('getState') == 'error' ) {
+		return "Your changes have not been saved.\nStay on the current page to correct.";
 	    }
 	},
 	_onBeforePrint: function(event){
