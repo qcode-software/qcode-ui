@@ -3196,108 +3196,108 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
-        // Returns the field above the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop < fromFieldTop && (nextField === undefined || fieldTop > nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element above the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop < fromElementTop && (nextElement === undefined || elementTop > nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (leftOfColumn(fromField, field) && (nextField === undefined || rightOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop > nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (leftOfColumn(fromElement, element) && (nextElement === undefined || rightOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop > nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 };
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.eastOf = function(selection) {
-        // Returns the field right of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft > fromFieldLeft && (nextField === undefined || fieldLeft < nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element right of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft > fromElementLeft && (nextElement === undefined || elementLeft < nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (belowRow(fromField, field) && (nextField === undefined || aboveRow(nextField, field) || (sameRow(field, nextField) && fieldLeft < nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (belowRow(fromElement, element) && (nextElement === undefined || aboveRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft < nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.southOf = function(selection) {
-        // Returns the field below the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop > fromFieldTop && (nextField === undefined || fieldTop < nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element below the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop > fromElementTop && (nextElement === undefined || elementTop < nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (rightOfColumn(fromField, field) && (nextField === undefined || leftOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop < nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (rightOfColumn(fromElement, element) && (nextElement === undefined || leftOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop < nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.westOf = function(selection) {
-        // Returns the field left of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft < fromFieldLeft && (nextField === undefined || fieldLeft > nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element left of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft < fromElementLeft && (nextElement === undefined || elementLeft > nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (aboveRow(fromField, field) && (nextField === undefined || belowRow(nextField, field) || (sameRow(field, nextField) && fieldLeft > nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (aboveRow(fromElement, element) && (nextElement === undefined || belowRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft > nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
 
     function sameRow(a, b) {
@@ -4667,8 +4667,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Assumes that the editor's container is the target element's offset parent.
 	    editor
 		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css(element.positionRelativeTo(this.element))
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.html(value)
 		.focus();
 	}, 
@@ -4704,7 +4704,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		var element = this.currentElement;
 		var editor = this.editor;
 		editor
-		    .css(element.positionRelativeTo(this.element))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()))
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		    .css({
 			'width': element.css('width')
@@ -4858,8 +4858,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 
 	    editor
-		.css(element.positionRelativeTo(this.element))
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.val(value)
 		.focus();
 	}, 
@@ -4898,7 +4898,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		$.each(['width', 'height'], function(i, name){
 		    editor.css(name, element.css(name));
 		});
-		editor.css(element.positionRelativeTo(this.element));
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	},
 	_inputOnKeyDown: function(e) {
@@ -5043,12 +5043,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
 	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 	    editor
-		.css(element.positionRelativeTo(this.element))
 		.css({
 		    'height': "+=1", 
 		    'padding-bottom': "-=1"
 		})
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.val(value)
 		.focus();
 	}, 
@@ -5089,7 +5089,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
-		    .css(element.positionRelativeTo(this.element))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()))
 		    .css({
 			'height': "+=1"
 		    });
@@ -7924,7 +7924,7 @@ function dbFormHTMLArea(oDiv) {
 	    myPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! this.is(commonOffsetParent) ) {
+	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
 	    myPosition.top += commonOffsetParent.scrollTop();
 	}
@@ -7941,7 +7941,7 @@ function dbFormHTMLArea(oDiv) {
 	    targetPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! target.is(commonOffsetParent) ) {
+	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
 	    targetPosition.top += commonOffsetParent.scrollTop();
 	}

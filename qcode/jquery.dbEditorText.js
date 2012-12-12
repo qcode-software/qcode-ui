@@ -63,8 +63,8 @@
 	    }
 
 	    editor
-		.css(element.positionRelativeTo(this.element))
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.val(value)
 		.focus();
 	}, 
@@ -103,7 +103,7 @@
 		$.each(['width', 'height'], function(i, name){
 		    editor.css(name, element.css(name));
 		});
-		editor.css(element.positionRelativeTo(this.element));
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	},
 	_inputOnKeyDown: function(e) {

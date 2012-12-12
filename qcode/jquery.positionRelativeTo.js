@@ -32,7 +32,7 @@
 	    myPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! this.is(commonOffsetParent) ) {
+	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
 	    myPosition.top += commonOffsetParent.scrollTop();
 	}
@@ -49,7 +49,7 @@
 	    targetPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! target.is(commonOffsetParent) ) {
+	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
 	    targetPosition.top += commonOffsetParent.scrollTop();
 	}

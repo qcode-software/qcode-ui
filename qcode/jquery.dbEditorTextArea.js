@@ -62,12 +62,12 @@
 
 	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 	    editor
-		.css(element.positionRelativeTo(this.element))
 		.css({
 		    'height': "+=1", 
 		    'padding-bottom': "-=1"
 		})
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.val(value)
 		.focus();
 	}, 
@@ -108,7 +108,7 @@
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
-		    .css(element.positionRelativeTo(this.element))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()))
 		    .css({
 			'height': "+=1"
 		    });

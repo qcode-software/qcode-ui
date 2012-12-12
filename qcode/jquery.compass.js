@@ -1,107 +1,107 @@
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
-        // Returns the field above the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop < fromFieldTop && (nextField === undefined || fieldTop > nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element above the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop < fromElementTop && (nextElement === undefined || elementTop > nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (leftOfColumn(fromField, field) && (nextField === undefined || rightOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop > nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (leftOfColumn(fromElement, element) && (nextElement === undefined || rightOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop > nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 };
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.eastOf = function(selection) {
-        // Returns the field right of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft > fromFieldLeft && (nextField === undefined || fieldLeft < nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element right of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft > fromElementLeft && (nextElement === undefined || elementLeft < nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (belowRow(fromField, field) && (nextField === undefined || aboveRow(nextField, field) || (sameRow(field, nextField) && fieldLeft < nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (belowRow(fromElement, element) && (nextElement === undefined || aboveRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft < nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.southOf = function(selection) {
-        // Returns the field below the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop > fromFieldTop && (nextField === undefined || fieldTop < nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element below the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop > fromElementTop && (nextElement === undefined || elementTop < nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (rightOfColumn(fromField, field) && (nextField === undefined || leftOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop < nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (rightOfColumn(fromElement, element) && (nextElement === undefined || leftOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop < nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.westOf = function(selection) {
-        // Returns the field left of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft < fromFieldLeft && (nextField === undefined || fieldLeft > nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element left of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft < fromElementLeft && (nextElement === undefined || elementLeft > nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (aboveRow(fromField, field) && (nextField === undefined || belowRow(nextField, field) || (sameRow(field, nextField) && fieldLeft > nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (aboveRow(fromElement, element) && (nextElement === undefined || belowRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft > nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
 
     function sameRow(a, b) {

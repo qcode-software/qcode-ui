@@ -61,8 +61,8 @@
 	    // Assumes that the editor's container is the target element's offset parent.
 	    editor
 		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css(element.positionRelativeTo(this.element))
 		.show()
+		.css(element.positionRelativeTo(this.editor.offsetParent()))
 		.html(value)
 		.focus();
 	}, 
@@ -98,7 +98,7 @@
 		var element = this.currentElement;
 		var editor = this.editor;
 		editor
-		    .css(element.positionRelativeTo(this.element))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()))
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		    .css({
 			'width': element.css('width')
