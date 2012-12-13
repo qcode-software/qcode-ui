@@ -18,7 +18,7 @@
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this.hasFocus = false;
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -36,6 +36,7 @@
 		'blur': this._inputOnBlur,
 		'focus': this._inputOnFocus
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -43,36 +44,40 @@
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    // Assumes that the editor's container is the target element's offset parent.
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.show()
-		.css(element.positionRelativeTo(this.editor.offsetParent()))
-		.html(value)
-		.focus();
-	}, 
+	    this.currentElement = $(element);
+	    this.editor.show().html(value);
+	    this.refresh();
+	    this.editor.focus();
+	},
 	hide: function() {
 	    // Hide the editor
 	    if ( this.hasFocus ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
-	}, 
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		// Copy various style from the target element to the editor
+		var editor = this.editor;
+		var element = this.currentElement;
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+		editor
+		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -90,20 +95,6 @@
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		editor
-		    .css(element.positionRelativeTo(this.editor.offsetParent()))
-		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		    .css({
-			'width': element.css('width')
-		    });
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.

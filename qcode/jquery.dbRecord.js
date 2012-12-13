@@ -13,6 +13,13 @@
 	    } else {
 		this.type = "update";
 	    }
+	    this._on({
+		'dbRecordOut': function() {
+		    if ( this.getState() === "dirty" ) {
+			this.save();
+		    }
+		}
+	    });
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record
@@ -32,6 +39,7 @@
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
+		this.getCurrentField().dbField('editor', 'refresh');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
@@ -108,13 +116,12 @@
 	}, 
 	recordIn: function(event) {
 	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
-	    // Call when done editing this record. Auto-saves if any changes were made.
-	    if ( this.getState() === "dirty" ) {
-		this.save();
-	    }
+	    // Call when done editing this record.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
 	_actionReturn: function(action, xmlDoc, status, jqXHR) {

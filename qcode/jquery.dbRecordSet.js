@@ -41,31 +41,38 @@
 
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
+	    this.currentRecord = $([]);
 	},
 	save: function(aysnc) {
 	    // Save the current record
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record or an empty jQuery object if none exists.
-	    return this.currentField.dbField('getRecord');
-	}, 
+	    // Returns the current record
+	    return this.currentRecord;
+	},
+	setCurrentRecord: function(newRecord) {
+	    // Sets the current field
+	    this.currentRecord = $(newRecord);
+	},
 	getCurrentField: function() {
-	    // Returns the current field, or an empty jQuery object if none exists.
+	    // Returns the current field
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
+	    // Sets the current field
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(toField) {
 	    // Move to the target field
-	    var currentRecord = this.currentField.dbField('getRecord');
+	    var currentRecord = this.getCurrentRecord();
 	    var newRecord = toField.dbField('getRecord');
-	    this.currentField.dbField('fieldOut');
+
+	    this.getCurrentField().dbField('fieldOut');
 	    if ( ! currentRecord.is(newRecord) ) {
 		currentRecord.dbRecord('recordOut');
 	    }
+
 	    toField.dbField('fieldIn');
 	    if ( ! currentRecord.is(newRecord) ) {
 		newRecord.dbRecord('recordIn');

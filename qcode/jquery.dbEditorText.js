@@ -17,7 +17,7 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('dbEditorText')
@@ -39,6 +39,7 @@
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -46,27 +47,10 @@
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value of the editor
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent'
-		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    editor
-		.show()
-		.css(element.positionRelativeTo(this.editor.offsetParent()))
-		.val(value)
-		.focus();
+	    this.currentElement = $(element);
+	    this.editor.show().val(value);
+	    this.refresh();
+	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -74,6 +58,27 @@
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
 	}, 
 	selectText: function(option) {
 	    // Set the text selection / cursor position
@@ -92,19 +97,6 @@
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
-	    // Ensures that the editor is still positioned correctly over the target element.
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width', 'height'], function(i, name){
-		    editor.css(name, element.css(name));
-		});
-		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    var selection;

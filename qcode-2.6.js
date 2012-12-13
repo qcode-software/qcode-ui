@@ -2546,11 +2546,11 @@ DbGridInputBool.prototype.selectText = function(option) {
 DbGridInputBool.prototype.show = function(cell,value) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var inputBool = this.inputBool;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   height = cell.height();
   width = cell.width();
   
@@ -4624,7 +4624,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this.hasFocus = false;
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -4642,6 +4642,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'blur': this._inputOnBlur,
 		'focus': this._inputOnFocus
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -4649,36 +4650,40 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    // Assumes that the editor's container is the target element's offset parent.
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.show()
-		.css(element.positionRelativeTo(this.editor.offsetParent()))
-		.html(value)
-		.focus();
-	}, 
+	    this.currentElement = $(element);
+	    this.editor.show().html(value);
+	    this.refresh();
+	    this.editor.focus();
+	},
 	hide: function() {
 	    // Hide the editor
 	    if ( this.hasFocus ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
-	}, 
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		// Copy various style from the target element to the editor
+		var editor = this.editor;
+		var element = this.currentElement;
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+		editor
+		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -4696,20 +4701,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		editor
-		    .css(element.positionRelativeTo(this.editor.offsetParent()))
-		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		    .css({
-			'width': element.css('width')
-		    });
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
@@ -4812,7 +4803,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('dbEditorText')
@@ -4834,6 +4825,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -4841,27 +4833,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value of the editor
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent'
-		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    editor
-		.show()
-		.css(element.positionRelativeTo(this.editor.offsetParent()))
-		.val(value)
-		.focus();
+	    this.currentElement = $(element);
+	    this.editor.show().val(value);
+	    this.refresh();
+	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -4869,6 +4844,27 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
 	}, 
 	selectText: function(option) {
 	    // Set the text selection / cursor position
@@ -4887,19 +4883,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
-	    // Ensures that the editor is still positioned correctly over the target element.
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width', 'height'], function(i, name){
-		    editor.css(name, element.css(name));
-		});
-		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    var selection;
@@ -4998,7 +4981,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
@@ -5019,6 +5002,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -5026,39 +5010,44 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-	    editor
-		.css({
-		    'height': "+=1", 
-		    'padding-bottom': "-=1"
-		})
-		.show()
-		.css(element.positionRelativeTo(this.editor.offsetParent()))
-		.val(value)
-		.focus();
+	    this.currentElement = $(element);
+	    this.editor.show().val(value);
+	    this.refresh();
+	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
+	    this.currentElement = $([]);
 	    this.editor.hide();
-	}, 
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+		editor
+		    .css({
+			'height': "+=1", 
+			'padding-bottom': "-=1"
+		    })
+		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -5076,24 +5065,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width', 'height'], function(i, name){
-		    editor.css(name, element.css(name));
-		});
-
-		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-		editor
-		    .css(element.positionRelativeTo(this.editor.offsetParent()))
-		    .css({
-			'height': "+=1"
-		    });
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
@@ -5220,16 +5191,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var fieldValue = this.getValue();
 
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    var plugin = this._getEditorPluginName();
-	    recordSet[plugin]('show', this.element, fieldValue);
+	    this.editor('show', this.element, fieldValue);
 
 	    // Optionally set the text selection
 	    if (select) {
-		recordSet[plugin]('selectText', select);
+		this.editor('selectText', select);
 	    } else if ( this.element.attr('fieldInSelect') != null ) {
-		recordSet[plugin]('selectText', this.element.attr('fieldInSelect'));
+		this.editor('selectText', this.element.attr('fieldInSelect'));
 	    } else {
-		recordSet[plugin]('selectText', 'all');
+		this.editor('selectText', 'all');
 	    }
 
 	    this.element.trigger('dbFieldIn');
@@ -5238,12 +5208,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Stop editing this field
 	    var recordSet = this.getRecordSet();
 	    var record = this.getRecord();
-	    recordSet.dbRecordSet('setCurrentField', $([]));
+	    recordSet.dbRecordSet('setCurrentField', null);
 
-	    // Get the name of the appropriate dbEditor plugin, so that it can be called on the record set container.
- 	    var plugin = this._getEditorPluginName();
-
-	    var editorValue = recordSet[plugin]('getValue');
+	    var editorValue = this.editor('getValue');
 
 	    if ( this.getValue() !== editorValue ) {
 		record.dbRecord('setState', 'dirty');
@@ -5251,7 +5218,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.write();
 	    this.element.css('visibility', "inherit");
 
-	    recordSet[plugin]('hide');
+	    this.editor('hide');
 
 	    this.element.trigger('dbFieldOut');
 	}, 
@@ -5322,11 +5289,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	editorKeyUp: function(event){
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    
-	    if ( this.getValue() !== editorValue) {
+	    if ( this.getValue() !== this.editor('getValue') ) {
 		// Set dirty
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
@@ -5342,14 +5305,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
-	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
 	    // Write the editor's contents to the field
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    this.setValue(editorValue);
+	    this.setValue(this.editor('getValue'));
+	},
+	editor: function(method) {
+	    var recordSet = this.getRecordSet(),
+	    pluginName = this._getEditorPluginName();
+	    return recordSet[pluginName].apply(recordSet, arguments);
 	},
 	_getEditorPluginName: function() {
 	    // Returns the name of the appropriate plugin for editing this field
@@ -7310,6 +7274,13 @@ function dbFormHTMLArea(oDiv) {
 	    } else {
 		this.type = "update";
 	    }
+	    this._on({
+		'dbRecordOut': function() {
+		    if ( this.getState() === "dirty" ) {
+			this.save();
+		    }
+		}
+	    });
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record
@@ -7329,6 +7300,7 @@ function dbFormHTMLArea(oDiv) {
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
+		this.getCurrentField().dbField('editor', 'refresh');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
@@ -7405,13 +7377,12 @@ function dbFormHTMLArea(oDiv) {
 	}, 
 	recordIn: function(event) {
 	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
-	    // Call when done editing this record. Auto-saves if any changes were made.
-	    if ( this.getState() === "dirty" ) {
-		this.save();
-	    }
+	    // Call when done editing this record.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
 	_actionReturn: function(action, xmlDoc, status, jqXHR) {
@@ -7496,31 +7467,38 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
+	    this.currentRecord = $([]);
 	},
 	save: function(aysnc) {
 	    // Save the current record
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record or an empty jQuery object if none exists.
-	    return this.currentField.dbField('getRecord');
-	}, 
+	    // Returns the current record
+	    return this.currentRecord;
+	},
+	setCurrentRecord: function(newRecord) {
+	    // Sets the current field
+	    this.currentRecord = $(newRecord);
+	},
 	getCurrentField: function() {
-	    // Returns the current field, or an empty jQuery object if none exists.
+	    // Returns the current field
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
+	    // Sets the current field
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(toField) {
 	    // Move to the target field
-	    var currentRecord = this.currentField.dbField('getRecord');
+	    var currentRecord = this.getCurrentRecord();
 	    var newRecord = toField.dbField('getRecord');
-	    this.currentField.dbField('fieldOut');
+
+	    this.getCurrentField().dbField('fieldOut');
 	    if ( ! currentRecord.is(newRecord) ) {
 		currentRecord.dbRecord('recordOut');
 	    }
+
 	    toField.dbField('fieldIn');
 	    if ( ! currentRecord.is(newRecord) ) {
 		newRecord.dbRecord('recordIn');

@@ -46,16 +46,15 @@
 	    var fieldValue = this.getValue();
 
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    var plugin = this._getEditorPluginName();
-	    recordSet[plugin]('show', this.element, fieldValue);
+	    this.editor('show', this.element, fieldValue);
 
 	    // Optionally set the text selection
 	    if (select) {
-		recordSet[plugin]('selectText', select);
+		this.editor('selectText', select);
 	    } else if ( this.element.attr('fieldInSelect') != null ) {
-		recordSet[plugin]('selectText', this.element.attr('fieldInSelect'));
+		this.editor('selectText', this.element.attr('fieldInSelect'));
 	    } else {
-		recordSet[plugin]('selectText', 'all');
+		this.editor('selectText', 'all');
 	    }
 
 	    this.element.trigger('dbFieldIn');
@@ -64,12 +63,9 @@
 	    // Stop editing this field
 	    var recordSet = this.getRecordSet();
 	    var record = this.getRecord();
-	    recordSet.dbRecordSet('setCurrentField', $([]));
+	    recordSet.dbRecordSet('setCurrentField', null);
 
-	    // Get the name of the appropriate dbEditor plugin, so that it can be called on the record set container.
- 	    var plugin = this._getEditorPluginName();
-
-	    var editorValue = recordSet[plugin]('getValue');
+	    var editorValue = this.editor('getValue');
 
 	    if ( this.getValue() !== editorValue ) {
 		record.dbRecord('setState', 'dirty');
@@ -77,7 +73,7 @@
 	    this.write();
 	    this.element.css('visibility', "inherit");
 
-	    recordSet[plugin]('hide');
+	    this.editor('hide');
 
 	    this.element.trigger('dbFieldOut');
 	}, 
@@ -148,11 +144,7 @@
 	    }
 	}, 
 	editorKeyUp: function(event){
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    
-	    if ( this.getValue() !== editorValue) {
+	    if ( this.getValue() !== this.editor('getValue') ) {
 		// Set dirty
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
@@ -168,14 +160,15 @@
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
-	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
 	    // Write the editor's contents to the field
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    this.setValue(editorValue);
+	    this.setValue(this.editor('getValue'));
+	},
+	editor: function(method) {
+	    var recordSet = this.getRecordSet(),
+	    pluginName = this._getEditorPluginName();
+	    return recordSet[pluginName].apply(recordSet, arguments);
 	},
 	_getEditorPluginName: function() {
 	    // Returns the name of the appropriate plugin for editing this field
