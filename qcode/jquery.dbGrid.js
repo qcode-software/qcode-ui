@@ -43,8 +43,8 @@
 	// Bind
 	tbody.on('mouseup.dbGrid',cellOnMouseUp);
 	jQuery(window).on('resize.dbGrid',onResize);
-	window.onbeforeunload = onBeforeUnload;
-	window.onbeforeprint = onBeforePrint;
+	jQuery(window).on('beforeunload', onBeforeUnload);
+	jQuery(window).on('beforeprint', onBeforePrint);
      
 	init2();
       }

@@ -5984,8 +5984,8 @@ function dbFormHTMLArea(oDiv) {
 	// Bind
 	tbody.on('mouseup.dbGrid',cellOnMouseUp);
 	jQuery(window).on('resize.dbGrid',onResize);
-	window.onbeforeunload = onBeforeUnload;
-	window.onbeforeprint = onBeforePrint;
+	jQuery(window).on('beforeunload', onBeforeUnload);
+	jQuery(window).on('beforeprint', onBeforePrint);
      
 	init2();
       }
@@ -7529,9 +7529,12 @@ function dbFormHTMLArea(oDiv) {
 	},
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.
-	    var record = this.getCurrentRecord();
-	    if ( record.dbRecord('getState') == 'dirty' || record.dbRecord('getState') == 'error' ) {
-		return "Your changes have not been saved.\nStay on the current page to correct.";
+	    var records = this.element.find('.record');
+	    for (var i = 0; i < records.length; i++) {
+		var record = records.eq(i);
+		if ( record.dbRecord('getState') === 'dirty' || record.dbRecord('getState') === 'error' ) {
+		    return "Your changes have not been saved.\nStay on the current page to correct.";
+		}
 	    }
 	},
 	_onBeforePrint: function(event){

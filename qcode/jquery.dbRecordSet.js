@@ -85,9 +85,12 @@
 	},
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.
-	    var record = this.getCurrentRecord();
-	    if ( record.dbRecord('getState') == 'dirty' || record.dbRecord('getState') == 'error' ) {
-		return "Your changes have not been saved.\nStay on the current page to correct.";
+	    var records = this.element.find('.record');
+	    for (var i = 0; i < records.length; i++) {
+		var record = records.eq(i);
+		if ( record.dbRecord('getState') === 'dirty' || record.dbRecord('getState') === 'error' ) {
+		    return "Your changes have not been saved.\nStay on the current page to correct.";
+		}
 	    }
 	},
 	_onBeforePrint: function(event){
