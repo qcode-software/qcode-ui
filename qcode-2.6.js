@@ -5148,6 +5148,18 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
+	_create: function() {
+	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecord().dbRecord('getSaveType'));
+	    if ( this.saveType === 'fieldOut' ) {
+		this._on({
+		    'dbFieldOut': function() {
+			if ( this.getRecord().dbRecord('getState') === "dirty" ) {
+			    this.getRecord().dbRecord('save');
+			}
+		    }
+		});
+	    }
+	},
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
@@ -7274,13 +7286,19 @@ function dbFormHTMLArea(oDiv) {
 	    } else {
 		this.type = "update";
 	    }
-	    this._on({
-		'dbRecordOut': function() {
-		    if ( this.getState() === "dirty" ) {
-			this.save();
+	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet('getSaveType'));
+	    if ( this.saveType === 'recordOut' ) {
+		this._on({
+		    'dbRecordOut': function() {
+			if ( this.getState() === "dirty" ) {
+			    this.save();
+			}
 		    }
-		}
-	    });
+		});
+	    }
+	},
+	getSaveType: function() {
+	    return this.saveType;
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record
@@ -7465,9 +7483,14 @@ function dbFormHTMLArea(oDiv) {
 		'beforeprint': this._onBeforePrint,
 	    });
 
+	    this.saveType = coalesce(this.element.attr('saveType'), 'recordOut');
+
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
+	},
+	getSaveType: function() {
+	    return this.saveType;
 	},
 	save: function(aysnc) {
 	    // Save the current record

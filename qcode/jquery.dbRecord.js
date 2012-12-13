@@ -13,13 +13,19 @@
 	    } else {
 		this.type = "update";
 	    }
-	    this._on({
-		'dbRecordOut': function() {
-		    if ( this.getState() === "dirty" ) {
-			this.save();
+	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet('getSaveType'));
+	    if ( this.saveType === 'recordOut' ) {
+		this._on({
+		    'dbRecordOut': function() {
+			if ( this.getState() === "dirty" ) {
+			    this.save();
+			}
 		    }
-		}
-	    });
+		});
+	    }
+	},
+	getSaveType: function() {
+	    return this.saveType;
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record

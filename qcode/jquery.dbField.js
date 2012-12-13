@@ -3,6 +3,18 @@
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
+	_create: function() {
+	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecord().dbRecord('getSaveType'));
+	    if ( this.saveType === 'fieldOut' ) {
+		this._on({
+		    'dbFieldOut': function() {
+			if ( this.getRecord().dbRecord('getState') === "dirty" ) {
+			    this.getRecord().dbRecord('save');
+			}
+		    }
+		});
+	    }
+	},
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');

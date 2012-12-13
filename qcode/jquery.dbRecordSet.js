@@ -39,9 +39,14 @@
 		'beforeprint': this._onBeforePrint,
 	    });
 
+	    this.saveType = coalesce(this.element.attr('saveType'), 'recordOut');
+
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
+	},
+	getSaveType: function() {
+	    return this.saveType;
 	},
 	save: function(aysnc) {
 	    // Save the current record
