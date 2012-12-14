@@ -13,6 +13,7 @@
 	    saveType: "recordOut"
 	},
 	_getCreateOptions: function() {
+	    // Use custom attributes to overwite default options
 	    return {
 		saveType: this.element.attr('saveType')
 	    }
