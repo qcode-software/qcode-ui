@@ -5,6 +5,11 @@
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
+	_getCreateOptions: function() {
+	    return {
+		saveType: coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet("option", "saveType"))
+	    }
+	},
 	_create: function() {
 	    // Constructor function
 	    this.state = 'current';
@@ -13,8 +18,7 @@
 	    } else {
 		this.type = "update";
 	    }
-	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet('getSaveType'));
-	    if ( this.saveType === 'recordOut' ) {
+	    if ( this.options.saveType === 'recordOut' ) {
 		this._on({
 		    'dbRecordOut': function() {
 			if ( this.getState() === "dirty" ) {
@@ -23,9 +27,6 @@
 		    }
 		});
 	    }
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record

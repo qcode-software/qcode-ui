@@ -9,6 +9,14 @@
 
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
+	options: {
+	    saveType: "recordOut"
+	},
+	_getCreateOptions: function() {
+	    return {
+		saveType: this.element.attr('saveType')
+	    }
+	},
 	_create: function(){
 	    // Constructor function
 
@@ -39,14 +47,9 @@
 		'beforeprint': this._onBeforePrint,
 	    });
 
-	    this.saveType = coalesce(this.element.attr('saveType'), 'recordOut');
-
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	save: function(aysnc) {
 	    // Save the current record

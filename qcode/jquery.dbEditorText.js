@@ -50,7 +50,6 @@
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
-	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor

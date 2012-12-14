@@ -47,7 +47,6 @@
 	    this.currentElement = $(element);
 	    this.editor.show().html(value);
 	    this.refresh();
-	    this.editor.focus();
 	},
 	hide: function() {
 	    // Hide the editor
