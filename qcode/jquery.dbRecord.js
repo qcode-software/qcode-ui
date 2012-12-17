@@ -95,7 +95,13 @@
 		} else {
 		    var value = $(field).dbField('getValue');
 		}
-		data[name] = value;
+		if ( typeof data[name] == "undefined" ) {
+		    data[name] = value;
+		} else if ( typeof data[name] == "object" ) {
+		    data[name].push(value);
+		} else {
+		    data[name] = new Array(data[name]);
+		}
 	    });
 
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);

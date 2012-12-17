@@ -21,7 +21,16 @@ function splitURL(url) {
     var data = {};
     if ( queryString !== "" ) {
 	$.each(queryString.split('&'),function(i, pair){
-	    data[pair.split('=')[0]] = pair.split('=')[1];
+	    var pair = pair.split('=');
+	    var name = decodeURIComponent( pair[0].replace(/\+/g, " ") );
+	    var value = decodeURIComponent( pair[1].replace(/\+/g, " ") );
+	    if ( typeof data[name] == "undefined" ) {
+		data[name] = value;
+	    } else if ( typeof data[name] == "object" ) {
+		data[name].push(value);
+	    } else {
+		data[name] = new Array(data[name]);
+	    }
 	});
     }
     return {
@@ -96,4 +105,17 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
+}
+
+function nonBreakingString(text) {
+    return text.replace(" ", "&nbsp");
+}
+
+// linkNoHistory plugin - apply to links to avoid adding to the "back" button
+$.fn.linkNoHistory = function() {
+    $(this).filter('a').on('click', function(event) {
+	window.location.replace($(this).attr('href'));
+	event.preventDefault();
+    });
+    return this;
 }

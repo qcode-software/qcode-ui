@@ -38,4 +38,34 @@
 		.on('mouseleave', settings.selector, mouseLeave);
 	}
     }
+
+    // delayedGroupHover plugin - trigger callback functions when the mouse hovers over or out of a group of elements for enough time.
+    $.fn.delayedGroupHover = function(options) {
+	var settings = $.extend({
+	    inTime: 200,
+	    outTime: 200
+	}, options);
+
+	var timer;
+	function mouseEnter(event) {
+	    if ( timer !== undefined ) {
+		window.clearTimeout(timer);
+	    }
+	    if ( typeof settings.hoverIn === "function" ) {
+		timer = window.setTimeout(settings.hoverIn, settings.inTime);
+	    }
+	}
+	function mouseLeave(event) {
+	    if ( timer !== undefined ) {
+		window.clearTimeout(timer);
+	    }
+	    if ( typeof settings.hoverOut === "function" ) {
+		timer = window.setTimeout(settings.hoverOut, settings.outTime);
+	    }
+	}
+
+	$(this)
+	    .on('mouseenter', mouseEnter)
+	    .on('mouseleave', mouseLeave);
+    }
 })(jQuery, window);
