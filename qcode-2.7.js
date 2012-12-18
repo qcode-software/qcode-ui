@@ -3041,6 +3041,7 @@ if (!Object.create) {
 		var table = this.first();
                 switch(arguments[0]){
                 case "border-left-width":
+		case "borderLeftWidth":
                     var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
                     this.css('border-left-width', 0);
                     var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
@@ -3049,6 +3050,7 @@ if (!Object.create) {
                     return borderWidth + "px";
                     
                 case "border-right-width":
+		case "borderRightWidth":
                     var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
                     this.css('border-right-width', 0);
                     var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
@@ -3057,6 +3059,7 @@ if (!Object.create) {
                     return borderWidth + "px";
                     
                 case "border-top-width":
+		case "borderTopWidth":
                     var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
                     this.css('border-top-width', 0);
                     var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
@@ -3065,6 +3068,7 @@ if (!Object.create) {
                     return borderWidth + "px";
                     
                 case "border-bottom-width":
+		case "borderBottomWidth":
                     var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
                     this.css('border-bottom-width', 0);
                     var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
