@@ -10,6 +10,7 @@
 	},
 	_create: function() {
 	    // TheadFixed Class Constructor
+	    var widget = this;
 
 	    // Attempt to handle existing wrappers sensibly.
 	    if ( ! $(this.element).is('table') ) {
@@ -38,28 +39,16 @@
 	    this.wrapper
 		.addClass(this.options.wrapperClass);
 
-	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
-	    this.scrollBox.css('min-width', 10000);
-
-	    // If any cells besides header cells and first-row cells have a specified width, remove it.
-	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
-
-	    // Calculate and apply column widths
+	    // Store any inline widths that were present before the plugin was called
 	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
 		var th = $(element);
 		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
-		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
-
-		// Ensures that default padding will be preserved when the thead is removed
-		th.css({
-		    'padding-top': th.css('padding-top'),
-		    'padding-right': th.css('padding-right'),
-		    'padding-bottom': th.css('padding-bottom'),
-		    'padding-left': th.css('padding-left')
-		});
-		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
+		th.data('theadFixedCellWidth', widget._getCellInlineWidth(th));
+		td.data('theadFixedCellWidth', widget._getCellInlineWidth(td));
 	    });
+
+	    // Calculate and apply widths so that the headers match the body
+	    this._setWidths();
 
 	    // Apply css
 	    this.wrapper.css({
@@ -80,8 +69,7 @@
 	    this.scrollBox.css({
 		'overflow-y': "auto",
 		'overflow-x': 'hidden',
-		'height': "100%",
-		'min-width': table.outerWidth() + scrollBarWidth
+		'height': "100%"
 	    });
 
 	    thead.css({
@@ -114,6 +102,53 @@
 	    });
 	    table.css('border-top-width', 0);
 	},
+	repaint: function() {
+	    // Recalculate widths, heights, etc.
+	    var table = this.table;
+	    var thead = table.children('thead');
+	    thead.css({
+		'position': "static"
+	    });
+	    this._setWidths();
+	    thead.css({
+		'position': "absolute"
+	    });
+	    this.scrollWrapper.css('top', thead.outerHeight());
+	},
+	_setWidths: function() {
+	    // Calculate the width of each column and apply it to first-row cells in the header and body
+	    var table = this.table;
+	    var thead = table.children('thead');
+
+	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
+	    this.scrollBox.css('min-width', 10000);
+
+	    // If any cells besides header cells and first-row cells have a specified width, remove it.
+	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
+
+	    // Calculate and apply column widths
+	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
+		var th = $(element);
+		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
+
+		th.css('width', coalesce(th.data('theadFixedCellWidth'), ''));
+		td.css('width', coalesce(td.data('theadFixedCellWidth'), ''));
+
+		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
+
+		// Ensures that default padding will be preserved when the thead is removed
+		th.css({
+		    'padding-top': th.css('padding-top'),
+		    'padding-right': th.css('padding-right'),
+		    'padding-bottom': th.css('padding-bottom'),
+		    'padding-left': th.css('padding-left')
+		});
+		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
+		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
+	    });
+
+	    this.scrollBox.css('min-width', table.outerWidth() + scrollBarWidth);
+	},
 	getWrapper: function() {
 	    return this.wrapper;
 	},
@@ -125,6 +160,22 @@
 	},
 	getTable: function() {
 	    return this.table;
+	},
+	_getCellInlineWidth: function(cell) {
+	    // Gets the width from a cell's inline style attribute
+	    var width,
+	    style = cell.attr('style'),
+	    pairs = style.split(';');
+	    $.each(pairs, function(i, pair) {
+		var bits = pair.split(':'),
+		name = $.trim(bits[0]),
+		value = $.trim(bits[1]);
+		if ( name === "width" ) {
+		    width = value;
+		    return false;
+		}
+	    });
+	    return width;
 	}
     });
 })(jQuery);
