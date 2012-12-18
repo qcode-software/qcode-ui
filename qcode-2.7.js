@@ -3102,10 +3102,10 @@ if (!Object.create) {
     }
 })(jQuery);
 
-jQuery.expr[':'].focus = function( elem ) {
+/*jQuery.expr[':'].focus = function( elem ) {
     var doc = elem.ownerDocument;
     return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex || elem.isContentEditable);
-}
+}*/
 
 /* ==== jquery.colInherit.js ==== */
 (function($) {
@@ -4662,7 +4662,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement = $(element);
 	    this.editor.show().html(value);
 	    this.refresh();
-	    this.editor.focus();
 	},
 	hide: function() {
 	    // Hide the editor
@@ -4845,7 +4844,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
-	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5022,7 +5020,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
-	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5158,8 +5155,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	_create: function() {
-	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecord().dbRecord('getSaveType'));
-	    if ( this.saveType === 'fieldOut' ) {
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
 		    'dbFieldOut': function() {
 			if ( this.getRecord().dbRecord('getState') === "dirty" ) {
@@ -7289,14 +7286,14 @@ function dbFormHTMLArea(oDiv) {
     $.widget('qcode.dbRecord', {
 	_create: function() {
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
 		this.type = "add";
 	    } else {
 		this.type = "update";
 	    }
-	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet('getSaveType'));
-	    if ( this.saveType === 'recordOut' ) {
+	    if ( this.options.saveType === 'recordOut' ) {
 		this._on({
 		    'dbRecordOut': function() {
 			if ( this.getState() === "dirty" ) {
@@ -7305,9 +7302,6 @@ function dbFormHTMLArea(oDiv) {
 		    }
 		});
 	    }
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record
@@ -7468,8 +7462,12 @@ function dbFormHTMLArea(oDiv) {
 
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
+	options: {
+	    saveType: "recordOut"
+	},
 	_create: function(){
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    // Elements with class "editable" should be editable fields.
@@ -7498,14 +7496,9 @@ function dbFormHTMLArea(oDiv) {
 		'beforeprint': this._onBeforePrint,
 	    });
 
-	    this.saveType = coalesce(this.element.attr('saveType'), 'recordOut');
-
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	save: function(aysnc) {
 	    // Save the current record
@@ -7563,10 +7556,15 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.delayedHover.js ==== */
 (function($, window, undefined) {
+    // Delayed hover plugin.
+    // Triggers "delayedHoverIn" or "delayedHoverOut" if the user hovers over, or out of, a single element for more than a given time.
+    // Each element in the current jQuery object is handled separately, but a selector can be used to delegate the listeners
+    // (eg. if delayedHover events will need to be triggered on elements that are added to the DOM later)
     $.fn.delayedHover = function(options){
-	var settings = $.extend({
+	var options = $.extend({
 	    inTime: 200,
-	    outTime: 200
+	    outTime: 200,
+	    selector: undefined
 	}, options);
 
 	function mouseEnter(event) {
@@ -7577,7 +7575,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    timer = window.setTimeout(function() {
 		target.trigger('delayedHoverIn');
-	    }, settings.inTime)
+	    }, options.inTime)
 	    target.data('delayedHoverTimer', timer);
 	}
 	function mouseLeave(event) {
@@ -7588,26 +7586,32 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    timer = window.setTimeout(function() {
 		target.trigger('delayedHoverOut');
-	    }, settings.outTime)
+	    }, options.outTime)
 	    target.data('delayedHoverTimer', timer);
 	}
 
-	if ( settings.selector === undefined ) {
+	if ( options.selector === undefined ) {
 	    $(this)
 		.on('mouseenter', mouseEnter)
 		.on('mouseleave', mouseLeave);
 	} else {
 	    $(this)
-		.on('mouseenter', settings.selector, mouseEnter)
-		.on('mouseleave', settings.selector, mouseLeave);
+		.on('mouseenter', options.selector, mouseEnter)
+		.on('mouseleave', options.selector, mouseLeave);
 	}
     }
 
-    // delayedGroupHover plugin - trigger callback functions when the mouse hovers over or out of a group of elements for enough time.
+    // Delayed Group Hover plugin.
+    // Treats all the elements in the current jQuery object as a single "group";
+    // Invokes a user-defined callback when the user hovers over one element from the current jQuery object for more than a given time,
+    // or when they hover out of all the elements of the current jQuery object for more than a given time.
     $.fn.delayedGroupHover = function(options) {
-	var settings = $.extend({
+	// hoverIn and hoverOut are optional callback functions.
+	var options = $.extend({
 	    inTime: 200,
-	    outTime: 200
+	    outTime: 200,
+	    hoverIn: undefined,
+	    hoverOut: undefined
 	}, options);
 
 	var timer;
@@ -7615,16 +7619,16 @@ function dbFormHTMLArea(oDiv) {
 	    if ( timer !== undefined ) {
 		window.clearTimeout(timer);
 	    }
-	    if ( typeof settings.hoverIn === "function" ) {
-		timer = window.setTimeout(settings.hoverIn, settings.inTime);
+	    if ( typeof options.hoverIn === "function" ) {
+		timer = window.setTimeout(options.hoverIn, options.inTime);
 	    }
 	}
 	function mouseLeave(event) {
 	    if ( timer !== undefined ) {
 		window.clearTimeout(timer);
 	    }
-	    if ( typeof settings.hoverOut === "function" ) {
-		timer = window.setTimeout(settings.hoverOut, settings.outTime);
+	    if ( typeof options.hoverOut === "function" ) {
+		timer = window.setTimeout(options.hoverOut, options.outTime);
 	    }
 	}
 
@@ -7676,8 +7680,8 @@ function dbFormHTMLArea(oDiv) {
 	    scrollSpeed: 0.3,
 	    snapTime: 100
 	}, options);
-	var scrollBox = settings.scrollBox;
-	var container = settings.container;
+	var scrollBox = settings.scrollBox.addClass('hoverScroller');
+	var container = settings.container.addClass('hoverScrollerContainer');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
 
@@ -8088,7 +8092,7 @@ function dbFormHTMLArea(oDiv) {
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
 	    $('body').css('margin-right', "+=35px");
 
-	    var sidebar = this.element,
+	    var sidebar = this.element.addClass('sidebar'),
 	    toolbar = this.toolbar = sidebar.find('.toolbar'),
 	    initialWidth = sidebar.width();
 
@@ -9383,8 +9387,8 @@ function dbFormHTMLArea(oDiv) {
     var qryData = urlData.data;
     if ( qryData.sortCols !== undefined ) {
 	var sortColsArray = qryData.sortCols.split(" ");
-	var firstSortColName = sortColsArray[0];
-	var firstSortColType = coalesce(sortColsArray[1], 'ASC');
+	var currentSortColName = sortColsArray[0];
+	var currentSortColType = coalesce(sortColsArray[1], 'ASC');
     }
 
     // The actual widget prototype
@@ -9448,11 +9452,8 @@ function dbFormHTMLArea(oDiv) {
 	    // Create the menu
 	    var colName = this.options.column.attr('name');
 
-	    var tmpSortCols = {};
-	    tmpSortCols[ colName ] = "ASC";
-	    var ascURL = path + "?" + $.param( this._sortColsIntoQryData(tmpSortCols, qryData) );
-	    tmpSortCols[ colName ] = "DESC";
-	    var descURL = path + "?" + $.param( this._sortColsIntoQryData(tmpSortCols, qryData) );
+	    var ascURL = urlSet(window.location.href, 'sortCols', colName + " " + "ASC");
+	    var descURL = urlSet(window.location.href, 'sortCols', colName + " " + "DESC");
 
 	    // Generate link text from sort type
 	    var ascText;
@@ -9473,17 +9474,17 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Create the links
 	    var ascLink = $('<a>')
-			    .attr( 'href',  ascURL )
-			    .html( nonBreakingString( ascText ) )
-			    .linkNoHistory();
+		.attr( 'href',  ascURL )
+		.html( ascText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
 	    var descLink = $('<a>')
-			    .attr( 'href',  descURL )
-			    .html( nonBreakingString( descText ) )
-			    .linkNoHistory();
+		.attr( 'href',  descURL )
+		.html( descText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('clsSortMenu')
+		.addClass('thSortMenu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",
@@ -9492,8 +9493,8 @@ function dbFormHTMLArea(oDiv) {
 		});
 
 	    // Add the required links to the menu
-	    if ( colName === firstSortColName ) {
-		if ( firstSortColType == "ASC" ) {
+	    if ( colName === currentSortColName ) {
+		if ( currentSortColType == "ASC" ) {
 		    this.menu.append(descLink);
 		} else {
 		    this.menu.append(ascLink);
@@ -9509,16 +9510,6 @@ function dbFormHTMLArea(oDiv) {
 		    outTime: 400,
 		    hoverOut: this.menuHide.bind(this)
 		});
-	},
-	_sortColsIntoQryData: function(sortCols, qryData) {
-	    // Generate a new query data object from a sort columnss object and a query data object
-	    var tmpQryData = $.extend({}, qryData);
-	    var pairs = [];
-	    $.each(sortCols, function(name, value) {
-		pairs.push(name + " " + value);
-	    });
-	    tmpQryData.sortCols = pairs.join(" ");
-	    return tmpQryData;
 	}
     });
 })(jQuery, window);
@@ -9768,13 +9759,46 @@ function focusFirstChild(element) {
 }
 
 function stripHTML(html) {
-  return html.replace(/<[^>]+>/gi,"");
+    return html.replace(/<[^>]+>/gi,"");
 }
 function escapeHTML(str) {
-	return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
 }
 function unescapeHTML(str) {
-	return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+    return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+}
+
+function urlSet(url,name,value) {
+    var re = /([^\?]+)\??(.*)/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    url = path + "?" + urlDataSet(queryString,name,value);
+    return url;
+}
+
+function urlDataSet(data,name,value) {
+    var list = new Array();
+    var a = new Array();
+    var b = new Array();
+    var c = new Array();
+    
+    if ( data != "" ) {
+	var a = data.split('&');
+    }
+    for (var i=0;i<a.length;i++) {
+	b = a[i].split('=');
+	var n = decodeURIComponent(b[0].replace(/\+/g,' '));
+	var v = decodeURIComponent(b[1].replace(/\+/g,' '));
+	c[n]=v;
+    }
+    c[name] = value;
+    for (key in c) {
+	list.push(encodeURIComponent(key) + "=" + encodeURIComponent(c[key]));
+    }
+    
+    data=list.join("&");
+    return data;
 }
 
 function httpPost(url,data,handler,errorHandler,async) {
@@ -9816,11 +9840,7 @@ function httpPost(url,data,handler,errorHandler,async) {
     });
 }
 
-function nonBreakingString(text) {
-    return text.replace(" ", "&nbsp");
-}
-
-// linkNoHistory plugin - apply to links to avoid adding to the "back" button
+// linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
     $(this).filter('a').on('click', function(event) {
 	window.location.replace($(this).attr('href'));

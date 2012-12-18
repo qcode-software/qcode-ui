@@ -1,6 +1,6 @@
 #!/usr/bin/tclsh8.5
 
-#| Concat all .js files in qcode directory
+#| Concat all .js files in js directory
 
 set dir [file normalize [file dirname [info script]]]
 
@@ -31,7 +31,7 @@ puts {/*
 */
 }
 
-foreach filename [lsort [glob $dir/qcode/*.js]] {
+foreach filename [lsort [glob $dir/js/*.js]] {
     puts "/* ==== [file tail $filename] ==== */"
     set fh [open $filename r]
     puts [read $fh]
