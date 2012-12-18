@@ -3098,6 +3098,11 @@ if (!Object.create) {
     }
 })(jQuery);
 
+jQuery.expr[':'].focus = function( elem ) {
+    var doc = elem.ownerDocument;
+    return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex || elem.isContentEditable);
+}
+
 /* ==== jquery.colInherit.js ==== */
 (function($) {
     $.fn.colInherit = function(options) {
@@ -9618,8 +9623,6 @@ function dbFormHTMLArea(oDiv) {
 		});
 	    });
 	    table.css('border-top-width', 0);
-
-	    this._on({'cellOut.dbGrid': this.repaint})
 	},
 	repaint: function() {
 	    // Recalculate widths, heights, etc.
