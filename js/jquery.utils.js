@@ -59,13 +59,46 @@ function focusFirstChild(element) {
 }
 
 function stripHTML(html) {
-  return html.replace(/<[^>]+>/gi,"");
+    return html.replace(/<[^>]+>/gi,"");
 }
 function escapeHTML(str) {
-	return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
 }
 function unescapeHTML(str) {
-	return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+    return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+}
+
+function urlSet(url,name,value) {
+    var re = /([^\?]+)\??(.*)/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    url = path + "?" + urlDataSet(queryString,name,value);
+    return url;
+}
+
+function urlDataSet(data,name,value) {
+    var list = new Array();
+    var a = new Array();
+    var b = new Array();
+    var c = new Array();
+    
+    if ( data != "" ) {
+	var a = data.split('&');
+    }
+    for (var i=0;i<a.length;i++) {
+	b = a[i].split('=');
+	var n = decodeURIComponent(b[0].replace(/\+/g,' '));
+	var v = decodeURIComponent(b[1].replace(/\+/g,' '));
+	c[n]=v;
+    }
+    c[name] = value;
+    for (key in c) {
+	list.push(encodeURIComponent(key) + "=" + encodeURIComponent(c[key]));
+    }
+    
+    data=list.join("&");
+    return data;
 }
 
 function httpPost(url,data,handler,errorHandler,async) {
@@ -107,11 +140,7 @@ function httpPost(url,data,handler,errorHandler,async) {
     });
 }
 
-function nonBreakingString(text) {
-    return text.replace(" ", "&nbsp");
-}
-
-// linkNoHistory plugin - apply to links to avoid adding to the "back" button
+// linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
     $(this).filter('a').on('click', function(event) {
 	window.location.replace($(this).attr('href'));

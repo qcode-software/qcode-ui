@@ -6,8 +6,8 @@
     var qryData = urlData.data;
     if ( qryData.sortCols !== undefined ) {
 	var sortColsArray = qryData.sortCols.split(" ");
-	var firstSortColName = sortColsArray[0];
-	var firstSortColType = coalesce(sortColsArray[1], 'ASC');
+	var currentSortColName = sortColsArray[0];
+	var currentSortColType = coalesce(sortColsArray[1], 'ASC');
     }
 
     // The actual widget prototype
@@ -71,11 +71,8 @@
 	    // Create the menu
 	    var colName = this.options.column.attr('name');
 
-	    var tmpSortCols = {};
-	    tmpSortCols[ colName ] = "ASC";
-	    var ascURL = path + "?" + $.param( this._sortColsIntoQryData(tmpSortCols, qryData) );
-	    tmpSortCols[ colName ] = "DESC";
-	    var descURL = path + "?" + $.param( this._sortColsIntoQryData(tmpSortCols, qryData) );
+	    var ascURL = urlSet(window.location.href, 'sortCols', colName + " " + "ASC");
+	    var descURL = urlSet(window.location.href, 'sortCols', colName + " " + "DESC");
 
 	    // Generate link text from sort type
 	    var ascText;
@@ -96,17 +93,17 @@
 
 	    // Create the links
 	    var ascLink = $('<a>')
-			    .attr( 'href',  ascURL )
-			    .html( nonBreakingString( ascText ) )
-			    .linkNoHistory();
+		.attr( 'href',  ascURL )
+		.html( ascText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
 	    var descLink = $('<a>')
-			    .attr( 'href',  descURL )
-			    .html( nonBreakingString( descText ) )
-			    .linkNoHistory();
+		.attr( 'href',  descURL )
+		.html( descText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('clsSortMenu')
+		.addClass('thSortMenu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",
@@ -115,8 +112,8 @@
 		});
 
 	    // Add the required links to the menu
-	    if ( colName === firstSortColName ) {
-		if ( firstSortColType == "ASC" ) {
+	    if ( colName === currentSortColName ) {
+		if ( currentSortColType == "ASC" ) {
 		    this.menu.append(descLink);
 		} else {
 		    this.menu.append(ascLink);
@@ -132,16 +129,6 @@
 		    outTime: 400,
 		    hoverOut: this.menuHide.bind(this)
 		});
-	},
-	_sortColsIntoQryData: function(sortCols, qryData) {
-	    // Generate a new query data object from a sort columnss object and a query data object
-	    var tmpQryData = $.extend({}, qryData);
-	    var pairs = [];
-	    $.each(sortCols, function(name, value) {
-		pairs.push(name + " " + value);
-	    });
-	    tmpQryData.sortCols = pairs.join(" ");
-	    return tmpQryData;
 	}
     });
 })(jQuery, window);

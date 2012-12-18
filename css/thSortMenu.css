@@ -1,0 +1,18 @@
+span.clsSort {
+    color:blue;
+    cursor:hand;
+}
+.thSortMenu {
+    background:white;
+    border:solid 1px #aca899;
+    padding-top:2px;
+    padding-bottom:2px;
+    padding-left:15px;
+    padding-right:15px;
+}
+.thSortMenu a {
+    display: block;
+}
+.thSortMenu a + a {
+    margin-top: 4px;
+}

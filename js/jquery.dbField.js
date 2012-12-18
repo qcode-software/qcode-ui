@@ -4,8 +4,8 @@
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	_create: function() {
-	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecord().dbRecord('getSaveType'));
-	    if ( this.saveType === 'fieldOut' ) {
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
 		    'dbFieldOut': function() {
 			if ( this.getRecord().dbRecord('getState') === "dirty" ) {

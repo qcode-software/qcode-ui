@@ -1,8 +1,8 @@
-// dbEditorTextArea plugin
-// A hovering editor for multi-line text input
-;(function($, window, undefined){
+// dbEditorText plugin
+// A hovering editor for single-line input
+;(function($, window, undefined) {
 
-    // css attributes to copy from target elements to the editor when editor is shown
+    // css attributes to copy from the target element to the editor when editor is shown
     var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
 			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
 			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
@@ -13,22 +13,23 @@
 			  'width', 'height'];
 
     // Uses the jQuery UI widget factory
-    $.widget( 'qcode.dbEditorTextArea', {
+    $.widget('qcode.dbEditorText', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.refresh
 	    });
-	    this.editor = $('<textarea>')
+	    this.editor = $('<input type="text">')
+		.addClass('dbEditorText')
 		.appendTo(this.element)
-		.addClass('dbEditorTextArea')
 		.css({
 		    'position': "absolute", 
-		    'resize': "none", 
+		    'background': "white", 
+		    'overflow': "visible", 
 		    '-moz-box-sizing': "content-box", 
 		    '-ms-box-sizing': "content-box", 
 		    'box-sizing': "content-box", 
-		    'overflow': "auto"
+		    'z-index': 1
 		})
 		.hide();
 	    this._on(this.editor, {
@@ -45,45 +46,39 @@
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value
+	    // Show this editor over the target element and set the value of the editor
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
-	    this.editor.focus();
 	}, 
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
-	    this.currentElement = $([]);
 	    this.editor.hide();
 	},
 	refresh: function() {
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
+
 		// Copy various style from the target element to the editor
 		$.each(copyAttributes, function(i, name){
 		    editor.css(name, element.css(name));
 		});
 
 		// Different browsers return different css for transparent elements
-		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		    editor.css('backgroundColor', "white");
 		} else {
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
 
-		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-		editor
-		    .css({
-			'height': "+=1", 
-			'padding-bottom': "-=1"
-		    })
-		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
-	},
+	}, 
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -103,24 +98,24 @@
 	    this.editor.remove();
 	},
 	_inputOnKeyDown: function(e) {
-	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    // nb. This switch cascades; the lack of breaks is intentional
-	    switch(e.which) {
-
-	    case 37: // left
-	    case 39: // right
-		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
-		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
-		var selection = this.editor.textrange('get');
-		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
-		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
-	    case 83: // S
-		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
+	    var selection;
+	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    case 37: //left
+		// If selection is not empty collapse left
+		selection = this.editor.textrange('get');
+		if ( ! ( selection.selectionText === "" && selection.selectionAtStart )) break;
+	    case 39: //right
+		// If selection is not empty collapse right
+		selection = this.editor.textrange('get');
+		if ( e.which ==  39 && ! ( selection.selectionText === "" && selection.selectionAtEnd )) break;
+	    case 83: //S
+		// Not Ctrl + s
 		if ( e.which == 83 && ! e.ctrlKey ) break;
-
-	    case 9: // tab
-	    case 38: // up
-	    case 40: // down
+	    case 13: //return
+	    case 9: //tab
+	    case 38: //up
+	    case 40: //down
+		// Any of the above re-trigger event
 		var event = jQuery.Event('editorKeyDown', {
 		    'data': e.data, 
 		    'ctrlKey': e.ctrlKey, 
@@ -130,6 +125,7 @@
 		});
 		e.preventDefault();
 		this.currentElement.trigger(event);
+		break;
 	    }
 	},
 	_inputOnKeyUp: function(e) {
@@ -165,7 +161,7 @@
             });
 	    this.currentElement.trigger(event);
 	},
-	_inputOnBlur: function(e) {
+	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {

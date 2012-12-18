@@ -7,14 +7,14 @@
     $.widget('qcode.dbRecord', {
 	_create: function() {
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
 		this.type = "add";
 	    } else {
 		this.type = "update";
 	    }
-	    this.saveType = coalesce(this.element.attr('saveType'), this.getRecordSet().dbRecordSet('getSaveType'));
-	    if ( this.saveType === 'recordOut' ) {
+	    if ( this.options.saveType === 'recordOut' ) {
 		this._on({
 		    'dbRecordOut': function() {
 			if ( this.getState() === "dirty" ) {
@@ -23,9 +23,6 @@
 		    }
 		});
 	    }
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	getRecordSet: function() {
 	    // Get the record-set element containing this record

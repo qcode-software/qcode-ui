@@ -9,8 +9,12 @@
 
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
+	options: {
+	    saveType: "recordOut"
+	},
 	_create: function(){
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    // Elements with class "editable" should be editable fields.
@@ -39,14 +43,9 @@
 		'beforeprint': this._onBeforePrint,
 	    });
 
-	    this.saveType = coalesce(this.element.attr('saveType'), 'recordOut');
-
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
-	},
-	getSaveType: function() {
-	    return this.saveType;
 	},
 	save: function(aysnc) {
 	    // Save the current record
