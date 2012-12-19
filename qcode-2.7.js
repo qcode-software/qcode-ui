@@ -4804,7 +4804,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorText', {
 	_create: function() {
-	    // Constructor function - create the editor element, and bind event listeners.
+	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.refresh
 	    });
@@ -4835,7 +4835,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value of the editor
+	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
@@ -4848,6 +4848,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.editor.hide();
 	},
 	refresh: function() {
+	    // repaint the editor
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
@@ -4864,7 +4865,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		} else {
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
-
+		// position
 		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	}, 
@@ -4951,9 +4952,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e, source) {
-	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
-	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
+		// really is blurred
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
@@ -5144,13 +5144,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 })(jQuery, window);
 
 /* ==== jquery.dbField.js ==== */
-// dbField plugin - a field (editable or not) in a record set.
+// dbField plugin - a field in a dbRecord.
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	_create: function() {
+	    // saveType
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    
 	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
 		    'dbFieldOut': function() {
@@ -5162,19 +5164,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	},
 	getRecordSet: function() {
-	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
 	},
 	getRecord: function(){
-	    // get the record containing this field
 	    return this.element.closest('.record');
 	},
 	getName: function() {
-	    // Get the name of this field
 	    return this.element.attr('name');
 	},
 	getValue: function(){
-	    // get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 	    if ( this.getType() == "htmlarea" ) {
 		return this.element.html();
 	    } else if ( this.element.is(':input') ) {
@@ -5184,7 +5182,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	setValue: function(newValue){
-	    // set the current value of this field
 	    if ( this.getType() == "htmlarea" ) {
 		this.element.html(newValue);
 	    } else if ( this.element.is(':input') ) {
@@ -5194,17 +5191,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	fieldIn: function(select){
-	    // Begin editing this field 
+	    // Show the editor on this field
 	    // select can be one of "all", "start" or "end", and indicates the text range to select
 	    var recordSet = this.getRecordSet();
-
+	    
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
-
-	    var fieldValue = this.getValue();
-
+	    
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    this.editor('show', this.element, fieldValue);
+	    this.editor('show', this.element, this.getValue());
 
 	    // Optionally set the text selection
 	    if (select) {
@@ -5214,39 +5209,36 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    } else {
 		this.editor('selectText', 'all');
 	    }
-
+	    // custom event
 	    this.element.trigger('dbFieldIn');
 	}, 
 	fieldOut: function(){
-	    // Stop editing this field
 	    var recordSet = this.getRecordSet();
-	    var record = this.getRecord();
 	    recordSet.dbRecordSet('setCurrentField', null);
 
-	    var editorValue = this.editor('getValue');
-
-	    if ( this.getValue() !== editorValue ) {
+	    // Check if dirty
+	    if ( this.getValue() !== this.editor('getValue') ) {
+		this.write();
+		var record = this.getRecord();
 		record.dbRecord('setState', 'dirty');
 	    }
-	    this.write();
+
 	    this.element.css('visibility', "inherit");
-
 	    this.editor('hide');
-
+	    // custom event
 	    this.element.trigger('dbFieldOut');
 	}, 
 	getType: function(){
-	    // Returns the field type (input, text, or html)
+	    // Returns the field type (text, textarea, or htmlarea)
 	    return coalesce(this.element.attr('type'), "text");
 	}, 
 	isEditable: function(){
-	    // Returns true if the field is currently editable (ie. normally editable, and not updating)
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
 	onMouseDown: function(event){
-	    // Behavior for a mouse down event on this field - switch to this field if it's editable
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
+		// Don't blur the editor that we just showed
 		event.preventDefault();
 	    }
 	}, 
@@ -5324,23 +5316,20 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.setValue(this.editor('getValue'));
 	},
 	editor: function(method) {
-	    var recordSet = this.getRecordSet(),
-	    pluginName = this._getEditorPluginName();
-	    return recordSet[pluginName].apply(recordSet, arguments);
-	},
-	_getEditorPluginName: function() {
-	    // Returns the name of the appropriate plugin for editing this field
+	    var recordSet = this.getRecordSet();
+	    var pluginName;
 	    switch(this.getType()){
 	    case "text":
-		return "dbEditorText";
+		pluginName="dbEditorText";
 		break;
 	    case "textarea":
-		return "dbEditorTextArea";
+		pluginName="dbEditorTextArea";
 		break;
 	    case "htmlarea":
-		return "dbEditorHTMLArea";
+		pluginName="dbEditorHTMLArea";
 		break;
 	    }
+	    return recordSet[pluginName].apply(recordSet, arguments);
 	}
     });
 })(jQuery);
@@ -5707,7 +5696,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 })(jQuery);
 
 /* ==== jquery.dbFormCombo.js ==== */
-(function($){
+;(function($, undefined) {
     function DbFormCombo(input, settings) {
 	this.input = input;
 	this.settings = $.extend({
@@ -7274,13 +7263,13 @@ function dbFormHTMLArea(oDiv) {
 /* ==== jquery.dbRecord.js ==== */
 // dbRecord plugin
 // Part of a dbRecordSet. 
-// A dbRecord represents a collection of dbFields which will be added, updated, or deleted together.
+// A dbRecord represents a collection of dbFields.
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function() {
-	    // Constructor function
+	    // saveType option
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
@@ -7299,11 +7288,9 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	},
 	getRecordSet: function() {
-	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
 	getState: function() {
-	    // Get the state of this record
 	    return this.state;
 	}, 
 	setState: function(newState) {
@@ -7327,7 +7314,7 @@ function dbFormHTMLArea(oDiv) {
 	    return this.error;
 	},
 	save: function(async) {
-	    // Save this record, using an add or update url as appropriate
+	    // Save this record
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
@@ -7338,7 +7325,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.action(this.type, url, async);
 	}, 
 	delete: function(async) {
-	    // Delete this record, by sending a delete request to the server
+	    // Delete this record
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
@@ -7358,28 +7345,31 @@ function dbFormHTMLArea(oDiv) {
 	    var urlPieces = splitURL(url);
 	    var path = urlPieces.path;
 	    var data = urlPieces.data;
+	    // Look for any fields (elements with attr name) and store name/value in data
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
 		if ( $(field).dbField('getType') == 'htmlarea' ) {
-		    // xml cannot contain raw html, so escape/unescape it.
+		    // xml cannot contain raw html, so escape/unescape field value.
 		    var value = escapeHTML($(field).dbField('getValue'));
 		} else {
 		    var value = $(field).dbField('getValue');
 		}
+		// If name is used more than once store values in array
 		if ( typeof data[name] == "undefined" ) {
 		    data[name] = value;
-		} else if ( typeof data[name] == "object" ) {
+		} else if ( Array.isArray(data[name]) ) {
 		    data[name].push(value);
 		} else {
-		    data[name] = new Array(data[name]);
+		    data[name] = new Array(data[name], value);
 		}
 	    });
-
+	    // Post
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
+	    // custom event 
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
 	getCurrentField: function() {
-	    // Return the field currently being edited (or an empty jQuery object if none are)
+	    // Return the field currently being edited (or an empty jQuery object)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
 	setValues: function(xmlDoc) {
@@ -7398,12 +7388,10 @@ function dbFormHTMLArea(oDiv) {
 	    this.element.trigger('resize');
 	}, 
 	recordIn: function(event) {
-	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
-	    // Call when done editing this record.
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
@@ -7446,13 +7434,8 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.dbRecordSet.js ==== */
-// Apply to elements with recordSet class.
-;jQuery(function(){
-    jQuery('.recordSet').dbRecordSet();
-});
-
 // dbRecordSet plugin
-// Call on a DOM element which contains the dbRecords.
+// Provides an ui for editable database records.
 ;(function($, window, undefined){
 
     // Use the jQuery UI widget factory.
@@ -7461,11 +7444,12 @@ function dbFormHTMLArea(oDiv) {
 	    saveType: "recordOut"
 	},
 	_create: function(){
-	    // Constructor function
+	    // check saveType attr
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
+	    // Ensure recordSet class is set
+	    this.element.addClass('recordSet');
 
-	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
-	    // Elements with class "editable" should be editable fields.
+	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
 		    $(event.currentTarget).dbField('onMouseDown', event);
@@ -7500,23 +7484,19 @@ function dbFormHTMLArea(oDiv) {
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record
 	    return this.currentRecord;
 	},
 	setCurrentRecord: function(newRecord) {
-	    // Sets the current field
 	    this.currentRecord = $(newRecord);
 	},
 	getCurrentField: function() {
-	    // Returns the current field
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the current field
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(toField) {
-	    // Move to the target field
+	    //
 	    var currentRecord = this.getCurrentRecord();
 	    var newRecord = toField.dbField('getRecord');
 
@@ -9694,18 +9674,20 @@ function dbFormHTMLArea(oDiv) {
 	_getCellInlineWidth: function(cell) {
 	    // Gets the width from a cell's inline style attribute
 	    var width,
-	    style = cell.attr('style'),
-	    pairs = style.split(';');
-	    $.each(pairs, function(i, pair) {
-		var bits = pair.split(':'),
-		name = $.trim(bits[0]),
-		value = $.trim(bits[1]);
-		if ( name === "width" ) {
-		    width = value;
-		    return false;
-		}
-	    });
-	    return width;
+	    style = cell.attr('style');
+	    if ( style !== undefined ) {
+		var pairs = style.split(';');
+		$.each(pairs, function(i, pair) {
+		    var bits = pair.split(':'),
+		    name = $.trim(bits[0]),
+		    value = $.trim(bits[1]);
+		    if ( name === "width" ) {
+			width = value;
+			return false;
+		    }
+		});
+		return width;
+	    }
 	}
     });
 })(jQuery);
@@ -9742,7 +9724,7 @@ function splitURL(url) {
 	    } else if ( typeof data[name] == "object" ) {
 		data[name].push(value);
 	    } else {
-		data[name] = new Array(data[name]);
+		data[name] = new Array(data[name], value);
 	    }
 	});
     }

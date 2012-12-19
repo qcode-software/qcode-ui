@@ -29,7 +29,7 @@ function splitURL(url) {
 	    } else if ( typeof data[name] == "object" ) {
 		data[name].push(value);
 	    } else {
-		data[name] = new Array(data[name]);
+		data[name] = new Array(data[name], value);
 	    }
 	});
     }

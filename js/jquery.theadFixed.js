@@ -164,18 +164,20 @@
 	_getCellInlineWidth: function(cell) {
 	    // Gets the width from a cell's inline style attribute
 	    var width,
-	    style = cell.attr('style'),
-	    pairs = style.split(';');
-	    $.each(pairs, function(i, pair) {
-		var bits = pair.split(':'),
-		name = $.trim(bits[0]),
-		value = $.trim(bits[1]);
-		if ( name === "width" ) {
-		    width = value;
-		    return false;
-		}
-	    });
-	    return width;
+	    style = cell.attr('style');
+	    if ( style !== undefined ) {
+		var pairs = style.split(';');
+		$.each(pairs, function(i, pair) {
+		    var bits = pair.split(':'),
+		    name = $.trim(bits[0]),
+		    value = $.trim(bits[1]);
+		    if ( name === "width" ) {
+			width = value;
+			return false;
+		    }
+		});
+		return width;
+	    }
 	}
     });
 })(jQuery);

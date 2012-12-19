@@ -1,4 +1,4 @@
-(function($){
+;(function($, undefined) {
     function DbFormCombo(input, settings) {
 	this.input = input;
 	this.settings = $.extend({

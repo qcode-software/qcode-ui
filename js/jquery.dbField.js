@@ -1,10 +1,12 @@
-// dbField plugin - a field (editable or not) in a record set.
+// dbField plugin - a field in a dbRecord.
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
 	_create: function() {
+	    // saveType
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    
 	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
 		    'dbFieldOut': function() {
@@ -16,19 +18,15 @@
 	    }
 	},
 	getRecordSet: function() {
-	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
 	},
 	getRecord: function(){
-	    // get the record containing this field
 	    return this.element.closest('.record');
 	},
 	getName: function() {
-	    // Get the name of this field
 	    return this.element.attr('name');
 	},
 	getValue: function(){
-	    // get the current value of this field (may be different from the value held in the editor, if this field is currently being edited)
 	    if ( this.getType() == "htmlarea" ) {
 		return this.element.html();
 	    } else if ( this.element.is(':input') ) {
@@ -38,7 +36,6 @@
 	    }
 	}, 
 	setValue: function(newValue){
-	    // set the current value of this field
 	    if ( this.getType() == "htmlarea" ) {
 		this.element.html(newValue);
 	    } else if ( this.element.is(':input') ) {
@@ -48,17 +45,15 @@
 	    }
 	}, 
 	fieldIn: function(select){
-	    // Begin editing this field 
+	    // Show the editor on this field
 	    // select can be one of "all", "start" or "end", and indicates the text range to select
 	    var recordSet = this.getRecordSet();
-
+	    
 	    recordSet.dbRecordSet('setCurrentField', this.element);
 	    this.element.css('visibility', "hidden");
-
-	    var fieldValue = this.getValue();
-
+	    
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    this.editor('show', this.element, fieldValue);
+	    this.editor('show', this.element, this.getValue());
 
 	    // Optionally set the text selection
 	    if (select) {
@@ -68,39 +63,36 @@
 	    } else {
 		this.editor('selectText', 'all');
 	    }
-
+	    // custom event
 	    this.element.trigger('dbFieldIn');
 	}, 
 	fieldOut: function(){
-	    // Stop editing this field
 	    var recordSet = this.getRecordSet();
-	    var record = this.getRecord();
 	    recordSet.dbRecordSet('setCurrentField', null);
 
-	    var editorValue = this.editor('getValue');
-
-	    if ( this.getValue() !== editorValue ) {
+	    // Check if dirty
+	    if ( this.getValue() !== this.editor('getValue') ) {
+		this.write();
+		var record = this.getRecord();
 		record.dbRecord('setState', 'dirty');
 	    }
-	    this.write();
+
 	    this.element.css('visibility', "inherit");
-
 	    this.editor('hide');
-
+	    // custom event
 	    this.element.trigger('dbFieldOut');
 	}, 
 	getType: function(){
-	    // Returns the field type (input, text, or html)
+	    // Returns the field type (text, textarea, or htmlarea)
 	    return coalesce(this.element.attr('type'), "text");
 	}, 
 	isEditable: function(){
-	    // Returns true if the field is currently editable (ie. normally editable, and not updating)
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
 	onMouseDown: function(event){
-	    // Behavior for a mouse down event on this field - switch to this field if it's editable
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
+		// Don't blur the editor that we just showed
 		event.preventDefault();
 	    }
 	}, 
@@ -178,23 +170,20 @@
 	    this.setValue(this.editor('getValue'));
 	},
 	editor: function(method) {
-	    var recordSet = this.getRecordSet(),
-	    pluginName = this._getEditorPluginName();
-	    return recordSet[pluginName].apply(recordSet, arguments);
-	},
-	_getEditorPluginName: function() {
-	    // Returns the name of the appropriate plugin for editing this field
+	    var recordSet = this.getRecordSet();
+	    var pluginName;
 	    switch(this.getType()){
 	    case "text":
-		return "dbEditorText";
+		pluginName="dbEditorText";
 		break;
 	    case "textarea":
-		return "dbEditorTextArea";
+		pluginName="dbEditorTextArea";
 		break;
 	    case "htmlarea":
-		return "dbEditorHTMLArea";
+		pluginName="dbEditorHTMLArea";
 		break;
 	    }
+	    return recordSet[pluginName].apply(recordSet, arguments);
 	}
     });
 })(jQuery);

@@ -15,7 +15,7 @@
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorText', {
 	_create: function() {
-	    // Constructor function - create the editor element, and bind event listeners.
+	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.refresh
 	    });
@@ -46,7 +46,7 @@
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value of the editor
+	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
 	    this.refresh();
@@ -59,6 +59,7 @@
 	    this.editor.hide();
 	},
 	refresh: function() {
+	    // repaint the editor
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
@@ -75,7 +76,7 @@
 		} else {
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
-
+		// position
 		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	}, 
@@ -162,9 +163,8 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e, source) {
-	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
-	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
+		// really is blurred
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});

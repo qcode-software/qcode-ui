@@ -1,10 +1,5 @@
-// Apply to elements with recordSet class.
-;jQuery(function(){
-    jQuery('.recordSet').dbRecordSet();
-});
-
 // dbRecordSet plugin
-// Call on a DOM element which contains the dbRecords.
+// Provides an ui for editable database records.
 ;(function($, window, undefined){
 
     // Use the jQuery UI widget factory.
@@ -13,11 +8,12 @@
 	    saveType: "recordOut"
 	},
 	_create: function(){
-	    // Constructor function
+	    // check saveType attr
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
+	    // Ensure recordSet class is set
+	    this.element.addClass('recordSet');
 
-	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
-	    // Elements with class "editable" should be editable fields.
+	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
 		    $(event.currentTarget).dbField('onMouseDown', event);
@@ -52,23 +48,19 @@
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record
 	    return this.currentRecord;
 	},
 	setCurrentRecord: function(newRecord) {
-	    // Sets the current field
 	    this.currentRecord = $(newRecord);
 	},
 	getCurrentField: function() {
-	    // Returns the current field
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the current field
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(toField) {
-	    // Move to the target field
+	    //
 	    var currentRecord = this.getCurrentRecord();
 	    var newRecord = toField.dbField('getRecord');
 

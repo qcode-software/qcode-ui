@@ -1,12 +1,12 @@
 // dbRecord plugin
 // Part of a dbRecordSet. 
-// A dbRecord represents a collection of dbFields which will be added, updated, or deleted together.
+// A dbRecord represents a collection of dbFields.
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function() {
-	    // Constructor function
+	    // saveType option
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
@@ -25,11 +25,9 @@
 	    }
 	},
 	getRecordSet: function() {
-	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
 	getState: function() {
-	    // Get the state of this record
 	    return this.state;
 	}, 
 	setState: function(newState) {
@@ -53,7 +51,7 @@
 	    return this.error;
 	},
 	save: function(async) {
-	    // Save this record, using an add or update url as appropriate
+	    // Save this record
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
@@ -64,7 +62,7 @@
 	    this.action(this.type, url, async);
 	}, 
 	delete: function(async) {
-	    // Delete this record, by sending a delete request to the server
+	    // Delete this record
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
@@ -84,28 +82,31 @@
 	    var urlPieces = splitURL(url);
 	    var path = urlPieces.path;
 	    var data = urlPieces.data;
+	    // Look for any fields (elements with attr name) and store name/value in data
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
 		if ( $(field).dbField('getType') == 'htmlarea' ) {
-		    // xml cannot contain raw html, so escape/unescape it.
+		    // xml cannot contain raw html, so escape/unescape field value.
 		    var value = escapeHTML($(field).dbField('getValue'));
 		} else {
 		    var value = $(field).dbField('getValue');
 		}
+		// If name is used more than once store values in array
 		if ( typeof data[name] == "undefined" ) {
 		    data[name] = value;
-		} else if ( typeof data[name] == "object" ) {
+		} else if ( Array.isArray(data[name]) ) {
 		    data[name].push(value);
 		} else {
-		    data[name] = new Array(data[name]);
+		    data[name] = new Array(data[name], value);
 		}
 	    });
-
+	    // Post
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
+	    // custom event 
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
 	getCurrentField: function() {
-	    // Return the field currently being edited (or an empty jQuery object if none are)
+	    // Return the field currently being edited (or an empty jQuery object)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
 	setValues: function(xmlDoc) {
@@ -124,12 +125,10 @@
 	    this.element.trigger('resize');
 	}, 
 	recordIn: function(event) {
-	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
-	    // Call when done editing this record.
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
