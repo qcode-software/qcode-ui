@@ -14,7 +14,7 @@
     background: url("../images/down.png") no-repeat center black;
 }
 .hoverScrollerContainer .up.scroller {
-    top: 30px;
+    top: 0;
     display: none;
     background: url("../images/up.png") no-repeat top center black;
 }
