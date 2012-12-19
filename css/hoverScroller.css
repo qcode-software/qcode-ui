@@ -1,7 +1,7 @@
 .hoverScrollerContainer {
     position: relative;
 }
-.hoverScroller .scroller {
+.hoverScrollerContainer .scroller {
     position: absolute;
     left: 0;
     right: 0;
