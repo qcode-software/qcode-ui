@@ -8,12 +8,12 @@
     height: 25px;
     z-index: 200;
 }
-.hoverScroller .down.scroller {
+.hoverScrollerContainer .down.scroller {
     bottom: 0;
     opacity: 0.1;
     background: url("../images/down.png") no-repeat center black;
 }
-.hoverScroller .up.scroller {
+.hoverScrollerContainer .up.scroller {
     top: 30px;
     display: none;
     background: url("../images/up.png") no-repeat top center black;
