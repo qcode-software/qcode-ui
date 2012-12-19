@@ -23,6 +23,82 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* ==== 0.jquery-hacks.js ==== */
+// Bug fix for table border width detection in ie9
+(function($){
+    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
+        var oldCssFunction = $.fn.css;
+        $.fn.css = function() {
+            if ( this.first().is('table') && arguments.length == 1 ) {
+		var table = this.first();
+                switch(arguments[0]){
+                case "border-left-width":
+		case "borderLeftWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-left-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-left-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-right-width":
+		case "borderRightWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-right-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-right-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-top-width":
+		case "borderTopWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-top-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-top-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-bottom-width":
+		case "borderBottomWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-bottom-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-bottom-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                default:
+                    return oldCssFunction.apply(this,arguments);
+                }
+            } else {
+                return oldCssFunction.apply(this,arguments);
+            }
+        };
+    }
+    function getInnerWidth(table) {
+        var borderSpacing = table.css('border-spacing');
+        var horizontalSpacing = borderSpacing.split(' ').shift();
+        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
+    }
+    function getInnerHeight(table) {
+        var borderSpacing = table.css('border-spacing');
+        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
+        var totalHeight = verticalSpacing;
+        table.find('thead, tbody, tfoot').each(function(){
+            if ( $(this).css('position') != "absolute" ) {
+                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
+            }
+        });
+        return totalHeight;
+    }
+
+    jQuery.expr[":"].focus = function( elem ) {
+	var doc = elem.ownerDocument;
+	return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex || elem.isContentEditable);
+    }
+})(jQuery);
+
 /* ==== 0.jquery-ui-hacks.js ==== */
 (function($) {
     if ( $.isFunction($.widget) ) {
@@ -76,6 +152,46 @@
     }
 }) (jQuery);
 
+
+/* ==== 0.js-hacks.js ==== */
+// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+	if (typeof this !== "function") {
+	    // closest thing possible to the ECMAScript 5 internal IsCallable function
+	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+	}
+	
+	var aArgs = Array.prototype.slice.call(arguments, 1), 
+	fToBind = this, 
+	fNOP = function () {},
+	fBound = function () {
+	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
+	    return fToBind.apply(this instanceof fNOP && oThis
+				 ? this
+				 : oThis,
+				 aArgs.concat(Array.prototype.slice.call(arguments)));
+	};
+	
+	// The bound function prototype inherits from the original function prototype
+	fNOP.prototype = this.prototype;
+	fBound.prototype = new fNOP();
+	
+	return fBound;
+    };
+}
+
+// Support for Object.create in earlier browsers
+if (!Object.create) {
+    Object.create = function (o) {
+        if (arguments.length > 1) {
+            throw new Error('Object.create implementation only accepts the first parameter.');
+        }
+        function F() {}
+        F.prototype = o;
+        return new F();
+    };
+}
 
 /* ==== bvwLib1.0.js ==== */
 function Mod(a, b) { return a-Math.floor(a/b)*b }
@@ -2992,121 +3108,6 @@ function dynamicResize(oContainer) {
     }
 }
 
-/* ==== hacks.js ==== */
-// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
-if (!Function.prototype.bind) {
-    Function.prototype.bind = function (oThis) {
-	if (typeof this !== "function") {
-	    // closest thing possible to the ECMAScript 5 internal IsCallable function
-	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-	}
-	
-	var aArgs = Array.prototype.slice.call(arguments, 1), 
-	fToBind = this, 
-	fNOP = function () {},
-	fBound = function () {
-	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
-	    return fToBind.apply(this instanceof fNOP && oThis
-				 ? this
-				 : oThis,
-				 aArgs.concat(Array.prototype.slice.call(arguments)));
-	};
-	
-	// The bound function prototype inherits from the original function prototype
-	fNOP.prototype = this.prototype;
-	fBound.prototype = new fNOP();
-	
-	return fBound;
-    };
-}
-
-// Support for Object.create in earlier browsers
-if (!Object.create) {
-    Object.create = function (o) {
-        if (arguments.length > 1) {
-            throw new Error('Object.create implementation only accepts the first parameter.');
-        }
-        function F() {}
-        F.prototype = o;
-        return new F();
-    };
-}
-
-// Bug fix for table border width detection in ie9
-(function($){
-    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
-        var oldCssFunction = $.fn.css;
-        $.fn.css = function() {
-            if ( this.first().is('table') && arguments.length == 1 ) {
-		var table = this.first();
-                switch(arguments[0]){
-                case "border-left-width":
-		case "borderLeftWidth":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-left-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-left-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-right-width":
-		case "borderRightWidth":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-right-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-right-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-top-width":
-		case "borderTopWidth":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-top-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-top-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-bottom-width":
-		case "borderBottomWidth":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-bottom-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-bottom-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                default:
-                    return oldCssFunction.apply(this,arguments);
-                }
-            } else {
-                return oldCssFunction.apply(this,arguments);
-            }
-        };
-    }
-    function getInnerWidth(table) {
-        var borderSpacing = table.css('border-spacing');
-        var horizontalSpacing = borderSpacing.split(' ').shift();
-        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
-    }
-    function getInnerHeight(table) {
-        var borderSpacing = table.css('border-spacing');
-        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
-        var totalHeight = verticalSpacing;
-        table.find('thead, tbody, tfoot').each(function(){
-            if ( $(this).css('position') != "absolute" ) {
-                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
-            }
-        });
-        return totalHeight;
-    }
-})(jQuery);
-
-/*jQuery.expr[':'].focus = function( elem ) {
-    var doc = elem.ownerDocument;
-    return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex || elem.isContentEditable);
-}*/
-
 /* ==== jquery.colInherit.js ==== */
 (function($) {
     $.fn.colInherit = function(options) {
@@ -4631,7 +4632,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
-	    this.hasFocus = false;
 	    this._on(window, {
 		'resize': this.refresh
 	    });
@@ -4648,8 +4648,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
 		'paste': this._inputOnPaste,
-		'blur': this._inputOnBlur,
-		'focus': this._inputOnFocus
+		'blur': this._inputOnBlur
 	    });
 	    this.currentElement = $([]);
 	},
@@ -4665,7 +4664,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	hide: function() {
 	    // Hide the editor
-	    if ( this.hasFocus ) {
+	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
@@ -4777,16 +4776,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    if ( ! this.hasFocus ) {
+	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
 	    }
-	    this.hasFocus = false;
-	},
-	_inputOnFocus: function(e, source) {
-	    this.hasFocus = true;
 	}
     });
 })(jQuery, window);
