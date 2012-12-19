@@ -1,12 +1,5 @@
-#!/usr/bin/tclsh8.5
-
-#| Concat all .js files in js directory
-
-set dir [file normalize [file dirname [info script]]]
-
-# qcode.js description and liscense info
-puts {/*
- * This file contains the concatented JavaScript Libary for Qcode Software Limited.
+/*
+ * This file contains the concatented JavaScript Library for Qcode Software Limited.
  *
  * https://svn.qcode.co.uk/js/trunk
  * https://trac.qcode.co.uk/js
@@ -29,11 +22,73 @@ puts {/*
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/* ==== hoverScroller.css ==== */
+.hoverScrollContainer {
+    position: relative;
+}
+.hoverScroller .scroller {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 25px;
+    z-index: 200;
+}
+.hoverScroller .down.scroller {
+    bottom: 0;
+    opacity: 0.1;
+    background: url("../images/down.png") no-repeat center black;
+}
+.hoverScroller .up.scroller {
+    top: 30px;
+    display: none;
+    background: url("../images/up.png") no-repeat top center black;
 }
 
-foreach filename [lsort [glob $dir/js/*.js]] {
-    puts "/* ==== [file tail $filename] ==== */"
-    set fh [open $filename r]
-    puts [read $fh]
-    puts ""
+/* ==== sidebar.css ==== */
+/* Sidebar */
+.sidebar {
+    float: right;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 250px;
+    overflow: hidden;
+    max-width: 95%;
+    min-width: 50px;
+    background: white;
 }
+
+/* Sidebar resize handle */
+.sidebar .handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -5px;
+    width: 10px;
+    cursor: w-resize;
+    z-index: 10;
+}
+
+/* ==== thSortMenu.css ==== */
+span.clsSort {
+    color:blue;
+    cursor:hand;
+}
+.thSortMenu {
+    background:white;
+    border:solid 1px #aca899;
+    padding-top:2px;
+    padding-bottom:2px;
+    padding-left:15px;
+    padding-right:15px;
+}
+.thSortMenu a {
+    display: block;
+}
+.thSortMenu a + a {
+    margin-top: 4px;
+}
+
+

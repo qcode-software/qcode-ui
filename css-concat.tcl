@@ -1,12 +1,12 @@
 #!/usr/bin/tclsh8.5
 
-#| Concat all .js files in js directory
+#| Concat all .css files in css directory
 
 set dir [file normalize [file dirname [info script]]]
 
 # qcode.js description and liscense info
 puts {/*
- * This file contains the concatented JavaScript Libary for Qcode Software Limited.
+ * This file contains the concatented JavaScript Library for Qcode Software Limited.
  *
  * https://svn.qcode.co.uk/js/trunk
  * https://trac.qcode.co.uk/js
@@ -31,7 +31,7 @@ puts {/*
 */
 }
 
-foreach filename [lsort [glob $dir/js/*.js]] {
+foreach filename [lsort [glob $dir/css/*.css]] {
     puts "/* ==== [file tail $filename] ==== */"
     set fh [open $filename r]
     puts [read $fh]

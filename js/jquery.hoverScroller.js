@@ -11,8 +11,8 @@
 	    scrollSpeed: 0.3,
 	    snapTime: 100
 	}, options);
-	var scrollBox = settings.scrollBox;
-	var container = settings.container;
+	var scrollBox = settings.scrollBox.addClass('hoverScroller');
+	var container = settings.container.addClass('hoverScrollerContainer');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
 

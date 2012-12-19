@@ -3,12 +3,8 @@
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
-	_getCreateOptions: function() {
-	    return {
-		saveType: coalesce(this.element.attr('saveType'), this.getRecord().dbRecord("option", "saveType"))
-	    }
-	},
 	_create: function() {
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
 	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
 		    'dbFieldOut': function() {

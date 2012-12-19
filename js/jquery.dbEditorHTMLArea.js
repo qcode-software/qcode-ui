@@ -16,7 +16,6 @@
     $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
-	    this.hasFocus = false;
 	    this._on(window, {
 		'resize': this.refresh
 	    });
@@ -33,8 +32,7 @@
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
 		'paste': this._inputOnPaste,
-		'blur': this._inputOnBlur,
-		'focus': this._inputOnFocus
+		'blur': this._inputOnBlur
 	    });
 	    this.currentElement = $([]);
 	},
@@ -50,7 +48,7 @@
 	},
 	hide: function() {
 	    // Hide the editor
-	    if ( this.hasFocus ) {
+	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
@@ -162,16 +160,12 @@
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    if ( ! this.hasFocus ) {
+	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
 	    }
-	    this.hasFocus = false;
-	},
-	_inputOnFocus: function(e, source) {
-	    this.hasFocus = true;
 	}
     });
 })(jQuery, window);

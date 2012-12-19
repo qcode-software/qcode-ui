@@ -12,14 +12,9 @@
 	options: {
 	    saveType: "recordOut"
 	},
-	_getCreateOptions: function() {
-	    // Use custom attributes to overwite default options
-	    return {
-		saveType: this.element.attr('saveType')
-	    }
-	},
 	_create: function(){
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    // Elements with class "editable" should be editable fields.

@@ -5,7 +5,7 @@
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
 	    $('body').css('margin-right', "+=35px");
 
-	    var sidebar = this.element,
+	    var sidebar = this.element.addClass('sidebar'),
 	    toolbar = this.toolbar = sidebar.find('.toolbar'),
 	    initialWidth = sidebar.width();
 

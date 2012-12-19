@@ -23,6 +23,82 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* ==== 0.jquery-hacks.js ==== */
+// Bug fix for table border width detection in ie9
+(function($){
+    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
+        var oldCssFunction = $.fn.css;
+        $.fn.css = function() {
+            if ( this.first().is('table') && arguments.length == 1 ) {
+		var table = this.first();
+                switch(arguments[0]){
+                case "border-left-width":
+		case "borderLeftWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-left-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-left-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-right-width":
+		case "borderRightWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    this.css('border-right-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-right-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-top-width":
+		case "borderTopWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-top-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-top-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                case "border-bottom-width":
+		case "borderBottomWidth":
+                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    this.css('border-bottom-width', 0);
+                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
+                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
+                    this.css('border-bottom-width', borderWidth);
+                    return borderWidth + "px";
+                    
+                default:
+                    return oldCssFunction.apply(this,arguments);
+                }
+            } else {
+                return oldCssFunction.apply(this,arguments);
+            }
+        };
+    }
+    function getInnerWidth(table) {
+        var borderSpacing = table.css('border-spacing');
+        var horizontalSpacing = borderSpacing.split(' ').shift();
+        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
+    }
+    function getInnerHeight(table) {
+        var borderSpacing = table.css('border-spacing');
+        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
+        var totalHeight = verticalSpacing;
+        table.find('thead, tbody, tfoot').each(function(){
+            if ( $(this).css('position') != "absolute" ) {
+                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
+            }
+        });
+        return totalHeight;
+    }
+
+    jQuery.expr[":"].focus = function( elem ) {
+	var doc = elem.ownerDocument;
+	return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex || elem.isContentEditable);
+    }
+})(jQuery);
+
 /* ==== 0.jquery-ui-hacks.js ==== */
 (function($) {
     if ( $.isFunction($.widget) ) {
@@ -76,6 +152,46 @@
     }
 }) (jQuery);
 
+
+/* ==== 0.js-hacks.js ==== */
+// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+	if (typeof this !== "function") {
+	    // closest thing possible to the ECMAScript 5 internal IsCallable function
+	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+	}
+	
+	var aArgs = Array.prototype.slice.call(arguments, 1), 
+	fToBind = this, 
+	fNOP = function () {},
+	fBound = function () {
+	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
+	    return fToBind.apply(this instanceof fNOP && oThis
+				 ? this
+				 : oThis,
+				 aArgs.concat(Array.prototype.slice.call(arguments)));
+	};
+	
+	// The bound function prototype inherits from the original function prototype
+	fNOP.prototype = this.prototype;
+	fBound.prototype = new fNOP();
+	
+	return fBound;
+    };
+}
+
+// Support for Object.create in earlier browsers
+if (!Object.create) {
+    Object.create = function (o) {
+        if (arguments.length > 1) {
+            throw new Error('Object.create implementation only accepts the first parameter.');
+        }
+        function F() {}
+        F.prototype = o;
+        return new F();
+    };
+}
 
 /* ==== bvwLib1.0.js ==== */
 function Mod(a, b) { return a-Math.floor(a/b)*b }
@@ -2546,11 +2662,11 @@ DbGridInputBool.prototype.selectText = function(option) {
 DbGridInputBool.prototype.show = function(cell,value) {
   var row = cell.closest('tr');
   var table = row.closest('table');
-  var container = table.closest('div');
   var inputBool = this.inputBool;
 
-  var top = cell.position().top + container.scrollTop() ;
-  var left =  cell.position().left + container.scrollLeft();
+  var relativePosition = cell.positionRelativeTo(table);
+  var top = relativePosition.top;
+  var left = relativePosition.left;
   height = cell.height();
   width = cell.width();
   
@@ -2992,112 +3108,6 @@ function dynamicResize(oContainer) {
     }
 }
 
-/* ==== hacks.js ==== */
-// Support for Function.prototype.bound in earlier browsers - taken from developer.mozilla.org
-if (!Function.prototype.bind) {
-    Function.prototype.bind = function (oThis) {
-	if (typeof this !== "function") {
-	    // closest thing possible to the ECMAScript 5 internal IsCallable function
-	    throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-	}
-	
-	var aArgs = Array.prototype.slice.call(arguments, 1), 
-	fToBind = this, 
-	fNOP = function () {},
-	fBound = function () {
-	    // If the bound function is called with the "new" keyword, the scope will be the new object instead of oThis
-	    return fToBind.apply(this instanceof fNOP && oThis
-				 ? this
-				 : oThis,
-				 aArgs.concat(Array.prototype.slice.call(arguments)));
-	};
-	
-	// The bound function prototype inherits from the original function prototype
-	fNOP.prototype = this.prototype;
-	fBound.prototype = new fNOP();
-	
-	return fBound;
-    };
-}
-
-// Support for Object.create in earlier browsers
-if (!Object.create) {
-    Object.create = function (o) {
-        if (arguments.length > 1) {
-            throw new Error('Object.create implementation only accepts the first parameter.');
-        }
-        function F() {}
-        F.prototype = o;
-        return new F();
-    };
-}
-
-// Bug fix for table border width detection in ie9
-(function($){
-    if ( $.browser.msie && parseInt($.browser.version, 10) == "9" ) {
-        var oldCssFunction = $.fn.css;
-        $.fn.css = function() {
-            if ( this.first().is('table') && arguments.length == 1 ) {
-		var table = this.first();
-                switch(arguments[0]){
-                case "border-left-width":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-left-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-left-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-right-width":
-                    var totalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    this.css('border-right-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetWidth) - getInnerWidth(table);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-right-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-top-width":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-top-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-top-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                case "border-bottom-width":
-                    var totalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    this.css('border-bottom-width', 0);
-                    var newTotalBorderWidth = parseInt(this[0].offsetHeight) - getInnerHeight(this);
-                    var borderWidth = totalBorderWidth - newTotalBorderWidth;
-                    this.css('border-bottom-width', borderWidth);
-                    return borderWidth + "px";
-                    
-                default:
-                    return oldCssFunction.apply(this,arguments);
-                }
-            } else {
-                return oldCssFunction.apply(this,arguments);
-            }
-        };
-    }
-    function getInnerWidth(table) {
-        var borderSpacing = table.css('border-spacing');
-        var horizontalSpacing = borderSpacing.split(' ').shift();
-        return parseInt(table.find('tbody').outerWidth()) + (parseInt(horizontalSpacing) * 2);
-    }
-    function getInnerHeight(table) {
-        var borderSpacing = table.css('border-spacing');
-        var verticalSpacing = parseInt(borderSpacing.split(' ').pop());
-        var totalHeight = verticalSpacing;
-        table.find('thead, tbody, tfoot').each(function(){
-            if ( $(this).css('position') != "absolute" ) {
-                totalHeight += parseInt($(this).outerHeight()) + verticalSpacing;
-            }
-        });
-        return totalHeight;
-    }
-})(jQuery);
-
 /* ==== jquery.colInherit.js ==== */
 (function($) {
     $.fn.colInherit = function(options) {
@@ -3196,108 +3206,108 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
-        // Returns the field above the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop < fromFieldTop && (nextField === undefined || fieldTop > nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element above the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop < fromElementTop && (nextElement === undefined || elementTop > nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (leftOfColumn(fromField, field) && (nextField === undefined || rightOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop > nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (leftOfColumn(fromElement, element) && (nextElement === undefined || rightOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop > nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 };
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.eastOf = function(selection) {
-        // Returns the field right of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft > fromFieldLeft && (nextField === undefined || fieldLeft < nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element right of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft > fromElementLeft && (nextElement === undefined || elementLeft < nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (belowRow(fromField, field) && (nextField === undefined || aboveRow(nextField, field) || (sameRow(field, nextField) && fieldLeft < nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (belowRow(fromElement, element) && (nextElement === undefined || aboveRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft < nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.southOf = function(selection) {
-        // Returns the field below the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldTop = fromField.offset().top;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldTop = field.offset().top;
-            if (sameColumn(fromField, field) && fieldTop > fromFieldTop && (nextField === undefined || fieldTop < nextFieldTop)) {
-                nextField = field;
-                nextFieldTop = fieldTop;
+        // Returns the element below the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementTop = fromElement.offset().top;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementTop = element.offset().top;
+            if (sameColumn(fromElement, element) && elementTop > fromElementTop && (nextElement === undefined || elementTop < nextElementTop)) {
+                nextElement = element;
+                nextElementTop = elementTop;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldTop = field.offset().top;
-                if (rightOfColumn(fromField, field) && (nextField === undefined || leftOfColumn(nextField, field) || (sameColumn(field, nextField) && fieldTop < nextFieldTop))) {
-                    nextField = field;
-                    nextFieldTop = fieldTop;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementTop = element.offset().top;
+                if (rightOfColumn(fromElement, element) && (nextElement === undefined || leftOfColumn(nextElement, element) || (sameColumn(element, nextElement) && elementTop < nextElementTop))) {
+                    nextElement = element;
+                    nextElementTop = elementTop;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
     $.fn.westOf = function(selection) {
-        // Returns the field left of the target, or undefined if none exists
-	var fromField = $(this);
-        var nextField;
-        var fromFieldLeft = fromField.offset().left;
-        var fields = $(selection).filter(':visible').not(fromField);
-        fields.each(function() {
-            var field = $(this);
-            var fieldLeft = field.offset().left;
-            if (sameRow(field, fromField) && fieldLeft < fromFieldLeft && (nextField === undefined || fieldLeft > nextFieldLeft)) {
-                nextField = field;
-                nextFieldLeft = fieldLeft;
+        // Returns the element left of the target, or undefined if none exists
+	var fromElement = $(this);
+        var nextElement;
+        var fromElementLeft = fromElement.offset().left;
+        var elements = $(selection).filter(':visible').not(fromElement);
+        elements.each(function() {
+            var element = $(this);
+            var elementLeft = element.offset().left;
+            if (sameRow(element, fromElement) && elementLeft < fromElementLeft && (nextElement === undefined || elementLeft > nextElementLeft)) {
+                nextElement = element;
+                nextElementLeft = elementLeft;
             }
         });
-        if (nextField === undefined) {
-            fields.each(function() {
-                var field = $(this);
-                var fieldLeft = $(field).offset().left;
-                if (aboveRow(fromField, field) && (nextField === undefined || belowRow(nextField, field) || (sameRow(field, nextField) && fieldLeft > nextFieldLeft))) {
-                    nextField = field;
-                    nextFieldLeft = fieldLeft;
+        if (nextElement === undefined) {
+            elements.each(function() {
+                var element = $(this);
+                var elementLeft = $(element).offset().left;
+                if (aboveRow(fromElement, element) && (nextElement === undefined || belowRow(nextElement, element) || (sameRow(element, nextElement) && elementLeft > nextElementLeft))) {
+                    nextElement = element;
+                    nextElementLeft = elementLeft;
                 }
             });
         }
-        return nextField;
+        return nextElement;
     }
 
     function sameRow(a, b) {
@@ -4622,9 +4632,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     $.widget('qcode.dbEditorHTMLArea', {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
-	    this.hasFocus = false;
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -4639,9 +4648,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
 		'paste': this._inputOnPaste,
-		'blur': this._inputOnBlur,
-		'focus': this._inputOnFocus
+		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -4649,36 +4658,39 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    // Assumes that the editor's container is the target element's offset parent.
-	    editor
-		.height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		.css(element.positionRelativeTo(this.element))
-		.show()
-		.html(value)
-		.focus();
-	}, 
+	    this.currentElement = $(element);
+	    this.editor.show().html(value);
+	    this.refresh();
+	},
 	hide: function() {
 	    // Hide the editor
-	    if ( this.hasFocus ) {
+	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
-	}, 
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		// Copy various style from the target element to the editor
+		var editor = this.editor;
+		var element = this.currentElement;
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+		editor
+		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
+		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -4696,20 +4708,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		editor
-		    .css(element.positionRelativeTo(this.element))
-		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		    .css({
-			'width': element.css('width')
-		    });
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
@@ -4778,16 +4776,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_inputOnBlur: function(e, source) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
-	    if ( ! this.hasFocus ) {
+	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
 	    }
-	    this.hasFocus = false;
-	},
-	_inputOnFocus: function(e, source) {
-	    this.hasFocus = true;
 	}
     });
 })(jQuery, window);
@@ -4812,7 +4806,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('dbEditorText')
@@ -4834,6 +4828,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -4841,27 +4836,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value of the editor
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent'
-		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    editor
-		.css(element.positionRelativeTo(this.element))
-		.show()
-		.val(value)
-		.focus();
+	    this.currentElement = $(element);
+	    this.editor.show().val(value);
+	    this.refresh();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -4869,6 +4846,27 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
 	}, 
 	selectText: function(option) {
 	    // Set the text selection / cursor position
@@ -4887,19 +4885,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
-	    // Ensures that the editor is still positioned correctly over the target element.
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width', 'height'], function(i, name){
-		    editor.css(name, element.css(name));
-		});
-		editor.css(element.positionRelativeTo(this.element));
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    var selection;
@@ -4998,7 +4983,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.refresh
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
@@ -5019,6 +5004,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
@@ -5026,39 +5012,43 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
-	    // (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-	    editor
-		.css(element.positionRelativeTo(this.element))
-		.css({
-		    'height': "+=1", 
-		    'padding-bottom': "-=1"
-		})
-		.show()
-		.val(value)
-		.focus();
+	    this.currentElement = $(element);
+	    this.editor.show().val(value);
+	    this.refresh();
 	}, 
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
+	    this.currentElement = $([]);
 	    this.editor.hide();
-	}, 
+	},
+	refresh: function() {
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
+		editor
+		    .css({
+			'height': "+=1", 
+			'padding-bottom': "-=1"
+		    })
+		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -5076,24 +5066,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
-	},
-	_onResize: function(event) {
-	    // Any event that might change the size or position of the editor's target needs to trigger this.
-	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this
-	    if ( this.currentElement ) {
-		var element = this.currentElement;
-		var editor = this.editor;
-		$.each(['width', 'height'], function(i, name){
-		    editor.css(name, element.css(name));
-		});
-
-		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
-		editor
-		    .css(element.positionRelativeTo(this.element))
-		    .css({
-			'height': "+=1"
-		    });
-	    }
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
@@ -5177,6 +5149,18 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
     // Use the jQuery UI widget factory
     $.widget( "qcode.dbField", {
+	_create: function() {
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    if ( this.options.saveType === 'fieldOut' ) {
+		this._on({
+		    'dbFieldOut': function() {
+			if ( this.getRecord().dbRecord('getState') === "dirty" ) {
+			    this.getRecord().dbRecord('save');
+			}
+		    }
+		});
+	    }
+	},
 	getRecordSet: function() {
 	    // Get the record set element that contains this field
 	    return this.element.closest('.recordSet');
@@ -5220,16 +5204,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var fieldValue = this.getValue();
 
 	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    var plugin = this._getEditorPluginName();
-	    recordSet[plugin]('show', this.element, fieldValue);
+	    this.editor('show', this.element, fieldValue);
 
 	    // Optionally set the text selection
 	    if (select) {
-		recordSet[plugin]('selectText', select);
+		this.editor('selectText', select);
 	    } else if ( this.element.attr('fieldInSelect') != null ) {
-		recordSet[plugin]('selectText', this.element.attr('fieldInSelect'));
+		this.editor('selectText', this.element.attr('fieldInSelect'));
 	    } else {
-		recordSet[plugin]('selectText', 'all');
+		this.editor('selectText', 'all');
 	    }
 
 	    this.element.trigger('dbFieldIn');
@@ -5238,12 +5221,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Stop editing this field
 	    var recordSet = this.getRecordSet();
 	    var record = this.getRecord();
-	    recordSet.dbRecordSet('setCurrentField', $([]));
+	    recordSet.dbRecordSet('setCurrentField', null);
 
-	    // Get the name of the appropriate dbEditor plugin, so that it can be called on the record set container.
- 	    var plugin = this._getEditorPluginName();
-
-	    var editorValue = recordSet[plugin]('getValue');
+	    var editorValue = this.editor('getValue');
 
 	    if ( this.getValue() !== editorValue ) {
 		record.dbRecord('setState', 'dirty');
@@ -5251,7 +5231,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.write();
 	    this.element.css('visibility', "inherit");
 
-	    recordSet[plugin]('hide');
+	    this.editor('hide');
 
 	    this.element.trigger('dbFieldOut');
 	}, 
@@ -5322,11 +5302,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	}, 
 	editorKeyUp: function(event){
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    
-	    if ( this.getValue() !== editorValue) {
+	    if ( this.getValue() !== this.editor('getValue') ) {
 		// Set dirty
 		this.getRecord().dbRecord('setState', 'dirty');
 	    }
@@ -5342,14 +5318,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
-	    this.getRecord().dbRecord('recordOut');
 	}, 
 	write: function(){
 	    // Write the editor's contents to the field
-	    var recordSet = this.getRecordSet();
- 	    var plugin = this._getEditorPluginName();
-	    var editorValue = recordSet[plugin]('getValue');
-	    this.setValue(editorValue);
+	    this.setValue(this.editor('getValue'));
+	},
+	editor: function(method) {
+	    var recordSet = this.getRecordSet(),
+	    pluginName = this._getEditorPluginName();
+	    return recordSet[pluginName].apply(recordSet, arguments);
 	},
 	_getEditorPluginName: function() {
 	    // Returns the name of the appropriate plugin for editing this field
@@ -5369,7 +5346,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 })(jQuery);
 
 /* ==== jquery.dbForm.js ==== */
-(function($){
+(function($, undefined){
     function DbForm(form) {
 	this.form = $(form);
 	this.elements = $([]);
@@ -5460,7 +5437,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    if ( typeof async == "undefined" ) {
 		async = false;
 	    }
-	    httpPost(url, formEncode.call(this, this.form), handler, errorHandler, async);
+	    httpPost(url, formData.call(this, this.form), handler, errorHandler, async);
 	},
 	focus: function() {
 	    this.elements.each(function(){
@@ -5656,14 +5633,15 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	this.form.trigger('formActionError.dbForm', [errorMessage]);
     }
 
-    function formEncode(form) {
-	var list = new Array;
+    function formData(form) {
+	var data = {};
 	this.elements
 	    .filter(function(){ return $(this).prop('name') != ""; })
 	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
 	    .filter(function(){ return ! $(this).is('div.clsRadioGroup'); })
 	    .each(function(){
+		var name = $(this).attr('name');
 		var value = "";
 		if ( $(this).is('input') ) {
 		    if ( $(this).prop('type') == "checkbox" ) {
@@ -5682,9 +5660,16 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		} else {
 		    value = $(this).html();
 		}
-		list.push(encodeURIComponent($(this).attr('name')) + "=" + encodeURIComponent(value));
+		if ( data[name] === undefined ) {
+		    data[name] = value;
+		} else if ( typeof data[name] !== 'object' ) {
+		    data[name] = new Array(data[name], value);
+		} else {
+		    data[name].push(value);
+		}
+
 	    });
-	return list.join("&");
+	return data;
     }
 
     $.fn.dbForm = function(method) {
@@ -6000,8 +5985,8 @@ function dbFormHTMLArea(oDiv) {
 	// Bind
 	tbody.on('mouseup.dbGrid',cellOnMouseUp);
 	jQuery(window).on('resize.dbGrid',onResize);
-	window.onbeforeunload = onBeforeUnload;
-	window.onbeforeprint = onBeforePrint;
+	jQuery(window).on('beforeunload', onBeforeUnload);
+	jQuery(window).on('beforeprint', onBeforePrint);
      
 	init2();
       }
@@ -7294,24 +7279,34 @@ function dbFormHTMLArea(oDiv) {
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
-	_create: function(){
+	_create: function() {
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
 	    this.state = 'current';
 	    if ( this.element.attr('recordType') === "add" ) {
 		this.type = "add";
 	    } else {
 		this.type = "update";
 	    }
+	    if ( this.options.saveType === 'recordOut' ) {
+		this._on({
+		    'dbRecordOut': function() {
+			if ( this.getState() === "dirty" ) {
+			    this.save();
+			}
+		    }
+		});
+	    }
 	},
-	getRecordSet: function(){
+	getRecordSet: function() {
 	    // Get the record-set element containing this record
 	    return this.element.closest('.recordSet');
 	}, 
-	getState: function(){
+	getState: function() {
 	    // Get the state of this record
 	    return this.state;
 	}, 
-	setState: function(newState){
+	setState: function(newState) {
 	    // Set the state of this record
 	    switch(newState) {
 	    case "updating":
@@ -7321,13 +7316,17 @@ function dbFormHTMLArea(oDiv) {
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
+		this.getCurrentField().dbField('editor', 'refresh');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
 		$.error('Invalid state');
 	    }
-	}, 
-	save: function(async){
+	},
+	getErrorMessage: function() {
+	    return this.error;
+	},
+	save: function(async) {
 	    // Save this record, using an add or update url as appropriate
 	    if ( this.getState() === "updating" ) {
 		return false;
@@ -7338,7 +7337,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    this.action(this.type, url, async);
 	}, 
-	delete: function(async){
+	delete: function(async) {
 	    // Delete this record, by sending a delete request to the server
 	    if ( this.getState() === "updating" ) {
 		return false;
@@ -7349,7 +7348,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    this.action('delete', url, async);
 	}, 
-	action: function(action, url, async){
+	action: function(action, url, async) {
 	    // Perform the given action (add, update, delete), by submitting record data to the server.
 	    var async = coalesce(async, true);
 
@@ -7367,17 +7366,23 @@ function dbFormHTMLArea(oDiv) {
 		} else {
 		    var value = $(field).dbField('getValue');
 		}
-		data[name] = value;
+		if ( typeof data[name] == "undefined" ) {
+		    data[name] = value;
+		} else if ( typeof data[name] == "object" ) {
+		    data[name].push(value);
+		} else {
+		    data[name] = new Array(data[name]);
+		}
 	    });
 
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
-	getCurrentField: function(){
+	getCurrentField: function() {
 	    // Return the field currently being edited (or an empty jQuery object if none are)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
-	setValues: function(xmlDoc){
+	setValues: function(xmlDoc) {
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
@@ -7392,20 +7397,20 @@ function dbFormHTMLArea(oDiv) {
 	    });
 	    this.element.trigger('resize');
 	}, 
-	recordIn: function(event){
+	recordIn: function(event) {
 	    // Call to start editing this record. Does nothing much because focus is determined by fields, not records.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
 	}, 
 	recordOut: function(event){
-	    // Call when done editing this record. Auto-saves if any changes were made.
-	    if ( this.getState() === "dirty" ) {
-		this.save();
-	    }
+	    // Call when done editing this record.
+	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
-	_actionReturn: function(action, xmlDoc, status, jqXHR){
+	_actionReturn: function(action, xmlDoc, status, jqXHR) {
 	    // Called on successfull return from a server action (add, update or delete)
 	    this.setState('current');
+	    this.error = undefined;
 	    switch(action){
 	    case "update":
 		this.setValues(xmlDoc);
@@ -7428,12 +7433,13 @@ function dbFormHTMLArea(oDiv) {
 		recordSet.trigger('resize');
 	    }
 	},
-	_actionReturnError: function(action, message, type){
+	_actionReturnError: function(action, message, type) {
 	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		alert(message);
 	    }
+	    this.error = message;
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
 	}
     });
@@ -7451,8 +7457,12 @@ function dbFormHTMLArea(oDiv) {
 
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
+	options: {
+	    saveType: "recordOut"
+	},
 	_create: function(){
 	    // Constructor function
+	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 
 	    // Event listeners - instead of seperate event listeners for each field, delegated event listeners are added to the container.
 	    // Elements with class "editable" should be editable fields.
@@ -7483,31 +7493,38 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Initialize as empty jQuery object.
 	    this.currentField = $([]);
+	    this.currentRecord = $([]);
 	},
 	save: function(aysnc) {
 	    // Save the current record
 	    this.getCurrentRecord().dbRecord('save', async);
 	}, 
 	getCurrentRecord: function() {
-	    // Returns the current record or an empty jQuery object if none exists.
-	    return this.currentField.dbField('getRecord');
-	}, 
+	    // Returns the current record
+	    return this.currentRecord;
+	},
+	setCurrentRecord: function(newRecord) {
+	    // Sets the current field
+	    this.currentRecord = $(newRecord);
+	},
 	getCurrentField: function() {
-	    // Returns the current field, or an empty jQuery object if none exists.
+	    // Returns the current field
 	    return this.currentField;
 	}, 
 	setCurrentField: function(newField) {
-	    // Sets the "currentField" property directly, please use fieldChange to change the current field.
+	    // Sets the current field
 	    this.currentField = $(newField);
 	}, 
 	fieldChange: function(toField) {
 	    // Move to the target field
-	    var currentRecord = this.currentField.dbField('getRecord');
+	    var currentRecord = this.getCurrentRecord();
 	    var newRecord = toField.dbField('getRecord');
-	    this.currentField.dbField('fieldOut');
+
+	    this.getCurrentField().dbField('fieldOut');
 	    if ( ! currentRecord.is(newRecord) ) {
 		currentRecord.dbRecord('recordOut');
 	    }
+
 	    toField.dbField('fieldIn');
 	    if ( ! currentRecord.is(newRecord) ) {
 		newRecord.dbRecord('recordIn');
@@ -7515,13 +7532,11 @@ function dbFormHTMLArea(oDiv) {
 	},
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.
-	    var record = this.getCurrentRecord();
-	    if ( record.dbRecord('getState') == 'dirty' ) {
-		if ( window.confirm('Do you want to save your changes?') ) {
-		    record.dbRecord('save', false);
-		    if ( record.dbRecord('getState') == 'error' ) {
-			return "Your changes could not be saved.\nStay on the current page to correct.";
-		    }
+	    var records = this.element.find('.record');
+	    for (var i = 0; i < records.length; i++) {
+		var record = records.eq(i);
+		if ( record.dbRecord('getState') === 'dirty' || record.dbRecord('getState') === 'error' ) {
+		    return "Your changes have not been saved.\nStay on the current page to correct.";
 		}
 	    }
 	},
@@ -7536,10 +7551,15 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.delayedHover.js ==== */
 (function($, window, undefined) {
+    // Delayed hover plugin.
+    // Triggers "delayedHoverIn" or "delayedHoverOut" if the user hovers over, or out of, a single element for more than a given time.
+    // Each element in the current jQuery object is handled separately, but a selector can be used to delegate the listeners
+    // (eg. if delayedHover events will need to be triggered on elements that are added to the DOM later)
     $.fn.delayedHover = function(options){
-	var settings = $.extend({
+	var options = $.extend({
 	    inTime: 200,
-	    outTime: 200
+	    outTime: 200,
+	    selector: undefined
 	}, options);
 
 	function mouseEnter(event) {
@@ -7550,7 +7570,7 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    timer = window.setTimeout(function() {
 		target.trigger('delayedHoverIn');
-	    }, settings.inTime)
+	    }, options.inTime)
 	    target.data('delayedHoverTimer', timer);
 	}
 	function mouseLeave(event) {
@@ -7561,19 +7581,55 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    timer = window.setTimeout(function() {
 		target.trigger('delayedHoverOut');
-	    }, settings.outTime)
+	    }, options.outTime)
 	    target.data('delayedHoverTimer', timer);
 	}
 
-	if ( settings.selector === undefined ) {
+	if ( options.selector === undefined ) {
 	    $(this)
 		.on('mouseenter', mouseEnter)
 		.on('mouseleave', mouseLeave);
 	} else {
 	    $(this)
-		.on('mouseenter', settings.selector, mouseEnter)
-		.on('mouseleave', settings.selector, mouseLeave);
+		.on('mouseenter', options.selector, mouseEnter)
+		.on('mouseleave', options.selector, mouseLeave);
 	}
+    }
+
+    // Delayed Group Hover plugin.
+    // Treats all the elements in the current jQuery object as a single "group";
+    // Invokes a user-defined callback when the user hovers over one element from the current jQuery object for more than a given time,
+    // or when they hover out of all the elements of the current jQuery object for more than a given time.
+    $.fn.delayedGroupHover = function(options) {
+	// hoverIn and hoverOut are optional callback functions.
+	var options = $.extend({
+	    inTime: 200,
+	    outTime: 200,
+	    hoverIn: undefined,
+	    hoverOut: undefined
+	}, options);
+
+	var timer;
+	function mouseEnter(event) {
+	    if ( timer !== undefined ) {
+		window.clearTimeout(timer);
+	    }
+	    if ( typeof options.hoverIn === "function" ) {
+		timer = window.setTimeout(options.hoverIn, options.inTime);
+	    }
+	}
+	function mouseLeave(event) {
+	    if ( timer !== undefined ) {
+		window.clearTimeout(timer);
+	    }
+	    if ( typeof options.hoverOut === "function" ) {
+		timer = window.setTimeout(options.hoverOut, options.outTime);
+	    }
+	}
+
+	$(this)
+	    .on('mouseenter', mouseEnter)
+	    .on('mouseleave', mouseLeave);
     }
 })(jQuery, window);
 
@@ -7619,8 +7675,8 @@ function dbFormHTMLArea(oDiv) {
 	    scrollSpeed: 0.3,
 	    snapTime: 100
 	}, options);
-	var scrollBox = settings.scrollBox;
-	var container = settings.container;
+	var scrollBox = settings.scrollBox.addClass('hoverScroller');
+	var container = settings.container.addClass('hoverScrollerContainer');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
 
@@ -7916,7 +7972,7 @@ function dbFormHTMLArea(oDiv) {
 	    myPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! this.is(commonOffsetParent) ) {
+	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
 	    myPosition.top += commonOffsetParent.scrollTop();
 	}
@@ -7933,7 +7989,7 @@ function dbFormHTMLArea(oDiv) {
 	    targetPosition.top += positionOfCurrent.top;
 	    current = current.offsetParent();   
 	}
-	if ( ! target.is(commonOffsetParent) ) {
+	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
 	    targetPosition.top += commonOffsetParent.scrollTop();
 	}
@@ -8031,7 +8087,7 @@ function dbFormHTMLArea(oDiv) {
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
 	    $('body').css('margin-right', "+=35px");
 
-	    var sidebar = this.element,
+	    var sidebar = this.element.addClass('sidebar'),
 	    toolbar = this.toolbar = sidebar.find('.toolbar'),
 	    initialWidth = sidebar.width();
 
@@ -9317,6 +9373,142 @@ function dbFormHTMLArea(oDiv) {
     };
 })(jQuery);
 
+/* ==== jquery.thSortMenu.js ==== */
+// thSortMenu plugin - support for server-side table sorting
+;(function($, window, undefined) {
+    // Static variables, shared by all instances of this plugin on the page
+    var urlData = splitURL(window.location.href);
+    var path = urlData.path;
+    var qryData = urlData.data;
+    if ( qryData.sortCols !== undefined ) {
+	var sortColsArray = qryData.sortCols.split(" ");
+	var currentSortColName = sortColsArray[0];
+	var currentSortColType = coalesce(sortColsArray[1], 'ASC');
+    }
+
+    // The actual widget prototype
+    $.widget('qcode.thSortMenu', {
+	_create: function() {
+	    // Constructor function
+	    // Apply default column and sort type
+	    if ( this.options.column === undefined ) {
+		this.options.column = this.element.parent('th').closest('table').find('col').eq( this.element.parent('th').index() );
+	    }
+	    if ( ! this.options.column.is('col') || this.options.column.length != 1 ) {
+		$.error('Invalid column for thSortMenu');
+	    }
+	    if ( this.options.type === undefined ) {
+		this.options.type = this.getColType(this.options.column);
+	    }
+
+	    // Bind events
+	    this._on({
+		'click': this.menuShow
+	    });
+
+	    // Remember parent's background color
+	    this.savedBackground = this.element.parent().css('background-color');
+	},
+	menuShow: function(target) {
+	    // Show the menu. Target is the event or element to position against.
+	    if ( this.menu === undefined ) {
+		this._menuCreate();
+	    }
+	    this.element.parent().css({
+		'background-color': "#ffffe9"
+	    });
+	    // Use jQuery UI position method
+	    this.menu
+		.show()
+		.position({
+		    'my': "left top",
+		    'of': target,
+		    'collision': "fit"
+		});
+	},
+	menuHide: function() {
+	    // Hide the menu
+	    this.menu.hide();
+	    this.element.parent().css({
+		'background-color': this.savedBackground
+	    });
+	},
+	getColType: function(col) {
+	    // Get the sort type of the given column
+	    if ( col.hasClass('clsNumber') || col.hasClass('clsMoney') ) {
+		return 'numeric';
+	    } else if ( col.hasClass('clsDate') ) {
+		return 'date';
+	    } else {
+		return 'alpha';
+	    }
+	},
+	_menuCreate: function() {
+	    // Create the menu
+	    var colName = this.options.column.attr('name');
+
+	    var ascURL = urlSet(window.location.href, 'sortCols', colName + " " + "ASC");
+	    var descURL = urlSet(window.location.href, 'sortCols', colName + " " + "DESC");
+
+	    // Generate link text from sort type
+	    var ascText;
+	    var descText;
+	    switch(this.options.type) {
+	    case 'numeric':
+		ascText = "Sort Low to High";
+		descText = "Sort High to Low";
+		break;
+	    case 'date':
+		ascText = "Sort Old to New";
+		descText = "Sort New to Old";
+		break;
+	    default:
+		ascText = "Sort A-Z";
+		descText = "Sort Z-A";
+	    }
+
+	    // Create the links
+	    var ascLink = $('<a>')
+		.attr( 'href',  ascURL )
+		.html( ascText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
+	    var descLink = $('<a>')
+		.attr( 'href',  descURL )
+		.html( descText.replace(/\s/g, "&nbsp;") )
+		.linkNoHistory();
+
+	    // Create the menu element
+	    this.menu = $('<div>')
+		.addClass('thSortMenu')
+		.appendTo($('body'))
+		.css({
+		    'position': "absolute",
+		    'display': "none",
+		    'z-index': 3
+		});
+
+	    // Add the required links to the menu
+	    if ( colName === currentSortColName ) {
+		if ( currentSortColType == "ASC" ) {
+		    this.menu.append(descLink);
+		} else {
+		    this.menu.append(ascLink);
+		}
+	    } else {
+		this.menu.append(ascLink).append(descLink);
+	    }
+
+	    // Add the menu to the widget and bind hover events
+	    this.element.add(this.menu)
+		.delayedGroupHover({
+		    inTime: 400,
+		    outTime: 400,
+		    hoverOut: this.menuHide.bind(this)
+		});
+	}
+    });
+})(jQuery, window);
+
 /* ==== jquery.theadFixed.js ==== */
 (function($, undefined) {
     var scrollBarWidth = 18;
@@ -9330,6 +9522,7 @@ function dbFormHTMLArea(oDiv) {
 	},
 	_create: function() {
 	    // TheadFixed Class Constructor
+	    var widget = this;
 
 	    // Attempt to handle existing wrappers sensibly.
 	    if ( ! $(this.element).is('table') ) {
@@ -9358,28 +9551,16 @@ function dbFormHTMLArea(oDiv) {
 	    this.wrapper
 		.addClass(this.options.wrapperClass);
 
-	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
-	    this.scrollBox.css('min-width', 10000);
-
-	    // If any cells besides header cells and first-row cells have a specified width, remove it.
-	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
-
-	    // Calculate and apply column widths
+	    // Store any inline widths that were present before the plugin was called
 	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
 		var th = $(element);
 		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
-		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
-
-		// Ensures that default padding will be preserved when the thead is removed
-		th.css({
-		    'padding-top': th.css('padding-top'),
-		    'padding-right': th.css('padding-right'),
-		    'padding-bottom': th.css('padding-bottom'),
-		    'padding-left': th.css('padding-left')
-		});
-		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
+		th.data('theadFixedCellWidth', widget._getCellInlineWidth(th));
+		td.data('theadFixedCellWidth', widget._getCellInlineWidth(td));
 	    });
+
+	    // Calculate and apply widths so that the headers match the body
+	    this._setWidths();
 
 	    // Apply css
 	    this.wrapper.css({
@@ -9400,8 +9581,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.scrollBox.css({
 		'overflow-y': "auto",
 		'overflow-x': 'hidden',
-		'height': "100%",
-		'min-width': table.outerWidth() + scrollBarWidth
+		'height': "100%"
 	    });
 
 	    thead.css({
@@ -9434,6 +9614,53 @@ function dbFormHTMLArea(oDiv) {
 	    });
 	    table.css('border-top-width', 0);
 	},
+	repaint: function() {
+	    // Recalculate widths, heights, etc.
+	    var table = this.table;
+	    var thead = table.children('thead');
+	    thead.css({
+		'position': "static"
+	    });
+	    this._setWidths();
+	    thead.css({
+		'position': "absolute"
+	    });
+	    this.scrollWrapper.css('top', thead.outerHeight());
+	},
+	_setWidths: function() {
+	    // Calculate the width of each column and apply it to first-row cells in the header and body
+	    var table = this.table;
+	    var thead = table.children('thead');
+
+	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
+	    this.scrollBox.css('min-width', 10000);
+
+	    // If any cells besides header cells and first-row cells have a specified width, remove it.
+	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
+
+	    // Calculate and apply column widths
+	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
+		var th = $(element);
+		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
+
+		th.css('width', coalesce(th.data('theadFixedCellWidth'), ''));
+		td.css('width', coalesce(td.data('theadFixedCellWidth'), ''));
+
+		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
+
+		// Ensures that default padding will be preserved when the thead is removed
+		th.css({
+		    'padding-top': th.css('padding-top'),
+		    'padding-right': th.css('padding-right'),
+		    'padding-bottom': th.css('padding-bottom'),
+		    'padding-left': th.css('padding-left')
+		});
+		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
+		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
+	    });
+
+	    this.scrollBox.css('min-width', table.outerWidth() + scrollBarWidth);
+	},
 	getWrapper: function() {
 	    return this.wrapper;
 	},
@@ -9445,6 +9672,22 @@ function dbFormHTMLArea(oDiv) {
 	},
 	getTable: function() {
 	    return this.table;
+	},
+	_getCellInlineWidth: function(cell) {
+	    // Gets the width from a cell's inline style attribute
+	    var width,
+	    style = cell.attr('style'),
+	    pairs = style.split(';');
+	    $.each(pairs, function(i, pair) {
+		var bits = pair.split(':'),
+		name = $.trim(bits[0]),
+		value = $.trim(bits[1]);
+		if ( name === "width" ) {
+		    width = value;
+		    return false;
+		}
+	    });
+	    return width;
 	}
     });
 })(jQuery);
@@ -9473,7 +9716,16 @@ function splitURL(url) {
     var data = {};
     if ( queryString !== "" ) {
 	$.each(queryString.split('&'),function(i, pair){
-	    data[pair.split('=')[0]] = pair.split('=')[1];
+	    var pair = pair.split('=');
+	    var name = decodeURIComponent( pair[0].replace(/\+/g, " ") );
+	    var value = decodeURIComponent( pair[1].replace(/\+/g, " ") );
+	    if ( typeof data[name] == "undefined" ) {
+		data[name] = value;
+	    } else if ( typeof data[name] == "object" ) {
+		data[name].push(value);
+	    } else {
+		data[name] = new Array(data[name]);
+	    }
 	});
     }
     return {
@@ -9502,13 +9754,46 @@ function focusFirstChild(element) {
 }
 
 function stripHTML(html) {
-  return html.replace(/<[^>]+>/gi,"");
+    return html.replace(/<[^>]+>/gi,"");
 }
 function escapeHTML(str) {
-	return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
 }
 function unescapeHTML(str) {
-	return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+    return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+}
+
+function urlSet(url,name,value) {
+    var re = /([^\?]+)\??(.*)/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    url = path + "?" + urlDataSet(queryString,name,value);
+    return url;
+}
+
+function urlDataSet(data,name,value) {
+    var list = new Array();
+    var a = new Array();
+    var b = new Array();
+    var c = new Array();
+    
+    if ( data != "" ) {
+	var a = data.split('&');
+    }
+    for (var i=0;i<a.length;i++) {
+	b = a[i].split('=');
+	var n = decodeURIComponent(b[0].replace(/\+/g,' '));
+	var v = decodeURIComponent(b[1].replace(/\+/g,' '));
+	c[n]=v;
+    }
+    c[name] = value;
+    for (key in c) {
+	list.push(encodeURIComponent(key) + "=" + encodeURIComponent(c[key]));
+    }
+    
+    data=list.join("&");
+    return data;
 }
 
 function httpPost(url,data,handler,errorHandler,async) {
@@ -9548,6 +9833,15 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
+}
+
+// linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
+$.fn.linkNoHistory = function() {
+    $(this).filter('a').on('click', function(event) {
+	window.location.replace($(this).attr('href'));
+	event.preventDefault();
+    });
+    return this;
 }
 
 /* ==== tabCtl.js ==== */
