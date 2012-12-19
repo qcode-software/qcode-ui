@@ -58,7 +58,7 @@
 	}, options);
 
 	var timer;
-	var group = $(this);
+	var group = this;
 	function mouseEnter(event) {
 	    if ( $(event.relatedTarget).is(group) ) {
 		return;
@@ -67,7 +67,7 @@
 		window.clearTimeout(timer);
 	    }
 	    if ( typeof options.hoverIn === "function" ) {
-		timer = window.setTimeout(options.hoverIn, options.inTime);
+		timer = window.setTimeout(options.hoverIn.bind(group), options.inTime);
 	    }
 	}
 	function mouseLeave(event) {
@@ -78,7 +78,7 @@
 		window.clearTimeout(timer);
 	    }
 	    if ( typeof options.hoverOut === "function" ) {
-		timer = window.setTimeout(options.hoverOut, options.outTime);
+		timer = window.setTimeout(options.hoverOut.bind(group), options.outTime);
 	    }
 	}
 
