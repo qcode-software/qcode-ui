@@ -48,7 +48,6 @@
 /* ==== sidebar.css ==== */
 /* Sidebar */
 .sidebar {
-    float: right;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -73,16 +72,16 @@
 
 /* ==== thSortMenu.css ==== */
 span.clsSort {
-    color:blue;
-    cursor:hand;
+    color: blue;
+    cursor: pointer;
 }
 .thSortMenu {
-    background:white;
-    border:solid 1px #aca899;
-    padding-top:2px;
-    padding-bottom:2px;
-    padding-left:15px;
-    padding-right:15px;
+    background: white;
+    border: solid 1px #aca899;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 .thSortMenu a {
     display: block;
