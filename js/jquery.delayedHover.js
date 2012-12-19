@@ -58,7 +58,11 @@
 	}, options);
 
 	var timer;
+	var group = $(this);
 	function mouseEnter(event) {
+	    if ( $(event.relatedTarget).is(group) ) {
+		return;
+	    }
 	    if ( timer !== undefined ) {
 		window.clearTimeout(timer);
 	    }
@@ -67,6 +71,9 @@
 	    }
 	}
 	function mouseLeave(event) {
+	    if ( $(event.relatedTarget).is(group) ) {
+		return;
+	    }
 	    if ( timer !== undefined ) {
 		window.clearTimeout(timer);
 	    }
@@ -75,7 +82,7 @@
 	    }
 	}
 
-	$(this)
+	group
 	    .on('mouseenter', mouseEnter)
 	    .on('mouseleave', mouseLeave);
     }
