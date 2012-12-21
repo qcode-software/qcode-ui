@@ -112,6 +112,8 @@
 	    case 83: //S
 		// Not Ctrl + s
 		if ( e.which == 83 && ! e.ctrlKey ) break;
+
+	    case 46: // delete
 	    case 13: //return
 	    case 9: //tab
 	    case 38: //up

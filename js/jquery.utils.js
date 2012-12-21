@@ -148,3 +148,18 @@ $.fn.linkNoHistory = function() {
     });
     return this;
 }
+
+$.fn.setObjectValue = function(value) {
+    // Set the value of the target elements based on their type.
+    this.each(function() {
+	var element = $(this);
+	if ( element.is('select, input, textarea') ) {
+	    element.val(value);
+	} else if ( element.is('.clsRadioGroup') ) {
+		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
+	} else {
+	    element.html(value);
+	}
+    });		 
+    return this;
+}
