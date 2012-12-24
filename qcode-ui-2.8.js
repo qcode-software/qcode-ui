@@ -4907,7 +4907,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.repaint
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
@@ -4930,34 +4930,16 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    return parseBoolean(this.editor.text());
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value of the editor
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent'
-		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
+	    // Show this editor over the target element and set the value
+	    this.currentElement = $(element);
+	    this.editor.show();
 	    if ( parseBoolean(value) ) {
 		this._setTrue();
 	    } else {
 		this._setFalse();
 	    }
-	    
-	    editor
-		.css(element.positionRelativeTo(this.element))
-		.show()
-		.focus();
-	}, 
+	    this.repaint()
+	},
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
@@ -4965,6 +4947,28 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	    this.editor.hide();
 	}, 
+	repaint: function() {
+	    // repaint the editor
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+		// position
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -5130,7 +5134,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.refresh
+		'resize': this.repaint
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -5158,7 +5162,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show().html(value);
-	    this.refresh();
+	    this.repaint();
 	},
 	hide: function() {
 	    // Hide the editor
@@ -5167,7 +5171,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	    this.editor.hide();
 	},
-	refresh: function() {
+	repaint: function() {
 	    if ( this.currentElement.length == 1 ) {
 		// Copy various style from the target element to the editor
 		var editor = this.editor;
@@ -5209,19 +5213,19 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-		var selection = this.editor.textrange('get');
+	    var selection = this.editor.textrange('get');
 
 	    switch(e.which) {
 	    case 38: // up
 	    case 37: // left
-		if ( selection.selectionText === "" && selection.selectionAtStart ) {
+		if ( selection.selectionAtStart ) {
 		    break;
 		} else {
 		    return true;
 		}
 	    case 40: // down
 	    case 39: // right
-		if ( selection.selectionText === "" && selection.selectionAtEnd ) {
+		if ( selection.selectionAtEnd ) {
 		    break;
 		} else {
 		    return true;
@@ -5243,20 +5247,20 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		}
 	    case 9: // tab 
 		break;
-	    
+
 	    default: return true 
 	    }
 
-	    // propagate event to target element
-	    var event = jQuery.Event(e.type, {
-		    'data': e.data, 
-		    'ctrlKey': e.ctrlKey, 
-		    'altKey': e.altKey, 
-		    'shiftKey': e.shiftKey, 
-		    'which': e.which
-		});
-		e.preventDefault();
-		this.currentElement.trigger(event);
+	    // propagate custom event to target element
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+	    });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
@@ -5324,7 +5328,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.refresh
+		'resize': this.repaint
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('dbEditorText')
@@ -5356,7 +5360,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
-	    this.refresh();
+	    this.repaint();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5365,7 +5369,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 	    this.editor.hide();
 	},
-	refresh: function() {
+	repaint: function() {
 	    // repaint the editor
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
@@ -5406,37 +5410,55 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.editor.remove();
 	},
 	_inputOnKeyDown: function(e) {
-	    var selection;
-	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	    case 37: //left
-		// If selection is not empty collapse left
-		selection = this.editor.textrange('get');
-		if ( ! ( selection.selectionText === "" && selection.selectionAtStart )) break;
-	    case 39: //right
-		// If selection is not empty collapse right
-		selection = this.editor.textrange('get');
-		if ( e.which ==  39 && ! ( selection.selectionText === "" && selection.selectionAtEnd )) break;
-	    case 83: //S
-		// Not Ctrl + s
-		if ( e.which == 83 && ! e.ctrlKey ) break;
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    var selection = this.editor.textrange('get');
 
-	    case 46: // delete
-	    case 13: //return
-	    case 9: //tab
-	    case 38: //up
-	    case 40: //down
-		// Any of the above re-trigger event
-		var event = jQuery.Event('editorKeyDown', {
-		    'data': e.data, 
-		    'ctrlKey': e.ctrlKey, 
-		    'altKey': e.altKey, 
-		    'shiftKey': e.shiftKey, 
-		    'which': e.which
-		});
-		e.preventDefault();
-		this.currentElement.trigger(event);
+	    switch(e.which) {
+	    case 38: // up
+	    case 37: // left
+		if ( selection.selectionAtStart ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 40: // down
+	    case 39: // right
+		if ( selection.selectionAtEnd ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 83: // S
+		if ( e.ctrlKey ) {
+		    break;
+		} else {
+		    return true;
+		}
+
+	    case 46: // delete 
 		break;
+	    case 13: // return
+		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 9: // tab 
+		break;
+
+	    default: return true 
 	    }
+
+	    // propagate custom event to target element
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+	    });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.
@@ -5503,7 +5525,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.refresh
+		'resize': this.repaint
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
@@ -5534,7 +5556,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
-	    this.refresh();
+	    this.repaint();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5544,7 +5566,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement = $([]);
 	    this.editor.hide();
 	},
-	refresh: function() {
+	repaint: function() {
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
@@ -5589,19 +5611,19 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-		var selection = this.editor.textrange('get');
+	    var selection = this.editor.textrange('get');
 
 	    switch(e.which) {
 	    case 38: // up
 	    case 37: // left
-		if ( selection.selectionText === "" && selection.selectionAtStart ) {
+		if ( selection.selectionAtStart ) {
 		    break;
 		} else {
 		    return true;
 		}
 	    case 40: // down
 	    case 39: // right
-		if ( selection.selectionText === "" && selection.selectionAtEnd ) {
+		if ( selection.selectionAtEnd ) {
 		    break;
 		} else {
 		    return true;
@@ -5623,17 +5645,17 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		}
 	    case 9: // tab 
 		break;
-	    
+
 	    default: return true 
 	    }
 
 	    // propagate event to target element
-	    var event = jQuery.Event(e.type, {
-		    'data': e.data, 
-		    'ctrlKey': e.ctrlKey, 
-		    'altKey': e.altKey, 
-		    'shiftKey': e.shiftKey, 
-		    'which': e.which
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
 	    });
 	    e.preventDefault();
 	    this.currentElement.trigger(event);
@@ -7049,7 +7071,7 @@ function dbFormHTMLArea(oDiv) {
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
-		this.getCurrentField().dbField('editor', 'refresh');
+		this.getCurrentField().dbField('editor', 'repaint');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
