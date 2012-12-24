@@ -17,7 +17,7 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.refresh
+		'resize': this.repaint
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -45,7 +45,7 @@
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show().html(value);
-	    this.refresh();
+	    this.repaint();
 	},
 	hide: function() {
 	    // Hide the editor
@@ -54,7 +54,7 @@
 	    }
 	    this.editor.hide();
 	},
-	refresh: function() {
+	repaint: function() {
 	    if ( this.currentElement.length == 1 ) {
 		// Copy various style from the target element to the editor
 		var editor = this.editor;
@@ -96,19 +96,19 @@
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-		var selection = this.editor.textrange('get');
+	    var selection = this.editor.textrange('get');
 
 	    switch(e.which) {
 	    case 38: // up
 	    case 37: // left
-		if ( selection.selectionText === "" && selection.selectionAtStart ) {
+		if ( selection.selectionAtStart ) {
 		    break;
 		} else {
 		    return true;
 		}
 	    case 40: // down
 	    case 39: // right
-		if ( selection.selectionText === "" && selection.selectionAtEnd ) {
+		if ( selection.selectionAtEnd ) {
 		    break;
 		} else {
 		    return true;
@@ -130,20 +130,20 @@
 		}
 	    case 9: // tab 
 		break;
-	    
+
 	    default: return true 
 	    }
 
-	    // propagate event to target element
-	    var event = jQuery.Event(e.type, {
-		    'data': e.data, 
-		    'ctrlKey': e.ctrlKey, 
-		    'altKey': e.altKey, 
-		    'shiftKey': e.shiftKey, 
-		    'which': e.which
-		});
-		e.preventDefault();
-		this.currentElement.trigger(event);
+	    // propagate custom event to target element
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+	    });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.

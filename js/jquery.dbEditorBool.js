@@ -17,7 +17,7 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this._onResize
+		'resize': this.repaint
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
@@ -40,34 +40,16 @@
 	    return parseBoolean(this.editor.text());
 	}, 
 	show: function(element, value){
-	    // Show this editor over the target element and set the value of the editor
-	    this.currentElement = element;
-	    var editor = this.editor;
-
-	    // Copy various style from the target element to the editor
-	    $.each(copyAttributes, function(i, name){
-		editor.css(name, element.css(name));
-	    });
-
-	    // Different browsers return different css for transparent elements
-	    if ( element.css('backgroundColor') == 'transparent'
-		 || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', element.css('backgroundColor'));
-	    }
-
+	    // Show this editor over the target element and set the value
+	    this.currentElement = $(element);
+	    this.editor.show();
 	    if ( parseBoolean(value) ) {
 		this._setTrue();
 	    } else {
 		this._setFalse();
 	    }
-	    
-	    editor
-		.css(element.positionRelativeTo(this.element))
-		.show()
-		.focus();
-	}, 
+	    this.repaint()
+	},
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
@@ -75,6 +57,28 @@
 	    }
 	    this.editor.hide();
 	}, 
+	repaint: function() {
+	    // repaint the editor
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+		// position
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
