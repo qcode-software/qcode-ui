@@ -85,6 +85,19 @@
 			dbGrid.cellChange(initialFocusCell);
 		    }
 		});
+
+		// preformatted columns
+		var rows = dbGrid.tbody.children('tr');
+		dbGrid.colgroup.children('[type=text],[type=textarea]').each(function() {
+		    var col = $(this);
+		    var colIndex = col.index();
+		    
+		    // apply class to existing td elements in tbody
+		    rows.children('td:nth-child(' + (colIndex + 1)  + ')').addClass('preformatted')
+
+		    // apply class to this column that can later be inherited by new rows
+		    col.addClass('preformatted')
+		});
 	    }
 	},
 	getInitialFocusCell: function(){
