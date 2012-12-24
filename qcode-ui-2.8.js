@@ -7368,7 +7368,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.element.addClass(newState);
 	    this.setStatusBarMsg(message);
 	    this.state = newState;
-	    this.getCurrentCell().dbCell('editor', 'refresh');
+	    this.getCurrentCell().dbCell('editor', 'repaint');
 	    this.element.trigger('dbRecordStateChange');
 	},
 	rowIn: function(){  
