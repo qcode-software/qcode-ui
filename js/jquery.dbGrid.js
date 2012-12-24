@@ -52,20 +52,20 @@
 		    'mouseup td': function(event) {
 			$(event.currentTarget).dbCell('onMouseUp');
 		    },
-		    'keydown td': function(event){
-			$(event.currentTarget).dbCell('onKeyDown', event);
+		    'editorKeyDown td': function(event){
+			$(event.currentTarget).dbCell('editorKeyDown', event);
 		    },
-		    'keyup td': function(event){
-			$(event.currentTarget).dbCell('onKeyUp', event);
+		    'editorKeyUp td': function(event){
+			$(event.currentTarget).dbCell('editorKeyUp', event);
 		    },
-		    'cut td': function(event){
-			$(event.currentTarget).dbCell('onCut', event);
+		    'editorCut td': function(event){
+			$(event.currentTarget).dbCell('editorCut', event);
 		    },
-		    'paste td': function(event){
-			$(event.currentTarget).dbCell('onPaste', event);
+		    'editorPaste td': function(event){
+			$(event.currentTarget).dbCell('editorPaste', event);
 		    },
-		    'blur td': function(event){
-			$(event.currentTarget).dbCell('onBlur', event);
+		    'editorBlur td': function(event){
+			$(event.currentTarget).dbCell('editorBlur', event);
 		    }
 		});
 		dbGrid._on(window, {

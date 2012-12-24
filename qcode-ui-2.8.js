@@ -3539,47 +3539,31 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Write the contents of the editor to the current cell
 	    this.setValue(this.editor('getValue'));
 	},
-	onBlur: function(){
+	editorBlur: function(){
 	    // Perform a cellout if the editor blurs and updateType == "onCellOut"
 	    var grid = this.getGrid();
 	    var row = this.getRow();
-
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; }
-	    	   
 	    if ( grid.dbGrid('option', 'updateType') === 'onCellOut' ) {
 		this.cellOut();
 	    }		   
 	},
-	onCut: function(){
+	editorCut: function(){
 	    // Cut events should be triggered on the editor, but will be passed on to here. 
 	    // Editor value will have changed, mark row as dirty.
 	    var row = this.getRow();
-
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; }
-	    
 	    row.dbRow('setState', 'dirty');
 	},
-	onPaste: function(){
+	editorPaste: function(){
 	    // Paste events should be triggered on the editor, but will be passed on to here. 
 	    // Editor value will have changed, mark row as dirty.
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) {
-		// Cell is not currently being edited
-		return true; 
-	    }
-	    
 	    var row = this.getRow();
 	    row.dbRow('setState', 'dirty');
 	},
-	onKeyUp: function(){
+	editorKeyUp: function(){
 	    // If the Editor's value has changed, mark row as dirty.
 	    var row = this.getRow();
 	    var grid = this.getGrid();
  	    
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; } 
-	    
 	    if ( this.getValue() !== this.editor('getValue') ) {
 		row.dbRow('setState', 'dirty');
 		}
@@ -3588,12 +3572,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
 	    }
 	},
-	onKeyDown: function(event){
+	editorKeyDown: function(event){
 	    var cell = this.element;
 	    var grid = this.getGrid();
 
-	    // Cell is not currently being edited or Alt key combination
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) || event.altKey ) { return true; }
+	    // Alt key combination
+	    if ( event.altKey ) { return true; }
 
 	    switch(event.which) {
 	    case 38: // Up Arrow
@@ -5042,7 +5026,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 
 	    // propagate event to target element
-	    var event = jQuery.Event(e.type, {
+	    var event = jQuery.Event('editorKeyDown', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5076,7 +5060,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	     }
 
 	    // Pass all key up events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5087,7 +5071,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnCut: function(e) {
 	    // Pass all cut events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorCut', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5104,7 +5088,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    }
 
 	    // Pass all paste events on to the target element.
-            var event = jQuery.Event(e.type, {
+            var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
@@ -5117,7 +5101,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
-		var event = jQuery.Event(e.type, {
+		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
 		this.currentElement.trigger(event);
@@ -6540,20 +6524,20 @@ function dbFormHTMLArea(oDiv) {
 		    'mouseup td': function(event) {
 			$(event.currentTarget).dbCell('onMouseUp');
 		    },
-		    'keydown td': function(event){
-			$(event.currentTarget).dbCell('onKeyDown', event);
+		    'editorKeyDown td': function(event){
+			$(event.currentTarget).dbCell('editorKeyDown', event);
 		    },
-		    'keyup td': function(event){
-			$(event.currentTarget).dbCell('onKeyUp', event);
+		    'editorKeyUp td': function(event){
+			$(event.currentTarget).dbCell('editorKeyUp', event);
 		    },
-		    'cut td': function(event){
-			$(event.currentTarget).dbCell('onCut', event);
+		    'editorCut td': function(event){
+			$(event.currentTarget).dbCell('editorCut', event);
 		    },
-		    'paste td': function(event){
-			$(event.currentTarget).dbCell('onPaste', event);
+		    'editorPaste td': function(event){
+			$(event.currentTarget).dbCell('editorPaste', event);
 		    },
-		    'blur td': function(event){
-			$(event.currentTarget).dbCell('onBlur', event);
+		    'editorBlur td': function(event){
+			$(event.currentTarget).dbCell('editorBlur', event);
 		    }
 		});
 		dbGrid._on(window, {
@@ -7362,6 +7346,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.element.addClass(newState);
 	    this.setStatusBarMsg(message);
 	    this.state = newState;
+	    this.getCurrentCell().dbCell('editor', 'refresh');
 	    this.element.trigger('dbRecordStateChange');
 	},
 	rowIn: function(){  

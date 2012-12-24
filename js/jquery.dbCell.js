@@ -156,47 +156,31 @@
 	    // Write the contents of the editor to the current cell
 	    this.setValue(this.editor('getValue'));
 	},
-	onBlur: function(){
+	editorBlur: function(){
 	    // Perform a cellout if the editor blurs and updateType == "onCellOut"
 	    var grid = this.getGrid();
 	    var row = this.getRow();
-
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; }
-	    	   
 	    if ( grid.dbGrid('option', 'updateType') === 'onCellOut' ) {
 		this.cellOut();
 	    }		   
 	},
-	onCut: function(){
+	editorCut: function(){
 	    // Cut events should be triggered on the editor, but will be passed on to here. 
 	    // Editor value will have changed, mark row as dirty.
 	    var row = this.getRow();
-
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; }
-	    
 	    row.dbRow('setState', 'dirty');
 	},
-	onPaste: function(){
+	editorPaste: function(){
 	    // Paste events should be triggered on the editor, but will be passed on to here. 
 	    // Editor value will have changed, mark row as dirty.
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) {
-		// Cell is not currently being edited
-		return true; 
-	    }
-	    
 	    var row = this.getRow();
 	    row.dbRow('setState', 'dirty');
 	},
-	onKeyUp: function(){
+	editorKeyUp: function(){
 	    // If the Editor's value has changed, mark row as dirty.
 	    var row = this.getRow();
 	    var grid = this.getGrid();
  	    
-	    // Cell is not currently being edited
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) ) { return true; } 
-	    
 	    if ( this.getValue() !== this.editor('getValue') ) {
 		row.dbRow('setState', 'dirty');
 		}
@@ -205,12 +189,12 @@
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
 	    }
 	},
-	onKeyDown: function(event){
+	editorKeyDown: function(event){
 	    var cell = this.element;
 	    var grid = this.getGrid();
 
-	    // Cell is not currently being edited or Alt key combination
-	    if ( ! this.element.is(grid.dbGrid('getCurrentCell')) || event.altKey ) { return true; }
+	    // Alt key combination
+	    if ( event.altKey ) { return true; }
 
 	    switch(event.which) {
 	    case 38: // Up Arrow

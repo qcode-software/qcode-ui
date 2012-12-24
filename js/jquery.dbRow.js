@@ -68,6 +68,7 @@
 	    this.element.addClass(newState);
 	    this.setStatusBarMsg(message);
 	    this.state = newState;
+	    this.getCurrentCell().dbCell('editor', 'refresh');
 	    this.element.trigger('dbRecordStateChange');
 	},
 	rowIn: function(){  
