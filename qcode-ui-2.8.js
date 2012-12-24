@@ -5414,14 +5414,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var selection = this.editor.textrange('get');
 
 	    switch(e.which) {
-	    case 38: // up
+	  
 	    case 37: // left
 		if ( selection.selectionAtStart ) {
 		    break;
 		} else {
 		    return true;
-		}
-	    case 40: // down
+		}	   
 	    case 39: // right
 		if ( selection.selectionAtEnd ) {
 		    break;
@@ -5434,15 +5433,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		} else {
 		    return true;
 		}
-
+	    case 38: // up
+	    case 40: // down
 	    case 46: // delete 
-		break;
 	    case 13: // return
-		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
-		    break;
-		} else {
-		    return true;
-		}
 	    case 9: // tab 
 		break;
 
