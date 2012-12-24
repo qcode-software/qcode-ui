@@ -40,7 +40,7 @@
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
-		this.getCurrentField().dbField('editor', 'refresh');
+		this.getCurrentField().dbField('editor', 'repaint');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
