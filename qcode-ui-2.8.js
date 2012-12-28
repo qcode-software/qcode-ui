@@ -5167,7 +5167,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		.appendTo(this.element)
 		.css({
 		    'position':'absolute',
-		    'background': "white", 
 		    'overflow':'auto',
 		    'z-index': 1
 		})
@@ -5218,10 +5217,23 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		});
 
 		// Copy various style from the editor to combo options div
-		var copyOptionsAttributes = ['borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontSize', 'fontFamily', 'fontWeight', 'width'];
+		var copyOptionsAttributes = ['backgroundColor', 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontSize', 'fontFamily', 'fontWeight', 'width'];
 		$.each(copyOptionsAttributes, function(i, name){
 		    comboOptions.css(name, editor.css(name));
-		});		
+		});
+		var borderWidth = Math.max(
+		    parseInt(editor.css('borderTopWidth')),
+		    parseInt(editor.css('borderRightWidth')),
+		    parseInt(editor.css('borderBottomWidth')),
+		    parseInt(editor.css('borderLeftWidth'))
+		) + 'px';
+		comboOptions.css({
+		    'borderTopWidth': borderWidth,
+		    'borderRightWidth': borderWidth,
+		    'borderBottomWidth': borderWidth,
+		    'borderLeftWidth': borderWidth
+		});
+		    
 
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
