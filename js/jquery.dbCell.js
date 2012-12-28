@@ -109,7 +109,11 @@
 	    var grid = this.getGrid();
 	  	  
 	    this.hide();
-	    this.editor('show', cell, this.getValue())
+	    if ( this.getType() === 'combo' ) {
+		this.editor('show', cell, this.getValue(), this.getCol().attr('searchURL'));
+	    } else {
+		this.editor('show', cell, this.getValue())
+	    }
 	    select = coalesce(select, this.getCol().attr('cellInSelect'), 'all');
 	    this.editor('selectText', select); 
 	    grid.dbGrid('setCurrentCell', cell);
