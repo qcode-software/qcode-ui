@@ -568,6 +568,12 @@ function cellOnKeyDown(e) {
   }
   e.returnValue=false;
   e.cancelBubble = true;
+  if ( e.preventDefault ) {
+      e.preventDefault();
+  }
+  if ( e.stopPropagation ) {
+      e.stopPropagation();
+  }
 }
 
 function moveRight(fromCell) {

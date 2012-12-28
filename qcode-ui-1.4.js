@@ -2992,6 +2992,12 @@ function cellOnKeyDown(e) {
   }
   e.returnValue=false;
   e.cancelBubble = true;
+  if ( e.preventDefault ) {
+      e.preventDefault();
+  }
+  if ( e.stopPropagation ) {
+      e.stopPropagation();
+  }
 }
 
 function moveRight(fromCell) {
@@ -4566,7 +4572,7 @@ function dbGridCombo(callback) {
 		}
 		return true
 	    } else {
-		callback(window.event);
+		callback(e);
 	    }
 	}
 	if (e.keyCode == 40) {
@@ -4579,16 +4585,16 @@ function dbGridCombo(callback) {
 		}
 		return true
 	    } else {
-		callback(window.event);
+		callback(e);
 	    }
 	}
 	if (e.keyCode == 37 && atEditStart(oInput)) {
 	    // Left Arrow
-	    callback(window.event);
+	    callback(e);
 	}
 	if (e.keyCode == 39 && atEditEnd(oInput) ) {
 	    // Right Arrow
-	    callback(window.event);
+	    callback(e);
 	}
 	if (e.keyCode == 9 || e.keyCode == 13) {
 	    // TAB or Return
@@ -4598,18 +4604,20 @@ function dbGridCombo(callback) {
 		if ( option.index() !== -1 ) {
 		    editor.val(option.text());
 		    _lastValue = option.text();
+		    comboOptions.hide();
+		    // trigger keyup on editor to let it listeners know that it's value has changed
+		    editor.trigger('keyup');
 		}
-		comboOptions.hide();
 	    } 
-	    callback(window.event);
+	    callback(e);
 	}
 	if (e.keyCode == 46) {
 	    // Delete
-	    callback(window.event)
+	    callback(e)
 	}
 	if ( e.keyCode == 83 && e.ctrlKey ) {
 	    // Ctrl+S
-	    callback(window.event);
+	    callback(e);
 	}
     }
 
@@ -4618,7 +4626,7 @@ function dbGridCombo(callback) {
 	    _lastValue = editor.val();
 	    search();
 	}
-	callback(window.event)
+	callback(e)
     }
 
     function comboOptionMouseUp(e) {
@@ -4628,6 +4636,8 @@ function dbGridCombo(callback) {
 	comboOptions.hide();
 	editor.val(option.text());
 	_lastValue = option.text();
+	// trigger keyup on editor to let it listeners know that it's value has changed
+	editor.trigger('keyup');
 	// Move cursor to end of Input
 	var rng = oInput.createTextRange();
 	rng.collapse(false);
@@ -4644,7 +4654,6 @@ function dbGridCombo(callback) {
 	comboOptions.children('.selected').removeClass('selected');
 	comboOptions.children(':nth-child(' + (index + 1) + ')').addClass('selected');
     }
-
     
     function search() {
 	// Server side search for available options
