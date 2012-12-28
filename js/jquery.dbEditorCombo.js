@@ -254,8 +254,10 @@
 		    if ( option.index() !== -1 ) {
 			this.editor.val(option.text());
 			this.lastValue = option.text();
+			// trigger keyup on editor to let it listeners know that it's value has changed
+			this.editor.trigger('keyup');
+			this.comboOptions.hide();
 		    }
-		    this.comboOptions.hide();
 		}
 
 	    case 46: // delete 
@@ -332,6 +334,8 @@
 	    this.lastValue = option.text();	   
 	    this.selectText('end');
 	    this.comboOptions.hide();
+	    // trigger keyup on editor to let it listeners know that it's value has changed
+	    this.editor.trigger('keyup');
 	    return true
 	},
 	_comboOptionMouseEnter: function(e) {
