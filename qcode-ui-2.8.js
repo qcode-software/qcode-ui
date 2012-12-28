@@ -5169,10 +5169,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		    'position':'absolute',
 		    'background': "white", 
 		    'overflow':'auto',
-		    'border-width':'1px',
-		    'border-style':'solid',
-		    'border-color':'black',
-		    'height':'150px',
 		    'z-index': 1
 		})
 		.hide();
@@ -5246,8 +5242,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			'top': position.top
 		});
 		comboOptions.css({
-		    'left': position.left,
-		    'top': position.top + editor.height()
+		    'left': position.left - parseInt(comboOptions.css('border-left_width')),
+		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('border-top-width'))
 		});
 	    }
 	}, 
@@ -5267,22 +5263,22 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}, 
 	search: function() {
 	    // Server side search for available options
-	    temp = this;
-	    this.comboOptions.show().text("Searching ...");
+	    dbEditorCombo = this;
+	    dbEditorCombo.comboOptions.show().text("Searching ...");
 	    
 	    jQuery.ajax({
-		url: this.searchURL,
+		url: dbEditorCombo.searchURL,
 		data: {
-		    value: this.getValue(),
+		    value: dbEditorCombo.getValue()
 		},
 		dataType: 'xml',
 		async: false,
 		cache: false,
 		success: function(data) {
-		    temp.searchReturn(data)
+		    dbEditorCombo.searchReturn(data)
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
-		    temp.comboOptions.text("Software Bug ! " + textStatus + ': ' + errorThrown);
+		    dbEditorCombo.comboOptions.text("Software Bug ! " + textStatus + ': ' + errorThrown);
 		}   
 	    });
 	},
