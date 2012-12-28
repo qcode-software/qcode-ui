@@ -386,10 +386,7 @@ function cellIn(oTD,select) {
   if ( type == 'combo' ) {
     oInputCtl = oCombo;
     var searchURL = oCol.searchURL;
-    var name = oCol.name;
-    var boundName = oCol.boundName;
-    var boundValue = getCellValue(currentRow,boundName);
-    oInputCtl.show(oTD,name,cellValue,boundName,boundValue,searchURL);
+    oInputCtl.show(oTD,cellValue,searchURL);
   }
   if ( type == 'bool') {
     oInputCtl = oInputBool;
@@ -467,9 +464,6 @@ function cellWrite() {
   var currentRow = getContainingElmt(currentCell,"TR");
   var name = oColGroup.children[currentCell.cellIndex].name;
   setCellValue(currentRow,name,oInputCtl.getValue());
-  if ( oInputCtl.getType() == 'combo') {
-    setCellValue(currentRow,oInputCtl.getBoundName(),oInputCtl.getBoundValue());	
-  }
 }
 
 function cellOnKeyUp(e) {
