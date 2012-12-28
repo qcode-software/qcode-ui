@@ -250,7 +250,6 @@ function dbGridCombo(callback) {
 	comboOptions.children('.selected').removeClass('selected');
 	comboOptions.children(':nth-child(' + (index + 1) + ')').addClass('selected');
     }
-
     
     function search() {
 	// Server side search for available options
