@@ -4411,12 +4411,7 @@ function dbGridCombo(callback) {
 	.appendTo(document.body)
 	.css({
 	    'position':'absolute',
-	    'background': "white", 
 	    'overflow':'auto',
-	    'border-width':'1px',
-	    'border-style':'solid',
-	    'border-color':'black',
-	    'height':'150px',
 	    'z-index': 1	    
 	})
 	.hide();
@@ -4528,11 +4523,12 @@ function dbGridCombo(callback) {
 	oInput.style.pixelLeft = getContainerPixelLeft(oTD);
 	editor.show();
 
+	oComboOptions.style.backgroundColor = oInput.style.backgroundColor
 	oComboOptions.style.borderColor=oTD.currentStyle.borderColor;
+	oComboOptions.style.borderWidth=oTD.currentStyle.borderWidth;
 	oComboOptions.style.paddingLeft = oTD.currentStyle.paddingLeft;
 	oComboOptions.style.paddingRight = oTD.currentStyle.paddingRight;
 	oComboOptions.style.width = oInput.offsetWidth;
-	oComboOptions.style.height = 150;
 	oComboOptions.style.pixelTop = getPixelTop(oInput) + oInput.offsetHeight;
 	// I think IE has a bug that prevents offsetLeft/offsetParent from
 	// correctly calculating position. The width of the container div border
