@@ -5812,7 +5812,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.input.val( $(record).find(this.input.attr('name')).text() );
 	    this.lastValue = this.input.val();
 	    this.hide();
-	    this.currentItem = "undefined";
+	    this.currentItem = undefined;
 	    this.input.focus();
 	    this.input.trigger('comboSelect');
 	},
