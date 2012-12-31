@@ -130,6 +130,7 @@ function dbGridCombo(callback) {
 	editor.show();
 
 	oComboOptions.style.backgroundColor = oInput.style.backgroundColor
+	oComboOptions.style.borderStyle=oTD.currentStyle.borderStyle;
 	oComboOptions.style.borderColor=oTD.currentStyle.borderColor;
 	oComboOptions.style.borderWidth=oTD.currentStyle.borderWidth;
 	oComboOptions.style.paddingLeft = oTD.currentStyle.paddingLeft;
