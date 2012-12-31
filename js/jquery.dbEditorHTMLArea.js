@@ -17,14 +17,13 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.refresh
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
 		.addClass('dbEditorHTMLArea')
 		.appendTo(this.element)
 		.css({
-		    'overflow': "auto",
 		    'position': "absolute"
 		})
 		.hide();
@@ -45,7 +44,7 @@
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show().html(value);
-	    this.repaint();
+	    this.refresh();
 	},
 	hide: function() {
 	    // Hide the editor
@@ -54,7 +53,7 @@
 	    }
 	    this.editor.hide();
 	},
-	repaint: function() {
+	refresh: function() {
 	    if ( this.currentElement.length == 1 ) {
 		// Copy various style from the target element to the editor
 		var editor = this.editor;
@@ -96,54 +95,34 @@
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    var selection = this.editor.textrange('get');
-
+	    // nb. This switch cascades; the lack of breaks is intentional
 	    switch(e.which) {
-	    case 38: // up
+
 	    case 37: // left
-		if ( selection.selectionAtStart ) {
-		    break;
-		} else {
-		    return true;
-		}
-	    case 40: // down
 	    case 39: // right
-		if ( selection.selectionAtEnd ) {
-		    break;
-		} else {
-		    return true;
-		}
+		// On left or right key down, if you are at the end of the available text and there is no selection to collapse, pass the event to the target.
+		// Otherwise, allow the cursor to move within the editor, or allow the current selection to collapse down to a cursor, as appropriate.
+		var selection = this.editor.textrange('get');
+		if ( e.which == 37 && ! ( selection.selectionText === "" && selection.selectionAtStart ) ) break;
+		if ( e.which == 39 && ! ( selection.selectionText === "" && selection.selectionAtEnd ) ) break;
+
 	    case 83: // S
-		if ( e.ctrlKey ) {
-		    break;
-		} else {
-		    return true;
-		}
+		// Only Ctrl+S needs to be passed on; a regular "s" just uses browser defaults
+		if ( e.which == 83 && ! e.ctrlKey ) break;
 
-	    case 46: // delete 
-		break;
-	    case 13: // return
-		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
-		    break;
-		} else {
-		    return true;
-		}
-	    case 9: // tab 
-		break;
-
-	    default: return true 
+	    case 9: // tab
+	    case 38: // up
+	    case 40: // down
+		var event = jQuery.Event('editorKeyDown', {
+		    'data': e.data, 
+		    'ctrlKey': e.ctrlKey, 
+		    'altKey': e.altKey, 
+		    'shiftKey': e.shiftKey, 
+		    'which': e.which
+		});
+		e.preventDefault();
+		this.currentElement.trigger(event);
 	    }
-
-	    // propagate custom event to target element
-	    var event = jQuery.Event('editorKeyDown', {
-		'data': e.data, 
-		'ctrlKey': e.ctrlKey, 
-		'altKey': e.altKey, 
-		'shiftKey': e.shiftKey, 
-		'which': e.which
-	    });
-	    e.preventDefault();
-	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.

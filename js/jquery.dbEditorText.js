@@ -17,7 +17,7 @@
 	_create: function() {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.refresh
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('dbEditorText')
@@ -49,7 +49,7 @@
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
 	    this.editor.show().val(value);
-	    this.repaint();
+	    this.refresh();
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -58,7 +58,7 @@
 	    }
 	    this.editor.hide();
 	},
-	repaint: function() {
+	refresh: function() {
 	    // repaint the editor
 	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
@@ -99,49 +99,35 @@
 	    this.editor.remove();
 	},
 	_inputOnKeyDown: function(e) {
-	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    var selection = this.editor.textrange('get');
-
-	    switch(e.which) {
-	  
-	    case 37: // left
-		if ( selection.selectionAtStart ) {
-		    break;
-		} else {
-		    return true;
-		}	   
-	    case 39: // right
-		if ( selection.selectionAtEnd ) {
-		    break;
-		} else {
-		    return true;
-		}
-	    case 83: // S
-		if ( e.ctrlKey ) {
-		    break;
-		} else {
-		    return true;
-		}
-	    case 38: // up
-	    case 40: // down
-	    case 46: // delete 
-	    case 13: // return
-	    case 9: // tab 
+	    var selection;
+	    switch(e.which) { //nb. Switch cascades; lack of breaks is intended
+	    case 37: //left
+		// If selection is not empty collapse left
+		selection = this.editor.textrange('get');
+		if ( ! ( selection.selectionText === "" && selection.selectionAtStart )) break;
+	    case 39: //right
+		// If selection is not empty collapse right
+		selection = this.editor.textrange('get');
+		if ( e.which ==  39 && ! ( selection.selectionText === "" && selection.selectionAtEnd )) break;
+	    case 83: //S
+		// Not Ctrl + s
+		if ( e.which == 83 && ! e.ctrlKey ) break;
+	    case 13: //return
+	    case 9: //tab
+	    case 38: //up
+	    case 40: //down
+		// Any of the above re-trigger event
+		var event = jQuery.Event('editorKeyDown', {
+		    'data': e.data, 
+		    'ctrlKey': e.ctrlKey, 
+		    'altKey': e.altKey, 
+		    'shiftKey': e.shiftKey, 
+		    'which': e.which
+		});
+		e.preventDefault();
+		this.currentElement.trigger(event);
 		break;
-
-	    default: return true 
 	    }
-
-	    // propagate custom event to target element
-	    var event = jQuery.Event('editorKeyDown', {
-		'data': e.data, 
-		'ctrlKey': e.ctrlKey, 
-		'altKey': e.altKey, 
-		'shiftKey': e.shiftKey, 
-		'which': e.which
-	    });
-	    e.preventDefault();
-	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
 	    // Pass all key up events on to the target element.

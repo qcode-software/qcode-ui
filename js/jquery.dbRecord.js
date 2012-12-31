@@ -40,7 +40,7 @@
 		this.element.removeClass("current dirty updating error");
 		this.element.addClass(newState);
 		this.state = newState;
-		this.getCurrentField().dbField('editor', 'repaint');
+		this.getCurrentField().dbField('editor', 'refresh');
 		this.element.trigger('dbRecordStateChange');
 		break;
 	    default:
@@ -112,7 +112,7 @@
 	setValues: function(xmlDoc) {
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
-		var node = $(xmlDoc).find('records > record > ' + $(field).dbField('getName'));
+		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
 		    if ( $(field).dbField('getType') == 'htmlarea') {
 			// xml cannot contain raw html, so escape/unescape it.
