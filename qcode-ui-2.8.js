@@ -6455,7 +6455,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
     function formActionSuccess(xmlDoc, type) {
 	var dbForm = this;
-	$('records record *', xmlDoc).each(function(i, xmlNode){
+	$('records > record *', xmlDoc).each(function(i, xmlNode){
 	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
 		if ( $(target).is('input, textarea, select') ) {
 		    $(target).val($(xmlNode).text());
@@ -6464,7 +6464,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		}
 	    });
 	});
-	$('records html *', xmlDoc).each(function(i, xmlNode){
+	$('records > html *', xmlDoc).each(function(i, xmlNode){
 	    $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
 		if ( $(target).is('input, textarea, select') ) {
 		    $(target).val($(xmlNode).text());
@@ -6479,12 +6479,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	}
 	
 	// Info
-	var rec = $(xmlDoc).find('records info').first();
+	var rec = $(xmlDoc).find('records > info').first();
 	if ( rec.length == 1 ) {
 	    this.setStatus(rec.text());
 	}
 	// Alert
-	var rec = $(xmlDoc).find('records alert').first();
+	var rec = $(xmlDoc).find('records > alert').first();
 	if ( rec.length == 1 ) {
 	    alert(rec.text());
 	}
@@ -6673,7 +6673,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.input.val( $(record).find(this.input.attr('name')).text() );
 	    this.lastValue = this.input.val();
 	    this.hide();
-	    this.currentItem = "undefined";
+	    this.currentItem = undefined;
 	    this.input.focus();
 	    this.input.trigger('comboSelect');
 	},
@@ -7510,7 +7510,7 @@ function dbFormHTMLArea(oDiv) {
 	setValues: function(xmlDoc) {
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
-		var node = $(xmlDoc).find('records record ' + $(field).dbField('getName'));
+		var node = $(xmlDoc).find('records > record > ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
 		    if ( $(field).dbField('getType') == 'htmlarea') {
 			// xml cannot contain raw html, so escape/unescape it.
