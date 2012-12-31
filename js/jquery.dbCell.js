@@ -124,8 +124,8 @@
 	    var row = this.getRow();
 	    var grid = this.getGrid();
 	    
-	    // Custom Event: Trigger any cellOut events bound to this grid
-	    cell.trigger('cellOut');
+	    // Custom Event: Trigger any dbCellOut events bound to this grid
+	    cell.trigger('dbCellOut');
 	    
 	    var oldValue = this.getValue();
 	    var newValue = this.editor('getValue');

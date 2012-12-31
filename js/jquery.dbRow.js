@@ -69,15 +69,15 @@
 	    this.setStatusBarMsg(message);
 	    this.state = newState;
 	    this.getCurrentCell().dbCell('editor', 'repaint');
-	    this.element.trigger('dbRecordStateChange');
+	    this.element.trigger('dbRowStateChange');
 	},
 	rowIn: function(){  
 	    // Update NavCounter and statusBarMsg
 	    var row = this.element;
 	    var grid = this.getGrid();
 
-	    // Custom Event: Trigger any rowIn events bound to this table
-	    row.trigger('rowIn.dbGrid');
+	    // Custom Event: Trigger any dbRowIn events bound to this table
+	    row.trigger('dbRowIn');
 
 	    if ( this.error ) {
 		grid.dbGrid('setStatusBarMsg', this.error);
@@ -86,8 +86,8 @@
 	},
 	rowOut: function(){
 	    // Save row if dirty
-	    // Custom Event: Trigger any rowOut events bound to this table
-	    this.element.trigger('rowOut');
+	    // Custom Event: Trigger any dbRowOut events bound to this table
+	    this.element.trigger('dbRowOut');
 	    
 	    if ( this.state === 'dirty' ) {
 		this.save();

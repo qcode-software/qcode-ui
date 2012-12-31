@@ -102,22 +102,28 @@
 	},
 	getInitialFocusCell: function(){
 	    var dbGrid = this;
-	    var initialFocusCell = $([]);
-
+	  
 	    if ( dbGrid.option('initialFocus') === 'end' ) {
 		// Return the first editable cell in the last row
 		initialFocusCell = $('tr:last > td:first', dbGrid.tbody);
-		if ( initialFocusCell.size() && ! initialFocusCell.dbCell('isEditable') ) {
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
+		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
 		}
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
 		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
-		if ( initialFocusCell.size() && ! initialFocusCell.dbCell('isEditable') ) {
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
+		}
 	    }
-	    return initialFocusCell;
+
+	    return $([]);
 	},
 	getEditorDiv: function(){
 	    return this.editorDiv;

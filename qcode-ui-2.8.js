@@ -3507,8 +3507,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var row = this.getRow();
 	    var grid = this.getGrid();
 	    
-	    // Custom Event: Trigger any cellOut events bound to this grid
-	    cell.trigger('cellOut');
+	    // Custom Event: Trigger any dbCellOut events bound to this grid
+	    cell.trigger('dbCellOut');
 	    
 	    var oldValue = this.getValue();
 	    var newValue = this.editor('getValue');
@@ -6950,22 +6950,28 @@ function dbFormHTMLArea(oDiv) {
 	},
 	getInitialFocusCell: function(){
 	    var dbGrid = this;
-	    var initialFocusCell = $([]);
-
+	  
 	    if ( dbGrid.option('initialFocus') === 'end' ) {
 		// Return the first editable cell in the last row
 		initialFocusCell = $('tr:last > td:first', dbGrid.tbody);
-		if ( initialFocusCell.size() && ! initialFocusCell.dbCell('isEditable') ) {
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
+		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
 		}
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
 		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
-		if ( initialFocusCell.size() && ! initialFocusCell.dbCell('isEditable') ) {
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
+		}
 	    }
-	    return initialFocusCell;
+
+	    return $([]);
 	},
 	getEditorDiv: function(){
 	    return this.editorDiv;
@@ -7736,15 +7742,15 @@ function dbFormHTMLArea(oDiv) {
 	    this.setStatusBarMsg(message);
 	    this.state = newState;
 	    this.getCurrentCell().dbCell('editor', 'repaint');
-	    this.element.trigger('dbRecordStateChange');
+	    this.element.trigger('dbRowStateChange');
 	},
 	rowIn: function(){  
 	    // Update NavCounter and statusBarMsg
 	    var row = this.element;
 	    var grid = this.getGrid();
 
-	    // Custom Event: Trigger any rowIn events bound to this table
-	    row.trigger('rowIn.dbGrid');
+	    // Custom Event: Trigger any dbRowIn events bound to this table
+	    row.trigger('dbRowIn');
 
 	    if ( this.error ) {
 		grid.dbGrid('setStatusBarMsg', this.error);
@@ -7753,8 +7759,8 @@ function dbFormHTMLArea(oDiv) {
 	},
 	rowOut: function(){
 	    // Save row if dirty
-	    // Custom Event: Trigger any rowOut events bound to this table
-	    this.element.trigger('rowOut');
+	    // Custom Event: Trigger any dbRowOut events bound to this table
+	    this.element.trigger('dbRowOut');
 	    
 	    if ( this.state === 'dirty' ) {
 		this.save();
