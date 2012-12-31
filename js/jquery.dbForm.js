@@ -201,7 +201,7 @@
 
     function formActionSuccess(xmlDoc, type) {
 	var dbForm = this;
-	$('records record *', xmlDoc).each(function(i, xmlNode){
+	$('records > record *', xmlDoc).each(function(i, xmlNode){
 	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
 		if ( $(target).is('input, textarea, select') ) {
 		    $(target).val($(xmlNode).text());
@@ -210,7 +210,7 @@
 		}
 	    });
 	});
-	$('records html *', xmlDoc).each(function(i, xmlNode){
+	$('records > html *', xmlDoc).each(function(i, xmlNode){
 	    $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
 		if ( $(target).is('input, textarea, select') ) {
 		    $(target).val($(xmlNode).text());
@@ -225,12 +225,12 @@
 	}
 	
 	// Info
-	var rec = $(xmlDoc).find('records info').first();
+	var rec = $(xmlDoc).find('records > info').first();
 	if ( rec.length == 1 ) {
 	    this.setStatus(rec.text());
 	}
 	// Alert
-	var rec = $(xmlDoc).find('records alert').first();
+	var rec = $(xmlDoc).find('records > alert').first();
 	if ( rec.length == 1 ) {
 	    alert(rec.text());
 	}
