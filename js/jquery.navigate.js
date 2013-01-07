@@ -53,7 +53,7 @@
             }
 
             // if nextElement exists change focus and prevent event defaults
-            if (nextElement !== undefined) {
+            if (nextElement.length === 1) {
                 navigate.changeFocus(currentElement, nextElement);
                 event.preventDefault();
                 return false;

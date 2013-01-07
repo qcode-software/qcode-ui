@@ -1,6 +1,6 @@
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
-        // Returns the element above the target, or undefined if none exists
+        // Returns the element above the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementTop = fromElement.offset().top;
@@ -23,10 +23,10 @@
                 };
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.eastOf = function(selection) {
-        // Returns the element right of the target, or undefined if none exists
+        // Returns the element right of the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementLeft = fromElement.offset().left;
@@ -49,10 +49,10 @@
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.southOf = function(selection) {
-        // Returns the element below the target, or undefined if none exists
+        // Returns the element below the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementTop = fromElement.offset().top;
@@ -75,10 +75,10 @@
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.westOf = function(selection) {
-        // Returns the element left of the target, or undefined if none exists
+        // Returns the element left of the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementLeft = fromElement.offset().left;
@@ -101,7 +101,7 @@
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
 
     function sameRow(a, b) {

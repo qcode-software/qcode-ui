@@ -3206,7 +3206,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
-        // Returns the element above the target, or undefined if none exists
+        // Returns the element above the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementTop = fromElement.offset().top;
@@ -3229,10 +3229,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
                 };
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.eastOf = function(selection) {
-        // Returns the element right of the target, or undefined if none exists
+        // Returns the element right of the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementLeft = fromElement.offset().left;
@@ -3255,10 +3255,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.southOf = function(selection) {
-        // Returns the element below the target, or undefined if none exists
+        // Returns the element below the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementTop = fromElement.offset().top;
@@ -3281,10 +3281,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
     $.fn.westOf = function(selection) {
-        // Returns the element left of the target, or undefined if none exists
+        // Returns the element left of the target, or an empty set if none exists
 	var fromElement = $(this);
         var nextElement;
         var fromElementLeft = fromElement.offset().left;
@@ -3307,7 +3307,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
                 }
             });
         }
-        return nextElement;
+        return $(nextElement);
     }
 
     function sameRow(a, b) {
@@ -5306,39 +5306,36 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var recordSet = this.getRecordSet();
 	    var field = this.element;
 	    var fields = recordSet.find('.editable');
+	    var newField = $([]);
 	    switch (event.which) {
 	    case 37: // left arrow
-		recordSet.dbRecordSet('fieldChange', field.westOf(fields));
+		newField = field.westOf(fields);
 		break;
 	    case 38: // up arrow
-		recordSet.dbRecordSet('fieldChange', field.northOf(fields));
+		newField = field.northOf(fields);
 		break;
 	    case 39: // right arrow
-		recordSet.dbRecordSet('fieldChange', field.eastOf(fields));
+		newField = field.eastOf(fields);
 		break;
 	    case 40: // down arrow
-		recordSet.dbRecordSet('fieldChange', field.southOf(fields));
+		newField = field.southOf(fields);
 		break;
 	    case 9: // tab key 
 		if ( event.shiftKey ) {
-		    var newField = field.westOf(fields);
+		    newField = field.westOf(fields);
 		} else {
-		    var newField = field.eastOf(fields);
+		    newField = field.eastOf(fields);
 		}
-		if ( newField == field ) {
+		if ( newField.length === 0 ) {
 		    // save if on last record 
 		    this.getRecord().dbRecord('save');
-		} else {
-		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
 	    case 13: // return key
-		var newField = field.eastOf(fields);
-		if ( newField == field ) {
+		newField = field.eastOf(fields);
+		if ( newField.length === 0 ) {
 		    // save if on last record 
 		    this.getRecord().dbRecord('save');
-		} else {
-		    recordSet.dbRecordSet('fieldChange', newField);
 		}
 		break;
 	    case 83: // Ctrl + S - save the current record.
@@ -5347,6 +5344,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		    event.preventDefault();
 		}
 		break;
+	    }
+	    if ( newField.length === 1 ) {
+		recordSet.dbRecordSet('fieldChange', newField);
 	    }
 	}, 
 	editorKeyUp: function(event){
@@ -7958,7 +7958,7 @@ function dbFormHTMLArea(oDiv) {
             }
 
             // if nextElement exists change focus and prevent event defaults
-            if (nextElement !== undefined) {
+            if (nextElement.length === 1) {
                 navigate.changeFocus(currentElement, nextElement);
                 event.preventDefault();
                 return false;
