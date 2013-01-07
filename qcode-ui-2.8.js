@@ -5326,14 +5326,14 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		} else {
 		    newField = field.eastOf(fields);
 		}
-		if ( newField.length === 0 ) {
+		if ( newField.length === 0 && this.getRecord().dbRecord('getState') === 'dirty' ) {
 		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		}
 		break;
 	    case 13: // return key
 		newField = field.eastOf(fields);
-		if ( newField.length === 0 ) {
+		if ( newField.length === 0 && this.getRecord().dbRecord('getState') === 'dirty' ) {
 		    // save if on last record 
 		    this.getRecord().dbRecord('save');
 		}
