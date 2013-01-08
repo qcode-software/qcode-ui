@@ -23,6 +23,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* ==== dbEditorCombo.css ==== */
+.dbEditorComboOptions {
+    height:150px;
+}
+
+.dbEditorComboOptions div.selected {
+    background-color:lightgrey;
+}
+
 /* ==== hoverScroller.css ==== */
 .hoverScrollerContainer {
     position: relative;

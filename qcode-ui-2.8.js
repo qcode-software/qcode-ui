@@ -3380,6 +3380,284 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     }
 })(jQuery);
 
+/* ==== jquery.dbCell.js ==== */
+(function($, window, document, undefined){
+    $.widget("qcode.dbCell", {
+	_create: function(){
+	    this.keyUpTimer
+	},
+	getRow: function(){
+	    return this.element.closest('tr');
+	},
+	getGrid: function(){
+	    return this.element.closest('table');
+	},
+	getCol: function(){
+	    return this.getGrid().children('colgroup').children().eq(this.element.index());
+	},
+	getType: function(){
+	    // default type == 'text'
+	    return coalesce(this.getCol().attr('type'), 'text');
+	},
+	getEditorPluginName: function(){
+	    switch ( this.getType() ) {
+	    case 'bool': return "dbEditorBool"
+	    case 'combo': return "dbEditorCombo"
+	    case 'htmlarea': return "dbEditorHTMLArea"
+	    case 'text': return "dbEditorText"
+	    case 'textarea': return "dbEditorTextArea"
+	    default:
+		$.error('Unknown editor for cell type : ' + this.getType());
+		return;
+	    }
+	},
+	editor: function() {
+	    var grid = this.getGrid();
+	    var editorDiv = grid.dbGrid('getEditorDiv');
+	    var editorPluginName = this.getEditorPluginName();
+	    return $.fn[editorPluginName].apply(editorDiv, arguments);
+	},
+	getValue: function(){
+	    var cellType = this.getType();
+
+            if ( cellType === "htmlarea" || cellType === "html" ) {
+                return this.element.html();
+            } else if ( cellType === "bool" ) {
+		return parseBoolean(stripHTML(this.element.html()));
+	    } else if ( this.element.is(':input') ) {
+                return this.element.val();
+            } else {
+                return this.element.text();
+            }
+	},
+	setValue: function(value){
+	    var cellType = this.getType();
+
+            if ( cellType === "htmlarea" || cellType === "html" ) {
+		this.element.html(value);
+            } else if ( cellType === "bool" ) {
+		if ( parseBoolean(value) ) {
+		    this.element.html("<span class='clsTrue'>Yes</span>");
+		} else {
+		    this.element.html("<span class='clsFalse'>No</span>");
+		}
+	    } else if ( this.element.is(':input') ) {
+                this.element.val(value);
+            } else {
+                this.element.text(value);
+            }
+	},
+	isEditable: function() {
+	    var row = this.getRow();
+	    var col = this.getCol();
+
+	    if ( row.dbRow('getState') === 'updating' ) {
+		return false;
+	    } 
+	    // Is the column visible
+	    if ( col.hasClass('clsHidden') ) {
+		return false;
+	    }
+	    // No name defined
+	    if ( col.attr('name') === undefined ) {
+		return false;
+	    }
+	    if ( row.dbRow('option','type') === 'add' && parseBoolean(col.attr('addDisabled')) === true ) {
+		return false;
+	    }
+	    if ( row.dbRow('option','type') === 'update' && parseBoolean(col.attr('updateDisabled')) === true ) {
+		return false;
+	    } 
+	    if ( col.attr('type') === 'html' ) {
+		return false;
+	    }
+	    return true;
+	},
+	isTabStop: function() {
+	    if ( this.getCol().attr('tabStop') === 'no' ) {
+		return false;
+	    } else {
+		return true;
+	    }
+	},
+	hide: function(){
+	    this.element.css('visibility','hidden');
+	},
+	show: function(){
+	    this.element.css('visibility','inherit');
+	},
+	cellIn: function(select) {
+	    // Update currentCell dbGrid variable, hide the cell, show the editor and set editor text selection.
+	    var cell = this.element;
+	    var grid = this.getGrid();
+	  	  
+	    this.hide();
+	    if ( this.getType() === 'combo' ) {
+		this.editor('show', cell, this.getValue(), this.getCol().attr('searchURL'));
+	    } else {
+		this.editor('show', cell, this.getValue())
+	    }
+	    select = coalesce(select, this.getCol().attr('cellInSelect'), 'all');
+	    this.editor('selectText', select); 
+	    grid.dbGrid('setCurrentCell', cell);
+	},
+	cellOut: function(){
+	    // Write editor to cell, show cell, hide editor, unset currentCell dbGrid variable
+	    var cell = this.element;
+	    var row = this.getRow();
+	    var grid = this.getGrid();
+	    
+	    // Custom Event: Trigger any dbCellOut events bound to this grid
+	    cell.trigger('dbCellOut');
+	    
+	    var oldValue = this.getValue();
+	    var newValue = this.editor('getValue');
+	    this.write();
+	    this.show();
+	    this.editor('hide');
+	    grid.dbGrid('setCurrentCell', $([]));
+	  
+	    // Perform any custom action for this column
+	    if ( row.dbRow('getState') === 'dirty' &&  this.getCol().attr('action') ) {
+		var actionURL = this.getCol().attr('action');
+		row.dbRow('action','custom',actionURL,false);
+	    }
+
+	    // Auto-save depending on dbGrid's updateType
+	    switch ( grid.dbGrid('option', 'updateType') ) {
+	    case 'onKeyUp': 
+		// cancel any delayed save and save immediately
+		this._cancelDelayedSave();
+		if (row.dbRow('getState') === 'dirty') {
+		    row.dbRow('save',false);
+		}
+		break;	    
+	    case 'onCellOut': 
+		// save immediately
+		if (row.dbRow('getState') === 'dirty') {
+		    row.dbRow('save',false);
+		}
+	    }
+	},
+	write: function(){
+	    // Write the contents of the editor to the current cell
+	    this.setValue(this.editor('getValue'));
+	},
+	editorBlur: function(){
+	    // Perform a cellout if the editor blurs and updateType == "onCellOut"
+	    var grid = this.getGrid();
+	    var row = this.getRow();
+	    if ( grid.dbGrid('option', 'updateType') === 'onCellOut' ) {
+		this.cellOut();
+	    }		   
+	},
+	editorCut: function(){
+	    // Cut events should be triggered on the editor, but will be passed on to here. 
+	    // Editor value will have changed, mark row as dirty.
+	    var row = this.getRow();
+	    row.dbRow('setState', 'dirty');
+	},
+	editorPaste: function(){
+	    // Paste events should be triggered on the editor, but will be passed on to here. 
+	    // Editor value will have changed, mark row as dirty.
+	    var row = this.getRow();
+	    row.dbRow('setState', 'dirty');
+	},
+	editorKeyUp: function(){
+	    // If the Editor's value has changed, mark row as dirty.
+	    var row = this.getRow();
+	    var grid = this.getGrid();
+ 	    
+	    if ( this.getValue() !== this.editor('getValue') ) {
+		row.dbRow('setState', 'dirty');
+		}
+	    if ( grid.dbGrid('option','updateType') === "onKeyUp" ) {
+		this._cancelDelayedSave();
+		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
+	    }
+	},
+	editorKeyDown: function(event){
+	    var cell = this.element;
+	    var grid = this.getGrid();
+
+	    // Alt key combination
+	    if ( event.altKey ) { return true; }
+
+	    switch(event.which) {
+	    case 38: // Up Arrow
+		grid.dbGrid('cellChange', grid.dbGrid('cellAbove', cell));
+		break;
+	    case 40: // Down Arrow
+		grid.dbGrid('cellChange', grid.dbGrid('cellBelow', cell));
+		break;
+	    case 37: // Left Arrow
+		grid.dbGrid('cellChange', grid.dbGrid('cellLeftOf', cell));
+		break;
+	    case 39: // Right Arrow
+		grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
+		break;		
+	    case 83: // s Key
+		if ( event.ctrlKey ) {
+		    // Ctrl + s
+		    grid.dbGrid('save');
+		    break;
+		}
+	    case 46: // Delete Key
+		grid.dbGrid('delete');
+		break;
+	    case 13: // Return Key
+		grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
+		if ( grid.dbGrid('getCurrentCell').is(cell) ) {
+		    // We are on the last editable cell 
+		    grid.dbGrid('save');
+		}
+		break;
+	    case 9: // Tab Key
+		if ( event.shiftKey ) {
+		    grid.dbGrid('cellChange', grid.dbGrid('cellLeftOf', cell));
+		} else {
+		    grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
+		}
+		if ( grid.dbGrid('getCurrentCell').is(cell) ) {
+		    // We are on the last editable cell 
+		    grid.dbGrid('save');
+		    return true;
+		}
+		break;
+
+	    default: // handle event using browser defaults
+		return true;
+	    }
+	    
+	    // prevent event propagation and browser defaults 
+	    event.preventDefault();
+	    event.stopPropagation();
+	    return false
+	},
+	onMouseUp: function(event){
+	    // Mouse up event on an editable cell - call changeCell
+	    var grid = this.getGrid();
+
+	    // Cell is not editable
+	    if ( ! this.isEditable() ) { return true; } 
+	    
+	    grid.dbGrid('cellChange', this.element);
+	},
+	_delayedSave: function(){
+	    var row = this.getRow();
+	    if ( row.dbRow('getState') === 'dirty' ) {
+		row.dbRow('save');
+	    }
+	},
+	_cancelDelayedSave: function(){
+	    if ( this.keyUpTimer !== undefined ) {
+		clearTimeout(this.keyUpTimer);
+	    }
+	    this.keyUpTimer=undefined;
+	},
+    });
+})(jQuery, window, document);
+
 /* ==== jquery.dbCellControl.js ==== */
 (function($){
     $.fn.dbCellControl = function() {
@@ -4613,6 +4891,583 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     };
 })(jQuery);
 
+/* ==== jquery.dbEditorBool.js ==== */
+// dbEditorBool plugin
+// A hovering editor for boolean input
+;(function($, window, undefined) {
+
+    // css attributes to copy from the target element to the editor when editor is shown
+    var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
+			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
+			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
+			  'borderRightWidth', 'borderRightStyle', 'borderRightColor', 
+			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
+			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
+			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
+			  'width', 'height'];
+
+    // Uses the jQuery UI widget factory
+    $.widget('qcode.dbEditorBool', {
+	_create: function() {
+	    // Constructor function - create the editor element, and bind event listeners.
+	    this._on(window, {
+		'resize': this.repaint
+	    });
+	    this.editor = $('<div>')
+		.attr('contentEditable',true)
+		.addClass('dbEditorBool')
+		.appendTo(this.element)
+		.css({
+		    'position': "absolute"
+		})
+		.hide();
+	    this._on(this.editor, {
+		'keydown': this._inputOnKeyDown,
+		'keyup': this._inputOnKeyUp,
+		'cut': this._inputOnCut,
+		'paste': this._inputOnPaste,
+		'blur': this._inputOnBlur
+	    });
+	},
+	getValue: function() {
+	    // Get the current value of the editor
+	    return parseBoolean(this.editor.text());
+	}, 
+	show: function(element, value){
+	    // Show this editor over the target element and set the value
+	    this.currentElement = $(element);
+	    this.editor.show();
+	    this.repaint()
+	    if ( parseBoolean(value) ) {
+		this._setTrue();
+	    } else {
+		this._setFalse();
+	    }	   
+	},
+	hide: function() {
+	    // Hide the editor
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor.hide();
+	}, 
+	repaint: function() {
+	    // repaint the editor
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor.css('backgroundColor', "white");
+		} else {
+		    editor.css('backgroundColor', element.css('backgroundColor'));
+		}
+		// position
+		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+	    }
+	},
+	selectText: function(option) {
+	    // Set the text selection / cursor position
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set', "start", "start");
+		break;
+	    case "end":
+		this.editor.textrange('set', "end", "end");
+		break;
+	    case "all":
+		this.editor.textrange('set', "all");
+		break;
+	    }
+	}, 
+	destroy: function() {
+	    // If the widget is destroyed, remove the editor from the DOM.
+	    this.editor.remove();
+	},
+	_setTrue: function() {
+	    this.editor.html('<span class=clsTrue>Yes</span>');
+	},
+	_setFalse: function() {
+	    this.editor.html('<span class=clsFalse>No</span>');
+	},
+	_onResize: function(event) {
+	    // Any event that might change the size or position of the editor's target needs to trigger this.
+	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
+	    // Ensures that the editor is still positioned correctly over the target element.
+	    if ( this.currentElement ) {
+		var element = this.currentElement;
+		var editor = this.editor;
+		$.each(['width', 'height'], function(i, name){
+		    editor.css(name, element.css(name));
+		});
+		editor.css(element.positionRelativeTo(this.element));
+	    }
+	},
+	_inputOnKeyDown: function(e) {
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behaviour.
+	    var selection = this.editor.textrange('get');
+
+	    switch(e.which) {
+	    case 83: // S
+		if ( e.ctrlKey ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 38: // up
+	    case 37: // left
+	    case 40: // down
+	    case 39: // right
+	    case 46: // delete 
+	    case 13: // return
+	    case 9: // tab 
+		break;
+	    
+	    default: return true 
+	    }
+
+	    // propagate event to target element
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+	    });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
+	},
+	_inputOnKeyUp: function(e) {
+	     switch(e.which) {
+	     case 97: // 1
+	     case 49: // 1
+	     case 84: // t
+	     case 89: // y
+		 this._setTrue();
+		 break;
+	     case 96: // 0
+	     case 48: // 0
+	     case 70: // f
+	     case 78: // n
+		 this._setFalse();
+		 break; 
+	     }
+
+	    // Pass all key up events on to the target element.
+            var event = jQuery.Event('editorKeyUp', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnCut: function(e) {
+	    // Pass all cut events on to the target element.
+            var event = jQuery.Event('editorCut', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnPaste: function(e) {
+	    if ( this.getValue() ) {
+		this._setFalse();
+	    } else {
+		this._setTrue();
+	    }
+
+	    // Pass all paste events on to the target element.
+            var event = jQuery.Event('editorPaste', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnBlur: function(e, source) {
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // Otherwise, pass blur events on to the target element.
+	    if ( ! this.editor.is(':focus') ) {
+		var event = jQuery.Event('editorBlur', {
+		    'data': e.data
+		});
+		this.currentElement.trigger(event);
+	    }
+	}
+    });
+})(jQuery, window);
+
+/* ==== jquery.dbEditorCombo.js ==== */
+// dbEditorCombo plugin
+// A hovering editor for with combo completion
+;(function($, window, undefined) {
+
+    // css attributes to copy from the target element to the editor when editor is shown
+    var copyAttributes = ['borderTopWidth', 'borderTopStyle', 'borderTopColor', 
+			  'borderBottomWidth', 'borderBottomStyle', 'borderBottomColor', 
+			  'borderLeftWidth', 'borderLeftStyle', 'borderLeftColor', 
+			  'borderRightWidth', 'borderRightStyle', 'borderRightColor', 
+			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
+			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
+			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
+			  'width', 'height'];
+        
+    // Uses the jQuery UI widget factory
+    $.widget('qcode.dbEditorCombo', {
+	_create: function() {
+	    // Create the editor element, and bind event listeners.
+	    this._on(window, {
+		'resize': this.repaint
+	    });
+
+	    this.editor = $('<input type="text">')
+		.addClass('dbEditorCombo')
+		.appendTo(this.element)
+		.css({
+		    'position': "absolute", 
+		    'background': "white", 
+		    'overflow': "visible", 
+		    '-moz-box-sizing': "content-box", 
+		    '-ms-box-sizing': "content-box", 
+		    'box-sizing': "content-box", 
+		    'z-index': 1
+		})
+		.hide();
+	    this._on(this.editor, {
+		'keydown': this._inputOnKeyDown,
+		'keyup': this._inputOnKeyUp,
+		'cut': this._inputOnCut,
+		'paste': this._inputOnPaste,
+		'blur': this._inputOnBlur
+	    });
+
+	    this.comboOptions = $('<div>')
+		.addClass('dbEditorComboOptions')
+		.appendTo(this.element)
+		.css({
+		    'position':'absolute',
+		    'overflow':'auto',
+		    'z-index': 1
+		})
+		.hide();
+	    this._on(this.comboOptions, {
+		'mouseup div': this._comboOptionMouseUp,
+		'mouseenter div': this._comboOptionMouseEnter
+	    });
+
+	    this.currentElement = $([]);
+	},
+	getValue: function() {
+	    // Get the current value of the editor
+	    return this.editor.val();
+	}, 
+	show: function(element, value, searchURL){
+	    // Show this editor positioned over the target element and set the value of the editor
+	    this.currentElement = $(element);
+	    this.editor.show();
+	    this.lastValue = value;
+	    this.searchURL = searchURL;
+	    this.repaint();
+	    this.editor.val(value);
+	}, 
+	hide: function() {
+	    // Hide the editor
+	    if ( this.editor.is(':focus') ) {
+		this.editor.trigger('blur');
+	    }
+	    this.editor
+		.add(this.comboOptions)
+		.hide();
+	},
+	selectOption: function(index) {
+	    // Select the option for this 0-based index
+	    this.comboOptions.children('.selected').removeClass('selected');
+	    this.comboOptions.children(':nth-child(' + (index + 1) + ')').addClass('selected');
+	},
+	repaint: function() {
+	    // repaint the editor
+	    if ( this.currentElement.length == 1 ) {
+		var editor = this.editor;
+		var comboOptions = this.comboOptions;
+		var element = this.currentElement;
+
+		// Copy various style from the target element to the editor
+		$.each(copyAttributes, function(i, name){
+		    editor.css(name, element.css(name));
+		});
+
+		// Copy various style from the editor to combo options div
+		var copyOptionsAttributes = ['backgroundColor', 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontSize', 'fontFamily', 'fontWeight', 'width'];
+		$.each(copyOptionsAttributes, function(i, name){
+		    comboOptions.css(name, editor.css(name));
+		});
+		var borderWidth = Math.max(
+		    parseInt(editor.css('borderTopWidth')),
+		    parseInt(editor.css('borderRightWidth')),
+		    parseInt(editor.css('borderBottomWidth')),
+		    parseInt(editor.css('borderLeftWidth'))
+		) + 'px';
+		comboOptions.css({
+		    'borderTopWidth': borderWidth,
+		    'borderRightWidth': borderWidth,
+		    'borderBottomWidth': borderWidth,
+		    'borderLeftWidth': borderWidth
+		});
+		    
+
+		// Different browsers return different css for transparent elements
+		if ( element.css('backgroundColor') == 'transparent'
+		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
+		    editor
+			.add(comboOptions)
+			.css('backgroundColor', "white");
+		} else {
+		    editor
+			.add(comboOptions)
+			.css('backgroundColor', element.css('backgroundColor'));
+		}
+
+		// position
+		var position = element.positionRelativeTo(this.editor.offsetParent());
+		editor.css({
+			'left': position.left,
+			'top': position.top
+		});
+		comboOptions.css({
+		    'left': position.left - parseInt(comboOptions.css('border-left_width')),
+		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('border-top-width'))
+		});
+	    }
+	}, 
+	selectText: function(option) {
+	    // Set the text selection / cursor position
+	    switch(option) {
+	    case "start":
+		this.editor.textrange('set', "start", "start");
+		break;
+	    case "end":
+		this.editor.textrange('set', "end", "end");
+		break;
+	    case "all":
+		this.editor.textrange('set', "all");
+		break;
+	    }
+	}, 
+	search: function() {
+	    // Server side search for available options
+	    dbEditorCombo = this;
+	    dbEditorCombo.comboOptions.show().text("Searching ...");
+	    
+	    jQuery.ajax({
+		url: dbEditorCombo.searchURL,
+		data: {
+		    value: dbEditorCombo.getValue()
+		},
+		dataType: 'xml',
+		async: false,
+		cache: false,
+		success: function(data) {
+		    dbEditorCombo.searchReturn(data)
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+		    dbEditorCombo.comboOptions.text("Software Bug ! " + textStatus + ': ' + errorThrown);
+		}   
+	    });
+	},
+	searchReturn: function(xmlDoc) {
+	    // Populate comboOptions element with server response
+	    var comboOptions = this.comboOptions;
+	    comboOptions.empty();
+
+	    var rec = jQuery('error:first', xmlDoc);
+	    if ( rec.size() ) {
+		// Error returned by Server
+		comboOptions.text(rec.text());
+	    } else {
+		// Success
+		var recs = jQuery('records > record > option', xmlDoc);
+		if ( recs.size() ) {
+		    // Matches Found
+		    recs.each(function() {
+			var comboOption = jQuery('<div>')
+			    .text($(this).text())
+			    .css({
+				'width': '100%',
+				'cursor': 'pointer'
+			    })
+			    .appendTo(comboOptions);
+		    });
+		    // selectOption first option
+		    this.selectOption(0);
+		} else {
+		    // No Matches
+		    comboOptions.text("No Matches");
+		}
+	    }
+	},
+	_inputOnKeyDown: function(e) {
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    var selection = this.editor.textrange('get');
+
+	    switch(e.which) {
+	  
+	    case 37: // left
+		if ( selection.selectionAtStart ) {
+		    break;
+		} else {
+		    return true;
+		}	   
+	    case 39: // right
+		if ( selection.selectionAtEnd ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 83: // S
+		if ( e.ctrlKey ) {
+		    break;
+		} else {
+		    return true;
+		}
+	    case 38: // up
+		if ( this.comboOptions.is(':visible') ) {
+		    // navigate within comboOptions if it is visible
+		    var index = this.comboOptions.children('.selected').prev().index();
+		    if ( index !== -1 ) {
+			this.selectOption(index);
+		    }
+		    return true
+		}
+	    case 40: // down
+		if ( this.comboOptions.is(':visible') ) {
+		    // navigate within comboOptions if it is visible
+		    var index = this.comboOptions.children('.selected').next().index();
+		    if ( index !== -1 ) {
+			this.selectOption(index);
+		    }
+		    return true
+		}
+	    case 9: // tab 
+	    case 13: // return
+		if ( this.comboOptions.is(':visible') ) {
+		    // Update editor with the selected comboOption
+		    var option = this.comboOptions.children('.selected');
+		    if ( option.index() !== -1 ) {
+			this.editor.val(option.text());
+			this.lastValue = option.text();
+			// trigger keyup on editor to let it listeners know that it's value has changed
+			this.editor.trigger('keyup');
+			this.comboOptions.hide();
+		    }
+		}
+
+	    case 46: // delete 
+		break;
+
+	    default: return true 
+	    }
+
+	    // propagate custom event to target element
+	    var event = jQuery.Event('editorKeyDown', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+	    });
+	    e.preventDefault();
+	    this.currentElement.trigger(event);
+	},
+	_inputOnKeyUp: function(e) {
+	    if ( this.getValue() !== this.lastValue ) {
+		// Search for combo options		
+		this.lastValue = this.getValue()
+		this.search();
+	    }	    
+
+	    // Pass all key up events on to the target element.
+            var event = jQuery.Event('editorKeyUp', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnCut: function(e) {
+	    // Pass all cut events on to the target element.
+            var event = jQuery.Event('editorCut', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnPaste: function(e) {
+	    // Pass all paste events on to the target element.
+            var event = jQuery.Event('editorPaste', {
+		'data': e.data, 
+		'ctrlKey': e.ctrlKey, 
+		'altKey': e.altKey, 
+		'shiftKey': e.shiftKey, 
+		'which': e.which
+            });
+	    this.currentElement.trigger(event);
+	},
+	_inputOnBlur: function(e, source) {
+	    if ( ! this.editor.is(':focus') ) {
+		// really is blurred
+		var event = jQuery.Event('editorBlur', {
+		    'data': e.data
+		});
+		this.currentElement.trigger(event);
+	    }
+	},
+	_comboOptionMouseUp: function(e) {
+	    // Select the target option and update editor value
+	    var option = $(e.currentTarget);
+	    
+	    this.selectOption(option.index());
+	    this.editor.val(option.text());
+	    this.lastValue = option.text();	   
+	    this.selectText('end');
+	    this.comboOptions.hide();
+	    // trigger keyup on editor to let it listeners know that it's value has changed
+	    this.editor.trigger('keyup');
+	    return true
+	},
+	_comboOptionMouseEnter: function(e) {
+	    // Select the target option
+	    var option = $(e.currentTarget);
+	    
+	    this.selectOption(option.index());
+	    return true
+	},
+	destroy: function() {
+	    // If the widget is destroyed, remove the editor from the DOM.
+	    this.editor.remove();
+	    this.comboOptions.remove();
+	}
+    });
+})(jQuery, window);
+
 /* ==== jquery.dbEditorHTMLArea.js ==== */
 // dbEditorHTMLArea plugin
 // A hovering editor for multi-line input with a contentEditable div to allow html markup
@@ -4660,8 +5515,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
-	    this.editor.show().html(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.html(value);
 	},
 	hide: function() {
 	    // Hide the editor
@@ -4858,8 +5714,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5048,8 +5905,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5985,1254 +6843,478 @@ function dbFormHTMLArea(oDiv) {
 }
 
 /* ==== jquery.dbGrid.js ==== */
-(function($){
-  // DbGrid Class Constructor
-  var DbGrid = function(table) {
-    // Private Class Variables
-    var recCount;
-    var keyUpTimer;
-    var tbody = jQuery([]);
-    var colgroup = jQuery([]);
-    var statusTable = jQuery([]);
-    var currentCell = jQuery([]);
-    // Input Controls
-      var dbGridInput;
-    var dbGridInputCtl;
-    var dbGridCombo;
-    var dbGridTextArea;
-    var dbGridHTMLArea;
-    var oFCKeditor;
-    var dbGridInputBool;
-   
-    // Parameters
-    if ( ! table.attr('initialFocus') ) { table.attr('initialFocus','true'); }
-    if ( ! table.attr('enabled') ) { table.attr('enabled','true'); }
-    if ( ! table.attr('updateType') ) { table.attr('updateType','rowOut'); }
-
-    // Functions 
-    function init() {
-      tbody = table.children('tbody');
-      colgroup = table.children('colgroup');
-      if ( ! colgroup.size() ) {
-        throw "This behavior requires a COLGROUP"
-      }
-    
-      // The status table should be contained in a div element that is a sibling of the parent of this table
-      if ( table.hasClass('clsDbGrid') ) {
-	statusTable = table.closest('.clsDbGridDiv').next('.clsDbGridDivStatus').children('table');
-      } else {
-	statusTable = jQuery([]);
-      }      
-      recCount = tbody.children().size();
-      if ( table.attr('enabled') == "true" ) {
-	// Init input controls
-	inputControlsInit();
-	// Bind
-	tbody.on('mouseup.dbGrid',cellOnMouseUp);
-	jQuery(window).on('resize.dbGrid',onResize);
-	jQuery(window).on('beforeunload', onBeforeUnload);
-	jQuery(window).on('beforeprint', onBeforePrint);
-     
-	init2();
-      }
-    };
-    // make init public
-    this.init = init;
-
-    function init2() {
-      if ( table.attr('addURL') ) {
-        createNewRow();
-      }
-
-	$('body').one('pluginsReady', function() {
-	    out: {
-		if ( table.attr('initialFocus') == "end" ) {
-  		    // Focus on first editable cell in last row
-		    var lastRow = tbody.children('tr:last');
-		    var cells = lastRow.children('td');
-		    for (var i=0;i<cells.size();i++) {
- 			cell = cells.eq(i);
-			
-			if ( isCellEditable(cell) && isTabStop(cell) ) { 
-			    currentCell = cell;
-			    cellIn(cell);
-			    rowIn(lastRow);
-
-			    break out;
-			}
-		    }
-  		    // Could not find an editable cell in last row
-		}
-
-		// Focus on first editableCell
-		if ( table.attr('initialFocus') == "true" ) {
-  		    var rows = tbody.children('tr');
-		    for (var i=0;i<rows.size();i++) {
-			var row = rows.eq(i);					   
-			var cells = row.children('td');			   
-			
-			for (var j=0;j<cells.size();j++) {
-			    var cell = cells.eq(j);
-
-			    if ( isCellEditable(cell) && isTabStop(cell) ) {
-				currentCell = cell;
-				cellIn(cell);
-				rowIn(row);
-
-				break out;
-			    }
-			}
-		    }
-		}
-		// Could not find an editable cell
-	    } // end out
-	});
-    };
-    
-    function focus() {
-      if ( currentCell.size() ) {
-        cellIn(currentCell);
-      }
-    };
-    // make focus public
-    this.focus = focus;
-    
-    function blur() {
-      if ( currentCell.size() ) {
-	cellOut(currentCell);
-      }
-    };
-    // make blur public
-    this.blur = blur;
-    
-    function setDirty() {
-      if ( currentCell.size() ) {
-        var currentRow = currentCell.closest('tr');
-        setRowState(currentRow,'dirty');
-      }
-    };
-    // make setDirty public
-    this.setDirty = setDirty;
-
-    // TODO: check this working in Chrome
-    function onBeforeUnload() {
-      if ( !currentCell.size() ) {	
-	return;
-      }
-      
-      var currentRow = currentCell.closest('tr');
-       if (currentRow.attr('rowState') == 'dirty' || currentRow.attr('rowState') == 'error' ) {
-	    return "Your changes have not been saved.\nStay on the current page to correct.";
-      }      
-    };
-
-    function onBeforePrint() {
-      if ( currentCell.size() ) {
-	cellOut(currentCell);
-      }	
-    };
-
-    function onResize() {
-      if ( currentCell.size() ) {
-	cellChange(currentCell);
-      }
-    };
-
-    function resize(colIdx,width) {
-      // 0-based colIdx
-      colgroup.children('col').eq(colIdx).width(width);
-      onResize();
-    };
-    // make resize public
-    this.resize = resize;
-
-    function find(colName,search) {
-      var found = false;
-      var colIdx = colgroup.children('col[name=' + colName + ']').index()      
-      if ( colIdx != -1 ) {
-        // found matching col element
-	var colCells = tbody.children('tr').children('td:nth-child(' + (colIdx + 1) + ')');
-	
-        colCells.each(function() {
-          cell = jQuery(this);
-	  if ( cell.text() == search ) {
-	    // found matching cell
-	    if ( ! isCellEditable(cell) ) {
-	      // move to next editable cell with the same row
-	      cell = moveRight(cell, false);
-	    }
-	    if ( ! isCellEditable(cell) ) {
-	      // move to previous editable cell with the same row
-	      cell = moveLeft(cell, false);
-	    }
-	    if ( isCellEditable(cell) ) {
-	      cellChange(cell);
-	      found = true;
-	    }
-	    return false; // break out of jQuery.each loop
+(function($, window, document, undefined){
+    $.widget('qcode.dbGrid', {
+	options: {
+	    initialFocus: true,
+	    enabled: true,
+	    updateType: 'rowOut',
+	    statusBar: true	    
+	},
+	_create: function(){
+	    var dbGrid = this;
 	    
-	  }
-	});
-      }
-      if ( ! found ) {
-	alert("Could not find " + search + ".");
-      }
-    };
-    // make find public
-    this.find = find;
+	    // Plugin Variables
+	    dbGrid.colgroup = this.element.children('colgroup');
+	    dbGrid.tbody = dbGrid.element.children('tbody');
+	    dbGrid.currentCell = $([]);
+	    dbGrid.statusBar = $([]);
+	    dbGrid.editorDiv = $([]);
+	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
+	  	    
+	    // Update options with those set via table attributes
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    $.each(attributes, function(i, name) {
+		var value = dbGrid.element.attr(name);
+		if ( value !== undefined ) {
+		    dbGrid.option(name,value);
+		}
+	    });
 
-    function save(row,async) {
-      if ( row == undefined || ! row.size() ) {
-	var row = currentCell.closest('tr');
-      }
-      if ( row.attr('rowType') == 'add' && table.attr('addURL') ) {
-	return rowAction(row,'add',table.attr('addURL'),rowActionReturn,async);
-      }
-      if ( row.attr('rowType') == 'update' && table.attr('updateURL') ) {
-	return rowAction(row,'update',table.attr('updateURL'),rowActionReturn,async);
-      }
-    };
-    // make save public
-    this.save = save;
-
-    function del(row) {
-      if ( row == undefined || ! row.size() ) {
-	row = currentCell.closest('tr');
-      }
-      if ( row.attr('rowType') == 'update' && table.attr('deleteURL') ) {
-	if ( window.confirm("Delete the current record?") ) {
-	  // async false
-	  rowAction(row,'delete',table.attr('deleteURL'),rowActionReturn,false);
-	}
-      }
-      if ( row.attr('rowType') == 'add' ) {
-	if ( window.confirm("Delete the current row?") ) {
-	  rowRemove(row);
-	}
-      }
-    };
-    // make del public
-    this.del = del;
-
-    //
-    // INPUT //
-    //
-    function inputControlCallback(e) {
-      if (e.type == 'keydown') {
-	cellOnKeyDown(e);
-      }
-      if (e.type == 'keyup') {
-	cellOnKeyUp(e);
-      }
-      if (e.type =='cut') {
-	cellOnCut(e);
-      }
-      if (e.type =='paste') {
-	cellOnPaste(e);
-      }
-      if (e.type =='blur') {
-	var activeElmt = jQuery(document.activeElement);
-	if (!table.is(activeElmt) && !table.find(activeElmt).size() && (dbGridInputCtl && !activeElmt.is(dbGridInputCtl.getElmt())) && currentCell.size()) {
-	  var currentRow = currentCell.closest('tr');
-	  if ( table.attr('updateType')=="onCellOut" && currentRow.attr('rowState') == 'dirty') {
-	    save(currentRow);
-	  }
-	}
-      }
-    };
-   
-    function inputControlsInit() {
-      var wantCombo= false;
-      var wantTextArea = false;
-      var wantHTMLArea = false;
-      var wantFCKeditor = false;
-      var wantBool = false;
-
-      colgroup.children('col').each(function() {
-	var colType = jQuery(this).attr('type');
-	
-	if ( colType == 'combo' ) {
-	  wantCombo = true;
-	}
-	if ( colType == 'textarea' ) {
-	  wantTextArea = true;
-	}
-	if ( colType == 'htmlarea' ) {
-	  wantHTMLArea = true;
-	}
-	if ( colType == 'FCKeditor' ) {
-	  wantFCKeditor = true;
-	}
-	if ( colType == 'bool' ) {
-	  wantBool = true;
-	}	
-      });
-	
-	var divContainer = $('<div>').insertBefore(table).css('position', "relative");
-	divContainer.add(table).wrapAll('<div class="wrapper">');
-
-      dbGridInput = new DbGridInput(inputControlCallback, divContainer)
-      
-      if ( wantCombo ) {
-	dbGridCombo = new DbGridCombo(inputControlCallback, divContainer);
-      }
-      if ( wantTextArea ) {
-	dbGridTextArea = new DbGridTextArea(inputControlCallback, divContainer);
-      }
-      if ( wantHTMLArea ) {
-	dbGridHTMLArea = new DbGridHTMLArea(inputControlCallback, divContainer);
-      }
-      if ( wantFCKeditor ) {
-	// TODO: FCKEditor
-	//oFCKeditor = dbGridFCKeditor(inputControlCallback,oDivContainer);
-      }
-      if ( wantBool ) {
-	dbGridInputBool = new DbGridInputBool(inputControlCallback, divContainer);
-      }
-    };
-    
-    //
-    // CELL
-    //
-
-    function cellChange(newCell) {
-      var newRow = newCell.closest('tr');
-      if ( ! currentCell.size() ) {
-	// No cell currently selected
-	rowIn(newRow);
-	cellIn(newCell);
-      } else {
-	var oldCell = currentCell;
-	var oldRow = oldCell.closest('tr');
-	
-	if ( newRow.index() != oldRow.index() ) {
-	  // Row Change
-	  cellOut(oldCell);
-	  rowOut(oldRow);
-	  rowIn(newRow);
-	  cellIn(newCell);
-	} else {
-	  // Same Row 
-	  cellOut(oldCell);
-	  cellIn(newCell);
-	}
-      }
-    };
-
-      function cellIn(cell,select) {
-	  currentCell = cell;
-	  // Hide the cell
-	  cell.css('visibility','hidden');
-	  // Decide which inputControl to use
-	  var col = colgroup.children('col').eq(cell.index());
-	  var colType = col.attr('type');
-	  var row = cell.closest('tr');
-	  var cellValue = getCellValue(row, col.attr('name'));
-	  if (  ! colType ) {
-	      colType = 'text';
-	  }
-	  if ( colType == 'text' ) {
-	      dbGridInputCtl = dbGridInput;
-	      dbGridInputCtl.show(cell,cellValue);
-	  }
-	  if ( colType == 'textarea' ) {
-	      if ( col.attr('editorHeight') !== undefined ) {
-		  var editorHeight = parseInt(col.attr('editorHeight'));
-	      }
-	      dbGridInputCtl = dbGridTextArea;
-	      dbGridInputCtl.show(cell,cellValue,editorHeight);
-	  }
-	  if ( colType == 'htmlarea') {
-	      if ( col.attr('editorHeight') !== undefined ) {
-		  var editorHeight = parseInt(col.attr('editorHeight'));
-	      }
-	      dbGridInputCtl = dbGridHTMLArea;
-	      dbGridInputCtl.show(cell,cellValue,editorHeight);
-	  }
-	  if ( colType == 'FCKeditor' ) {
-	      // TODO: Implement FCKeditor
-	      //var editorHeight = parseInt(col.attr('editorHeight'));
-	      //oInputCtl = oFCKeditor;
-	      //oInputCtl.show(cell[0],cellValue,editorHeight);
-	  }
-	  if ( colType == 'combo' ) {
-	      dbGridInputCtl = dbGridCombo;
-	      var searchURL = col.attr('searchURL');
-	      var name = col.attr('name');
-	      var boundName = col.attr('boundName');
-	      var boundValue = getCellValue(row,boundName);
-	      dbGridInputCtl.show(cell,name,cellValue,boundName,boundValue,searchURL);
-	  }
-	  if ( colType == 'bool') {
-	      dbGridInputCtl = dbGridInputBool;
-	      dbGridInputCtl.show(cell,cellValue);
-	  }
-
-	  if (select) {
-	      dbGridInputCtl.selectText(select);
-	  } else {
-	      if ( col.attr('cellInSelect') ) {
-		  dbGridInputCtl.selectText(col.attr('cellInSelect'));
-	      } else {
-		  dbGridInputCtl.selectText('all');
-	      }
-	  }
-      };
-    
-    function cellOut(cell) {
-      // Custom Event: Trigger any cellOut events bound to this table
-      cell.trigger('cellOut.dbGrid');
- 
-      var row = cell.closest('tr');
-      colIdx = cell.index();
-      var col = colgroup.children('col').eq(colIdx);
-      var oldValue = getCellValue(row,col.attr('name'));
-      var newValue = dbGridInputCtl.getValue();
-      
-      if ( oldValue != newValue ) {	
-	// Work around for combo
-	setRowState(row,'dirty');
-      }
-      cellWrite();
-      // Show the cell
-      cell.css('visibility','inherit');
-      // Hide the input control
-      dbGridInputCtl.hide();
-      // Cleanup
-      currentCell = jQuery([]);
-      dbGridInputCtl = undefined;
-      // Is there an action for this column
-      if ( row.attr('rowState')=='dirty' && col.attr('action') ) {
-	var actionURL = col.attr('action');
-	// async false
-	rowAction(row,'custom',actionURL,rowActionReturn,false);
-      }
-      // If updateType is onKeyUp then 
-      // cancel any delayed save and save now 
-      if ( table.attr('updateType')=="onKeyUp" ) {
-	cancelDelayedSave();
-	if (row.attr('rowState') == 'dirty') {
-	  save(row);
-	}
-      }
-      if ( table.attr('updateType')=="onCellOut" && row.attr('rowState') == 'dirty') {
-	save(row);
-      } 
-    }
-
-    function cellOnMouseUp(event) {
-      var target = jQuery(event.target);
-      if ( !target.is('td') && target.closest('td', table).size() ) {
-	target = target.closest('td');
-      }
-      if ( target.is('td') && isCellEditable(target) ) {
-	cellChange(target);
-      } else {
-	return false;
-      }
-    };
-
-    function cellWrite() {
-      // Write the contents of the input to the current cell
-      var currentRow = currentCell.closest('tr');
-      var colName = colgroup.children('col').eq(currentCell.index()).attr('name');
-      setCellValue(currentRow,colName,dbGridInputCtl.getValue());
-      if ( dbGridInputCtl.getType() == 'combo') {
-	setCellValue(currentRow,dbGridInputCtl.getBoundName(),dbGridInputCtl.getBoundValue());	
-      }
-    };
-
-    function cellOnKeyUp(event) {
-      // Custom Event: Trigger any keyUp events bound to this table
-      table.trigger('keyUp.dbGrid', [currentCell]);
-      
-      var currentRow = currentCell.closest('tr');
-      var colName = colgroup.children('col').eq(currentCell.index()).attr('name');
-      var oldValue = getCellValue(currentRow,colName);
-      var newValue = dbGridInputCtl.getValue();
-      if ( oldValue != newValue ) {  
-	setRowState(currentRow,'dirty');
-      } 
-      if (table.attr('updateType')=="onKeyUp") {
-	cancelDelayedSave();
-	keyUpTimer = setTimeout(delayedSave,750);
-      }
-    };
-
-    function delayedSave() {
-      if ( currentCell.size() ) {
-	var currentRow = currentCell.closest('tr');
-	if ( currentRow.attr('rowState') == 'dirty' ) {
-	  save(currentRow);
-	}
-      }
-    };
-
-    function cancelDelayedSave() {
-      if ( keyUpTimer != undefined ) {
-	clearTimeout(keyUpTimer);
-      }
-      keyUpTimer=undefined;
-    };
-
-    function cellOnCut(event) {
-      var currentRow = currentCell.closest('tr');
-      setRowState(currentRow,'dirty');
-    };
-
-    function cellOnPaste(event) {
-      var currentRow = currentCell.closest('tr');
-      setRowState(currentRow,'dirty');
-    };
-
-    function cellOnKeyDown(e) {
-      if (e.altKey) {
-	return true;
-      }
-      var cell = currentCell;
-      out: {
-	if (e.which == 37) {
-	  // Left Arrow
-	  cellChange(moveLeft(cell));
-	  break out;
-	}
-	if (e.which == 38) {
-	  // Up Arrow
-	  cellChange(moveUp(cell));
-	  break out;
-	}
-	if (e.which == 39 ) {
-	  // Right Arrow
-	  cellChange(moveRight(cell));
-	  break out;
-	}
-	if (e.which == 40 ) {
-	  // Down Arrow
-	  cellChange(moveDown(cell));
-	  break out;
-	}
-	if ( e.which == 9 ) {
-	  // TAB
-	  if ( e.shiftKey ) {
-	    cellChange(moveLeft(cell));
-	  } else {
-	    cellChange(moveRight(cell));
-	  }
-	  if ( currentCell.is(cell) ) {
-	    // document tabbing order
-	    return true;
-	  }
-	}
-	if (e.which == 13 ) {
-	  // Return
-	  cellChange(moveRight(cell));
-	  if ( currentCell.is(cell) ) {
-	    // Cell unchanged at bottom right boundary
-	    save();
-	  }	
-	}
-	if ( e.which == 46 ) {
-	  // Delete key
-	  del();
-	}
-	if ( e.which == 83 && e.ctrlKey ) {
-	  // Ctrl+S
-	  save();
-	  break out;
-	}
-	// End out label
-      }
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    function moveRight(fromCell, searchNextRows) {
-	searchNextRows = typeof searchNextRows == 'undefined' ? true : searchNextRows;
-      
-      var nextCell = fromCell.next('td');
-      
-      // Search for next editable cell on the same row
-      while ( nextCell.size() ) {
-	if (isCellEditable(nextCell) && isTabStop(nextCell)) {
-	  return nextCell;
-	} 
-	nextCell = nextCell.next('td');
-      }
-      if ( searchNextRows == true ) {
-	// Search for next editable cell on any subsequent row.
-	var nextRow = fromCell.closest('tr').next('tr');
-	while ( nextRow.size() ) {
-	  nextCell = nextRow.children('td').first();
-	  while ( nextCell.size() ) {
-	    if (isCellEditable(nextCell) && isTabStop(nextCell)) {
-	      return nextCell;
+	    // Create Optional Status Bar
+	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
+		dbGrid.statusBar = $('<div class="clsDbGridDivStatus">');
+		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
+		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
+		dbGrid.element.after(dbGrid.statusBar);
+		dbGrid.statusBar.dbGridDivStatus();
+	    } else {
+		dbGrid.statusBar = $([]);
 	    }
-	    nextCell = nextCell.next('td');
-	  }
-	  nextRow = nextRow.next('tr');
-	}
-      }
-      // Unable to find next editable cell 
-      return fromCell;
-    };
 
-    function moveLeft(fromCell, searchPreviousRows) {
-      searchPreviousRows = typeof searchPreviousRows == 'undefined' ? true : searchPreviousRows
+	    // Create a container to attach editors 
+	    dbGrid.editorDiv = $('<div>');
+	    dbGrid.editorDiv.addClass('clsDbGridDivEditor');
+	    dbGrid.editorDiv.css('position','relative');
+	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
+	    dbGrid.element.before(dbGrid.editorDiv);
+	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="wrapper">');
+	    
+	    // Enable the grid for editing
+	    if ( dbGrid.option('enabled') ) {
+		// Event listeners - instead of separate event listeners for each cell, delegated event listeners are added to the dbGrid.
+		dbGrid._on(dbGrid.tbody, {
+		    'mouseup td': function(event) {
+			$(event.currentTarget).dbCell('onMouseUp');
+		    },
+		    'editorKeyDown td': function(event){
+			$(event.currentTarget).dbCell('editorKeyDown', event);
+		    },
+		    'editorKeyUp td': function(event){
+			$(event.currentTarget).dbCell('editorKeyUp', event);
+		    },
+		    'editorCut td': function(event){
+			$(event.currentTarget).dbCell('editorCut', event);
+		    },
+		    'editorPaste td': function(event){
+			$(event.currentTarget).dbCell('editorPaste', event);
+		    },
+		    'editorBlur td': function(event){
+			$(event.currentTarget).dbCell('editorBlur', event);
+		    }
+		});
+		dbGrid._on(window, {
+		    'beforeunload': dbGrid._onBeforeUnload,
+		    'beforeprint': dbGrid._onBeforePrint
+		});
+		
+		// Create New Row
+		if ( dbGrid.option('addURL') ) {
+		    dbGrid.createNewRow();
+		}
 
-      var prevCell = fromCell.prev('td');
-      
-      // Search for previous editable cell on the same row
-      while ( prevCell.size() ) {
-	if (isCellEditable(prevCell) && isTabStop(prevCell)) {
-	  return prevCell;
-	} 
-	prevCell = prevCell.prev('td');
-      }
-      if ( searchPreviousRows == true ) {
-	// Search for previous editable cell on any subsequent row.
-	var prevRow = fromCell.closest('tr').prev('tr');
-	while ( prevRow.size() ) {
-	  prevCell = prevRow.children('td').last();
-	  while ( prevCell.size() ) {
-	    if (isCellEditable(prevCell) && isTabStop(prevCell)) {
-	      return prevCell;
+		// initialFocus
+		$('body').one('pluginsReady', function() {
+		    var initialFocusCell = dbGrid.getInitialFocusCell();
+		    if ( initialFocusCell.size() ) {
+			dbGrid.cellChange(initialFocusCell);
+		    }
+		});
+
+		// preformatted columns
+		var rows = dbGrid.tbody.children('tr');
+		dbGrid.colgroup.children('[type=text],[type=textarea]').each(function() {
+		    var col = $(this);
+		    var colIndex = col.index();
+		    
+		    // apply class to existing td elements in tbody
+		    rows.children('td:nth-child(' + (colIndex + 1)  + ')').addClass('preformatted')
+
+		    // apply class to this column that can later be inherited by new rows
+		    col.addClass('preformatted')
+		});
 	    }
-	    prevCell = prevCell.prev('td');
-	  }
-	  prevRow = prevRow.prev('tr');
-	}
-      }
-      // Unable to find previous editable cell 
-      return fromCell;
-    };
-
-    function moveUp(fromCell) {
-      var prevCell = jQuery([]);
-      var prevRow = fromCell.closest('tr').prev('tr');
-      var colIdx = fromCell.index();
-
-      // Search for first editable cell in the same column of previous rows.
-      while ( prevRow.size() ) {
-	prevCell = prevRow.children().eq(colIdx);
-	if (prevCell.size() && isCellEditable(prevCell) && isTabStop(prevCell)) {
-	    return prevCell;
-	}
-	prevRow = prevRow.prev('tr');
-      }
-      // Unable to find previous editable cell 
-      return fromCell;
-    };
-
-    function moveDown(fromCell) {
-      var nextCell = jQuery([]);
-      var nextRow = fromCell.closest('tr').next('tr');
-      var colIdx = fromCell.index();
-
-      // Search for first editable cell in the same column of subsequent rows.
-      while ( nextRow.size() ) {
-	nextCell = nextRow.children().eq(colIdx);
-	if (nextCell.size() && isCellEditable(nextCell) && isTabStop(nextCell)) {
-	    return nextCell;
-	}
-	nextRow = nextRow.next('tr');
-      }
-      // Unable to find next editable cell 
-      return fromCell;
-    };
-
-    function isCellEditable(cell) {
-      var row = cell.closest('tr');
-      var col = colgroup.children('col').eq(cell.index());
-      if ( row.attr('rowType') == undefined ) {
-	row.attr('rowType','update');
-      }
-      if ( row.attr('rowState') == 'updating' ) {
-	return false;
-      } 
-      // Is the column visible
-      if ( col.hasClass('clsHidden') ) {
-	return false;
-      }
-      // No name defined
-      if ( col.attr('name') == undefined ) {
-	return false;
-      }
-      if ( row.attr('rowType') == 'add' && col.attr('addDisabled') == 'true' ) {
-	return false;
-      }
-      if ( row.attr('rowType') == 'update' && col.attr('updateDisabled') == 'true' ) {
-	return false;
-      } 
-      if ( col.attr('type') == 'html' ) {
-	return false;
-      }
-      return true;
-    };
-    // make isCellEditable public
-    this.isCellEditable = isCellEditable;
-
-    function isTabStop(cell) {
-      var col = colgroup.children('col').eq(cell.index());
-      if ( col.attr('tabStop') == 'no' ) {
-	return false;
-      } else {
-	return true;
-      }
-    };
-
-    function getCellValue(row,name) {
-      var col = colgroup.children('col[name=' + name + ']').first();
-      var colType = col.attr('type');
-      var colIdx = col.index();
-
-      if ( colIdx != -1 ) {
-	// Found column with name
-	var cell = row.children('td').eq(colIdx);
-
-	if (  colType == 'html' || colType == 'htmlarea' || colType == 'FCKeditor' ) {
-	  return cell.html();
-	} else if ( colType=='bool' ) {
-	  return parseBoolean(stripHTML(cell.html()));
-	} else {
-	  return unescapeHTML(cell.html());
-	}
-      } 
-      throw new Error("No column named " + name);
-    };
-    // make getCellValue public
-    this.getCellValue = getCellValue;
-    
-    function setCellValue(row,name,value) {
-      var col = colgroup.children('col[name=' + name + ']').first();
-      var colType = col.attr('type');
-      var colIdx = col.index();
-
-      if ( colIdx != -1 ) {
-	// Found column with name
-	var cell = row.children('td').eq(colIdx);
-
-	if (  colType == 'html' || colType == 'htmlarea' || colType == 'FCKeditor' ) {
-	  cell.html(value);
-	} else if ( colType=='bool' ) {
-	  if ( parseBoolean(value) ) {
-	    cell.html("<span class='clsTrue'>Yes</span>");
-	  } else {
-	    cell.html("<span class='clsFalse'>No</span>");
-	  }
-	} else {
-	  cell.html(escapeHTML(value));
-	}
-	return cell.html()
-      }
-      throw new Error("No column named " + name);
-    };
-    // make setCellValue public
-    this.setCellValue = setCellValue;
-
-    //
-    // ROW
-    //
-
-    function requery(url,data) {
-      if ( url == undefined ) {
-	url = table.attr('dataURL');
-      }      
-      // Delete all rows
-      tbody.children('tr').remove();
-      
-      var handler = requeryReturn;
-      var errorHandler = rowActionReturnError;
-      var async = false;
-      var type = 'requery';
-      httpPost(url,data,handler,errorHandler,async,type);
-    };
-    // make requery public
-    this.requery = requery;
-
-    function requeryReturn(xml) {
-      var records = jQuery('records record', xml)
-      for(var i=0;i<records.size();i++) {
-        var row = createBlankRow();
-	displayRow(row,records.eq(i));
-      }
-      // calculated, html
-      jQuery('records calculated, records html', xml).children().each(function() {
-	node = jQuery(this);
-	var id = this.nodeName;
-	var value = node.text();
-
-	jQuery('#' + id, table).each(function() {
-	  setObjectValue(this, value);
-	});
-      });
-      
-      if ( table.attr('enabled') == "true" ) {
-	init2()
-      }
-    };
-
-    // requery2 will update the data on each row from the first down
-    // without deleting any rows
-    function requery2(url) {
-      var handler = requeryReturn2;
-      var errorHandler = function(errorMessage) {
-	setStatus(errorMessage);
-	alert(errorMessage);
-      }
-      var async = false;
-      var type = 'requery2';
-
-      httpGet(url,handler,errorHandler,async,type);
-    };
-    // make requery2 public
-    this.requery2 = requery2;
-
-    function requeryReturn2(xml) {
-      var records = jQuery('records record', xml)
-      var rows = jQuery('tbody tr', table);
-      for(var i=0;i<records.size();i++) {
-        var row = rows.eq(i);
-	displayRow(row,records.eq(i));
-      }
-      // calculated, html
-      jQuery('records calculated, records html', xml).children().each(function() {
-	node = jQuery(this);
-	var id = this.nodeName;
-	var value = node.text();
-
-	jQuery('#' + id, table).each(function() {
-	  setObjectValue(this, value);
-	});
-      });
-    };
-
-    function createBlankRow() {
-      var row = jQuery('<tr>');
-      var cols = colgroup.children('col');
-      for(var i=0;i<colgroup.children('col').size();i++) {
-        var cell = jQuery('<td>');
-	var colClass = cols.eq(i).attr('class');
-	if ( colClass ) {
-	  cell.attr('class', colClass);
-	}
-	var colStyle = cols.eq(i).attr('style');
-	if ( colStyle ) {
-	  cell.attr('style', colStyle);
-	}
-        row.append(cell);
-      }
-      row.attr('rowType', 'update');
-
-      tbody.append(row);
-      return row;
-    };
-  
-    function createNewRow() {
-      var row = jQuery('<tr>');
-      var cols = colgroup.children('col');
-      for(var i=0;i<colgroup.children('col').size();i++) {
-        var cell = jQuery('<td>');
-	var defaultValue = cols.eq(i).attr('defaultValue');
-	if ( defaultValue ) {
-	  cell.text(defaultValue);
-	}
-	var colClass = cols.eq(i).attr('class');
-	if ( colClass ) {
-	  cell.attr('class', colClass);
-	}
-	var colStyle = cols.eq(i).attr('style');
-	if ( colStyle ) {
-	  cell.attr('style', colStyle);
-	}
-	row.append(cell);
-      }
-      row.attr('rowType', 'add');
-
-      tbody.append(row);
-      return row;
-    };
- 
-    function rowRemove(row) {
-      // Try to move away from the current row
-      if ( row.find(currentCell).size() ) {
-	// Move Down
-	cellChange(moveDown(currentCell));
-      }
-      if ( row.find(currentCell).size() ) {	
-	// Move Up
-	cellChange(moveUp(currentCell));
-      }
-            
-      if ( row.find(currentCell).size() ) {
-	// Failed to move away
-	cellOut(currentCell);
-	row.remove();
-      } else {
-	row.remove();
-	if ( currentCell.size() ) {
-	  // Input will be in the wrong position
-	  cellIn(currentCell);
-	}
-      }
-    };
-    // make rowRemove public
-    this.rowRemove = rowRemove;
-    
-    function setRowState(row,newState) {
-      var oldState = row.attr('rowState');
-      
-      switch (newState) {
-	case 'dirty': {
-	  if ( oldState =='current' && row.attr('rowType') == 'add' ) {
-	    // Append New Row
-	    createNewRow();
-	  }
-	  if ( oldState == 'current' || oldState == 'error' ) {
-	    /*var style = "color:blue;cursor:hand;text-decoration:underline";
-	    var onclick = "jQuery('#" + table.attr('id') + "').first().data('dbGrid').save()"
-	    var span = "<span style=" + style + " onclick=" + onclick + ">save</span>";*/
-	      setStatus('Editing ... Type Ctrl+S to ');
-	      jQuery('tr:first td:first', statusTable).append(
-		  jQuery("<span>save</span>")
-		      .css({"color": "blue", "cursor": "hand", "text-decoration": "underline"})
-		      .click(function(){table.data('dbGrid').save()})
-	      );
-	  }
-	    break;
-	}
-
-	case 'current': {
-	  setStatus("Saved.");
-	  var backgroundColor = '';
-	  row.css('background-color', backgroundColor);
-	  if ( dbGridInputCtl != undefined ) {
-	    dbGridInputCtl.getElmt().css('background-color',backgroundColor);
-	  }
-	  break;
-	}
-
-	case 'updating': {
-	  var backgroundColor = 'yellow';
-	  row.css('background-color', backgroundColor);
-	  if ( dbGridInputCtl != undefined ) {
-	    dbGridInputCtl.getElmt().css('background-color',backgroundColor);
-	  }
-	  break;
-	}
-
-	case 'error': {
-	  var backgroundColor = 'tomato';
-	  row.css('background-color', backgroundColor);
-	  if ( dbGridInputCtl != undefined ) {
-	    dbGridInputCtl.getElmt().css('background-color',backgroundColor);
-	  }	  
-	  break;
-	}
-      }
-
-      row.attr('rowState',newState);
-    };
-    // make setRowState public
-    this.setRowState = setRowState;
-
-    function rowIn(row) {
-      // Custom Event: Trigger any rowIn events bound to this table
-      row.trigger('rowIn.dbGrid');
-
-      if ( ! row.attr('rowType') ) {
-	row.attr('rowType','update');
-      }
-      if ( ! row.attr('rowState') ) {
-	row.attr('rowState','current');
-      }
-      if ( row.attr('rowError') ) {
-	setStatus(row.attr('rowError'));
-      }
-      setNavCounter(row.index()+1);
-    };
-
-    function rowOut(row) {
-      // Custom Event: Trigger any rowOut events bound to this table
-      row.trigger('rowOut.dbGrid');
-
-      if ( row.attr('rowState') == 'dirty' ) {
-	save(row);
-      }
-    };
-
-    function rowUrlEncode(row) {
-      var list = new Array;
-      var cols = colgroup.children('col');
-      for(var i=0;i<cols.size();i++) {
-	var col = cols.eq(i);
-	if ( col.attr('name') ) {
-	  var name = col.attr('name');
-	  var value = getCellValue(row,name);
-	  list.push(encodeURIComponent(name) + "=" + encodeURIComponent(value));
-	}
-      }
-      return list.join("&");
-    };
-   
-    function rowAction(row,type,url,handler,async) {
-      if ( handler == undefined ) {
-	handler = rowActionReturn;
-      }
-      
-      // If async is true a page refresh may result in the db grid being populated with out of date values.
-      // Default async to false if the beforeunload event has been triggered, otherwise default to true.
-      if (async==false || (async == undefined && typeof event == "object" && event.type=='beforeunload') ) {
-	async = false;
-      } else {
-	async = true;
-      }
-      
-      if ( type=='add' || type=='update' || type=='delete' ) {
-	setRowState(row,'updating');
-      }
-      if (currentCell.size()) {
-	cellWrite();
-      }
-      
-      // Check if there are url encoded variables in the url
-      var re = /([^\?]+)\??(.*)/;
-      re.exec(url);
-      var path = RegExp.$1;
-      var queryString = RegExp.$2;
-      var data;
-      if ( queryString != "" ) {
-	data = queryString + '&' + rowUrlEncode(row);
-      } else {
-	data = rowUrlEncode(row);
-      }
-      
-      httpPost(url,data,handler,rowActionReturnError,async,type,row);
-    };
-    // make rowAction public
-    this.rowAction = rowAction;
-    
-    function rowActionReturn(xml,type,row) {
-      if ( type =='update' || type =='add' ) {
-	row.attr('rowType','update');
-	row.attr('rowError',undefined);
-	setRowState(row,'current');
-      }
-      if ( type =='add' ) {
-	recCount ++;
-	// Refresh counter
-	if ( currentCell.size() ) {
-	  var currentRow = currentCell.closest('tr');
-	  setNavCounter(currentRow.index() + 1);
-	}
-      }
-      if ( type == 'delete' ) {
-	recCount --;
-	// Focus
-	rowRemove(row);
-	setStatus("Deleted.");
-      }
-      // Row
-      var rec = jQuery('records record', xml);
-      if ( rec.size() ) {
-	displayRow(row,rec.eq(0));
-      }
-      // calculated, html
-      jQuery('records calculated', xml).children().each(function() {
-	node = jQuery(this);
-	var id = this.nodeName;
-	var value = node.text();
-
-	jQuery('#' + id, table).each(function() {
-	  setObjectValue(this, value);
-	});
-      });
-
-      jQuery('records html', xml).children().each(function() {
-	node = jQuery(this);
-	var id = this.nodeName;
-	var value = node.text();
-
-	jQuery('#' + id + ',[name="' + id + '"]').each(function() {
-	  setObjectValue(this, value);
-	});
-      });
-
-      // Info
-      var rec = jQuery('records info', xml);
-      if ( rec.size() ) {setStatus(rec.text());}
-      // Alert
-      var rec = jQuery('records alert', xml);
-      if ( rec.size() ) {alert(rec.text());}
-     
-      // Custom Event: Trigger any rowActionReturn events bound to this table
-      row.trigger('rowActionReturn.dbGrid', [type]);
-    };
-
-      function setObjectValue(element, value) {
-	  if ( $(element).is('select, input, textarea') ) {
-	      $(element).val(value);
-	  } else if ( $(element).is('.clsRadioGroup') ) {
-	      $(element).find('[name="'+$(element).prop('name')+'"][value="'+value+'"]').val(true);
-	  } else {
-	      $(element).html(value);
-	  }
-      }
-    
-    function rowActionReturnError(errorMessage,errorType,actionType,row) {
-      setRowState(row,'error');
-      setStatus(errorMessage);
-      if ( errorType != 'USER' ) {
-	alert(errorMessage);
-      }
-    };
-
-    function displayRow(row,xml) {
-      var cols = colgroup.children('col');
-      for(var i=0;i<cols.size();i++) {
-	var col = cols.eq(i);
-	var colName = col.attr('name');
-	var node = jQuery(colName, xml);
-	
-	if ( colName && node.size() ) {
-	  var value = node.text();
-	  setCellValue(row,colName,value);
-	}
-      }
-     
-      if ( currentCell.size() && row.find(currentCell).size() ) {
-	cellIn(currentCell,'preserve');
-      }
-    };
-    
-    // Status Message
-    function setStatus(msg) {
-      jQuery('tr:first td:first', statusTable).html(msg);
-    };
-    // make setStatus public
-    this.setStatus = setStatus;
-
-    function setNavCounter(bookmark) {
-      var str = 'Record ' + bookmark + ' of ' + recCount;
-      jQuery('tr:first td:last', statusTable).html(str);
-    };
-    
-    function httpPost(url,data,handler,errorHandler,async,type,elmt) {
-      jQuery.ajax ({
-	type: "POST",
-	cache: false,
-	async: async,
-	dataType: 'xml',
-	url: url,
-	data: data,
-	success: function(data, textStatus, jqXHR) {
-	  // USER ERROR
-	  var error = jQuery('error', data).first();
-	  if ( error.size() ) {
-	    var errorMessage = error.text();
-	    return errorHandler(errorMessage,'USER',type,elmt);
-	  }
-
-	  // NORMAL COMPLETION
-	  return handler(data,type,elmt);
 	},
-	error: function(jqXHR, textStatus, errorThrown) {
-	  // HTTP ERROR
-	  if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-	    errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
-	    return errorHandler(errorMessage,'HTTP',type,elmt);
-	  }
-
-	  // XML ERROR
-	  if ( textStatus == 'parsererror' ) {
-	    errorMessage = 'Error ! Unable to parse XML response';
-	    return errorHandler(errorMessage,'XML',type,elmt);
-	  }
- 
-	  // DEFAULT ERROR
-	  errorMessage = 'Error ! '+ textStatus;
-	  return errorHandler(errorMessage,'UNKNOWN',type,elmt);
-
-	}
-      });
-    }
-
-    function httpGet(url,handler,errorHandler,async,type,elmt) {
-      jQuery.ajax ({
-	type: "GET",
-	cache: false,
-	async: async,
-	dataType: 'xml',
-	url: url,
-	success: function(data, textStatus, jqXHR) {
-	  // USER ERROR
-	  var error = jQuery('error', data).first();
-	  if ( error.size() ) {
-	    var errorMessage = error.text();
-	    return errorHandler(errorMessage,'USER',type,elmt);
-	  }
-
-	  // NORMAL COMPLETION
-	  return handler(data,type,elmt);
-	},
-	error: function(jqXHR, textStatus, errorThrown) {
-	  // HTTP ERROR
-	  if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-	    errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
-	    return errorHandler(errorMessage,'HTTP',type,elmt);
-	  }
-
-	  // XML ERROR
-	  if ( textStatus == 'parsererror' ) {
-	    errorMessage = 'Error ! Unable to parse XML response';
-	    return errorHandler(errorMessage,'XML',type,elmt);
-	  }
+	getInitialFocusCell: function(){
+	    var dbGrid = this;
 	  
-	  // DEFAULT ERROR
-	  errorMessage = 'Error ! '+ textStatus;
-	  return errorHandler(errorMessage,'UNKNOWN',type,elmt);
+	    if ( dbGrid.option('initialFocus') === 'end' ) {
+		// Return the first editable cell in the last row
+		initialFocusCell = $('tr:last > td:first', dbGrid.tbody);
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
+		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
+		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
+		}
+	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
+		// Focus on first editableCell
+		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
+		if ( ! initialFocusCell.dbCell('isEditable') ) {
+		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
+		}
+		if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell
+		}
+	    }
 
+	    return $([]);
+	},
+	getEditorDiv: function(){
+	    return this.editorDiv;
+	},
+	incrRecCount: function(i){
+	    this.recCount += i;
+	},
+	setStatusBarMsg: function(message){
+	    // Update the message displayed in the StatusBar.
+	    $('tr:first td:first', this.statusBar).html(message);
+	},
+	setNavCounter: function(rowIndex){
+	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
+	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
+	    $('tr:first td:last', this.statusBar).html(str);
+	},
+	getCurrentCell: function(){
+	    return this.currentCell;
+	},
+	setCurrentCell: function(cell){
+	    this.currentCell = cell;
+	},
+	cellChange: function(newCell){
+	    // Perform any necessary cellOut/rowOut & cellIn/rowIn to begin editing newCell
+	    var newRow = newCell.dbCell('getRow');
+	    if ( ! this.currentCell.size() ) {
+		// No cell is currently being edited
+		newRow.dbRow('rowIn');
+		newCell.dbCell('cellIn');
+	    } else {
+		var oldCell = this.currentCell;
+		var oldRow = oldCell.dbCell('getRow');		
+		if ( newRow.index() == oldRow.index() ) {
+		    // Same Row 
+		    oldCell.dbCell('cellOut');
+		    newCell.dbCell('cellIn');
+		} else {
+		    // Row Change
+		    oldCell.dbCell('cellOut');
+		    oldRow.dbRow('rowOut');
+		    newRow.dbRow('rowIn');
+		    newCell.dbCell('cellIn');		    
+		}
+	    }
+	},
+	find: function(colName, search){
+	    // Search within ColName.
+	    // If search string is found begin editing corresponding record.
+	    // Otherwise raise an alert.
+	    var dbGrid = this;
+	    var found = false;
+	    var colIndex = this.colgroup.children('col[name=' + colName + ']').index();
+	    if ( colIndex !== -1 ) {
+		// found matching col element
+		var colCells = this.tbody.children('tr').children('td:nth-child(' + (colIndex + 1) + ')');
+		
+		colCells.each(function() {
+		    cell = $(this);
+		    if ( cell.text() == search ) {
+			// found matching cell
+			if ( ! cell.dbCell('isEditable') ) {
+			    // move to next editable cell within the same row
+			    cell = dbGrid.cellRightOf(cell, false);
+			}
+			if ( ! cell.dbCell('isEditable') ) {
+			    // move to previous editable cell with the same row
+			    cell = dbGrid.cellLeftOf(cell, false);
+			}
+			if ( cell.dbCell('isEditable') ) {
+			    dbGrid.cellChange(cell);
+			    found = true;
+			}
+			return false; // break out of $.each loop			
+		    }
+		});
+	    }
+	    if ( ! found ) {
+		alert("Could not find " + search + ".");
+	    }
+	},
+	save: function(row,async) {
+	    if ( row === undefined || ! row.size() ) {
+		var row = this.currentCell.closest('tr');
+	    }
+	    row.dbRow('save',async);
+	},
+	delete: function(row){
+	    if ( row === undefined || ! row.size() ) {
+		var row = this.currentCell.closest('tr');
+	    }
+	    if ( row.dbRow('option', 'type') === 'update' ) {
+		if ( window.confirm("Delete the current record?") ) {
+		    row.dbRow('delete', false)
+		}
+	    }
+	    if ( row.dbRow('option', 'type') == 'add' ) {
+		if ( window.confirm("Delete the current row?") ) {
+		    this.removeRow(row);
+		    this.setStatusBarMsg('Deleted.');
+		}
+	    }
+	},
+	removeRow: function(row) {
+	    // Try to move away from the current row
+	    if ( row.find(this.currentCell).size() ) {
+		// Move Down
+		this.cellChange(this.cellBelow(this.currentCell));
+	    }
+	    if ( row.find(this.currentCell).size() ) {	
+		// Still on same cell try to Move Up instead
+		this.cellChange(this.cellAbove(this.currentCell));
+	    }
+            if ( row.find(this.currentCell).size() ) {
+		// Failed to move away
+		this.currentCell.dbCell('cellOut');
+	    } 
+	    row.remove();
+	    this.element.trigger('resize');
+	},
+	createBlankRow: function(){
+	    // Append a blank row to the dbGrid with type='update'
+	    var row = $('<tr>');
+	    var cols = this.colgroup.children('col');
+	    for(var i=0;i<this.colgroup.children('col').size();i++) {
+		var cell = $('<td>');
+		var colClass = cols.eq(i).attr('class');
+		if ( colClass ) {
+		    cell.attr('class', colClass);
+		}
+		var colStyle = cols.eq(i).attr('style');
+		if ( colStyle ) {
+		    cell.attr('style', colStyle);
+		}
+		row.append(cell);
+	    }
+	    row.dbRow({'type': 'update'});
+
+	    this.tbody.append(row);
+	    return row;
+	},
+	createNewRow: function(){
+	    // Append a new row to the dbGrid with type='add' and with any defaultValues defined on the colgroup
+	    var row = $('<tr>');
+	    var cols = this.colgroup.children('col');
+	    for(var i=0;i<this.colgroup.children('col').size();i++) {
+		var cell = $('<td>');
+		var defaultValue = cols.eq(i).attr('defaultValue');
+		if ( defaultValue ) {
+		    cell.text(defaultValue);
+		}
+		var colClass = cols.eq(i).attr('class');
+		if ( colClass ) {
+		    cell.attr('class', colClass);
+		}
+		var colStyle = cols.eq(i).attr('style');
+		if ( colStyle ) {
+		    cell.attr('style', colStyle);
+		}
+		row.append(cell);
+	    }
+	    row.dbRow({'type': 'add'});
+
+	    this.tbody.append(row);
+	    return row;
+	},
+	requery: function(data, url){
+	    // Remove all rows from the dbGrid and requery the dataURL to re-populate the grid
+	    if ( url === undefined ) {
+		url = this.option('dataURL');
+	    }      
+	    this.setStatusBarMsg('');
+	    if ( this.currentCell.size() ) {
+		this.currentCell.dbCell('cellOut');
+	    }
+	    // Remove all rows
+	    this.tbody.children('tr').remove();
+	    
+	    httpPost(url,data,this._requeryReturn.bind(this),this._requeryReturnError.bind(this),false);
+	},
+	_requeryReturn: function(xmlDoc){
+	    // Rebuild dbGrid from requeryReturn response
+	    var dbGrid = this;
+
+	    // Create rows for each record in xmlDoc
+	    var records = $('records record', xmlDoc).each(function(){
+		var rec = $(this);
+		var row = dbGrid.createBlankRow();
+		rec.children().each(function() {
+		    var xmlNode = $(this);
+		    var colName = xmlNode.prop('nodeName');
+		    var value = xmlNode.text()
+		    row.dbRow('setCellValue', colName, value);		    
+		});	
+	    });
+
+	    // Update 'Calculated' elements within grid
+	    $('records > calculated', xmlDoc).children().each(function() {
+		xmlNode = $(this);
+		var id = xmlNode.prop('nodeName');
+		var value = xmlNode.text();
+		$('#' + id, dbGrid.table).setObjectValue(value);
+	    });
+
+	    // Update html elements external to the grid
+	    $('records > html', xmlDoc).children().each(function() {
+		xmlNode = $(this);
+		var id = xmlNode.prop('nodeName');
+		var value = xmlNode.text();
+		$('#' + id + ',[name="' + id + '"]').setObjectValue(value);
+	    });
+	    
+	    if ( parseBoolean(dbGrid.option('enabled')) === true ) {
+		// Create New Row
+		if ( dbGrid.option('addURL') ) {
+		    dbGrid.createNewRow();
+		}
+
+		// initialFocus
+		var initialFocusCell = dbGrid.getInitialFocusCell();
+		if ( initialFocusCell.size() ) {
+		    dbGrid.cellChange(initialFocusCell);
+		}
+	    }
+	},
+	_requeryReturnError: function(errorMessage) {
+	    this.setStatusBarMsg(errorMessage);
+	    alert(errorMessage);
+	},
+	cellAbove: function(fromCell) {
+	    // Return the first editable cell of the same column on previous rows. 
+	    // Return fromCell if unable to find previous cell
+	    var prevCell = $([]);
+	    var prevRow = fromCell.closest('tr').prev('tr');
+	    var colIndex = fromCell.index();
+
+	    while ( prevRow.size() ) {
+		prevCell = prevRow.children().eq(colIndex);
+		if ( prevCell.size() && prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
+		    return prevCell;
+		}
+		prevRow = prevRow.prev('tr');
+	    }
+	    // Unable to find previous editable cell 
+	    return fromCell;
+	},
+	cellRightOf: function(fromCell, searchNextRows) {
+	    // Return the next editable cell (optionally search subsequent rows). 
+	    // Return fromCell if unable to next editable cell
+	    searchNextRows = searchNextRows === undefined ? true : searchNextRows;
+	    var nextCell = fromCell.next('td');
+	    
+	    // Search for next editable cell on the same row
+	    while ( nextCell.size() ) {
+		if ( nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
+		    return nextCell;
+		} 
+		nextCell = nextCell.next('td');
+	    }
+	    if ( searchNextRows == true ) {
+		// Search for next editable cell on any subsequent row.
+		var nextRow = fromCell.closest('tr').next('tr');
+		while ( nextRow.size() ) {
+		    nextCell = nextRow.children('td').first();
+		    while ( nextCell.size() ) {
+			if ( nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
+			    return nextCell;
+			}
+			nextCell = nextCell.next('td');
+		    }
+		    nextRow = nextRow.next('tr');
+		}
+	    }
+	    // Unable to find next editable cell 
+	    return fromCell;
+	},
+	cellBelow: function(fromCell) {
+	    // Return the first editable cell of the same column on subsequent rows.
+	    var nextCell = $([]);
+	    var nextRow = fromCell.closest('tr').next('tr');
+	    var colIndex = fromCell.index();
+	    
+	    while ( nextRow.size() ) {
+		nextCell = nextRow.children().eq(colIndex);
+		if  (nextCell.size() && nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
+		    return nextCell;
+		}
+		nextRow = nextRow.next('tr');
+	    }
+	    // Unable to find next editable cell 
+	    return fromCell;
+	},
+	cellLeftOf: function(fromCell, searchPreviousRows) {
+	    // Return the previous editable cell (optionally search previous rows). 
+	    // Return fromCell if unable to previous editable cell
+	    searchPreviousRows = searchPreviousRows === undefined ? true : searchPreviousRows
+
+	    var prevCell = fromCell.prev('td');
+	    
+	    // Search for previous editable cell on the same row
+	    while ( prevCell.size() ) {
+		if ( prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
+		    return prevCell;
+		} 
+		prevCell = prevCell.prev('td');
+	    }
+	    if ( searchPreviousRows == true ) {
+		// Search for previous editable cell on any subsequent row.
+		var prevRow = fromCell.closest('tr').prev('tr');
+		while ( prevRow.size() ) {
+		    prevCell = prevRow.children('td').last();
+		    while ( prevCell.size() ) {
+			if ( prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
+			    return prevCell;
+			}
+			prevCell = prevCell.prev('td');
+		    }
+		    prevRow = prevRow.prev('tr');
+		}
+	    }
+	    // Unable to find previous editable cell 
+	    return fromCell;
+	},
+	resize: function(colIndex, width){
+	    // Resize the width of a column. Trigger resize event on window to resize any editors.
+	    // 0-based colIndex
+	    this.colgroup.children('col').eq(colIndex).width(width);
+	    $(window).trigger('resize');
+	},
+	_onBeforeUnload: function(){
+	    if ( ! this.currentCell.size() ) {	
+		// No cells are begin edited
+		return;
+	    }
+	    
+	    var currentRow = this.currentCell.closest('tr');
+	    if ( currentRow.dbRow('getState') !== 'current' ) {
+		return "Your changes have not been saved.\nStay on the current page to correct.";
+	    }    
+	},
+	_onBeforePrint: function(){
+	    if ( this.currentCell.size() ) {
+		this.currentCell.dbCell('cellOut');
+	    }	
 	}
-      });
-    }
-  };
-  
-  
-  // Make DbGrid Class available as a jquery plugin
-  $.fn.dbGrid = function(method) {
-    var args = arguments
-    var tables = this
-    var returnVal;
-
-    if ( this.not('table').size() ) {
-      throw new Error('jQuery.dbGrid requires that only table elements are contained in the jQuery object');
-    }
-
-    // Method calling logic
-    for ( var i=0; i< tables.size(); i++ ) {
-      var table = tables.eq(i);
-      var dbGrid = table.data('dbGrid');
-
-      if ( ! dbGrid ) {
-	dbGrid = new DbGrid(table);
-	table.data('dbGrid',dbGrid);
-      }
-
-      if ( ! method ) {
-	dbGrid.init.apply( dbGrid, args );
-      } else {	
-	returnVal = eval('dbGrid.' + method).apply( dbGrid, Array.prototype.slice.call( args, 1 ));
-	if ( returnVal != undefined ) {
-	  return returnVal;
-	} 
-      } 
-    }
-
-    return tables;
-  };
-
-})(jQuery);
-
-
+    });
+})(jQuery, window, document);
 
 /* ==== jquery.dbGridDivStatus.js ==== */
 (function($){
@@ -7584,6 +7666,243 @@ function dbFormHTMLArea(oDiv) {
     });
 })(jQuery, window);
 
+
+/* ==== jquery.dbRow.js ==== */
+(function($, window, document, undefined){
+    $.widget("qcode.dbRow", {
+	options: {
+	    'type': 'update'
+	},
+	_create: function(){
+	    this.state = 'current';
+	    this.error = undefined;
+	},
+	getGrid: function(){
+	    return this.element.closest('table');
+	},
+	getColgroup: function(){
+	    return this.getGrid().children('colgroup');
+	},
+	getCurrentCell: function() {
+	    return this.getGrid().dbGrid('getCurrentCell');
+	},
+	setStatusBarMsg: function(message) {
+	    this.getGrid().dbGrid('setStatusBarMsg',message);
+	},
+	getState: function(){
+	    return this.state;
+	},
+	getRowData: function(){
+	    // Return object with name/value pairs of row data
+	    var data = {};
+	    this.element.children('td').each(function() {
+		var cell = $(this);
+		var colName = cell.dbCell('getCol').attr('name');
+		var cellValue = cell.dbCell('getValue');
+		data[colName] = cellValue;
+	    });
+	    return data;
+	},
+	setState: function(newState){
+	    // Set the state of this row
+	    var grid = this.getGrid();
+	    var oldState = this.state;
+	    var message;
+	    
+	    switch (newState) {
+	    case 'dirty':
+		if ( oldState === 'current' && this.option('type') === 'add' ) {
+		    // Append New Row
+		    grid.dbGrid('createNewRow');
+		}
+		if ( oldState === 'current' || oldState === 'error' ) {
+		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		    var message = $('<span>').text('Editing ... to ').append(span).append(', type Ctrl+S');
+		}
+		break;
+	    case 'current': 
+		message = "Saved.";
+		break;
+	    case 'updating': 
+		message = "Updating ...";
+		break;
+	    case 'error': 
+		message = this.error;
+		break;
+	    default:
+		$.error('Invalid state');
+		return;
+	    }
+
+	    this.element.removeClass("current dirty updating error");
+	    this.element.addClass(newState);
+	    this.setStatusBarMsg(message);
+	    this.state = newState;
+	    this.getCurrentCell().dbCell('editor', 'repaint');
+	    this.element.trigger('dbRowStateChange');
+	},
+	rowIn: function(){  
+	    // Update NavCounter and statusBarMsg
+	    var row = this.element;
+	    var grid = this.getGrid();
+
+	    // Custom Event: Trigger any dbRowIn events bound to this table
+	    row.trigger('dbRowIn');
+
+	    if ( this.error ) {
+		grid.dbGrid('setStatusBarMsg', this.error);
+	    }
+	    grid.dbGrid('setNavCounter', row.index());
+	},
+	rowOut: function(){
+	    // Save row if dirty
+	    // Custom Event: Trigger any dbRowOut events bound to this table
+	    this.element.trigger('dbRowOut');
+	    
+	    if ( this.state === 'dirty' ) {
+		this.save();
+	    }
+	},
+	save: function(async){
+	    // Save this row, using an add or update url as appropriate
+	    var grid = this.getGrid();
+
+	    if ( this.state === "updating" ) {
+		return false;
+	    }
+	    switch(this.option('type')){
+	    case "update":
+		var url = grid.dbGrid('option', "updateURL");
+		break;
+	    case "add":
+		var url = grid.dbGrid('option', "addURL");
+		break;
+	    }
+	    if ( ! url ) {
+		$.error('Could not ' + this.option('type') + ' record - no url provided');
+	    }
+	    this.action(this.option('type'), url, async);
+	},
+	action: function(action, url, async){
+	    // Perform the given action (add, update, delete), by submitting row data to the server.
+	    var grid = this.getGrid();
+
+	    async = coalesce(async, true);
+	    if ( action === 'add' || action === 'update' || action === 'delete' ) {
+		this.setState('updating');
+	    }
+	    grid.dbGrid('getCurrentCell').dbCell('write');
+
+	    var urlPieces = splitURL(url);
+	    var path = urlPieces.path;
+	    var data = $.extend(urlPieces.data, this.getRowData());
+	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async);
+	    this.element.trigger('dbRowAction', [action]);
+	},
+	actionReturn: function(action, xmlDoc, status, jqXHR){
+	    // Called on successful return from a server action (add, update or delete)
+	    var grid = this.getGrid();
+
+	    this.xmlSetValues(xmlDoc);
+	    this.error = undefined;
+
+	    switch(action){
+	    case "update":
+		this.setState('current');
+		break;
+	    case "add":
+		// Once added, a record becomes an updatable record
+		this.option('type', "update");
+		this.setState('current');
+		grid.dbGrid('incrRecCount', 1);
+		break;
+	    }
+
+	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
+	    this.element.trigger('dbRowActionReturn', [action, xmlDoc, status, jqXHR]);
+
+	    if ( action == "delete" ) {
+		// When a record is deleted, remove it from the DOM.	
+		grid.dbGrid('removeRow',this.element)
+		grid.dbGrid('incrRecCount', -1);
+		grid.dbGrid('setStatusBarMsg','Deleted.');
+		this.destroy();
+	    }
+	},
+	actionReturnError: function(action,errorMessage, errorType){
+	    this.error = errorMessage;
+	    this.setState('error');
+	    if ( errorType != 'USER' ) {
+		alert(errorMessage);
+	    }
+	},
+	xmlSetValues: function(xmlDoc) {
+	    // Update row, calculated & external html values,
+	    // Display info and alert messages
+	    var grid = this.getGrid();
+	    var currentCell = grid.dbGrid('getCurrentCell')
+	    var dbRow = this;
+
+	    // Update row with record values in xmlDoc response
+	    var rec = $('records record', xmlDoc).first();
+	    if ( rec.size() ) {
+		rec.children().each(function() {
+		    var xmlNode = $(this);
+		    var colName = xmlNode.prop('nodeName');
+		    var value = xmlNode.text()
+		    dbRow.setCellValue(colName, value);		    
+		});		
+		if ( currentCell.size() && this.element.find(currentCell).size() ) {
+		    currentCell.dbCell('cellIn', 'end');
+		}
+	    }
+
+	    // Update 'Calculated' elements within grid
+	    $('records > calculated', xmlDoc).children().each(function() {
+		xmlNode = $(this);
+		var id = xmlNode.prop('nodeName');
+		var value = xmlNode.text();
+		$('#' + id, grid).setObjectValue(value);
+	    });
+
+	    // Update html elements external to the grid
+	    $('records > html', xmlDoc).children().each(function() {
+		xmlNode = $(this);
+		var id = xmlNode.prop('nodeName');
+		var value = xmlNode.text();
+		$('#' + id + ',[name="' + id + '"]').setObjectValue(value);
+	    });
+
+	    // Display info message in statusBar
+	    var xmlNode = $('records > info', xmlDoc);
+	    if ( xmlNode.size() ) {
+		this.setStatusBarMsg(xmlNode.text());
+	    }
+
+	    // Alert
+	    var xmlNode = $('records > alert', xmlDoc);
+	    if ( xmlNode.size() ) {
+		alert(xmlNode.text());
+	    }
+	},
+	setCellValue: function(colName, value){
+	    // Set the value of the cell corresponding to colName.
+	    var colIndex = $('col[name='+colName+']', this.colgroup).index();
+	    if ( colIndex !== -1 ) {
+		var cell = this.element.children('td').eq(colIndex);
+		cell.dbCell('setValue',value);	    
+	    }
+	},
+	delete: function(async){
+	    var grid = this.getGrid();
+	    var url = grid.dbGrid('option', 'deleteURL');
+	    if ( ! url ) {
+		$.error('Could not delete record - no url provided');
+	    }
+	    this.action('delete', url, async); 
+	}
+    });
+})(jQuery, window, document);
 
 /* ==== jquery.delayedGroupHover.js ==== */
 ;(function($, window, undefined) {
@@ -9897,6 +10216,21 @@ $.fn.linkNoHistory = function() {
 	window.location.replace($(this).attr('href'));
 	event.preventDefault();
     });
+    return this;
+}
+
+$.fn.setObjectValue = function(value) {
+    // Set the value of the target elements based on their type.
+    this.each(function() {
+	var element = $(this);
+	if ( element.is('select, input, textarea') ) {
+	    element.val(value);
+	} else if ( element.is('.clsRadioGroup') ) {
+		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
+	} else {
+	    element.html(value);
+	}
+    });		 
     return this;
 }
 

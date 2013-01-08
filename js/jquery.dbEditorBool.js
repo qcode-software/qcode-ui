@@ -1,5 +1,5 @@
-// dbEditorText plugin
-// A hovering editor for single-line input
+// dbEditorBool plugin
+// A hovering editor for boolean input
 ;(function($, window, undefined) {
 
     // css attributes to copy from the target element to the editor when editor is shown
@@ -13,23 +13,18 @@
 			  'width', 'height'];
 
     // Uses the jQuery UI widget factory
-    $.widget('qcode.dbEditorText', {
+    $.widget('qcode.dbEditorBool', {
 	_create: function() {
-	    // Create the editor element, and bind event listeners.
+	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint
 	    });
-	    this.editor = $('<input type="text">')
-		.addClass('dbEditorText')
+	    this.editor = $('<div>')
+		.attr('contentEditable',true)
+		.addClass('dbEditorBool')
 		.appendTo(this.element)
 		.css({
-		    'position': "absolute", 
-		    'background': "white", 
-		    'overflow': "visible", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
-		    'z-index': 1
+		    'position': "absolute"
 		})
 		.hide();
 	    this._on(this.editor, {
@@ -39,26 +34,29 @@
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
-	    this.currentElement = $([]);
 	},
 	getValue: function() {
 	    // Get the current value of the editor
-	    return this.editor.val();
+	    return parseBoolean(this.editor.text());
 	}, 
 	show: function(element, value){
-	    // Show this editor positioned over the target element and set the value of the editor
+	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show();
-	    this.repaint();
-	    this.editor.val(value);
-	}, 
+	    this.repaint()
+	    if ( parseBoolean(value) ) {
+		this._setTrue();
+	    } else {
+		this._setFalse();
+	    }	   
+	},
 	hide: function() {
 	    // Hide the editor
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
-	},
+	}, 
 	repaint: function() {
 	    // repaint the editor
 	    if ( this.currentElement.length == 1 ) {
@@ -80,7 +78,7 @@
 		// position
 		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
-	}, 
+	},
 	selectText: function(option) {
 	    // Set the text selection / cursor position
 	    switch(option) {
@@ -99,24 +97,30 @@
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
+	_setTrue: function() {
+	    this.editor.html('<span class=clsTrue>Yes</span>');
+	},
+	_setFalse: function() {
+	    this.editor.html('<span class=clsFalse>No</span>');
+	},
+	_onResize: function(event) {
+	    // Any event that might change the size or position of the editor's target needs to trigger this.
+	    // It is bound to the window resize event, so triggering a resize event on any element should propagate up and trigger this.
+	    // Ensures that the editor is still positioned correctly over the target element.
+	    if ( this.currentElement ) {
+		var element = this.currentElement;
+		var editor = this.editor;
+		$.each(['width', 'height'], function(i, name){
+		    editor.css(name, element.css(name));
+		});
+		editor.css(element.positionRelativeTo(this.element));
+	    }
+	},
 	_inputOnKeyDown: function(e) {
-	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
+	    // Some key events are passed to the target element, but only the ones where we might need some non-default behaviour.
 	    var selection = this.editor.textrange('get');
 
 	    switch(e.which) {
-	  
-	    case 37: // left
-		if ( selection.selectionAtStart ) {
-		    break;
-		} else {
-		    return true;
-		}	   
-	    case 39: // right
-		if ( selection.selectionAtEnd ) {
-		    break;
-		} else {
-		    return true;
-		}
 	    case 83: // S
 		if ( e.ctrlKey ) {
 		    break;
@@ -124,16 +128,18 @@
 		    return true;
 		}
 	    case 38: // up
+	    case 37: // left
 	    case 40: // down
+	    case 39: // right
 	    case 46: // delete 
 	    case 13: // return
 	    case 9: // tab 
 		break;
-
+	    
 	    default: return true 
 	    }
 
-	    // propagate custom event to target element
+	    // propagate event to target element
 	    var event = jQuery.Event('editorKeyDown', {
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
@@ -145,6 +151,21 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+	     switch(e.which) {
+	     case 97: // 1
+	     case 49: // 1
+	     case 84: // t
+	     case 89: // y
+		 this._setTrue();
+		 break;
+	     case 96: // 0
+	     case 48: // 0
+	     case 70: // f
+	     case 78: // n
+		 this._setFalse();
+		 break; 
+	     }
+
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -167,6 +188,12 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+	    if ( this.getValue() ) {
+		this._setFalse();
+	    } else {
+		this._setTrue();
+	    }
+
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -178,8 +205,9 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e, source) {
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
-		// really is blurred
 		var event = jQuery.Event('editorBlur', {
 		    'data': e.data
 		});
