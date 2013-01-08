@@ -29,26 +29,26 @@ Replace the current text with the next element is an array of strings
 Trigger custom events delayedHoverIn, delayedHoverOut after grace period following mouseenter or mouseleave  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/6vcPt/)
 
-## jquery.delayedGroupHover
+### jquery.delayedGroupHover
 Trigger custom callbacks on moue hovering over or out of a group of elements after a grace period  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ze9WH/)
 
-## jquery.enableDisable
+### jquery.enableDisable
 On a hyperlink remove the href attribute and add class disabled. Extendable for other elements  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/tnaZV/)
 
-## jquery.positionRelativeTo
+### jquery.positionRelativeTo
 Get the position of one element relative to another  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/tb7w3/)
 
-## jquery.sidebar
+### jquery.sidebar
 Turn a div into a right hand sidebar that is resizable and collapsible  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/RV7kH/)
 
-## jquery.theadFixed
+### jquery.theadFixed
 Fixed table headers with scrollable body  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/wAfbu/)
 
-## jquery.dbGrid
+### jquery.dbGrid
 A database grid  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/j6HPe/)
