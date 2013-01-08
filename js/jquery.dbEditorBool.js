@@ -43,12 +43,12 @@
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show();
+	    this.repaint()
 	    if ( parseBoolean(value) ) {
 		this._setTrue();
 	    } else {
 		this._setFalse();
-	    }
-	    this.repaint()
+	    }	   
 	},
 	hide: function() {
 	    // Hide the editor
@@ -152,13 +152,6 @@
 	},
 	_inputOnKeyUp: function(e) {
 	     switch(e.which) {
-	     case 32: // Spacebar - toggle value
-		 if ( this.getValue() ) {
-		     this._setFalse();
-		 } else {
-		     this._setTrue();
-		 }
-		 break;
 	     case 97: // 1
 	     case 49: // 1
 	     case 84: // t

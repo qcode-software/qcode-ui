@@ -64,10 +64,11 @@
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor

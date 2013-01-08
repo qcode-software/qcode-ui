@@ -4937,12 +4937,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
 	    this.editor.show();
+	    this.repaint()
 	    if ( parseBoolean(value) ) {
 		this._setTrue();
 	    } else {
 		this._setFalse();
-	    }
-	    this.repaint()
+	    }	   
 	},
 	hide: function() {
 	    // Hide the editor
@@ -5046,13 +5046,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyUp: function(e) {
 	     switch(e.which) {
-	     case 32: // Spacebar - toggle value
-		 if ( this.getValue() ) {
-		     this._setFalse();
-		 } else {
-		     this._setTrue();
-		 }
-		 break;
 	     case 97: // 1
 	     case 49: // 1
 	     case 84: // t
@@ -5185,10 +5178,11 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5521,8 +5515,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
-	    this.editor.show().html(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.html(value);
 	},
 	hide: function() {
 	    // Hide the editor
@@ -5602,7 +5597,19 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    case 13: // return
 		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
 		    break;
+		} else if ( e.shiftKey ) {
+		    return true;
 		} else {
+		   /* // Normalize the effect of the enter key, since browsers don't behave consitantly
+		    var selection = window.document.selection;
+		    if (selection) {
+			var range = selection.createRange();
+			range.pasteHTML('<br/>');
+			range.collapse(false);
+			range.select();
+		    } 
+		    return false;*/
+		    e.shiftKey = true;
 		    return true;
 		}
 	    case 9: // tab 
@@ -5719,8 +5726,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -5909,8 +5917,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
-	    this.editor.show().val(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor

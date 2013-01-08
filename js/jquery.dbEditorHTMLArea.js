@@ -44,8 +44,9 @@
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
-	    this.editor.show().html(value);
+	    this.editor.show();
 	    this.repaint();
+	    this.editor.html(value);
 	},
 	hide: function() {
 	    // Hide the editor
