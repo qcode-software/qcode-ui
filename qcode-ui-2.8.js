@@ -5597,19 +5597,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    case 13: // return
 		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
 		    break;
-		} else if ( e.shiftKey ) {
-		    return true;
 		} else {
-		   /* // Normalize the effect of the enter key, since browsers don't behave consitantly
-		    var selection = window.document.selection;
-		    if (selection) {
-			var range = selection.createRange();
-			range.pasteHTML('<br/>');
-			range.collapse(false);
-			range.select();
-		    } 
-		    return false;*/
-		    e.shiftKey = true;
 		    return true;
 		}
 	    case 9: // tab 
