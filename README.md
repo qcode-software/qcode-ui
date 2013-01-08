@@ -48,3 +48,7 @@ Turn a div into a right hand sidebar that is resizable and collapsible
 [jquery.theadFixed](https://trac.qcode.co.uk/js/browser/JS/trunk/qcode/jquery.theadFixed.js) :
 Fixed table headers with scrollable body  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/wAfbu/)
+
+jquery.dbGrid:
+A database grid
+[jsFiddle](http://jsfiddle.net/PeterChaplin/j6HPe/)
