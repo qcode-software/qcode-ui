@@ -83,13 +83,13 @@
 	    this.element.trigger('dbFieldOut');
 	}, 
 	getType: function(){
-	    // Returns the field type (text, textarea, or htmlarea)
+	    // Returns the field type
 	    return coalesce(this.element.attr('type'), "text");
 	}, 
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(event){
+	onMouseDown: function(){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -146,25 +146,16 @@
 	    if ( newField.length === 1 ) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
-	}, 
-	editorKeyUp: function(event){
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		// Set dirty
-		this.getRecord().dbRecord('setState', 'dirty');
-	    }
-	}, 
-	editorCut: function(){
-	    // Set as dirty
-	    this.getRecord().dbRecord('setState', 'dirty');
-	}, 
-	editorPaste: function(){
-	    // Set as dirty
-	    this.getRecord().dbRecord('setState', 'dirty');
-	}, 
+	},
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
-	}, 
+	},
+        editorValueChange: function(){
+	    if ( this.getValue() !== this.editor('getValue') ) {
+	        this.getRecord().dbRecord('setState', 'dirty');
+            }
+        },
 	write: function(){
 	    // Write the editor's contents to the field
 	    this.setValue(this.editor('getValue'));
@@ -173,6 +164,12 @@
 	    var recordSet = this.getRecordSet();
 	    var pluginName;
 	    switch(this.getType()){
+            case "combo":
+                pluginName="dbEditorCombo";
+                break;
+            case "bool":
+                pluginName="dbEditorBool";
+                break;
 	    case "text":
 		pluginName="dbEditorText";
 		break;

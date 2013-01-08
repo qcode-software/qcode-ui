@@ -806,358 +806,6 @@ function parseBoolean(value) {
 }
 
 
-/* ==== dbCellHTMLArea.js ==== */
-function dbCellHTMLArea(callback) {
-
-// vars
-var oHTMLArea;
-var callback;
-
-// Init
-oHTMLArea = document.createElement('DIV');
-oHTMLArea.contentEditable = true;
-oHTMLArea.style.position = 'absolute';
-oHTMLArea.style.visibility = 'hidden';
-
-oHTMLArea.attachEvent('onkeydown',inputOnKeyDown);
-oHTMLArea.attachEvent('onkeyup',inputOnKeyUp);
-
-// Set up handlers
-oHTMLArea.getType = getType;
-oHTMLArea.getValue = getValue;
-oHTMLArea.show = show;
-oHTMLArea.hide = hide;
-oHTMLArea.selectText = selectText;
-oHTMLArea.destroy = destroy;
-
-return oHTMLArea;
-
-function getType() {
-	return 'htmlarea';
-}
-
-function getValue() {
-	return oHTMLArea.innerHTML;
-}
-
-function selectText(option) {
-	var rng = document.body.createTextRange();
-	rng.moveToElementText(oHTMLArea);
-	if ( option == undefined || option == 'end') {
-		rng.collapse(false);
-		rng.select();
-	}
-	if ( option == 'start' ) {
-		rng.collapse(true);
-		rng.select();
-	}
-	if ( option == 'all' ) {
-		rng.select();
-	}
-}
-
- function show(oCell,value,editorHeight) {
-   oHTMLArea.style.borderWidth = oCell.currentStyle.borderWidth;
-   oHTMLArea.style.borderStyle = oCell.currentStyle.borderStyle;
-   oHTMLArea.style.borderColor = oCell.currentStyle.borderColor;
-  
-   oHTMLArea.style.marginTop = oCell.currentStyle.marginTop;
-   oHTMLArea.style.marginRight = oCell.currentStyle.marginRight;
-   oHTMLArea.style.marginBottom = oCell.currentStyle.marginBottom;
-   oHTMLArea.style.marginLeft = oCell.currentStyle.marginLeft;
-  
-   oHTMLArea.style.paddingTop = oCell.currentStyle.paddingTop;
-   oHTMLArea.style.paddingRight = oCell.currentStyle.paddingRight;
-   oHTMLArea.style.paddingBottom = oCell.currentStyle.paddingBottom;
-   oHTMLArea.style.paddingLeft = oCell.currentStyle.paddingLeft;
-	
-   oHTMLArea.style.textAlign = oCell.currentStyle.textAlign;
-   oHTMLArea.style.verticalAlign = oCell.currentStyle.verticalAlign;
-   oHTMLArea.style.fontSize = oCell.currentStyle.fontSize;
-   oHTMLArea.style.fontFamily = oCell.currentStyle.fontFamily;
-   if ( oCell.currentStyle.backgroundColor=='transparent' )	{
-     oHTMLArea.style.backgroundColor='white';
-   } else {
-     oHTMLArea.style.backgroundColor=oCell.currentStyle.backgroundColor;
-   }
-	
-   if ( editorHeight == undefined ) {
-     oHTMLArea.style.pixelWidth = oCell.offsetWidth;
-     oHTMLArea.style.pixelHeight = oCell.offsetHeight;
-   } else {
-     oHTMLArea.style.pixelWidth = oCell.offsetWidth;
-     oHTMLArea.style.pixelHeight = editorHeight;
-   }
-   oHTMLArea.style.pixelTop = getContainerPixelTop(oCell);
-   oHTMLArea.style.pixelLeft = getContainerPixelLeft(oCell);
-	
-   oHTMLArea.style.visibility = 'visible';
-   oHTMLArea.innerHTML = value;
- }
-
-function hide() {
-	oHTMLArea.style.visibility = 'hidden';
-}
-
-function inputOnKeyDown() {
-	// decide whether to propagate the event to the cell
-	// using the callback function passed in
-	var e = window.event;
-	out: {
-		if (e.keyCode == 9 || e.keyCode == 46) {
-			// TAB or Delete
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 13 && ! e.shiftKey) {
-			// Return no shift
-			callback(e)
-			break out;
-		}
-		if (e.keyCode == 37 && atEditStart(oHTMLArea)) {
-			// Left Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 38 && atEditStart(oHTMLArea)) {
-			// Up Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 39 && atEditEnd(oHTMLArea)) {
-			// Right Arrow
-			callback(e);
-			break out;
-		}
-		if (e.keyCode == 40 && atEditEnd(oHTMLArea)) {
-			// Down Arrow
-			callback(e);
-			break out;
-		}
-		if ( e.keyCode == 83 && e.ctrlKey ) {
-			// Ctrl+S
-			callback(e);
-			break out;
-		}
-		
-		// Default 
-		// don't propagate
-	}
-}
-
-function inputOnKeyUp() {
-	// allways propagate
-	var e = window.event;
-	callback(e);
-}
-
-function getContainerPixelLeft(elem) {
-	var left = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		left += elem.offsetLeft - elem.scrollLeft;
-		elem = elem.offsetParent;
-	}
-	return left;
-}
-function getContainerPixelTop(elem) {
-	var top = 0;
-	while (elem.tagName != 'DIV' && elem.tagName !='BODY') {
-		top += elem.offsetTop - elem.scrollTop;
-		elem = elem.offsetParent;
-	}
-	return top;
-}
-
-function destroy() {
-	oHTMLArea.removeNode(true);
-}
-
-//
-}
-
-
-/* ==== dbCellInput.js ==== */
-function dbCellInput(callback) {
-
-// vars
-var oInput;
-var callback;
-
-// Init
-oInput = document.createElement('INPUT');
-oInput.type='text';
-oInput.style.position = 'absolute';
-oInput.style.visibility = 'hidden';
-oInput.style.backgroundColor='white';
-// this changes how the input box copes with overflow
-oInput.style.overflow='visible';
-oInput.style.zIndex=1;
-
-oInput.attachEvent('onkeydown',inputOnKeyDown);
-oInput.attachEvent('onkeyup',inputOnKeyUp);
-oInput.attachEvent('oncut',inputOnCut);
-oInput.attachEvent('onpaste',inputOnPaste);
-oInput.attachEvent('onblur',inputOnBlur);
-
-// Set up handlers
-oInput.getType = getType;
-oInput.getValue = getValue;
-oInput.show = show;
-oInput.hide = hide;
-oInput.selectText = selectText;
-oInput.destroy = destroy;
-
-var bookmark;
-var lastValue;
-return oInput;
-
-function getType() {
-	return 'text';
-}
-
-function getValue() {
-	return oInput.value;
-}
-
-function selectText(option) {
-  var rng = oInput.createTextRange();
-  if ( option == 'end') {
-    rng.collapse(false);
-    rng.select();
-  }
-  if ( option == 'start' ) {
-    rng.collapse(true);
-    rng.select();
-  }
-  if ( option == 'preserve' && bookmark) {
-    if (lastValue==getValue()) {
-      rng.moveToBookmark(bookmark);
-    } else {
-      // move to end
-      rng.collapse(false);
-    }
-    rng.select();
-  }
-  if (option == undefined || option == 'all') {
-    rng.select();
-  }
-
-  storeSelection();
-}
-
-function show(oCell,value) {
-  var attributes = new Array();
-  attributes.push('borderTopWidth','borderTopStyle','borderTopColor');
-  attributes.push('borderBottomWidth','borderBottomStyle','borderBottomColor');
-  attributes.push('borderLeftWidth','borderLeftStyle','borderLeftColor');
-  attributes.push('borderRightWidth','borderRightStyle','borderRightColor');
-  attributes.push('marginTop','marginRight','marginBottom','marginLeft');
-  attributes.push('paddingTop','paddingRight','paddingBottom','paddingLeft');
-  attributes.push('textAlign','verticalAlign','fontSize','fontFamily','fontWeight');
-
-  for (var i=0;i<attributes.length;i++) {
-    var name = attributes[i];
-    oInput.style.setAttribute(name,oCell.currentStyle.getAttribute(name));
-  }
-  if ( oCell.currentStyle.backgroundColor=='transparent' )	{
-    oInput.style.backgroundColor='white';
-  } else {
-    oInput.style.backgroundColor=oCell.currentStyle.backgroundColor;
-  }	
-  
-  oInput.style.width = oCell.offsetWidth;
-  oInput.style.height = oCell.offsetHeight;
-  
-  oInput.style.top = getPixelTop(oCell)-getPixelTop(oInput.offsetParent)+2;
-  oInput.style.left = getPixelLeft(oCell)-getPixelLeft(oInput.offsetParent)+2;
-  
-  oInput.style.visibility = 'visible';
-  oInput.value = value;
-}
-
-function hide() {
-  oInput.blur();
-  oInput.style.visibility = 'hidden';
-}
-
-function inputOnKeyDown() {
-  // decide whether to propagate the event to the cell
-  // using the callback function passed in
-  var e = window.event;
- out: {
-    if (e.keyCode == 9 || e.keyCode == 13 || e.keyCode == 46) {
-      // TAB or Return or Delete
-      callback(e)
-	break out;
-    }
-    if (e.keyCode == 37 && atEditStart(oInput)) {
-      // Left Arrow
-      callback(e);
-      break out;
-    }
-    if (e.keyCode == 38) {
-      // Up Arrow
-      callback(e);
-      break out;
-    }
-    if (e.keyCode == 39 && atEditEnd(oInput) ) {
-      // Right Arrow
-      callback(e);
-      break out;
-    }
-    if (e.keyCode == 40) {
-      // Down Arrow
-      callback(e);
-      break out;
-    }
-    if ( e.keyCode == 83 && e.ctrlKey ) {
-      // Ctrl+S
-      callback(e);
-      break out;
-    }
-    // Default 
-    // don't propagate
-  }
-}
-
-function inputOnKeyUp() {
-  // allways propagate
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnCut() {
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnPaste() {
-  var e = window.event;
-  callback(e);
-  storeSelection();
-}
-
-function inputOnBlur() {
-  var e = window.event;
-  callback(e);
-}
-
-function destroy() {
-  oInput.removeNode(true);
-}
-
-function storeSelection() {
-  var currentRange=document.selection.createRange();
-  bookmark = currentRange.getBookmark();
-  lastValue=getValue();
- }
-
-//
-}
-
-
 /* ==== dbForm.js ==== */
 function dbForm(oForm) { 
 
@@ -1617,1376 +1265,6 @@ function onSubmit() {
 
 // End 
 }
-
-/* ==== dbGridCombo.js ==== */
-// DbGridCombo Class Constructor 
-var DbGridCombo = function(callback, container) {
-  var dbGridCombo = this;
-  
-  var combo = jQuery('<input>');
-  combo.attr('type','text');
-  combo.css({
-    'position':'absolute',
-    'visibility':'hidden'
-  });
-  container.append(combo);
-
-  var comboDiv = jQuery('<div>');
-  comboDiv.css({
-    'border-width':'1px',
-    'border-style':'solid',
-    'border-color':'black',
-    'background-color':'white',
-    'position':'absolute',
-    'overflow':'auto',
-    'visibility':'hidden'
-  });
-  container.append(comboDiv);
-
-
-  // Public Properties
-  dbGridCombo.callback = callback;
-  dbGridCombo.combo = combo;
-  dbGridCombo.comboDiv = comboDiv; // The dropdown container
-  dbGridCombo.xmlDoc;
-  dbGridCombo.currentItem = jQuery([]); // The highlighted row selected
-  dbGridCombo.lastValue;
-  dbGridCombo._name;
-  dbGridCombo._value;
-  dbGridCombo._boundValue;
-  dbGridCombo._boundName;
-  dbGridCombo._searchURL;
-
-  // Events  	
-  combo.on('keydown.dbGridCombo', function(e) {
-    dbGridCombo.inputOnKeyDown(e);
-  });
-  combo.on('keyup.dbGridCombo', function(e) {
-    dbGridCombo.inputOnKeyUp(e);
-  });
-  combo.on('blur.dbGridCombo', function(e) {
-    dbGridCombo.inputOnBlur(e);
-  });
-};
-
-/**********************************
- * Public DbGridCombo Methods Start
- **********************************/ 
-DbGridCombo.prototype.getType = function() {
-  return 'combo';
-};
-DbGridCombo.prototype.getValue = function() {
-  return this._value;
-};
-DbGridCombo.prototype.getBoundName = function() {
-  return this._boundName;
-};
-DbGridCombo.prototype.getBoundValue = function() {
-  return this._boundValue;
-};
-DbGridCombo.prototype.getElmt = function() {
-  return this.combo;
-};
-DbGridCombo.prototype.show = function(cell,name,value,boundName,boundValue,searchURL) {
-  var row = cell.closest('tr');
-  var table = row.closest('table');
-  var combo = this.combo;
-  var comboDiv = this.comboDiv;
-
-  relativePosition = cell.positionRelativeTo(table);
-  var top = relativePosition.top;
-  var left = relativePosition.left;
-  height = cell.height();
-  width = cell.width();
-  
-  if ( cell.css('backgroundColor') != 'transparent' ) {
-    backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
-    backgroundColor = row.css('background-color');
-  } else {
-    backgroundColor = 'white';
-  }
-
-  var borderTopWidth = parseInt(cell.css('border-top-width'));
-  var borderRightWidth = parseInt(cell.css('border-right-width'));
-  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
-  var borderLeftWidth = parseInt(cell.css('border-left-width'));
-
-  var borderTopColor = cell.css('border-top-color');
-  var borderRightColor = cell.css('border-right-style');
-  var borderBottomColor = cell.css('border-bottom-color');
-  var borderLeftColor = cell.css('border-left-color');
-
-
-  if ( table.css('border-collapse') == 'collapse' ) {
-    if ( borderTopWidth%2 == 0 ) {
-      var borderTopWidth = borderTopWidth/2;
-    } else {
-      var borderTopWidth = Math.ceil(borderTopWidth/2);
-    }
-    
-    if ( borderRightWidth%2 == 0 ) {
-      var borderRightWidth = borderRightWidth/2;
-    } else {
-      var borderRightWidth = Math.ceil(borderRightWidth/2);
-    }
-
-    if ( borderBottomWidth%2 == 0 ) {
-      var borderBottomWidth = borderBottomWidth/2;
-    } else {
-      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
-    }
-
-    if ( borderLeftWidth%2 == 0 ) {
-      var borderLeftWidth = borderLeftWidth/2;
-    } else {
-      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
-    }
-
-    top -=  borderTopWidth;
-    left -= borderLeftWidth;
-    height +=  borderTopWidth;
-    width +=  borderLeftWidth;
-  } 
-
-  var paddingTop = cell.css('padding-top');
-  var paddingRight = cell.css('padding-right');
-  var paddingBottom = cell.css('padding-bottom');
-  var paddingLeft = cell.css('padding-left');
-
-  // get styles applied to td
-  var comboStyles = {
-    'border-top-width': borderTopWidth,
-    'border-right-width': borderRightWidth,
-    'border-bottom-width': borderBottomWidth,
-    'border-left-width': borderLeftWidth,
-
-    'border-top-style': cell.css('border-top-style'),
-    'border-right-style': borderRightColor,
-    'border-bottom-style': cell.css('border-bottom-style'),
-    'border-left-style': cell.css('border-left-style'),
-
-    'border-top-color': borderTopColor,
-    'border-right-color': borderRightColor,
-    'border-bottom-color': borderBottomColor,
-    'border-left-color': borderLeftColor,
-
-    'margin-top': cell.css('margin-top'),
-    'margin-right': cell.css('margin-right'),
-    'margin-bottom': cell.css('margin-bottom'),
-    'margin-left': cell.css('margin-left'),
-    
-    'padding-top': paddingTop,
-    'padding-right': paddingRight,
-    'padding-bottom': paddingBottom,
-    'padding-left': paddingLeft,
-    
-    'text-align': cell.css('text-align'),
-    'vertical-align': cell.css('vertical-align'),
-    'font-size': cell.css('font-size'),
-    'font-family': cell.css('font-family'),
-
-    'top': top,
-    'left': left,
-    'width': width,
-    
-    'background-color': backgroundColor,
-
-    'visibility': 'visible'
-  };
-  // copy td styles onto combo
-  combo.css(comboStyles);
-  // adjust padding & height css properties to make combo the same height as the cell.
-  // If we use only height property we can not vertical align text inside combo element
-  var comboVerticalAlign = combo.css('vertical-align')
-  if ( comboVerticalAlign == 'top' ) {
-    combo.css('padding-bottom', parseInt(cell.css('padding-bottom')) + parseInt(cell.css('height')) - parseInt(combo.css('height')));
-  } else if ( comboVerticalAlign == 'bottom' ) {
-    combo.css('padding-top', parseInt(cell.css('padding-top')) + parseInt(cell.css('height')) - parseInt(combo.css('height'))) ;
-  } else {
-    combo.css('height', height);
-  }
-
-  var comboDivStyles = {
-    'border-top-color': borderTopColor,
-    'border-right-color': borderRightColor,
-    'border-bottom-color': borderBottomColor,
-    'border-left-color': borderLeftColor,
-
-    'padding-right': paddingRight,
-    'padding-left': paddingLeft,
-
-    'width': width,
-    'height': 150,
-
-    'top': top + height,
-    'left': left
-  };
-  // copy td styles onto comboDiv
-  comboDiv.css(comboDivStyles);
-
-  if ( searchURL == undefined ) { throw "searchURL must be defined" }
-  if ( boundName == undefined ) { throw "boundName must be defined" }
-  if ( name == undefined ) { throw "name must be defined" }
-  this._name = name;
-  this._value = value;
-  this.lastValue = value;
-  this._searchURL = searchURL;
-  this._boundName = boundName;
-  this._boundValue = boundValue;
-  
-  combo.val(value);
-};
-DbGridCombo.prototype.hide = function() {
-  this.combo.css('visibility','hidden');
-  this.comboDiv.css('visibility','hidden');
-};
-DbGridCombo.prototype.selectText = function(option) {
-  if ( option == 'end') {
-    this.combo.textrange('set', 'end');
-  }
-  if ( option == 'start' ) {
-    this.combo.textrange('set', 'start');
-  }
-  if ( option == undefined || option == 'all' ) {
-    this.combo.textrange('set', 'all');
-  }
-};
-DbGridCombo.prototype.inputOnKeyDown = function(e) {
-  // Decide whether to callback event.
-  if ( this.currentItem.size() ) {
-    active = true;
-  } else {
-    active = false;
-  } 
-  var textrangeData = this.combo.textrange('get');
-  if ( e.which == 38 ) {
-    // Up Arrow
-    if ( active ) {
-      var idx = this.currentItem.index();
-      if ( idx !=0 ) {
-	this.highlight(idx-1);
-      }
-    } else {
-      this.callback(e);
-    }
-  }
-  if ( e.which == 40 ) {
-    // Down Arrow
-    if ( active ) {
-      var idx = this.currentItem.index();
-      if ( idx != this.comboDiv.children().size() -1 ) {
-	this.highlight(idx+1);
-      }
-    } else {
-      this.callback(e);
-    }
-  }
-  if ( e.which == 37 && textrangeData.selectionAtStart ) {
-    // Left Arrow
-    this.callback(e);
-  }
-  if ( e.which == 39 && textrangeData.selectionAtEnd ) {
-    // Right Arrow
-    this.callback(e);
-  }
-  if ( e.which == 9 || e.which == 13 ) {
-    // TAB or Return
-    this.callback(e);
-  }
-  if ( e.which == 46 ) {
-    // Delete
-    this.callback(e)
-  }
-  if ( e.which == 83 && e.ctrlKey ) {
-    // Ctrl+S
-    this.callback(e);
-  }
-};
-DbGridCombo.prototype.inputOnKeyUp = function(e) {
-  if ( this.combo.val() != this.lastValue ) {
-    this.lastValue = this.combo.val();
-    this.search();
-  }
-  this.callback(e)  
-};
-DbGridCombo.prototype.inputOnBlur = function(e) {
-  var activeElmt = jQuery(document.activeElement);
-  if ( !this.comboDiv.is(activeElmt) && !this.comboDiv.find(activeElmt).size()  ) {
-    if ( this.currentItem.size() ) {
-      var idx = this.currentItem.index();
-      this.select(idx);
-      // trigger key up event to set row to dirty
-      this.combo.trigger('keyup.dbGridCombo');
-    }
-    this.comboDivHide();
-    this.currentItem = jQuery([]);
-  }
-};
-DbGridCombo.prototype.comboDivHide = function() {
-  this.comboDiv.css('visibility','hidden');
-  this.currentItem = jQuery([]);
-};
-DbGridCombo.prototype.comboDivShow = function() {
-  this.comboDiv.css({
-    'visibility':'visible',
-    'display':'block'
-  });
-};
-DbGridCombo.prototype.comboDivOnClick = function(e) {
-  var targetElmt = jQuery(e.target);
-  if ( !targetElmt.is(this.comboDiv) ) {
-    var idx = targetElmt.index();
-    this.select(idx);
-    // trigger key up event to set row to dirty
-    this.combo.trigger('keyup.dbGridCombo');
-  }
-};
-DbGridCombo.prototype.comboDivOnMouseOver = function(e) {
-  var targetElmt = jQuery(e.target);
-  if ( !targetElmt.is(this.comboDiv) ) {
-    var idx = targetElmt.index();
-    this.highlight(idx);
-  }
-};
-DbGridCombo.prototype.select = function(idx) {
-  this.combo.val(this._value);
-  this.lastValue = this._value;
-  this.comboDivHide();
-  // Move cursor to end of Input
-  this.selectText('end');
-};
-DbGridCombo.prototype.highlight = function(idx) {
-  var rec = jQuery('records record', this.xmlDoc).eq(idx);
-  this._value = jQuery(this._name + ':first', rec).text();
-  this._boundValue = jQuery(this._boundName + ':first', rec).text();
-
-  this.currentItem.css({
-    'background-color': '',
-    'color':''
-  });
-  this.currentItem = this.comboDiv.children().eq(idx);
-  this.currentItem.css({
-    'background-color':'highlight',
-    'color':'highlighttext'
-  });
-};
-DbGridCombo.prototype.search = function() {
-  //TODO
-  dbGridCombo = this;
-  comboDiv = dbGridCombo.comboDiv;
-
-  dbGridCombo.currentItem = jQuery([]);
-  comboDiv.text("Searching ...");
-  dbGridCombo.comboDivShow();
-
-  comboDiv.off('click.dbGridCombo');
-  comboDiv.off('mouseover.dbGridCombo');
- 
-  jQuery.ajax({
-    url: dbGridCombo._searchURL,
-    data: {
-      name: dbGridCombo._name,
-      value: dbGridCombo.combo.val(),
-      boundName: dbGridCombo._boundName
-    },
-    dataType: 'xml',
-    async: false,
-    cache: false,
-    success: function(data) {
-      dbGridCombo.searchReturn(data)
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-      comboDiv.text("Software Bug ! " + textStatus + ': ' + errorThrown);
-    }   
-  });
-};
-DbGridCombo.prototype.searchReturn = function(xmlDoc) {
-  this.xmlDoc = xmlDoc;
-  var rec = jQuery('error:first', xmlDoc);
-  if ( rec.size() ) {
-    // Error returned by Server
-    var error=rec.text;
-    this.comboDiv.text(rec.text());
-  } else {
-    // Success
-    var recs = jQuery('records record', xmlDoc);
-    if ( recs.size() ) {
-      // Matches Found
-      this.updateList(recs);
-    } else {
-      // No Matches
-      this.comboDiv.text("No Matches");
-      this._value = "";
-      this._boundValue = "";
-    }
-  }
-};
-DbGridCombo.prototype.updateList = function(recs) {
-  dbGridCombo = this;
-  comboDiv = dbGridCombo.comboDiv;
-
-  comboDiv.html('');
-
-  comboDiv.on('click.dbGridCombo', function(e) {
-    dbGridCombo.comboDivOnClick(e);
-  });
-  comboDiv.on('mouseover.dbGridCombo', function(e) {
-    dbGridCombo.comboDivOnMouseOver(e);
-  });
-  for(var i=0;i<recs.size();i++) {
-    var rec = recs.eq(i);
-    for(var j=0;j<rec.children().size();j++) {
-      var field = rec.children().eq(j);
-      var name= field.prop("nodeName");
-      var value = field.text();
-      if (name == dbGridCombo._name ) {
-	var item = jQuery('<div>');
-	item.css({
-	  'width': '100%',
-	  'cursor': 'pointer'
-	});
-	item.text(value);
-	comboDiv.append(item);
-      }
-    }
-  }
-  
-  dbGridCombo.currentItem = comboDiv.children().first();
-  dbGridCombo.highlight(0);
-};
-DbGridCombo.prototype.destroy = function() {
-  this.combo.remove();
-  this.comboDiv.remove();
-};
-/**********************************
- * Public DbGridCombo Methods End
- **********************************/
-
-
-/* ==== dbGridHTMLArea.js ==== */
-// DbGridHTMLArea Class Constructor
-var DbGridHTMLArea = function(callback, container) {
-  var dbGridHTMLArea = this;
-
-  var HTMLArea = jQuery('<div>');
-  HTMLArea.attr('contentEditable',true);
-  HTMLArea.css({
-    'position':'absolute',
-      'visibility':'hidden'
-  });
-    HTMLArea.addClass('htmlArea');
-  container.append(HTMLArea);
-
-  // Properties
-  dbGridHTMLArea.callback = callback;
-  dbGridHTMLArea.HTMLArea = HTMLArea;
-
-  // Events
-  HTMLArea.on('keyup.dbGridHTMLArea', function(e) {
-      dbGridHTMLArea.inputOnKeyUp(e);    
-  });
-  HTMLArea.on('keydown.dbGridHTMLArea', function(e) {
-      dbGridHTMLArea.inputOnKeyDown(e);
-  });   
-};
-
-/************************************
- * Public DbGridHTMLArea Methods Start
- ************************************/
-DbGridHTMLArea.prototype.getType = function() {
-  return 'htmlarea';
-};
-DbGridHTMLArea.prototype.getValue = function() {
-  return this.HTMLArea.html();
-};
-DbGridHTMLArea.prototype.getElmt = function() {
-  return this.HTMLArea;
-};
-DbGridHTMLArea.prototype.inputOnKeyDown = function(e) {
-  // decide whether to propagate the event to the cell
-  // using the callback function passed in
-  var textrangeData = this.HTMLArea.textrange('get'); 
-  out: {
-    if ( e.which == 9 || e.which == 46 ) {
-      // TAB or Delete
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 13 && ! e.shiftKey ) {
-      // Return no shift
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 37 && textrangeData.selectionAtStart ) {
-      // Left Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 38 && textrangeData.selectionAtStart ) {
-      // Up Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
-      // Right Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 40 && textrangeData.selectionAtEnd ) {
-      // Down Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 83 && e.ctrlKey ) {
-      // Ctrl+S
-      this.callback(e);
-      break out;
-    }
-    
-    // Default 
-    // don't propagate
-  }
-};
-DbGridHTMLArea.prototype.inputOnKeyUp = function(e) {
-  // allways propagate
-  this.callback(e);
-};
-DbGridHTMLArea.prototype.selectText = function(option) {
-  if ( option == undefined || option == 'end') {
-    this.HTMLArea.textrange('set', 'end');
-  }
-  if ( option == 'start' ) {
-    this.HTMLArea.textrange('set', 'start');
-  }
-  if ( option == 'all' ) {
-    this.HTMLArea.textrange('set', 'all');
-  }
-};
-DbGridHTMLArea.prototype.show = function(cell,value,editorHeight) {
-  var row = cell.closest('tr');
-  var table = row.closest('table');
-  var HTMLArea = this.HTMLArea;
-
-  var relativePosition = cell.positionRelativeTo(table);
-  var top = relativePosition.top;
-  var left = relativePosition.left;
-  if ( editorHeight == undefined ) {
-    height = cell.height();
-  } else {
-    height = editorHeight;
-  }
-  width = cell.width();
-  
-  if ( cell.css('backgroundColor') != 'transparent' ) {
-    backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
-    backgroundColor = row.css('background-color');
-  } else {
-    backgroundColor = 'white';
-  }
-
-  var borderTopWidth = parseInt(cell.css('border-top-width'));
-  var borderRightWidth = parseInt(cell.css('border-right-width'));
-  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
-  var borderLeftWidth = parseInt(cell.css('border-left-width'));
-
-  if ( table.css('border-collapse') == 'collapse' ) {
-    if ( borderTopWidth%2 == 0 ) {
-      var borderTopWidth = borderTopWidth/2;
-    } else {
-      var borderTopWidth = Math.ceil(borderTopWidth/2);
-    }
-    
-    if ( borderRightWidth%2 == 0 ) {
-      var borderRightWidth = borderRightWidth/2;
-    } else {
-      var borderRightWidth = Math.ceil(borderRightWidth/2);
-    }
-
-    if ( borderBottomWidth%2 == 0 ) {
-      var borderBottomWidth = borderBottomWidth/2;
-    } else {
-      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
-    }
-
-    if ( borderLeftWidth%2 == 0 ) {
-      var borderLeftWidth = borderLeftWidth/2;
-    } else {
-      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
-    }
-
-    top -=  borderTopWidth;
-    left -= borderLeftWidth;
-    height +=  borderTopWidth;
-    width +=  borderLeftWidth;
-  } 
-
-  // get styles applied to td
-  var styles = {
-    'border-top-width': borderTopWidth,
-    'border-right-width': borderRightWidth,
-    'border-bottom-width': borderBottomWidth,
-    'border-left-width': borderLeftWidth,
-
-    'border-top-style': cell.css('border-top-style'),
-    'border-right-style': cell.css('border-right-style'),
-    'border-bottom-style': cell.css('border-bottom-style'),
-    'border-left-style': cell.css('border-left-style'),
-
-    'border-top-color': cell.css('border-top-color'),
-    'border-right-color': cell.css('border-right-color'),
-    'border-bottom-color': cell.css('border-bottom-color'),
-    'border-left-color': cell.css('border-left-color'),
-
-    'margin-top': cell.css('margin-top'),
-    'margin-right': cell.css('margin-right'),
-    'margin-bottom': cell.css('margin-bottom'),
-    'margin-left': cell.css('margin-left'),
-    
-    'padding-top': cell.css('padding-top'),
-    'padding-right': cell.css('padding-right'),
-    'padding-bottom': cell.css('padding-bottom'),
-    'padding-left': cell.css('padding-left'),
-    
-    'text-align': cell.css('text-align'),
-    'vertical-align': cell.css('vertical-align'),
-    'font-size': cell.css('font-size'),
-    'font-family': cell.css('font-family'),
-
-    'top': top,
-    'left': left,
-    'width': width,
-    'height': height,
-
-    'background-color': backgroundColor,
-
-    'visibility': 'visible'
-  };
-  
-  // copy td styles onto HTMLArea
-  HTMLArea.css(styles);
-
-  HTMLArea.html(value);
-};
-
-DbGridHTMLArea.prototype.hide = function() {
-  this.HTMLArea.css('visibility','hidden');
-};
-DbGridHTMLArea.prototype.destroy = function() {
-  this.HTMLArea.remove();
-};
-/**********************************
- * Public DbGridHTMLArea Methods End
- **********************************/
-
-
-
-/* ==== dbGridInput.js ==== */
-// DbGridInput Class Constructor 
-var DbGridInput = function(callback, container) {
-  var dbGridInput = this;
-
-  var input = jQuery('<input>');
-  input.attr('type','text');
-  input.css({
-    'position':'absolute',
-    'visibility':'hidden',
-      'background-color':'white',
-      '-moz-box-sizing': "content-box", 
-      '-ms-box-sizing': "content-box", 
-      'box-sizing': "content-box"
-  });
-  container.append(input);
-
-  // Properties
-  dbGridInput.callback = callback;
-  dbGridInput.input = input;
-  dbGridInput.bookmark;
- 
-  // Events
-  input.on('keyup.dbGridInput', function(e) {
-    dbGridInput.inputOnKeyUp(e)    
-  });
-  input.on('keydown.dbGridInput', function(e) {
-    dbGridInput.inputOnKeyDown(e)
-  });
-  input.on('cut.dbGridInput', function(e) {
-    dbGridInput.inputOnCut(e)    
-  });
-  input.on('paste.dbGridInput', function(e) {
-    dbGridInput.inputOnPaste(e)
-  });
-  input.on('blur.dbGridInput', function(e) {
-    dbGridInput.inputOnBlur(e)
-  });
-};
-
-/**********************************
- * Public DbGridInput Methods Start
- **********************************/  
-DbGridInput.prototype.getType = function() {
-  return 'text';
-};
-DbGridInput.prototype.getValue = function() {
-  return this.input.val();
-};
-DbGridInput.prototype.getElmt = function() {
-  return this.input;
-};
-DbGridInput.prototype.storeSelection = function() {
-  this.bookmark = this.input.textrange('get');
-};
-DbGridInput.prototype.inputOnKeyUp = function(e) {
-  // allways propagate
-  this.callback(e);
-  this.storeSelection();
-};
-DbGridInput.prototype.inputOnKeyDown = function(e) {
-  // decide whether to propagate the event to the cell
-  // using the callback function passed in
-  var textrangeData = this.input.textrange('get'); 
-  out: {
-    if ( e.which == 9 || e.which == 13 || e.which == 46 ) {
-      // TAB or Return or Delete
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 37 && textrangeData.selectionAtStart ) {
-      // Left Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 38 ) {
-      // Up Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
-      // Right Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 40 ) {
-      // Down Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 83 && e.ctrlKey ) {
-      // Ctrl+S
-      this.callback(e);
-      break out;
-    }
-    // Default 
-    // don't propagate
-  }
-};
-DbGridInput.prototype.inputOnCut = function(e) {
-  this.callback(e);
-  this.storeSelection();
-};
-DbGridInput.prototype.inputOnPaste = function(e) {
-  this.callback(e);
-  this.storeSelection();
-};
-DbGridInput.prototype.inputOnBlur = function(e) {
-  this.callback(e);
-};
-DbGridInput.prototype.selectText = function(option) {
-  if ( option == 'end') {
-    this.input.textrange('set', 'end');
-  }
-  if ( option == 'start' ) {
-    this.input.textrange('set', 'start');
-  }
-  if ( option == undefined || option == 'all' ) {
-    this.input.textrange('set', 'all');
-  }
-  if ( option == 'preserve' ) {
-    if ( this.bookmark && this.getValue() == this.bookmark.text ) {
-      this.input.textrange('set', this.bookmark.selectionStart, this.bookmark.selectionEnd);
-    } else {
-      this.input.textrange('set','end');
-    }
-  }
-  this.storeSelection();
-};
-DbGridInput.prototype.show = function(cell,value) {
-  var row = cell.closest('tr');
-  var table = row.closest('table');
-  var input = this.input;
-
-    var relativePosition = cell.positionRelativeTo(table);
-  var top = relativePosition.top ;
-  var left = relativePosition.left;
-    height = cell.height();
-    width = cell.width();
-  
-    if ( cell.css('backgroundColor') != 'transparent' && cell.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
-    backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' && row.css('backgroundColor') != "rgba(0, 0, 0, 0)" ) {
-    backgroundColor = row.css('background-color');
-  } else {
-    backgroundColor = 'white';
-  }
-
-  var borderTopWidth = parseInt(cell.css('border-top-width'));
-  var borderRightWidth = parseInt(cell.css('border-right-width'));
-  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
-  var borderLeftWidth = parseInt(cell.css('border-left-width'));
-
-/*  if ( table.css('border-collapse') == 'collapse' ) {
-    if ( borderTopWidth%2 == 0 ) {
-      var borderTopWidth = borderTopWidth/2;
-    } else {
-      var borderTopWidth = Math.ceil(borderTopWidth/2);
-    }
-    
-    if ( borderRightWidth%2 == 0 ) {
-      var borderRightWidth = borderRightWidth/2;
-    } else {
-      var borderRightWidth = Math.ceil(borderRightWidth/2);
-    }
-
-    if ( borderBottomWidth%2 == 0 ) {
-      var borderBottomWidth = borderBottomWidth/2;
-    } else {
-      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
-    }
-
-    if ( borderLeftWidth%2 == 0 ) {
-      var borderLeftWidth = borderLeftWidth/2;
-    } else {
-      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
-    }
-
-    top -=  borderTopWidth;
-    left -= borderLeftWidth;
-    height +=  borderTopWidth;
-    width +=  borderLeftWidth;
-  } */
-  
-  // get styles applied to td
-  var styles = {
-    'border-top-width': borderTopWidth,
-    'border-right-width': borderRightWidth,
-    'border-bottom-width': borderBottomWidth,
-    'border-left-width': borderLeftWidth,
-
-    'border-top-style': cell.css('border-top-style'),
-    'border-right-style': cell.css('border-right-style'),
-    'border-bottom-style': cell.css('border-bottom-style'),
-    'border-left-style': cell.css('border-left-style'),
-
-    'border-top-color': cell.css('border-top-color'),
-    'border-right-color': cell.css('border-right-color'),
-    'border-bottom-color': cell.css('border-bottom-color'),
-    'border-left-color': cell.css('border-left-color'),
-
-    'margin-top': cell.css('margin-top'),
-    'margin-right': cell.css('margin-right'),
-    'margin-bottom': cell.css('margin-bottom'),
-    'margin-left': cell.css('margin-left'),
-    
-    'padding-top': cell.css('padding-top'),
-    'padding-right': cell.css('padding-right'),
-    'padding-bottom': parseInt(cell.css('padding-bottom')),
-    'padding-left': cell.css('padding-left'),
-    
-    'text-align': cell.css('text-align'),
-    'vertical-align': cell.css('vertical-align'),
-    'font-size': cell.css('font-size'),
-    'font-family': cell.css('font-family'),
-
-    'top': top,
-    'left': left,
-    'width': width,
-    
-    'background-color': backgroundColor,
-
-    'visibility': 'visible'
-  };
-  
-  // copy td styles onto input
-  input.css(styles);
-
-  // adjust padding & height css properties to make input the same height as the cell.
-  // If we use only height property we can not vertical align text inside input element
-  var inputVerticalAlign = input.css('vertical-align')
-  if ( inputVerticalAlign == 'top' ) {
-    input.css('padding-bottom', parseInt(cell.css('padding-bottom')) + parseInt(cell.css('height')) - parseInt(input.css('height')));
-  } else if ( inputVerticalAlign == 'bottom' ) {
-    input.css('padding-top', parseInt(cell.css('padding-top')) + parseInt(cell.css('height')) - parseInt(input.css('height'))) ;
-  } else {
-    input.css('height', height);
-  }
-
-  input.val(value);
-};
-DbGridInput.prototype.hide = function() {
-  this.input.blur();
-  this.input.css('visibility','hidden');
-};
-DbGridInput.prototype.destroy = function() {
-  this.input.remove();
-};
-/**********************************
- * Public DbGridInput Methods End
- **********************************/
-
-/* ==== dbGridInputBool.js ==== */
-// DbGridInputBool Class Constructor 
-var DbGridInputBool = function(callback, container) {
-  var dbGridInputBool = this;
-
-  var inputBool = jQuery('<div>');
-  inputBool.attr('contentEditable',true);
-  inputBool.css({
-    'position':'absolute',
-    'visibility':'hidden'
-  });
-  container.append(inputBool);
-
-  // Properties
-  dbGridInputBool.callback = callback;
-  dbGridInputBool.inputBool = inputBool;
-  
-  // Events
-  inputBool.on('keyup.dbGridInputBool', function(e) {
-    dbGridInputBool.inputOnKeyUp(e)    
-  });
-  inputBool.on('keydown.dbGridInputBool', function(e) {
-    dbGridInputBool.inputOnKeyDown(e)
-  }); 
-};
-
-/************************************
- * Public DbGridInputBool Methods Start
- ************************************/
-DbGridInputBool.prototype.getType = function() {
-  return 'bool';
-};
-DbGridInputBool.prototype.getValue = function() {
-  return parseBoolean(stripHTML(this.inputBool.html()));
-};
-DbGridInputBool.prototype.getElmt = function() {
-  return this.inputBool;
-};
-DbGridInputBool.prototype.setTrue = function() {
-  this.inputBool.html('<span class=clsTrue>Yes</span>');
-};
-DbGridInputBool.prototype.setFalse = function() {
-  this.inputBool.html('<span class=clsFalse>No</span>');
-};
-DbGridInputBool.prototype.inputOnKeyDown = function(e) {
-  // decide whether to propagate the event to the cell
-  // using the callback function passed in
-  var textrangeData = this.inputBool.textrange('get'); 
-  out: {
-    if ( e.which == 9 || e.which == 46 ) {
-      // TAB or Delete
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 13 && ! e.shiftKey ) {
-      // Return no shift
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 37 && textrangeData.selectionAtStart ) {
-      // Left Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 38 && textrangeData.selectionAtStart ) {
-      // Up Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
-      // Right Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 40 && textrangeData.selectionAtEnd ) {
-      // Down Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 83 && e.ctrlKey ) {
-      // Ctrl+S
-      this.callback(e);
-      break out;
-    }
-    // Default 
-    // don't propagate
-  }
-};
-DbGridInputBool.prototype.inputOnKeyUp = function(e) {
-  out: {
-    if ( e.which == 32 ) {
-      // Spacebar
-      if ( parseBoolean(stripHTML(oHTMLArea.innerHTML))) {
-	this.setFalse();
-      } else {
-	this.setTrue();
-      }
-      break out;
-    }
-    
-    if (  e.which==97 || e.which==49 || e.which==84 || e.which==89 ) {
-      // keypad 1 or 1 or t or y
-      this.setTrue();
-      break out;
-    }
-    if (  e.which==96 || e.which==48 || e.which==70 || e.which==78 ) {
-      // 0 or f or n
-      this.setFalse();
-      break out;
-    }
-  }
-  // allways propagate
-  this.callback(e);
-};
-DbGridInputBool.prototype.selectText = function(option) {
-  if ( option == undefined || option == 'end') {
-    this.inputBool.textrange('set', 'end');
-  }
-  if ( option == 'start' ) {
-    this.inputBool.textrange('set', 'start');
-  }
-  if ( option == 'all' ) {
-    this.inputBool.textrange('set', 'all');
-  }
-};
-DbGridInputBool.prototype.show = function(cell,value) {
-  var row = cell.closest('tr');
-  var table = row.closest('table');
-  var inputBool = this.inputBool;
-
-  var relativePosition = cell.positionRelativeTo(table);
-  var top = relativePosition.top;
-  var left = relativePosition.left;
-  height = cell.height();
-  width = cell.width();
-  
-  if ( cell.css('backgroundColor') != 'transparent' ) {
-    backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
-    backgroundColor = row.css('background-color');
-  } else {
-    backgroundColor = 'white';
-  }
-
-  var borderTopWidth = parseInt(cell.css('border-top-width'));
-  var borderRightWidth = parseInt(cell.css('border-right-width'));
-  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
-  var borderLeftWidth = parseInt(cell.css('border-left-width'));
-
-  if ( table.css('border-collapse') == 'collapse' ) {
-    if ( borderTopWidth%2 == 0 ) {
-      var borderTopWidth = borderTopWidth/2;
-    } else {
-      var borderTopWidth = Math.ceil(borderTopWidth/2);
-    }
-    
-    if ( borderRightWidth%2 == 0 ) {
-      var borderRightWidth = borderRightWidth/2;
-    } else {
-      var borderRightWidth = Math.ceil(borderRightWidth/2);
-    }
-
-    if ( borderBottomWidth%2 == 0 ) {
-      var borderBottomWidth = borderBottomWidth/2;
-    } else {
-      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
-    }
-
-    if ( borderLeftWidth%2 == 0 ) {
-      var borderLeftWidth = borderLeftWidth/2;
-    } else {
-      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
-    }
-
-    top -=  borderTopWidth;
-    left -= borderLeftWidth;
-    height +=  borderTopWidth;
-    width +=  borderLeftWidth;
-  } 
-
-  // get styles applied to td
-  var styles = {
-    'border-top-width': borderTopWidth,
-    'border-right-width': borderRightWidth,
-    'border-bottom-width': borderBottomWidth,
-    'border-left-width': borderLeftWidth,
-
-    'border-top-style': cell.css('border-top-style'),
-    'border-right-style': cell.css('border-right-style'),
-    'border-bottom-style': cell.css('border-bottom-style'),
-    'border-left-style': cell.css('border-left-style'),
-
-    'border-top-color': cell.css('border-top-color'),
-    'border-right-color': cell.css('border-right-color'),
-    'border-bottom-color': cell.css('border-bottom-color'),
-    'border-left-color': cell.css('border-left-color'),
-
-    'margin-top': cell.css('margin-top'),
-    'margin-right': cell.css('margin-right'),
-    'margin-bottom': cell.css('margin-bottom'),
-    'margin-left': cell.css('margin-left'),
-    
-    'padding-top': cell.css('padding-top'),
-    'padding-right': cell.css('padding-right'),
-    'padding-bottom': cell.css('padding-bottom'),
-    'padding-left': cell.css('padding-left'),
-    
-    'text-align': cell.css('text-align'),
-    'vertical-align': cell.css('vertical-align'),
-    'font-size': cell.css('font-size'),
-    'font-family': cell.css('font-family'),
-
-    'top': top,
-    'left': left,
-    'width': width,
-    'height': height,
-
-    'background-color': backgroundColor,
-
-    'visibility': 'visible'
-  };
-  
-  // copy td styles onto inputBool
-  inputBool.css(styles);
-
-  if ( parseBoolean(value) ) {
-    this.setTrue();
-  } else {
-    this.setFalse();
-  }
-};
-
-DbGridInputBool.prototype.hide = function() {
-  this.inputBool.css('visibility','hidden');
-};
-DbGridInputBool.prototype.destroy = function() {
-  this.inputBool.remove();
-};
-/**********************************
- * Public DbGridInputBool Methods End
- **********************************/
-
-
-/* ==== dbGridTextArea.js ==== */
-// DbGridTextArea Class Constructor 
-var DbGridTextArea = function(callback, container) {
-  var dbGridTextArea = this;
-
-  var textArea =  jQuery('<textarea>');
-  textArea.css({
-    'position':'absolute',
-    'visibility':'hidden',
-    'background-color':'white',
-    'border':'1px solid #aca899',
-    'overflow':'auto'
-  });
-  container.append(textArea);
-
-  // Properties
-  dbGridTextArea.callback = callback;
-  dbGridTextArea.textArea = textArea;
-
-  // Events
-  textArea.on('keyup.dbGridTextArea', function(e) {
-    dbGridTextArea.inputOnKeyUp(e)    
-  });
-  textArea.on('keydown.dbGridTextArea', function(e) {
-    dbGridTextArea.inputOnKeyDown(e)
-  });
-};
-
-/************************************
- * Public DbGridTextArea Methods Start
- ************************************/
-DbGridTextArea.prototype.getType = function() {
-  return 'textarea';
-};
-DbGridTextArea.prototype.getValue = function() {
-  var value = this.textArea.val();
-  return value.replace(/\r\n|\n/g,"<br>");
-};
-DbGridTextArea.prototype.getElmt = function() {
-  return this.textArea;
-};
-DbGridTextArea.prototype.inputOnKeyDown = function(e) {
-  // decide whether to propagate the event to the cell
-  // using the callback function passed in
-  var textrangeData = this.textArea.textrange('get'); 
-  out: {
-    if ( e.which == 9 || e.which == 46 ) {
-      // TAB or Delete
-      this.callback(e)
-      break out;
-    }
-    if ( e.which == 37 && textrangeData.selectionAtStart ) {
-      // Left Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 38 && textrangeData.selectionAtStart ) {
-      // Up Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 39 && textrangeData.selectionAtEnd ) {
-      // Right Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 40 && textrangeData.selectionAtEnd ) {
-      // Down Arrow
-      this.callback(e);
-      break out;
-    }
-    if ( e.which == 83 && e.ctrlKey ) {
-      // Ctrl+S
-      this.callback(e);
-      break out;
-    }
-    
-    // Default 
-    // don't propagate
-  }
-};
-DbGridTextArea.prototype.inputOnKeyUp = function(e) {
-  // allways propagate
-  this.callback(e);
-};
-DbGridTextArea.prototype.selectText = function(option) {
-  if ( option == 'end') {
-    this.textArea.textrange('set', 'end');
-  }
-  if ( option == 'start' ) {
-    this.textArea.textrange('set', 'start');
-  }
-  if ( option == undefined || option == 'all' ) {
-    this.textArea.textrange('set', 'all');
-  }
-};
-DbGridTextArea.prototype.show = function(cell,value,editorHeight) {
-  var row = cell.closest('tr');
-  var table = row.closest('table');
-  var textArea = this.textArea;
-
-  var relativePosition = cell.positionRelativeTo(table);
-  var top = relativePosition.top;
-  var left = relativePosition.left;
-  if ( editorHeight == undefined ) {
-    height = cell.height();
-  } else {
-    height = editorHeight;
-  }
-  width = cell.width();
-  
-  if ( cell.css('backgroundColor') != 'transparent' ) {
-    backgroundColor = cell.css('background-color');
-  } else if ( row.css('background-color') != 'transparent' ) {
-    backgroundColor = row.css('background-color');
-  } else {
-    backgroundColor = 'white';
-  }
-
-  var borderTopWidth = parseInt(cell.css('border-top-width'));
-  var borderRightWidth = parseInt(cell.css('border-right-width'));
-  var borderBottomWidth = parseInt(cell.css('border-bottom-width'));
-  var borderLeftWidth = parseInt(cell.css('border-left-width'));
-
-  if ( table.css('border-collapse') == 'collapse' ) {
-    if ( borderTopWidth%2 == 0 ) {
-      var borderTopWidth = borderTopWidth/2;
-    } else {
-      var borderTopWidth = Math.ceil(borderTopWidth/2);
-    }
-    
-    if ( borderRightWidth%2 == 0 ) {
-      var borderRightWidth = borderRightWidth/2;
-    } else {
-      var borderRightWidth = Math.ceil(borderRightWidth/2);
-    }
-
-    if ( borderBottomWidth%2 == 0 ) {
-      var borderBottomWidth = borderBottomWidth/2;
-    } else {
-      var borderBottomWidth = Math.ceil(borderBottomWidth/2);
-    }
-
-    if ( borderLeftWidth%2 == 0 ) {
-      var borderLeftWidth = borderLeftWidth/2;
-    } else {
-      var borderLeftWidth = Math.ceil(borderLeftWidth/2);
-    }
-
-    top -=  borderTopWidth;
-    left -= borderLeftWidth;
-    height +=  borderTopWidth;
-    width +=  borderLeftWidth;
-  } 
-  
-  // get styles applied to td
-  var styles = {
-    'border-top-width': borderTopWidth,
-    'border-right-width': borderRightWidth,
-    'border-bottom-width': borderBottomWidth,
-    'border-left-width': borderLeftWidth,
-
-    'border-top-style': cell.css('border-top-style'),
-    'border-right-style': cell.css('border-right-style'),
-    'border-bottom-style': cell.css('border-bottom-style'),
-    'border-left-style': cell.css('border-left-style'),
-
-    'border-top-color': cell.css('border-top-color'),
-    'border-right-color': cell.css('border-right-color'),
-    'border-bottom-color': cell.css('border-bottom-color'),
-    'border-left-color': cell.css('border-left-color'),
-
-    'margin-top': cell.css('margin-top'),
-    'margin-right': cell.css('margin-right'),
-    'margin-bottom': cell.css('margin-bottom'),
-    'margin-left': cell.css('margin-left'),
-    
-    'padding-top': cell.css('padding-top'),
-    'padding-right': cell.css('padding-right'),
-    'padding-bottom': parseInt(cell.css('padding-bottom')),
-    'padding-left': cell.css('padding-left'),
-    
-    'text-align': cell.css('text-align'),
-    'vertical-align': cell.css('vertical-align'),
-    'font-size': cell.css('font-size'),
-    'font-family': cell.css('font-family'),
-
-    'top': top,
-    'left': left,
-    'width': width,
-    'height': height,
-
-    'background-color': backgroundColor,
-
-    'visibility': 'visible'
-  };
-  
-  // copy td styles onto textArea
-  textArea.css(styles);
-  textArea.val(value.replace(/<br>/gi,"\r\n"));
-};
-DbGridTextArea.prototype.hide = function() {
-  this.textArea.css('visibility','hidden');
-};
-DbGridTextArea.prototype.destroy = function() {
-  this.textArea.remove();
-};
-/************************************
- * Public DbGridTextArea Methods End
- ************************************/
 
 /* ==== dbHeader.js ==== */
 function dbHeader(oTable) {
@@ -3551,31 +1829,21 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.cellOut();
 	    }		   
 	},
-	editorCut: function(){
-	    // Cut events should be triggered on the editor, but will be passed on to here. 
-	    // Editor value will have changed, mark row as dirty.
-	    var row = this.getRow();
-	    row.dbRow('setState', 'dirty');
-	},
-	editorPaste: function(){
-	    // Paste events should be triggered on the editor, but will be passed on to here. 
-	    // Editor value will have changed, mark row as dirty.
-	    var row = this.getRow();
-	    row.dbRow('setState', 'dirty');
-	},
 	editorKeyUp: function(){
 	    // If the Editor's value has changed, mark row as dirty.
-	    var row = this.getRow();
 	    var grid = this.getGrid();
  	    
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		row.dbRow('setState', 'dirty');
-		}
 	    if ( grid.dbGrid('option','updateType') === "onKeyUp" ) {
 		this._cancelDelayedSave();
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
 	    }
 	},
+        editorValueChange: function(){
+	    var row = this.getRow();
+	    if ( this.getValue() !== this.editor('getValue') ) {
+		row.dbRow('setState', 'dirty');
+	    }
+        },
 	editorKeyDown: function(event){
 	    var cell = this.element;
 	    var grid = this.getGrid();
@@ -3658,1239 +1926,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
     });
 })(jQuery, window, document);
 
-/* ==== jquery.dbCellControl.js ==== */
-(function($){
-    $.fn.dbCellControl = function() {
-	var returnValue;
-	var target = $(this);
-	if ( ! target.data('dbCellControl')){
-	    $.error('dbCellControl is abstract and must be initialized with another plugin');
-	} else {
-	    var control = target.data('dbCellControl');
-	    returnValue = target[control.pluginName].apply(target,arguments);
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
-
-/* ==== jquery.dbCellHTMLArea.js ==== */
-(function($){
-    var eventNamespace = '.dbCellControl.dbCellHTMLArea';
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width']
-    function DbCellHTMLArea(container,cells,options) {
-	cells.data('dbCellControl', this);
-	this.editor = $('<div>')
-	    .attr('contentEditable', true)
-	    .addClass('dbCellControl dbCellHTMLArea')
-	    .appendTo(container)
-	    .css({
-		'position': "absolute"
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-    $.extend(DbCellHTMLArea.prototype, {
-	pluginName: 'dbCellHTMLArea',
-	add: function(container,cells){
-	    cells.data('dbCellControl', this);
-	},
-	remove: function(cells) {
-	    cells.removeData('dbCellControl');
-	},
-	getType: function() {
-	    return 'htmlarea';
-	},
-	getValue: function() {
-	    return this.editor.html();
-	},
-	show: function(cell,value){
-	    this.currentCell = cell;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,cell.css(name));
-	    });
-	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', cell.css('backgroundColor'));
-	    }
-	    editor
-		.height((typeof cell.data('editorHeight') == "undefined") ? cell.height() : cell.data('editorHeight'))
-		.css({
-		    'top': cell.position().top + cell.offsetParent().scrollTop(),
-		    'left': cell.position().left + cell.offsetParent().scrollLeft()
-		})
-		.show()
-		.html(value)
-		.focus();
-	},
-	hide: function(cell) {
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	},
-	selectText: function(cell,text) {
-	    // TO DO - figure out if there's a way to do this
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 83: //S
-	    if ( ! e.ctrlKey ) break;
-	case 9: //tab
-	    e.preventDefault();
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    this.currentCell.trigger(event);
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnBlur(e, source) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentCell.trigger(event);
-	}
-    }
-    $.fn.dbCellHTMLArea = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('dbCellControl');
-	if ( ! control ) {
-	    control = target.data('dbCellHTMLArea');
-	}
-	if ( arguments[0] === 'isInitialized' ) {
-	    return Boolean(control);
-	}
-	if ( ! control ) {
-	    var cells = arguments[0];
-	    var options = arguments[1];
-	    target.data('dbCellHTMLArea', new DbCellHTMLArea(target,cells,options));
-	} else {
-	    if ( control.pluginName !== 'dbCellHTMLArea' ) {
-		$.error('Cannot apply dbCellHTMLArea - element has another control already');
-	    }
-	    var method = arguments[0];
-	    var args = [target].concat(Array.prototype.slice.call(arguments,1));
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,args);
-	    } else {
-		$.error('Invalid method of dbCellHTMLArea');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
-
-/* ==== jquery.dbCellInput.js ==== */
-(function($){
-    var eventNamespace = '.dbCellControl.dbCellInput';
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width','height']
-    function DbCellInput(container,cells) {
-	cells.data('dbCellControl', this);
-	this.editor = $('<input type="text">')
-	    .addClass('dbCellControl dbCellInput')
-	    .appendTo(container)
-	    .css({
-		'position': "absolute",
-		'background': "white",
-		'overflow': "visible",
-		'-moz-box-sizing': "content-box",
-		'-ms-box-sizing': "content-box",
-		'box-sizing': "content-box",
-		'z-index': 1
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-    $.extend(DbCellInput.prototype, {
-	pluginName: 'dbCellInput',
-	add: function(container,cells) {
-	    cells.data('dbCellControl', this);
-	},
-	remove: function(cells) {
-	    cells.removeData('dbCellControl');
-	},
-	getType: function() {
-	    return 'text';
-	},
-	getValue: function() {
-	    return this.editor.val();
-	},
-	show: function(cell,value){
-	    this.currentCell = cell;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,cell.css(name));
-	    });
-	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', cell.css('backgroundColor'));
-	    }
-	    editor
-		.css({
-		    'top': cell.position().top + cell.offsetParent().scrollTop(),
-		    'left': cell.position().left + cell.offsetParent().scrollLeft()
-		})
-		.show()
-		.val(value)
-		.focus();
-	},
-	hide: function(cell) {
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	},
-	selectText: function(cell,option) {
-	    // TO DO - figure out if there's a way to do this
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-    function inputOnKeyDown(e) {
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 83: //S
-	    if ( ! e.ctrlKey ) break;
-	case 13: //return
-	case 9: //tab
-	    e.preventDefault();
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    this.currentCell.trigger(event);
-	    break;
-	}
-    }
-    function inputOnKeyUp(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnBlur(e, source) {
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentCell.trigger(event);
-	}
-    }
-    $.fn.dbCellInput = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('dbCellControl');
-	if ( ! control ) {
-	    control = target.data('dbCellInput');
-	}
-	if ( arguments[0] === 'isInitialized' ) {
-	    return Boolean(control);
-	}
-	if ( ! control ) {
-	    var cells = arguments[0];
-	    var options = arguments[1];
-	    target.data('dbCellInput', new DbCellInput(target,cells,options));
-	} else {
-	    if ( control.pluginName !== 'dbCellInput' ) {
-		$.error('Cannot apply dbCellInput - element has another control already');
-	    }
-	    var method = arguments[0];
-	    if ( typeof control[method] == "function" ) {
-		var args = [target].concat(Array.prototype.slice.call(arguments,1));
-		returnValue = control[method].apply(control,args);
-	    } else {
-		$.error('Invalid method ' + method + ' of dbCellInput');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
-
-/* ==== jquery.dbCellTextArea.js ==== */
-(function($){
-    var eventNamespace = '.dbCellControl.dbCellHTMLArea';
-    var copyAttributes = ['borderTopWidth','borderTopStyle','borderTopColor',
-			  'borderBottomWidth','borderBottomStyle','borderBottomColor',
-			  'borderLeftWidth','borderLeftStyle','borderLeftColor',
-			  'borderRightWidth','borderRightStyle','borderRightColor',
-			  'marginTop','marginRight','marginBottom','marginLeft',
-			  'paddingTop','paddingRight','paddingBottom','paddingLeft',
-			  'textAlign','verticalAlign','fontSize','fontFamily','fontWeight',
-			  'width','height']
-    function DbCellTextArea(container,cells,options) {
-	cells.data('dbCellControl', this);
-	this.editor = $('<textarea>')
-	    .appendTo(container)
-	    .addClass('dbCellControl dbCellTextArea')
-	    .css({
-		'position': "absolute",
-		'resize': "none",
-		'-moz-box-sizing': "content-box",
-		'-ms-box-sizing': "content-box",
-		'box-sizing': "content-box",
-		'overflow': "auto"
-	    })
-	    .hide()
-	    .on('keydown' + eventNamespace, inputOnKeyDown.bind(this))
-	    .on('keyup' + eventNamespace, inputOnKeyUp.bind(this))
-	    .on('cut' + eventNamespace, inputOnCut.bind(this))
-	    .on('paste' + eventNamespace, inputOnPaste.bind(this))
-	    .on('blur' + eventNamespace, inputOnBlur.bind(this));
-    }
-    $.extend(DbCellTextArea.prototype, {
-	pluginName: 'dbCellTextArea',
-	add: function(container,cells){
-	    cells.data('dbCellControl', this);
-	},
-	remove: function(cells) {
-	    cells.removeData('dbCellControl');
-	},
-	getType: function() {
-	    return 'textarea';
-	},
-	getValue: function() {
-	    return this.editor.val();
-	},
-	show: function(cell,value){
-	    //console.log("dbCellTextArea show " + cell.text());
-	    this.currentCell = cell;
-	    var editor = this.editor;
-	    $.each(copyAttributes, function(i,name){
-		editor.css(name,cell.css(name));
-	    });
-	    if ( cell.css('backgroundColor') == 'transparent' || cell.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		editor.css('backgroundColor', "white");
-	    } else {
-		editor.css('backgroundColor', cell.css('backgroundColor'));
-	    }
-	    editor
-		.css({
-		    'top': cell.position().top + cell.offsetParent().scrollTop(),
-		    'left': cell.position().left + cell.offsetParent().scrollLeft(),
-		    'height': "+=1",
-		    'padding-bottom': "-=1"
-		})
-		.show()
-		.val(value)
-		.focus();
-	    //console.log("editor focus : " + editor.is(':focus'));
-	    //console.log("/show");
-	},
-	hide: function(cell) {
-	    //console.log("dbCellTextArea hide " + cell.text());
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.editor.hide();
-	    //console.log("/hide");
-	},
-	selectText: function(cell,option) {
-	    // TO DO - figure out if there's a way to do this
-	},
-	destroy: function() {
-	    this.editor.remove();
-	}
-    });
-    function inputOnKeyDown(e) {
-	//console.log("dbCellTextArea onKeyDown " + e.which + " " + e.timeStamp + " " + e.target.nodeName);
-	switch(e.which) { //nb. Switch cascades; lack of breaks is intended
-	case 83: //S
-	    if ( ! e.ctrlKey ) break;
-	case 9: //tab
-	    e.preventDefault();
-	case 38: //up
-	case 40: //down
-            var event = jQuery.Event(e.type,{
-		'data': e.data,
-		'ctrlKey': e.ctrlKey,
-		'altKey': e.altKey,
-		'shiftKey': e.shiftKey,
-		'which': e.which
-            });
-	    this.currentCell.trigger(event);
-	}
-	//console.log("/onKeyDown");
-    }
-    function inputOnKeyUp(e) {
-	//console.log("dbCellTextArea keyUp " + e.which);
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-	//console.log("/keyUp");
-    }
-    function inputOnCut(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnPaste(e) {
-        var event = jQuery.Event(e.type,{
-            'data': e.data,
-	    'ctrlKey': e.ctrlKey,
-	    'altKey': e.altKey,
-	    'shiftKey': e.shiftKey,
-            'which': e.which
-        });
-	this.currentCell.trigger(event);
-    }
-    function inputOnBlur(e) {
-	//console.log("dbCellTextArea onBlur " + e.timeStamp + " " + e.target.nodeName);
-	if ( ! this.editor.is(':focus') ) {
-            var event = jQuery.Event(e.type,{
-		'data': e.data
-            });
-	    this.currentCell.trigger(event);
-	}
-	//console.log("/onBlur");
-    }
-    $.fn.dbCellTextArea = function(){
-	var returnValue;
-	var target = $(this);
-	var control = target.data('dbCellControl');
-	if ( ! control ) {
-	    control = target.data('dbCellTextArea');
-	}
-	if ( arguments[0] === 'isInitialized' ) {
-	    return Boolean(control);
-	}
-	if ( ! control ) {
-	    var cells = arguments[0];
-	    var options = arguments[1];
-	    target.data('dbCellTextArea', new DbCellTextArea(target,cells,options));
-	} else {
-	    if ( control.pluginName !== 'dbCellTextArea' ) {
-		$.error('Cannot apply dbCellTextArea - element has another control already');
-	    }
-	    var method = arguments[0];
-	    var args = [target].concat(Array.prototype.slice.call(arguments,1));
-	    if ( typeof control[method] == "function" ) {
-		returnValue = control[method].apply(control,args);
-	    } else {
-		$.error('Invalid method of dbCellTextArea');
-	    }
-	}
-	if ( typeof returnValue != "undefined" ) {
-	    return returnValue;
-	} else {
-	    return target;
-	}
-    }
-})(jQuery);
-
-/* ==== jquery.dbCells.js ==== */
-(function($){
-    var states = ['current','dirty','updating','error'];
-    function DbCells(container, options) {
-	this.container = container;
-	this.settings = $.extend({
-	    'inputCellSelector': ".cell:not(.text, .html)",
-	    'textCellSelector': ".cell.text",
-	    'htmlCellSelector': ".cell.html",
-	    'initalFocus': true,
-	    'enabled': true,
-	    'updateType': "cellOut"
-	}, options);
-	this.inputCells = $(this.settings.inputCellSelector, this.container);
-	this.textCells = $(this.settings.textCellSelector, this.container);
-	this.htmlCells = $(this.settings.htmlCellSelector, this.container);
-	this.cells = this.inputCells
-	    .add(this.textCells)
-	    .add(this.htmlCells);
-	this.cells.data('dbCells', this);
-
-	if ( this.inputCells.length > 0 ) {
-	    this.container.dbCellInput(this.inputCells);
-	}
-	if ( this.textCells.length > 0 ) {
-	    this.container.dbCellTextArea(this.textCells);
-	}
-	if ( this.htmlCells.length > 0 ) {
-	    this.container.dbCellHTMLArea(this.htmlCells);
-	}
-	
-	var selectors = [];
-	if ( this.settings.inputCellSelector ) {
-	    selectors.push(this.settings.inputCellSelector);
-	}
-	if ( this.settings.textCellSelector ) {
-	    selectors.push(this.settings.textCellSelector);
-	}
-	if ( this.settings.htmlCellSelector ) {
-	    selectors.push(this.settings.htmlCellSelector);
-	}
-	var cellSelector = selectors.join(', ');
-	this.container
-	    .on('mouseup.dbCells', cellSelector, cellOnMouseUp.bind(this))
-	    .on('keydown.dbCells', cellSelector, cellOnKeyDown.bind(this))
-	    .on('keyup.dbCells', cellSelector, cellOnKeyUp.bind(this))
-	    .on('cut.dbCells', cellSelector, cellOnCut.bind(this))
-	    .on('paste.dbCells', cellSelector, cellOnPaste.bind(this))
-	    .on('blur.dbCells', cellSelector, cellOnBlur.bind(this))
-	    .on('update.dbCells', function(){
-		if ( typeof this.currentCell != "undefined" ) {
-		    this.currentCell.dbCellControl('show', this.currentCell.dbCellControl('getValue'));
-		};
-	    }.bind(this));
-	$(window)
-	    .on('resize.dbCells', onResize.bind(this))
-	    .on('beforeunload.dbCells', onBeforeUnload.bind(this))
-	    .on('beforeprint.dbCells', onBeforePrint.bind(this));
-    }
-    $.extend(DbCells.prototype, {
-	add: function(cell, type) {
-	    if ( typeof type == "undefined" ) {
-		if ( cell.is(this.settings.textCellSelector) ) {
-		    var type = "textarea";
-		} else if ( cell.is(this.settings.htmlCellSelector) ) {
-		    var type = "htmlarea";
-		} else {
-		    var type = "text";
-		}
-	    }
-	    switch (type) {
-	    case "text":
-		if ( this.container.dbCellInput('isInitialized') ) {
-		    this.container.dbCellInput('add',cell);
-		} else {
-		    this.container.dbCellInput(cell);
-		}
-		this.inputCells = this.inputCells.add(cell);
-		break;
-	    case "textarea":
-		if ( this.container.dbCellTextArea('isInitialized') ) {
-		    this.container.dbCellTextArea('add',cell);
-		} else {
-		    this.container.dbCellTextArea(cell);
-		}
-		this.textCells = this.textCells.add(cell);
-		break;
-	    case "htmlarea":
-		if ( this.container.dbCellHTMLArea('isInitialized') ) {
-		    this.container.dbCellHTMLArea('add',cell);
-		} else {
-		    this.container.dbCellHTMLArea(cell);
-		}
-		this.htmlCells = this.htmlCells.add(cell);
-		break;
-	    }
-	    this.cells = this.cells.add(cell);
-	    cell.data('dbCells', this);
-	},
-	remove: function(cell) {
-	    var type = this.getCellType(cell);
-	    cell.dbCellControl('remove');
-	    switch(type) {
-	    case "text":
-		this.inputCells = this.inputCells.not(cell);
-		break;
-	    case "textarea":
-		this.textCells = this.textCells.not(cell);
-		break;
-	    case "htmlarea":
-		this.htmlCells = this.htmlCells.not(cell);
-		break;
-	    }
-	    this.cells = this.cells.not(cell);
-	    cell.removeData('dbCells');
-	},
-	save: function(cell,async) {
-	    var dbCells = this;
-	    if ( typeof cell == "undefined" ) {
-		var cell = this.currentCell;
-	    }
-	    if ( cell.data('deleteWhenEmpty') && this.getCellValue(cell) === "" ) {
-		this.delete(cell,async);
-		cell.trigger('save');
-	    } else if ( typeof cell.data('updateUrl') != "undefined" ) {
-		dbCells.cellAction(cell,'update',cell.data('updateUrl'),cellActionReturn.bind(dbCells,cell,'update'),async);
-		cell.trigger('save');
-	    } else if ( typeof cell.data('addUrl') != "undefined" ) {
-		dbCells.cellAction(cell,'add',cell.data('addUrl'),cellActionReturn.bind(dbCells,cell,'add'),async);
-		cell.trigger('save');
-	    }
-	},
-	delete: function(cell,async) {
-	    if ( typeof cell == "undefined" ) {
-		var cell = this.currentCell;
-	    }
-	    if ( typeof cell.data('deleteUrl') != "undefined" ) {
-		this.cellAction(cell,'delete',cell.data('deleteUrl'),cellActionReturn.bind(this,cell,'delete'),async);
-		cell.trigger('delete');
-	    }
-	},
-	cellChange: function(newCell) {
-	    if ( typeof this.currentCell != "undefined" ) {
-		//console.log("Cell change from " + this.currentCell.text() + " to " + newCell.text());
-		this.cellOut(this.currentCell);
-	    } else {
-		//console.log("Cell change to " + newCell.text());
-	    }
-	    this.cellIn(newCell);
-	    //console.log("/cellChange");
-	},
-	focus: function() {
-	    //console.log("dbCells focus");
-	    if ( typeof this.currentCell != "undefined" ) {
-		this.cellIn(this.currentCell);
-	    }
-	    //console.log("/focus");
-	},
-	setDirty: function() {
-	    if ( typeof this.currentCell != "undefined" ) {
-		this.setCellState(currentCell,'dirty');
-	    }
-	},
-	cellIn: function(cell, select) {
-	    //console.log("dbCells cellIn to " + cell.text());
-	    if ( typeof cell != "object" ) {
-		$.error('cellIn requires a cell');
-	    }
-	    cell.data('focussing',true);
-	    this.currentCell = cell;
-	    this.currentCell.css('visibility', "hidden");
-	    if ( typeof this.getCellState(cell) == "undefined" ) {
-		this.setCellState(cell,'current');
-	    }
-	    var cellValue = this.getCellValue(cell);
-	    cell.dbCellControl('show',cellValue);
-
-	    if (select) {
-		cell.dbCellControl('selectText',text);
-	    } else if ( cell.data('cellInSelect') != null ) {
-		cell.dbCellControl('selectText',cell.data('cellInSelect'));
-	    } else {
-		cell.dbCellControl('selectText','all');
-	    }
-	    cell.trigger('cellin.dbCells');
-	    cell.removeData('focussing');
-	    //console.log("/cellIn");
-	},
-	cellOut: function(cell) {
-	    if ( typeof cell != 'object' ) {
-		$.error('cellOut requires a cell');
-	    }
-	    this.currentCell = undefined;
-	    //console.log("dbCells cellOut from " + cell.text());
-	    var oldValue = this.getCellValue(cell);
-	    var newValue = cell.dbCellControl('getValue');
-	    if ( oldValue != newValue ) {
-		this.setCellState(cell,'dirty');
-	    }
-	    cellWrite.call(this,cell);
-	    cell.css('visibility', "inherit");
-	    cell.dbCellControl('hide');
-	    if ( this.settings.updateType == "onKeyUp" ) {
-		this.cancelDelayedSave();
-	    }
-	    if ( this.getCellState(cell) == "dirty" ) {
-		this.save(cell);
-	    }
-	    cell.trigger('cellout.dbCells');
-	    //console.log("/cellOut");
-	},
-	setCellState: function(cell,state) {
-	    if ( typeof cell != "object" || typeof state != "string" || states.indexOf(state) < 0 ) {
-		$.error('Invalid arguments for setCellState');
-	    }
-	    cell.removeClass(states.join(' ')).addClass(state);
-	},
-	getCellState: function(cell) {
-	    if ( typeof cell != "object" ) {
-		$.error('getCellState requires a cell');
-	    }
-	    var cellState;
-	    $.each(states, function(i, state){
-		if ( cell.hasClass(state) ) {
-		    cellState = state;
-		}
-	    });
-	    return cellState;
-	},
-	getCellValue: function(cell) {
-	    if ( typeof cell != "object" ) {
-		$.error('getCellValue requires a cell');
-	    }
-	    switch(this.getCellType(cell)){
-	    case 'html':
-	    case 'htmlarea':
-		return cell.html();
-		break;
-	    default:
-		return unescapeHTML(cell.html());
-		break;
-	    }
-	},
-	setCellValue: function(cell, value) {
-	    if ( typeof cell != "object" || typeof value != "string" ) {
-		$.error('Invalid arguments for setCellValue');
-	    }
-	    switch(this.getCellType(cell)){
-	    case 'html':
-	    case 'htmlarea':
-		cell.html(value);
-		break;
-	    default:
-		cell.html(escapeHTML(value));
-		break;
-	    }
-	},
-	getCellType: function(cell) {
-	    if ( typeof cell != "object" ) {
-		$.error('getCellType requires a cell');
-	    }
-	    return cell.dbCellControl('getType');
-	},
-	delayedSave: function() {
-	    if ( typeof this.currentCell == "object"
-		 && this.getCellState(this.currentCell) == 'dirty' ) {
-		this.save();
-	    }
-	},
-	cancelDelayedSave: function() {
-	    if ( typeof this.keyUpTimer != "undefined" ) {
-		clearTimeout(this.keyUpTimer);
-		this.keyUpTimer = undefined;
-	    }
-	},
-	isCellEditable: function(cell) {
-	    if ( typeof cell != "object" ) {
-		$.error('isCellEditable requires a cell');
-	    }	    
-	    var state = this.getCellState(cell);
-	    if ( typeof state == "undefined" ) {
-		this.setCellState(cell,'current');
-	    }
-	    return state != 'updating';
-	},
-	isTabStop: function() {
-	    return true;
-	},
-	cellAction: function(cell,type,url,handler,async) {
-	    if ( typeof(handler) == "undefined" ) {
-		handler = cellActionReturn.bind(this,cell,type);
-	    }
-	    if (typeof(async) == "undefined") {
-		async = true;
-	    }
-	    
-	    this.setCellState(cell,'updating');
-
-	    if ( typeof this.currentCell != "undefined" ) {
-		cellWrite.call(this);
-	    }
-
-	    var name = cell.data('name');
-	    var value = this.getCellValue(cell);
-	    var data = {};
-	    data[name] = value;
-	    
-	    var re = /([^\?]+)\??(.*)/;
-	    re.exec(url);
-	    var path = RegExp.$1;
-	    var queryString = RegExp.$2;
-	    $.each(queryString.split('&'),function(i, pair){
-		data[pair.split('=')[0]] = pair.split('=')[1];
-	    });
-
-	    var deferred = new jQuery.Deferred();
-	    deferred.done(handler);
-	    deferred.fail(cellActionReturnError.bind(this,cell,type));
-	    httpPost(url,data,deferred.resolve.bind(deferred),deferred.reject.bind(deferred));
-	    cell.trigger('cellAction',[type,deferred]);
-	},
-	setStatus: function(msg){
-	    this.trigger('statuschange',[msg])
-	}
-    });
-    function cellActionReturn(cell,type,xmlDoc) {
-	var dbCells = this;
-	dbCells.setCellState(cell,'current');
-	if ( type == "update" ) {
-	    var node = $(xmlDoc).find('records record ' + cell.data('name'));
-	    if ( node.length > 0 ) {
-		dbCells.setCellValue(cell,node.text());
-	    }
-	}
-	$(xmlDoc).find('calculated *').each(function(){
-	    var node = $(this);
-	    dbCells.container.find('#'+node[0].nodeName).each(function(){
-		if ( $(this).is('input, select, textarea') ) {
-		    $(this).val(node.text());
-		} else {
-		    $(this).html(node.text());
-		}
-	    });
-	});
-	$(xmlDoc).find('html *').each(function(){
-	    var node = $(this);
-	    $('#'+node[0].nodeName).each(function(){
-		if ( $(this).is('input, select, textarea') ) {
-		    $(this).val(node.text());
-		} else {
-		    $(this).html(node.text());
-		}
-	    });
-	});
-	if ( $(xmlDoc).find('info').length > 0 ) {
-	    this.setStatus($(xmlDoc).find('info').text());
-	}
-	if ( $(xmlDoc).find('alert').length > 0 ) {
-	    alert($(xmlDoc).find('alert').text());
-	}
-	cell.trigger('cellActionReturn',[type, xmlDoc]);
-    }
-    function cellActionReturnError(cell,type,errorMessage,errorType) {
-	this.setCellState(cell,'error');
-	if ( errorType != 'USER' ) {
-	    alert(errorMessage);
-	}
-	cell.trigger('cellActionReturnError',[type,errorMessage,errorType]);
-    }
-    function onBeforeUnload(event) {
-	if ( typeof this.currentCell == "undefined" ) {
-	    return false;
-	}
-	if ( this.getCellState(this.currentCell) == 'dirty' ) {
-	    if ( window.confirm('Do you want to save your changes?') ) {
-		this.save(this.currentCell, false);
-		if ( this.getCellState(this.currentCell) == 'error' ) {
-		    return "Your changes could not be saved.\nStay on the current page to correct.";
-		}
-	    }
-	}
-    }
-    function onBeforePrint(event) {
-	if ( typeof this.currentCell != "undefined" ) {
-	    this.cellOut(this.currentCell);
-	}
-    }
-    function onResize(event) {
-	if ( typeof this.currentCell != "undefined" ) {
-	    this.cellOut(this.currentCell);
-	}
-    }
-    function cellOnBlur(event) {
-	/*var activeElmt=document.activeElement;
-	if ( this.container.find(activeElmt).length == 0
-	     && (oInputCtl && activeElmt!=oInputCtl)
-	     && this.currentCell) {
-	    if ( this.settings.updateType=="onCellOut"
-		 && this.getCellState(this.currentCell) == 'dirty') {
-		this.save(this.currentCell);
-	    }
-	    }*/
-	//console.log("dbCells cellOnBlur " + $(event.target).text());
-	if ( $(event.target).is(this.currentCell) && ! this.currentCell.data('focussing') ) {
-	    this.cellOut(this.currentCell);
-	}
-	//console.log("/cellOnBlur");
-    }
-    function cellOnKeyDown(event) {
-	//console.log("dbCells cellOnKeyDown " + event.which);
-	// cell controls should only propogate key events when default dbCells behavior is desired.
-	if ( event.altKey ) {
-	    return true;
-	}
-	switch (event.which) {
-	case 37: //left
-	    this.cellChange(moveLeft.call(this,this.curentCell));
-	    break;
-	case 38: //up
-	    this.cellChange(moveUp.call(this,this.currentCell));
-	    break;
-	case 39: //right
-	    this.cellChange(moveRight.call(this,this.currentCell));
-	    break;
-	case 40: //down
-	    this.cellChange(moveDown.call(this,this.currentCell));
-	    break;
-	case 9: //tab
-	    var oldCell = this.currentCell;
-	    if ( event.shiftKey ) {
-		this.cellChange(moveLeft.call(this,this.currentCell));
-	    } else {
-		this.cellChange(moveRight.call(this,this.currentCell));
-	    }
-	    break;
-	case 13: //return
-	    var oldCell = this.currentCell;	    
-	    this.cellChange(moveRight.call(this,this.currenCell));
-	    if ( this.currentCell == oldCell ) {
-		this.save();
-	    }
-	    break;
-	case 46: //delete
-	    if ( typeof this.currentCell.data('deleteUrl') != "undefined" ) {
-		var cell = this.currentCell;
-		this.cellOut(cell);
-		this.cellAction(cell,'delete',cell.data('deleteUrl'));
-	    }
-	    break;
-	case 83: //s
-	    if ( event.ctrlKey ) {
-		this.save();
-		event.preventDefault();
-	    }
-	    break;
-	}
-	//console.log("/cellOnKeyDown");
-    }
-    function cellOnMouseUp(event) {
-	var cell = $(event.target);
-	if ( this.cells.index(cell) > -1 ) {
-	    if ( this.isCellEditable(cell) ) {
-		this.cellChange(cell);
-	    }
-	}
-    }
-    function cellWrite(cell) {
-	if ( typeof cell != "object" ) {
-	    $.error('cellWrite requires a cell');
-	}
-	this.setCellValue(cell,cell.dbCellControl('getValue'));
-    }
-    function cellOnKeyUp(event) {
-	//console.log("dbCells onKeyUp " + event.which);
-	var cell = $(event.target);
-	var oldValue = this.getCellValue(cell);
-	var newValue = cell.dbCellControl('getValue');
-	if ( oldValue != newValue ) {
-	    this.setCellState(cell,'dirty');
-	}
-	if ( this.settings.updateType == "onKeyUp" ) {
-	    this.cancelDelayedSave();
-	    this.keyUpTimer = setTimeout(this.delayedSave.bind(this),750);
-	}
-	//console.log("/onKeyUp");
-    }
-    function cellOnCut(event) {
-	this.setCellState(this.currentCell,'dirty');
-    }
-    function cellOnPaste(event) {
-	this.setCellState(this.currentCell,'dirty');
-    }
-
-    function sameRow(a,b) {
-	return (a.offset().top <= (b.offset().top + b.outerHeight()))
-	    && ((a.offset().top + a.outerHeight()) >= b.offset().top);
-    }
-    function belowRow(a,b) {
-	return b.offset().top > (a.offset().top + a.outerHeight());
-    }
-    function aboveRow(a,b) {
-	return (b.offset().top + b.outerHeight()) < a.offset().top;
-    }
-    function sameColumn(a,b) {
-	return (a.offset().left <= (b.offset().left + b.outerWidth()))
-	    && ((a.offset().left + a.outerWidth()) >= b.offset().left);
-    }
-    function leftOfColumn(a,b) {
-	return (b.offset().left + b.outerWidth()) < a.offset().left;
-    }
-    function rightOfColumn(a,b) {
-	return (a.offset().left + a.outerWidth()) < b.offset().left;
-    }
-
-    function moveRight(fromCell) {
-	if ( typeof fromCell != "object" ) {
-	    var fromCell = this.currentCell;
-	}
-	var nextCell;
-	var fromCellLeft = fromCell.offset().left;
-	this.cells.each(function() {
-	    var cell = $(this);
-	    var cellLeft = cell.offset().left;
-	    if ( sameRow(cell,fromCell)
-		 && cellLeft > fromCellLeft
-		 && ( typeof nextCell == "undefined" || cellLeft < nextCellLeft )
-	       ) {
-		nextCell = cell;
-		nextCellLeft = cellLeft;
-	    }
-	});
-	if ( typeof nextCell == "undefined" ) {
-	    this.cells.each(function() {
-		var cell = $(this);
-		var cellLeft = $(cell).offset().left;
-		if ( belowRow(fromCell,cell)
-		     && (typeof nextCell == "undefined"
-			 || aboveRow(nextCell,cell)
-			 || (sameRow(cell,nextCell) && cellLeft < nextCellLeft)
-			)
-		   ) {
-		    nextCell = cell;
-		    nextCellLeft = cellLeft;
-		}
-	    });
-	}
-	if ( typeof nextCell == "undefined" ) {
-	    return fromCell;
-	} else {
-	    return nextCell;
-	}
-    }
-    function moveLeft(fromCell) {
-	if ( typeof fromCell != "object" ) {
-	    var fromCell = this.currentCell;
-	}
-	var nextCell;
-	var fromCellLeft = fromCell.offset().left;
-	this.cells.each(function() {
-	    var cell = $(this);
-	    var cellLeft = cell.offset().left;
-	    if ( sameRow(cell,fromCell)
-		 && cellLeft < fromCellLeft
-		 && ( typeof nextCell == "undefined" || cellLeft > nextCellLeft )
-	       ) {
-		nextCell = cell;
-		nextCellLeft = cellLeft;
-	    }
-	});
-	if ( typeof nextCell == "undefined" ) {
-	    this.cells.each(function() {
-		var cell = $(this);
-		var cellLeft = $(cell).offset().left;
-		if ( aboveRow(fromCell,cell)
-		     && (typeof nextCell == "undefined"
-			 || belowRow(nextCell,cell)
-			 || (sameRow(cell,nextCell) && cellLeft > nextCellLeft )
-			)
-		   ) {
-		    nextCell = cell;
-		    nextCellLeft = cellLeft;
-		}
-	    });
-	}
-	if ( typeof nextCell == "undefined" ) {
-	    return fromCell;
-	} else {
-	    return nextCell;
-	}
-    }
-    function moveUp(fromCell) {
-	if ( typeof fromCell != "object" ) {
-	    var fromCell = this.currentCell;
-	}
-	var nextCell;
-	var fromCellTop = fromCell.offset().top;
-	this.cells.each(function() {
-	    var cell = $(this);
-	    var cellTop = cell.offset().top;
-	    if ( sameColumn(fromCell,cell)
-		 && cellTop < fromCellTop
-		 && (typeof nextCell == "undefined" || cellTop > nextCellTop)
-	       ) {
-		nextCell = cell;
-		nextCellTop = cellTop;
-	    }
-	});
-	if ( typeof nextCell == "undefined" ) {
-	    this.cells.each(function() {
-		var cell = $(this);
-		var cellTop = cell.offset().top;
-		if ( leftOfColumn(fromCell,cell)
-		     && (typeof nextCell == "undefined"
-			 || rightOfColumn(nextCell,cell)
-			 || (sameColumn(cell,nextCell) && cellTop > nextCellTop)
-			)
-		   ) {
-		    nextCell = cell;
-		    nextCellTop = cellTop;
-		};
-	    });
-	}
-	if ( typeof nextCell == "undefined" ) {
-	    return fromCell;
-	} else {
-	    return nextCell;
-	}
-    }
-    function moveDown(fromCell) {
-	if ( typeof fromCell != "object" ) {
-	    var fromCell = this.currentCell;
-	}
-	var nextCell;
-	var fromCellTop = fromCell.offset().top;
-	this.cells.each(function() {
-	    var cell = $(this);
-	    var cellTop = cell.offset().top;
-	    if ( sameColumn(fromCell,cell)
-		 && cellTop > fromCellTop
-		 && ( typeof nextCell == "undefined" || cellTop < nextCellTop )
-	       ) {
-		nextCell = cell;
-		nextCellTop = cellTop;
-	    }
-	});
-	if ( typeof nextCell == "undefined" ) {
-	    this.cells.each(function() {
-		var cell = $(this);
-		var cellTop = cell.offset().top;
-		if ( rightOfColumn(fromCell,cell)
-		     && ( typeof nextCell == "undefined"
-			  || leftOfColumn(nextCell,cell)
-			  || (sameColumn(cell,nextCell) && cellTop < nextCellTop)
-			)
-		   ) {
-		    nextCell = cell;
-		    nextCellTop = cellTop;
-		}
-	    });
-	}
-	if ( typeof nextCell == "undefined" ) {
-	    return fromCell;
-	} else {
-	    return nextCell;
-	}
-    }
-    
-    $.fn.dbCells = function() {
-	var target = this;
-	var returnValue;
-	if ( typeof arguments[0] == "object" ) {
-	    var options = arguments[0];
-	}
-	if ( ! target.data('dbCells') ) {
-	    target.each(function(){
-		$(this).data('dbCells', new DbCells($(this), options));
-	    });
-	}
-	var dbCells = target.data('dbCells');
-	if ( typeof arguments[0] == "string" ) {
-	    var method = arguments[0];
-	    if ( typeof dbCells[method] == "function" ) {
-		if ( target.is(dbCells.container) ) {
-		    returnValue = dbCells[method].apply(dbCells, Array.prototype.slice.call(arguments,1));
-		} else {
-		    returnValue = dbCells[method].apply(dbCells, [target].concat(Array.prototype.slice.call(arguments,1)));
-		}
-	    }
-	}
-	if ( typeof returnValue == "undefined" ) {
-	    return target;
-	} else {
-	    return returnValue;
-	}
-    };
-})(jQuery);
-
 /* ==== jquery.dbEditorBool.js ==== */
 // dbEditorBool plugin
 // A hovering editor for boolean input
@@ -4939,10 +1974,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.editor.show();
 	    this.repaint()
 	    if ( parseBoolean(value) ) {
-		this._setTrue();
+		this.setTrue();
 	    } else {
-		this._setFalse();
-	    }	   
+		this.setFalse();
+	    }
 	},
 	hide: function() {
 	    // Hide the editor
@@ -4991,11 +2026,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
-	_setTrue: function() {
+	setTrue: function() {
 	    this.editor.html('<span class=clsTrue>Yes</span>');
+            this.currentElement.trigger('editorValueChange');
 	},
-	_setFalse: function() {
+	setFalse: function() {
 	    this.editor.html('<span class=clsFalse>No</span>');
+            this.currentElement.trigger('editorValueChange');
 	},
 	_onResize: function(event) {
 	    // Any event that might change the size or position of the editor's target needs to trigger this.
@@ -5050,13 +2087,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	     case 49: // 1
 	     case 84: // t
 	     case 89: // y
-		 this._setTrue();
+		 this.setTrue();
 		 break;
 	     case 96: // 0
 	     case 48: // 0
 	     case 70: // f
 	     case 78: // n
-		 this._setFalse();
+		 this.setFalse();
 		 break; 
 	     }
 
@@ -5083,9 +2120,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnPaste: function(e) {
 	    if ( this.getValue() ) {
-		this._setFalse();
+		this.setFalse();
 	    } else {
-		this._setTrue();
+		this.setTrue();
 	    }
 
 	    // Pass all paste events on to the target element.
@@ -5125,6 +2162,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width', 'height'];
+
+    // css attributes to copy from the editor to the options div when it is shown
+    var copyOptionsAttributes = ['backgroundColor',
+                                 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
+                                 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
+                                 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+                                 'fontSize', 'fontFamily', 'fontWeight', 'width'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -5138,12 +2182,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		.addClass('dbEditorCombo')
 		.appendTo(this.element)
 		.css({
-		    'position': "absolute", 
-		    'background': "white", 
-		    'overflow': "visible", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
+		    'position': "absolute",
+		    'background': "white",
+		    'overflow': "visible",
+		    '-moz-box-sizing': "content-box",
+		    '-ms-box-sizing': "content-box",
+		    'box-sizing': "content-box",
 		    'z-index': 1
 		})
 		.hide();
@@ -5174,7 +2218,11 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
-	}, 
+	},
+        setValue: function(value) {
+            this.editor.val(value);
+            this._valueChanged();
+        },
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
@@ -5189,8 +2237,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
-	    this.editor
-		.add(this.comboOptions)
+	    this.editor.add(this.comboOptions)
 		.hide();
 	},
 	selectOption: function(index) {
@@ -5211,7 +2258,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		});
 
 		// Copy various style from the editor to combo options div
-		var copyOptionsAttributes = ['backgroundColor', 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontSize', 'fontFamily', 'fontWeight', 'width'];
 		$.each(copyOptionsAttributes, function(i, name){
 		    comboOptions.css(name, editor.css(name));
 		});
@@ -5232,12 +2278,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
 		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		    editor
-			.add(comboOptions)
+		    editor.add(comboOptions)
 			.css('backgroundColor', "white");
 		} else {
-		    editor
-			.add(comboOptions)
+		    editor.add(comboOptions)
 			.css('backgroundColor', element.css('backgroundColor'));
 		}
 
@@ -5248,8 +2292,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 			'top': position.top
 		});
 		comboOptions.css({
-		    'left': position.left - parseInt(comboOptions.css('border-left_width')),
-		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('border-top-width'))
+		    'left': position.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
+		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
 		});
 	    }
 	}, 
@@ -5319,6 +2363,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		}
 	    }
 	},
+        _valueChanged: function() {	
+	    this.lastValue = this.getValue();
+            this.currentElement.trigger('editorValueChange');
+        },
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
 	    var selection = this.editor.textrange('get');
@@ -5367,13 +2415,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		    // Update editor with the selected comboOption
 		    var option = this.comboOptions.children('.selected');
 		    if ( option.index() !== -1 ) {
-			this.editor.val(option.text());
-			this.lastValue = option.text();
-			// trigger keyup on editor to let it listeners know that it's value has changed
-			this.editor.trigger('keyup');
+                        this.setValue(option.text());
 			this.comboOptions.hide();
+                        return true;
 		    }
 		}
+                break;
 
 	    case 46: // delete 
 		break;
@@ -5394,10 +2441,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
-		// Search for combo options		
-		this.lastValue = this.getValue()
-		this.search();
-	    }	    
+                this._valueChanged();
+	        this.search();
+	    }
 
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
@@ -5410,6 +2456,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this._valueChanged();
+	    this.search();
+
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -5421,6 +2470,9 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this._valueChanged();
+	    this.search();
+
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -5445,20 +2497,14 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var option = $(e.currentTarget);
 	    
 	    this.selectOption(option.index());
-	    this.editor.val(option.text());
-	    this.lastValue = option.text();	   
+            this.setValue(option.text());	   
 	    this.selectText('end');
 	    this.comboOptions.hide();
-	    // trigger keyup on editor to let it listeners know that it's value has changed
-	    this.editor.trigger('keyup');
-	    return true
 	},
 	_comboOptionMouseEnter: function(e) {
 	    // Select the target option
 	    var option = $(e.currentTarget);
-	    
 	    this.selectOption(option.index());
-	    return true
 	},
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
@@ -5594,12 +2640,38 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 
 	    case 46: // delete 
 		break;
+
 	    case 13: // return
+                if (e.shiftKey) {
+	            return true;
+                }
 		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
 		    break;
-		} else {
-		    return true;
 		}
+                // Normalize the effect of the enter key to make browsers behave consistently
+	        var selection = window.getSelection();
+
+                if ( document.queryCommandSupported('insertLineBreak') ) {
+	            // Webkit
+                    document.execCommand('insertLineBreak');
+                    e.preventDefault();
+                } else if ( document.queryCommandSupported('insertBrOnReturn') ) {
+	            // Firefox only
+                    document.execCommand('insertBrOnReturn');
+                } else if (selection && selection.rangeCount > 0) {
+	            // IE Standards
+	            var range = selection.getRangeAt(0);
+	            var brNode1 = jQuery('<br>').get(0);
+	    	    
+                    range.deleteContents();
+	            range.insertNode(brNode1);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
+	        }
+                return true;
+
 	    case 9: // tab 
 		break;
 
@@ -5618,6 +2690,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -5629,6 +2702,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -5640,6 +2714,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -5811,6 +2886,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -5822,6 +2898,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -5833,6 +2910,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -6012,6 +3090,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -6023,6 +3102,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -6034,6 +3114,7 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -6143,13 +3224,13 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    this.element.trigger('dbFieldOut');
 	}, 
 	getType: function(){
-	    // Returns the field type (text, textarea, or htmlarea)
+	    // Returns the field type
 	    return coalesce(this.element.attr('type'), "text");
 	}, 
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(event){
+	onMouseDown: function(){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -6206,25 +3287,16 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    if ( newField.length === 1 ) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
-	}, 
-	editorKeyUp: function(event){
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		// Set dirty
-		this.getRecord().dbRecord('setState', 'dirty');
-	    }
-	}, 
-	editorCut: function(){
-	    // Set as dirty
-	    this.getRecord().dbRecord('setState', 'dirty');
-	}, 
-	editorPaste: function(){
-	    // Set as dirty
-	    this.getRecord().dbRecord('setState', 'dirty');
-	}, 
+	},
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
-	}, 
+	},
+        editorValueChange: function(){
+	    if ( this.getValue() !== this.editor('getValue') ) {
+	        this.getRecord().dbRecord('setState', 'dirty');
+            }
+        },
 	write: function(){
 	    // Write the editor's contents to the field
 	    this.setValue(this.editor('getValue'));
@@ -6233,6 +3305,12 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    var recordSet = this.getRecordSet();
 	    var pluginName;
 	    switch(this.getType()){
+            case "combo":
+                pluginName="dbEditorCombo";
+                break;
+            case "bool":
+                pluginName="dbEditorBool";
+                break;
 	    case "text":
 		pluginName="dbEditorText";
 		break;
@@ -6894,7 +3972,7 @@ function dbFormHTMLArea(oDiv) {
 	    if ( dbGrid.option('enabled') ) {
 		// Event listeners - instead of separate event listeners for each cell, delegated event listeners are added to the dbGrid.
 		dbGrid._on(dbGrid.tbody, {
-		    'mouseup td': function(event) {
+		    'mouseup td': function(event){
 			$(event.currentTarget).dbCell('onMouseUp');
 		    },
 		    'editorKeyDown td': function(event){
@@ -6903,12 +3981,9 @@ function dbFormHTMLArea(oDiv) {
 		    'editorKeyUp td': function(event){
 			$(event.currentTarget).dbCell('editorKeyUp', event);
 		    },
-		    'editorCut td': function(event){
-			$(event.currentTarget).dbCell('editorCut', event);
-		    },
-		    'editorPaste td': function(event){
-			$(event.currentTarget).dbCell('editorPaste', event);
-		    },
+                    'editorValueChange td': function(event){
+                        $(event.currentTarget).dbCell('editorValueChange', event);
+                    },
 		    'editorBlur td': function(event){
 			$(event.currentTarget).dbCell('editorBlur', event);
 		    }
@@ -7318,83 +4393,84 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.dbGridDivStatus.js ==== */
 (function($){
-  // DbGridDivStatus Class Constructor - vertical resize on bottom border
-  var DbGridDivStatus = function(statusDiv) {
-    // Private Class Variables
-    var inZone = false;
-    var inResize = false;
-    var savedHeight;
-    var savedY;
-    var minHeight = 10;
-    // The div to resize
-    var resizeDiv = statusDiv.prev();
-    
-    // Events
-    statusDiv.on('mousemove.dbGridDivStatus', onMouseMoveStatusDiv);
-    statusDiv.on('mousedown.dbGridDivStatus', onMouseDownStatusDiv);
-    jQuery(document).on('mouseup.dbGridDivStatus',onMouseUpWindow);
-    jQuery(document).on('mousemove.dbGridDivStatus', onMouseMoveWindow);
-    
-    // Private Class Methods
-    function onMouseMoveStatusDiv(e) {
-      if ( e.pageY >= statusDiv.height() + statusDiv.offset().top + statusDiv.scrollTop() ) {
-	// Bottom Border
-	statusDiv.css('cursor','S-resize');
-	inZone = true;	  
-      } else if ( ! inResize ) {
-	statusDiv.css('cursor','auto');
-	inZone = false;
-      } 
-    }  
-    function onMouseDownStatusDiv(e) {
-      if ( inZone && e.which == 1) {
-	inResize = true;
-	savedY = e.screenY;
-	savedHeight = resizeDiv.height();
-	return false;
-      } 
-    }
-    function onMouseMoveWindow(e) {
-      if ( inResize ) {
-	// Drag
-	var deltaY = e.screenY - savedY;
-	var height = savedHeight + deltaY;
-	if ( height < minHeight ) {
-	  height = minHeight;
-	}
-	// Resize
-	resizeDiv.height(height);
-	  resizeDiv.trigger('resize');
-      }
-    }
-    function onMouseUpWindow(e) {
-      if ( inResize ) {
-	inResize = false;
-      }
-    }
-  };
+    // DbGridDivStatus Class Constructor - vertical resize on bottom border
+    var DbGridDivStatus = function(statusDiv) {
+        // Private Class Variables
+        var inZone = false;
+        var inResize = false;
+        var savedHeight;
+        var savedY;
+        var minHeight = 10;
+        // The div to resize
+        var resizeDiv;
+        
+        // Events
+        statusDiv.on('mousemove.dbGridDivStatus', onMouseMoveStatusDiv);
+        statusDiv.on('mousedown.dbGridDivStatus', onMouseDownStatusDiv);
+        jQuery(document).on('mouseup.dbGridDivStatus',onMouseUpWindow);
+        jQuery(document).on('mousemove.dbGridDivStatus', onMouseMoveWindow);
+        
+        // Private Class Methods
+        function onMouseMoveStatusDiv(e) {
+            if ( e.pageY >= statusDiv.height() + statusDiv.offset().top + statusDiv.scrollTop() ) {
+	        // Bottom Border
+	        statusDiv.css('cursor','S-resize');
+	        inZone = true;	  
+            } else if ( ! inResize ) {
+	        statusDiv.css('cursor','auto');
+	        inZone = false;
+            } 
+        }  
+        function onMouseDownStatusDiv(e) {
+            if ( inZone && e.which == 1) {
+                resizeDiv = statusDiv.prev();
+	        inResize = true;
+	        savedY = e.screenY;
+	        savedHeight = resizeDiv.height();
+	        return false;
+            } 
+        }
+        function onMouseMoveWindow(e) {
+            if ( inResize ) {
+	        // Drag
+	        var deltaY = e.screenY - savedY;
+	        var height = savedHeight + deltaY;
+	        if ( height < minHeight ) {
+	            height = minHeight;
+	        }
+	        // Resize
+	        resizeDiv.height(height);
+	        resizeDiv.trigger('resize');
+            }
+        }
+        function onMouseUpWindow(e) {
+            if ( inResize ) {
+	        inResize = false;
+            }
+        }
+    };
 
-  // Make DbGridDivStatus Class available as a jquery plugin
-  $.fn.dbGridDivStatus = function() {
-    var divs = this
+    // Make DbGridDivStatus Class available as a jquery plugin
+    $.fn.dbGridDivStatus = function() {
+        var divs = this
 
-    if ( divs.not('div').size() ) {
-      throw new Error('jQuery.dbGridDivStatus requires that only div elements are contained in the jQuery object');
-    }
+        if ( divs.not('div').size() ) {
+            throw new Error('jQuery.dbGridDivStatus requires that only div elements are contained in the jQuery object');
+        }
 
-    // Initialise DbGridDivStatus objects for each div unless this has already been done
-    for ( var i=0; i< divs.size(); i++ ) {
-      var div = divs.eq(i);
-      var dbGridDivStatus = div.data('dbGridDivStatus');
+        // Initialise DbGridDivStatus objects for each div unless this has already been done
+        for ( var i=0; i< divs.size(); i++ ) {
+            var div = divs.eq(i);
+            var dbGridDivStatus = div.data('dbGridDivStatus');
 
-      if ( ! dbGridDivStatus ) {
-	dbGridDivStatus = new DbGridDivStatus(div);
-	div.data('dbGridDivStatus',dbGridDivStatus);
-      }
-    }
-    
-    return divs;
-  };
+            if ( ! dbGridDivStatus ) {
+	        dbGridDivStatus = new DbGridDivStatus(div);
+	        div.data('dbGridDivStatus',dbGridDivStatus);
+            }
+        }
+        
+        return divs;
+    };
 
 }) (jQuery);
 
@@ -7590,22 +4666,16 @@ function dbFormHTMLArea(oDiv) {
 	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown', event);
+		    $(event.currentTarget).dbField('onMouseDown');
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
-		'editorKeyUp .editable': function(event) {
-		    $(event.currentTarget).dbField('editorKeyUp', event);
-		},
-		'editorCut .editable': function(event) {
-		    $(event.currentTarget).dbField('editorCut', event);
-		},
-		'editorPaste .editable': function(event) {
-		    $(event.currentTarget).dbField('editorPaste', event);
-		},
+                'editorValueChange .editable': function(event) {
+                    $(event.currentTarget).dbField('editorValueChange');
+                },
 		'editorBlur .editable': function(event) {
-		    $(event.currentTarget).dbField('editorBlur', event);
+		    $(event.currentTarget).dbField('editorBlur');
 		}
 	    });
 	    this._on(window, {

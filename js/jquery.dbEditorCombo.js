@@ -11,6 +11,13 @@
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
 			  'width', 'height'];
+
+    // css attributes to copy from the editor to the options div when it is shown
+    var copyOptionsAttributes = ['backgroundColor',
+                                 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
+                                 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
+                                 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+                                 'fontSize', 'fontFamily', 'fontWeight', 'width'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -24,12 +31,12 @@
 		.addClass('dbEditorCombo')
 		.appendTo(this.element)
 		.css({
-		    'position': "absolute", 
-		    'background': "white", 
-		    'overflow': "visible", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
+		    'position': "absolute",
+		    'background': "white",
+		    'overflow': "visible",
+		    '-moz-box-sizing': "content-box",
+		    '-ms-box-sizing': "content-box",
+		    'box-sizing': "content-box",
 		    'z-index': 1
 		})
 		.hide();
@@ -60,7 +67,11 @@
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
-	}, 
+	},
+        setValue: function(value) {
+            this.editor.val(value);
+            this._valueChanged();
+        },
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
@@ -75,8 +86,7 @@
 	    if ( this.editor.is(':focus') ) {
 		this.editor.trigger('blur');
 	    }
-	    this.editor
-		.add(this.comboOptions)
+	    this.editor.add(this.comboOptions)
 		.hide();
 	},
 	selectOption: function(index) {
@@ -97,7 +107,6 @@
 		});
 
 		// Copy various style from the editor to combo options div
-		var copyOptionsAttributes = ['backgroundColor', 'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontSize', 'fontFamily', 'fontWeight', 'width'];
 		$.each(copyOptionsAttributes, function(i, name){
 		    comboOptions.css(name, editor.css(name));
 		});
@@ -118,12 +127,10 @@
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
 		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
-		    editor
-			.add(comboOptions)
+		    editor.add(comboOptions)
 			.css('backgroundColor', "white");
 		} else {
-		    editor
-			.add(comboOptions)
+		    editor.add(comboOptions)
 			.css('backgroundColor', element.css('backgroundColor'));
 		}
 
@@ -134,8 +141,8 @@
 			'top': position.top
 		});
 		comboOptions.css({
-		    'left': position.left - parseInt(comboOptions.css('border-left_width')),
-		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('border-top-width'))
+		    'left': position.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
+		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
 		});
 	    }
 	}, 
@@ -205,6 +212,10 @@
 		}
 	    }
 	},
+        _valueChanged: function() {	
+	    this.lastValue = this.getValue();
+            this.currentElement.trigger('editorValueChange');
+        },
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
 	    var selection = this.editor.textrange('get');
@@ -253,13 +264,12 @@
 		    // Update editor with the selected comboOption
 		    var option = this.comboOptions.children('.selected');
 		    if ( option.index() !== -1 ) {
-			this.editor.val(option.text());
-			this.lastValue = option.text();
-			// trigger keyup on editor to let it listeners know that it's value has changed
-			this.editor.trigger('keyup');
+                        this.setValue(option.text());
 			this.comboOptions.hide();
+                        return true;
 		    }
 		}
+                break;
 
 	    case 46: // delete 
 		break;
@@ -280,10 +290,9 @@
 	},
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
-		// Search for combo options		
-		this.lastValue = this.getValue()
-		this.search();
-	    }	    
+                this._valueChanged();
+	        this.search();
+	    }
 
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
@@ -296,6 +305,9 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this._valueChanged();
+	    this.search();
+
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -307,6 +319,9 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this._valueChanged();
+	    this.search();
+
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
@@ -331,20 +346,14 @@
 	    var option = $(e.currentTarget);
 	    
 	    this.selectOption(option.index());
-	    this.editor.val(option.text());
-	    this.lastValue = option.text();	   
+            this.setValue(option.text());	   
 	    this.selectText('end');
 	    this.comboOptions.hide();
-	    // trigger keyup on editor to let it listeners know that it's value has changed
-	    this.editor.trigger('keyup');
-	    return true
 	},
 	_comboOptionMouseEnter: function(e) {
 	    // Select the target option
 	    var option = $(e.currentTarget);
-	    
 	    this.selectOption(option.index());
-	    return true
 	},
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.

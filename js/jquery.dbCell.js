@@ -168,31 +168,19 @@
 		this.cellOut();
 	    }		   
 	},
-	editorCut: function(){
-	    // Cut events should be triggered on the editor, but will be passed on to here. 
-	    // Editor value will have changed, mark row as dirty.
-	    var row = this.getRow();
-	    row.dbRow('setState', 'dirty');
-	},
-	editorPaste: function(){
-	    // Paste events should be triggered on the editor, but will be passed on to here. 
-	    // Editor value will have changed, mark row as dirty.
-	    var row = this.getRow();
-	    row.dbRow('setState', 'dirty');
-	},
-	editorKeyUp: function(){
+        editorValueChange: function(){
 	    // If the Editor's value has changed, mark row as dirty.
 	    var row = this.getRow();
 	    var grid = this.getGrid();
- 	    
+
 	    if ( this.getValue() !== this.editor('getValue') ) {
 		row.dbRow('setState', 'dirty');
-		}
+	    }
 	    if ( grid.dbGrid('option','updateType') === "onKeyUp" ) {
 		this._cancelDelayedSave();
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
 	    }
-	},
+        },
 	editorKeyDown: function(event){
 	    var cell = this.element;
 	    var grid = this.getGrid();

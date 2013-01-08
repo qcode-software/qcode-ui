@@ -49,21 +49,15 @@
 	    if ( dbGrid.option('enabled') ) {
 		// Event listeners - instead of separate event listeners for each cell, delegated event listeners are added to the dbGrid.
 		dbGrid._on(dbGrid.tbody, {
-		    'mouseup td': function(event) {
+		    'mouseup td': function(event){
 			$(event.currentTarget).dbCell('onMouseUp');
 		    },
 		    'editorKeyDown td': function(event){
 			$(event.currentTarget).dbCell('editorKeyDown', event);
 		    },
-		    'editorKeyUp td': function(event){
-			$(event.currentTarget).dbCell('editorKeyUp', event);
-		    },
-		    'editorCut td': function(event){
-			$(event.currentTarget).dbCell('editorCut', event);
-		    },
-		    'editorPaste td': function(event){
-			$(event.currentTarget).dbCell('editorPaste', event);
-		    },
+                    'editorValueChange td': function(event){
+                        $(event.currentTarget).dbCell('editorValueChange', event);
+                    },
 		    'editorBlur td': function(event){
 			$(event.currentTarget).dbCell('editorBlur', event);
 		    }

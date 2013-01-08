@@ -45,10 +45,10 @@
 	    this.editor.show();
 	    this.repaint()
 	    if ( parseBoolean(value) ) {
-		this._setTrue();
+		this.setTrue();
 	    } else {
-		this._setFalse();
-	    }	   
+		this.setFalse();
+	    }
 	},
 	hide: function() {
 	    // Hide the editor
@@ -97,11 +97,13 @@
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
 	},
-	_setTrue: function() {
+	setTrue: function() {
 	    this.editor.html('<span class=clsTrue>Yes</span>');
+            this.currentElement.trigger('editorValueChange');
 	},
-	_setFalse: function() {
+	setFalse: function() {
 	    this.editor.html('<span class=clsFalse>No</span>');
+            this.currentElement.trigger('editorValueChange');
 	},
 	_onResize: function(event) {
 	    // Any event that might change the size or position of the editor's target needs to trigger this.
@@ -156,13 +158,13 @@
 	     case 49: // 1
 	     case 84: // t
 	     case 89: // y
-		 this._setTrue();
+		 this.setTrue();
 		 break;
 	     case 96: // 0
 	     case 48: // 0
 	     case 70: // f
 	     case 78: // n
-		 this._setFalse();
+		 this.setFalse();
 		 break; 
 	     }
 
@@ -189,9 +191,9 @@
 	},
 	_inputOnPaste: function(e) {
 	    if ( this.getValue() ) {
-		this._setFalse();
+		this.setFalse();
 	    } else {
-		this._setTrue();
+		this.setTrue();
 	    }
 
 	    // Pass all paste events on to the target element.

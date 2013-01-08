@@ -145,6 +145,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -156,6 +157,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -167,6 +169,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 

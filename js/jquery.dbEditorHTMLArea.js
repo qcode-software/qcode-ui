@@ -123,12 +123,38 @@
 
 	    case 46: // delete 
 		break;
+
 	    case 13: // return
+                if (e.shiftKey) {
+	            return true;
+                }
 		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
 		    break;
-		} else {
-		    return true;
 		}
+                // Normalize the effect of the enter key to make browsers behave consistently
+	        var selection = window.getSelection();
+
+                if ( document.queryCommandSupported('insertLineBreak') ) {
+	            // Webkit
+                    document.execCommand('insertLineBreak');
+                    e.preventDefault();
+                } else if ( document.queryCommandSupported('insertBrOnReturn') ) {
+	            // Firefox only
+                    document.execCommand('insertBrOnReturn');
+                } else if (selection && selection.rangeCount > 0) {
+	            // IE Standards
+	            var range = selection.getRangeAt(0);
+	            var brNode1 = jQuery('<br>').get(0);
+	    	    
+                    range.deleteContents();
+	            range.insertNode(brNode1);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    e.preventDefault();
+	        }
+                return true;
+
 	    case 9: // tab 
 		break;
 
@@ -147,6 +173,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnKeyUp: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -158,6 +185,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnCut: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all cut events on to the target element.
             var event = jQuery.Event('editorCut', {
 		'data': e.data, 
@@ -169,6 +197,7 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnPaste: function(e) {
+            this.currentElement.trigger('editorValueChange');
 	    // Pass all paste events on to the target element.
             var event = jQuery.Event('editorPaste', {
 		'data': e.data, 
