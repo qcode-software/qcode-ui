@@ -1829,19 +1829,17 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 		this.cellOut();
 	    }		   
 	},
-	editorKeyUp: function(){
+        editorValueChange: function(){
 	    // If the Editor's value has changed, mark row as dirty.
+	    var row = this.getRow();
 	    var grid = this.getGrid();
- 	    
+
+	    if ( this.getValue() !== this.editor('getValue') ) {
+		row.dbRow('setState', 'dirty');
+	    }
 	    if ( grid.dbGrid('option','updateType') === "onKeyUp" ) {
 		this._cancelDelayedSave();
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
-	    }
-	},
-        editorValueChange: function(){
-	    var row = this.getRow();
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		row.dbRow('setState', 'dirty');
 	    }
         },
 	editorKeyDown: function(event){
@@ -3977,9 +3975,6 @@ function dbFormHTMLArea(oDiv) {
 		    },
 		    'editorKeyDown td': function(event){
 			$(event.currentTarget).dbCell('editorKeyDown', event);
-		    },
-		    'editorKeyUp td': function(event){
-			$(event.currentTarget).dbCell('editorKeyUp', event);
 		    },
                     'editorValueChange td': function(event){
                         $(event.currentTarget).dbCell('editorValueChange', event);

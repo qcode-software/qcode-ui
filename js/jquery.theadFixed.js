@@ -101,6 +101,10 @@
 		});
 	    });
 	    table.css('border-top-width', 0);
+
+            this._on($(window), {
+                'resize': this.repaint
+            });
 	},
 	repaint: function() {
 	    // Recalculate widths, heights, etc.
