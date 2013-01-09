@@ -249,6 +249,7 @@
 		    }
 		    return true
 		}
+                break;
 	    case 40: // down
 		if ( this.comboOptions.is(':visible') ) {
 		    // navigate within comboOptions if it is visible
@@ -258,6 +259,7 @@
 		    }
 		    return true
 		}
+                break;
 	    case 9: // tab 
 	    case 13: // return
 		if ( this.comboOptions.is(':visible') ) {
