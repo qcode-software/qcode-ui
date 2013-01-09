@@ -63,7 +63,7 @@
 
 	    this.scrollWrapper.css({
 		'position': "absolute",
-		'top': thead.outerHeight(),
+		'top': thead.outerHeight() + parseInt(table.css('border-top-width')),
 		'bottom': 0
 	    });
 	    this.scrollBox.css({
@@ -101,6 +101,8 @@
 		});
 	    });
 	    table.css('border-top-width', 0);
+
+            this._on($(window), {resize: this.repaint});
 	},
 	repaint: function() {
 	    // Recalculate widths, heights, etc.
