@@ -1,0 +1,7 @@
+.dbEditorComboOptions {
+    height:150px;
+}
+
+.dbEditorComboOptions div.selected {
+    background-color:lightgrey;
+}
