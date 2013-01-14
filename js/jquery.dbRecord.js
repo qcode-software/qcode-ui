@@ -24,6 +24,9 @@
 		});
 	    }
 	},
+        _destroy: function() {
+            this.element.find('.editable').dbField('destroy');
+        },
 	getRecordSet: function() {
 	    return this.element.closest('.recordSet');
 	}, 

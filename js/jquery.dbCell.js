@@ -107,7 +107,9 @@
 	    // Update currentCell dbGrid variable, hide the cell, show the editor and set editor text selection.
 	    var cell = this.element;
 	    var grid = this.getGrid();
-	  	  
+
+            cell.trigger('dbCellIn');
+
 	    this.hide();
 	    if ( this.getType() === 'combo' ) {
 		this.editor('show', cell, this.getValue(), this.getCol().attr('searchURL'));

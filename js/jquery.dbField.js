@@ -17,6 +17,9 @@
 		});
 	    }
 	},
+        _destroy: function() {
+            //this.editor('destroy');
+        },
 	getRecordSet: function() {
 	    return this.element.closest('.recordSet');
 	},

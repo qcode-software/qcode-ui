@@ -37,6 +37,10 @@
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
 	},
+        _destroy: function() {
+            this.currentField.dbField('fieldOut');
+            this.element.find('.record').dbRecord('destroy');
+        },
 	save: function(aysnc) {
 	    // Save the current record
 	    this.getCurrentRecord().dbRecord('save', async);
