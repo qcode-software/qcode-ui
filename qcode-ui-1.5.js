@@ -2292,8 +2292,8 @@ function divOnMouseOver() {
 function select(idx) {
 	var form = oInput.form;
 	var recs = xmlDoc.selectSingleNode('records');
-	var xmlSelected = recs.childNodes[idx];
-	oInput.value = xmlSelected.selectSingleNode(oInput.name).text;
+        var record = recs.selectSingleNode('record');
+	oInput.value = record.childNodes[idx].text;
 	lastValue = oInput.value;
 	hide();
 	currentItem = undefined;
@@ -2304,7 +2304,7 @@ function select(idx) {
 	
 	// Event Handler
 	if ( oInput.onSelect != undefined ) {
-		oInput.onSelect();
+	    oInput.onSelect();
 	}
 }
 
@@ -2363,9 +2363,9 @@ function updateList(recs) {
 		var rec = recs[i];
 		for(var j=0;j<rec.childNodes.length;j++) {
 			var field = rec.childNodes[j];
-			var name= field.nodeName;
+			var name = field.nodeName;
 			var value = field.text;
-			if (name == oInput.name ) {
+			if (name == "option") {
 				var oItem = oInput.document.createElement('DIV');
 				oItem.style.width = "100%";
 				oItem.style.cursor = 'pointer';
