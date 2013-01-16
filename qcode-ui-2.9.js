@@ -3759,8 +3759,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	        'mouseover': this._divOnMouseOver
             });
 	    var dbForm = this;
-	    this.xmlDoc.find('record').each(function(i,record){
-		var field = $(record).find(dbForm.element.attr('name'));
+	    this.xmlDoc.find('records > record > option').each(function(){
+		var field = $(this);
 		$('<div>')
 		    .css({
 			'width': "100%",
@@ -3850,13 +3850,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	        dbForm.div.text("Software Bug ! " + errorThrown);
 	    });
         }
-    });
-})(jQuery);
-
-/* ==== jquery.dbFormCombo2.js ==== */
-;(function($, undefined){
-    $.widget('qcode.dbFormCombo2', {
-        
     });
 })(jQuery);
 

@@ -64,8 +64,8 @@
 	        'mouseover': this._divOnMouseOver
             });
 	    var dbForm = this;
-	    this.xmlDoc.find('record').each(function(i,record){
-		var field = $(record).find(dbForm.element.attr('name'));
+	    this.xmlDoc.find('records > record > option').each(function(){
+		var field = $(this);
 		$('<div>')
 		    .css({
 			'width': "100%",
