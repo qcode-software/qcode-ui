@@ -112,7 +112,12 @@
 
 	    this.hide();
 	    if ( this.getType() === 'combo' ) {
-		this.editor('show', cell, this.getValue(), this.getCol().attr('searchURL'));
+                var data = this.getRow().dbRow('getRowData');
+                var searchURL = this.getCol().attr('searchURL');
+                $.each(data, function(name, value) {
+                    searchURL = urlSet(searchURL, name, value);
+                });
+		this.editor('show', cell, this.getValue(), searchURL);
 	    } else {
 		this.editor('show', cell, this.getValue())
 	    }
