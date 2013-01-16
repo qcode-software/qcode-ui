@@ -3725,6 +3725,10 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	        'keyup': this._onKeyUp,
 	        'blur': this._onBlur
             });
+	    this._on(this.div, {
+                'click': this._divOnClick,
+	        'mouseover': this._divOnMouseOver
+            });
         },
 	show: function(){
 	    this.div.show();
@@ -3744,8 +3748,8 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	    });
 	},
 	select: function(index) {
-	    var record = $(this.xmlDoc).find('record').eq(index);
-	    this.element.val( $(record).find(this.element.attr('name')).text() );
+	    var option = $(this.xmlDoc).find('records > record > option').eq(index);
+	    this.element.val( option.text() );
 	    this.lastValue = this.element.val();
 	    this.hide();
 	    this.currentItem = undefined;
@@ -3754,10 +3758,6 @@ jQuery.fn.columns_show_hide = function(column_selector) {
 	},
 	updateList: function() {
 	    this.div.empty();
-	    this._on(this.div, {
-                'click': this._divOnClick,
-	        'mouseover': this._divOnMouseOver
-            });
 	    var dbForm = this;
 	    this.xmlDoc.find('records > record > option').each(function(){
 		var field = $(this);
