@@ -2,7 +2,6 @@ function dbFormCombo(oInput) {
 
 // parameters
 var searchURL = oInput.searchURL;
-var boundName = oInput.boundName;
 var searchLimit = oInput.searchLimit;
 var comboWidth = oInput.comboWidth;
 var comboHeight = oInput.ComboHeight;
@@ -120,8 +119,6 @@ function select(idx) {
 	var form = oInput.form;
 	var recs = xmlDoc.selectSingleNode('records');
 	var xmlSelected = recs.childNodes[idx];
-	var column = xmlSelected.selectSingleNode(boundName);
-	form.elements[boundName].value = xmlSelected.selectSingleNode(boundName).text;
 	oInput.value = xmlSelected.selectSingleNode(oInput.name).text;
 	lastValue = oInput.value;
 	hide();
@@ -155,7 +152,6 @@ function search() {
 	url = urlSet(url,'name',oInput.name);
 	url = urlSet(url,'value',oInput.value);
 	url = urlSet(url,'searchLimit',searchLimit);
-	url = urlSet(url,'boundName',boundName);
 	xmlDoc = new ActiveXObject("Msxml2.DOMDocument");
 	xmlDoc.onreadystatechange = searchReturn;
 	xmlDoc.load(url);
@@ -179,7 +175,6 @@ function searchReturn() {
 				} else {
 					// No Matches
 					oDiv.innerText = "No Matches";
-					oInput.form.elements[boundName].value = "";
 				}
 			}
 		}
