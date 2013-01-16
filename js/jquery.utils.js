@@ -1,3 +1,12 @@
+// Returns the first non-undefined argument
+function coalesce() {
+    for(var i = 0; i < arguments.length; i++){
+	if ( typeof arguments[i] != "undefined" ) {
+	    return arguments[i];
+	}
+    }
+}
+
 (function ($) {
     $.fn.disable = function () {
 	return $(this).each(function () { 

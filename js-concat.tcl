@@ -1,26 +1,11 @@
 #!/usr/bin/tclsh8.5
 
-#| Concat all .js files in qcode directory
+#| Concat all .js files in js directory
 
 set dir [file normalize [file dirname [info script]]]
 
-# Determinde the most recent version of qcode.js
-set last_major_version 1
-set last_minor_version 0
-foreach filename [glob $dir/qcode-?*.?*.js] {
-    regexp {qcode-([0-9]+)\.([0-9]+).js$} $filename -> major_version minor_version
-    if { $major_version >= $last_major_version && $minor_version > $last_minor_version } {
-	set last_minor_version $minor_version
-	set last_major_version $major_version
-    }
-}
-
-set out_filename qcode-$last_major_version.[expr {$last_minor_version + 1}].js
-set temp /tmp/$out_filename
-set out [open $temp w]
-
 # qcode.js description and liscense info
-puts $out {/*
+puts {/*
  * This file contains the concatented JavaScript Libary for Qcode Software Limited.
  *
  * https://svn.qcode.co.uk/js/trunk
@@ -46,15 +31,9 @@ puts $out {/*
 */
 }
 
-foreach filename [lsort [glob $dir/qcode/*.js]] {
-    puts $out "/* ==== [file tail $filename] ==== */"
+foreach filename [lsort [glob $dir/js/*.js]] {
+    puts "/* ==== [file tail $filename] ==== */"
     set fh [open $filename r]
-    puts $out [read $fh]
-    puts $out ""
-    close $fh
+    puts [read $fh]
+    puts ""
 }
-close $out
-
-exec cp $temp $dir/$out_filename
-
-file delete $temp
