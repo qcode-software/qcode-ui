@@ -13,10 +13,8 @@
 		    'width': this.options.comboWidth,
 		    'height': this.options.comboHeight,
 		    'overflow': 'auto',
-		    'top': this.element.position().top + this.element.outerHeight(),
-		    'left': this.element.position().left,
 		    'border': "1px solid black",
-		    'background': "white",
+		    'background': "white"
 	        })
 	        .appendTo('body')
 	        .hide()
@@ -36,7 +34,12 @@
             });
         },
 	show: function(){
-	    this.div.show();
+	    this.div
+                .show()
+	        .css({
+		    'top': this.element.position().top + this.element.outerHeight(),
+		    'left': this.element.position().left
+	        });
 	},
 	hide: function() {
 	    this.div.removeClass('hover').hide();
@@ -116,9 +119,8 @@
 	    if ( ! this.div.is('.hover') ) {
 	        this.hide();
 	        this.currentItem = undefined;
-	    } else {
-                event.stopPropagation();
-            }
+                this.element.trigger('comboBlur');
+	    }
         },
         _divOnClick: function(event) {
 	    if ( ! this.div.is(event.target) ) {
