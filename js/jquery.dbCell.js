@@ -63,6 +63,8 @@
             } else {
                 this.element.text(value);
             }
+
+            this.element.trigger('resize');
 	},
 	isEditable: function() {
 	    var row = this.getRow();
