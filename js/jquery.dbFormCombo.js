@@ -116,7 +116,9 @@
 	    if ( ! this.div.is('.hover') ) {
 	        this.hide();
 	        this.currentItem = undefined;
-	    }
+	    } else {
+                event.stopPropagation();
+            }
         },
         _divOnClick: function(event) {
 	    if ( ! this.div.is(event.target) ) {
