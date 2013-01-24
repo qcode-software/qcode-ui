@@ -34,6 +34,7 @@
             // Update the image when a new filename is chosen
             this.image = this.element.find('img');
             this._on(this.input, {
+                'comboSelect': this.loadImage,
                 'comboBlur': this.loadImage
             });
 
