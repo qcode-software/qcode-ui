@@ -34,7 +34,13 @@
 			}
 
 			colStyle.split(';').forEach(function(pair) {
-			    if (jQuery.inArray(jQuery.trim(pair.split(':')[0]), attributes) == -1) {
+                            var name = jQuery.trim(pair.split(':')[0]);
+                            var value = jQuery.trim(pair.split(':')[1]);
+			    if (jQuery.inArray(name, attributes) == -1) {
+                                if (name === "display" && value === "table-column") {
+                                    value = "table-cell";
+                                    pair = name + ": " + value
+                                }
 				if (style == '') {
 				    style += pair;
 				} else {
