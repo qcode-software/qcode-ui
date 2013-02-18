@@ -8062,6 +8062,8 @@ function dynamicResize(oContainer) {
 
 /* ==== jquery.column_show_hide.js ==== */
 jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
+    // Show or hide table columns. Call on the table, with a selector for the columns.
+    // showOrHide is optional and takes either "show" or "hide", by default each column will toggle visibility
     jQuery(this).each(function() {
 	var table = jQuery(this);
         var show_cols = $([]);
