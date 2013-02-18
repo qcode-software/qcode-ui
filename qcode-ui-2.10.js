@@ -1387,7 +1387,11 @@ function dynamicResize(oContainer) {
 }
 
 /* ==== jquery.colInherit.js ==== */
-(function($) {
+// colInherit plugin
+// Call on tables to copy classes and inline styles from column elements onto cell elements
+// Does not overwrite existing cell inline styles.
+// Optionally takes an array of custom attribute names to also be copied.
+;(function($, undefined) {
     $.fn.colInherit = function(options) {
 	var settings = jQuery.extend({
 	    customAttributes: []
@@ -1407,12 +1411,13 @@ function dynamicResize(oContainer) {
 		    tds.addClass(col.attr('class'));
 		}
 
-		// apply col styles to td elements
+		// apply col styles to td and th elements
 		if (col.attr('style')) {
 		    var colStyle = col.attr('style').replace(/(^ +)|( *; *$)/, '');
 
 		    tds.each(function() {
 			var td = $(this);
+                        // Build an array of css attributes which already exist on the current cell (which will not be overwritten);
 			attributes = [];
 			style = '';
 			if (td.attr('style')) {
@@ -1422,6 +1427,7 @@ function dynamicResize(oContainer) {
 			    });
 			}
 
+                        // Loop over column css attributes
 			colStyle.split(';').forEach(function(pair) {
                             var name = jQuery.trim(pair.split(':')[0]);
                             var value = jQuery.trim(pair.split(':')[1]);
@@ -1444,6 +1450,7 @@ function dynamicResize(oContainer) {
 		    });
 		}
 		
+                // apply custom attributes from cols to td and th elements
 		settings.customAttributes.forEach(function(name) {
 		    if ( col.attr(name) ) {
 			tds.each(function() {
@@ -1461,6 +1468,8 @@ function dynamicResize(oContainer) {
 })(jQuery);
 
 /* ==== jquery.column_show_hide.js ==== */
+// Show and/or hide selected columns of tables
+// showHide is optional, if undefined selected columns will toggle visibility
 ;(function(undefined) {
     jQuery.fn.columns_show_hide = function(column_selector, showHide) {
         jQuery(this).each(function() {
@@ -1485,7 +1494,7 @@ function dynamicResize(oContainer) {
             });
 
 
-	    // Dettach table from DOM. 
+	    // Dettach table from DOM for performance gain.
 	    var table_parent = table.parent();
 	    var table_next_sibling = table.next();
 	    table.detach();

@@ -1,3 +1,5 @@
+// Show and/or hide selected columns of tables
+// showHide is optional, if undefined selected columns will toggle visibility
 ;(function(undefined) {
     jQuery.fn.columns_show_hide = function(column_selector, showHide) {
         jQuery(this).each(function() {
@@ -22,7 +24,7 @@
             });
 
 
-	    // Dettach table from DOM. 
+	    // Dettach table from DOM for performance gain.
 	    var table_parent = table.parent();
 	    var table_next_sibling = table.next();
 	    table.detach();
