@@ -1526,6 +1526,7 @@ function dynamicResize(oContainer) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var label = jQuery(e.delegateTarget).children('label');
             var sticky = checkbox.attr('sticky');
+            var stickyURL = checkbox.attr('sticky_url');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
@@ -1544,10 +1545,13 @@ function dynamicResize(oContainer) {
                 jQuery(tableSelector).columns_show_hide(colSelector,'hide');
             }
 
-            if ( sticky ) {
+            if ( sticky === 'true' ) {
                 // Update Sticky to remember user preference            
                 var data = {}
                 data[checkbox.attr('name')] = checkbox.is(':checked');
+                if ( stickyURL) {
+                    data['sticky_url'] = stickyURL;
+                }
                 $.post('sticky_save.html', data);
             }
         });
