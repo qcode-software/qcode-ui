@@ -27,7 +27,7 @@
                 jQuery(tableSelector).columns_show_hide(colSelector,'hide');
             }
 
-            if ( sticky === 'true' ) {
+            if ( parseBoolean(sticky) ) {
                 // Update Sticky to remember user preference            
                 var data = {}
                 data[checkbox.attr('name')] = checkbox.is(':checked');
