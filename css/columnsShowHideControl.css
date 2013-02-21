@@ -1,0 +1,44 @@
+.columnsShowHideToolbar .title {
+    font-size:120%;
+    font-weight:bold;
+    margin-bottom: 10px;
+    line-height: 1.5em;
+}
+.columnsShowHideControl {
+    display:inline-block;
+    float:left;
+    width:100px;
+    cursor: pointer;
+    padding: 1px 4px;
+    margin-right:8px;
+    border: 1px solid #aca899;
+    line-height: 1.5em;
+    margin-bottom: 8px;
+}
+.columnsShowHideControlDivider {
+    display:inline-block;
+    float:left;
+    width:2px;
+    border-right: 2px solid #ece9d8;
+    line-height: 1.5em;
+    margin-top: 2px;
+    margin-right:8px;
+    margin-bottom: 8px;
+}
+.columnsShowHideControl label {
+    float: left;
+    color: blue;
+}
+.columnsShowHideControl input {
+    float: right;
+    vertical-align: center;
+ }
+.columnsShowHideControl.checked {
+    background: #ece9d8;
+}
+.columnsShowHideControl.hover, col.hover {
+    background: #ffffdd;
+}
+.columnsShowHideControl.checked.hover {
+    background: #ffffcd;
+}
