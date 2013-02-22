@@ -8405,25 +8405,31 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
     }
 }(jQuery, window, document));
 
-/* ==== jquery.tableFilterMin.js ==== */
-// tableFilterMin - client-side table row filter based on user-defined minimum values
-;(function(jQuery, window, undefined) {
-    // keyup timer
-    var timer;
-
+/* ==== jquery.runDetached.js ==== */
+// runDetached jQuery plugin. Detach current element from the DOM, call a function (optional), then re-attach.
+;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
         var $prev = this.prev();
         if ( $prev.length == 0 ) {
             var $parent = this.parent();
         }
         this.detach();
-        toDo.call(this[0]);
+        if ( typeof toDo == "function" ) {
+            toDo.call(this);
+        }
         if ( $prev.length == 0 ) {
             this.appendTo($parent);
         } else {
             this.insertAfter($prev);
         }
     }
+})(jQuery);
+
+/* ==== jquery.tableFilterMin.js ==== */
+// tableFilterMin - client-side table row filter based on user-defined minimum values
+;(function(jQuery, window, undefined) {
+    // keyup timer
+    var timer;
 
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
@@ -8440,7 +8446,7 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
     }
 
     function updateFilters() {
-        $table = $(this);
+        $table = $this;
 
         // Clear the keyup timer
         window.clearTimeout(timer);
