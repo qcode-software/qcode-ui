@@ -8411,21 +8411,36 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
     // keyup timer
     var timer;
 
+    jQuery.fn.runDetached = function(toDo) {
+        var $prev = this.prev();
+        if ( $prev.length == 0 ) {
+            var $parent = this.parent();
+        }
+        this.detach();
+        toDo.call(this[0]);
+        if ( $prev.length == 0 ) {
+            this.appendTo($parent);
+        } else {
+            this.insertAfter($prev);
+        }
+    }
+
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
         $table.find('thead>tr>th>input')
-            .on('click', function() {
-                $(this).textrange('set', "all");
-            })
             .on('keyup', function() {
                 window.clearTimeout(timer);
-                timer = window.setTimeout(updateFilters.bind($table), 400);
+                timer = window.setTimeout(function() {
+                    $table.runDetached(updateFilters);
+                }, 400);
             })
-            .on('change', updateFilters.bind($table));
+            .on('change', function() {
+                $table.runDetached(updateFilters);
+            });
     }
 
     function updateFilters() {
-        var $table = this;
+        $table = $(this);
 
         // Clear the keyup timer
         window.clearTimeout(timer);
@@ -8442,7 +8457,7 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             filters[$input.parent().index()] = value;
         });
 
-        $('tbody>tr').each(function() {
+        $table.find('tbody>tr').each(function() {
             var $row = $(this);
             // Hide if row fails any of the filters, show otherwise
             var hide = false;
