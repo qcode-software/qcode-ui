@@ -5777,7 +5777,7 @@ function dbFormHTMLArea(oDiv) {
     });
 })(jQuery, window, document);
 
-/* ==== jquery.tableFilter.js ==== */
+/* ==== jquery.tableFilterMin.js ==== */
 // tableFilterMin - client-side table row filter based on user-defined minimum values
 ;(function(jQuery, window, undefined) {
     // keyup timer
