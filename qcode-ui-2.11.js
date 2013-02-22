@@ -1515,6 +1515,84 @@ function dynamicResize(oContainer) {
     };
 })();
 
+/* ==== jquery.columnsShowHideControl.js ==== */
+// Initialise column show/hide control
+;(function(undefined) {
+    jQuery.fn.columnsShowHideControl = function() {
+        // ----------------------------------------
+        // Show/hide columns when the user toggles the buttons
+        // ----------------------------------------
+        jQuery(this).on('click',function(e) {           
+            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+            var label = jQuery(e.delegateTarget).children('label');
+            var sticky = checkbox.attr('sticky');
+            var stickyURL = checkbox.attr('sticky_url');
+            var colSelector = checkbox.attr('col_selector');
+            var tableSelector = checkbox.attr('table_selector');
+
+            if ( !jQuery(e.target).is(checkbox) && !jQuery(e.target).is(label) ) {
+                // label or checkbox was not the event target, toggle checkbox state
+                checkbox.prop('checked', !checkbox.prop('checked'));
+            }             
+
+            if ( checkbox.is(':checked') ) {
+                // Show columns
+                jQuery(this).addClass('checked');
+                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+            } else {
+                // Hide columns
+                jQuery(this).removeClass('checked');
+                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+            }
+
+            if ( parseBoolean(sticky) ) {
+                // Update Sticky to remember user preference            
+                var data = {}
+                data[checkbox.attr('name')] = checkbox.is(':checked');
+                if ( stickyURL) {
+                    data['sticky_url'] = stickyURL;
+                }
+                $.post('sticky_save.html', data);
+            }
+        });
+
+        // ----------------------------------------
+        // Highlight columns when the user hovers over a button
+        // ----------------------------------------
+        jQuery(this).on('mouseenter', function(e) {
+            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+            var colSelector = checkbox.attr('col_selector');
+            var tableSelector = checkbox.attr('table_selector');
+
+            jQuery(colSelector, tableSelector).add(this).addClass('hover');
+        });
+        jQuery(this).on('mouseleave', function(e) {
+            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+            var colSelector = checkbox.attr('col_selector');
+            var tableSelector = checkbox.attr('table_selector');
+
+            jQuery(colSelector, tableSelector).add(this).removeClass('hover');
+        });   
+
+        // Show/Hide columns on document ready
+        jQuery(this).each(function() {
+            var checkbox = jQuery(this).children(':checkbox');
+            var colSelector = checkbox.attr('col_selector');
+            var tableSelector = checkbox.attr('table_selector');
+
+            if ( checkbox.is(':checked') ) {
+                // Show columns
+                jQuery(this).addClass('checked');
+                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+            } else {
+                // Hide columns
+                jQuery(this).removeClass('checked');
+                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+            }
+        });
+    };
+})();
+
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
     $.fn.northOf = function(selection) {
@@ -5700,9 +5778,12 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery, window, document);
 
 /* ==== jquery.tableFilter.js ==== */
+// tableFilterMin - client-side table row filter based on user-defined minimum values
 ;(function(jQuery, window, undefined) {
+    // keyup timer
     var timer;
-    jQuery.fn.tableFilter = function() {
+
+    jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
         $table.find('thead>tr>th>input')
             .on('click', function() {
@@ -5714,9 +5795,14 @@ function dbFormHTMLArea(oDiv) {
             })
             .on('change', updateFilters.bind($table));
     }
+
     function updateFilters() {
         var $table = this;
+
+        // Clear the keyup timer
         window.clearTimeout(timer);
+
+        // Map column index (0-based) to filter value
         var filters = {};
         $table.find('thead>tr>th>input').each(function() {
             var $input = $(this);
@@ -5727,8 +5813,10 @@ function dbFormHTMLArea(oDiv) {
             $input.val(value);
             filters[$input.parent().index()] = value;
         });
+
         $('tbody>tr').each(function() {
             var $row = $(this);
+            // Hide if row fails any of the filters, show otherwise
             var hide = false;
             $row.children('td').each(function(index, cell){
                 var cellValue = parseFloat($(cell).text());
@@ -5737,6 +5825,7 @@ function dbFormHTMLArea(oDiv) {
                 }
                 if ( filters[index] !== undefined && cellValue < filters[index] ) {
                     hide = true;
+                    //false return breaks the jQuery loop - no need to check the other columns when one has failed.
                     return false;
                 }
             });
