@@ -8435,18 +8435,22 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
         var $table = $(this).filter('table');
         $table.find('thead>tr>th>input')
             .on('keyup', function() {
+                var $input = $(this);
                 window.clearTimeout(timer);
                 timer = window.setTimeout(function() {
                     $table.runDetached(updateFilters);
+                    $input.focus();
                 }, 400);
             })
             .on('change', function() {
+                var $input = $(this);
                 $table.runDetached(updateFilters);
+                $input.focus();
             });
     }
 
     function updateFilters() {
-        $table = $this;
+        $table = this;
 
         // Clear the keyup timer
         window.clearTimeout(timer);
@@ -8459,7 +8463,11 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             if ( isNaN(value) ) {
                 var value = 0;
             }
-            $input.val(value);
+            if ( value == 0 ) {
+                $input.val("");
+            } else {
+                $input.val(value);
+            }
             filters[$input.parent().index()] = value;
         });
 
