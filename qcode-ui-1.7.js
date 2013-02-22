@@ -8406,7 +8406,10 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
 }(jQuery, window, document));
 
 /* ==== jquery.runDetached.js ==== */
-// runDetached jQuery plugin. Detach current element from the DOM, call a function (optional), then re-attach.
+// runDetached jQuery plugin.
+// Detach this element, call a function (optional), then re-attach the element.
+// Function passed in is called in the scope of the current jQuery object
+// Only supports single-element jQuery object at this time.
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
         var $prev = this.prev();
@@ -8462,11 +8465,6 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             var value = parseFloat($input.val());
             if ( isNaN(value) ) {
                 var value = 0;
-            }
-            if ( value == 0 ) {
-                $input.val("");
-            } else {
-                $input.val(value);
             }
             filters[$input.parent().index()] = value;
         });

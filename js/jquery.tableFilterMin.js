@@ -5,6 +5,7 @@
 
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
+        $table.find('thead>tr>th>input').not('[type]').attr('type', "text");
         $table.find('thead>tr>th>input')
             .on('keyup', function() {
                 var $input = $(this);
@@ -34,11 +35,6 @@
             var value = parseFloat($input.val());
             if ( isNaN(value) ) {
                 var value = 0;
-            }
-            if ( value == 0 ) {
-                $input.val("");
-            } else {
-                $input.val(value);
             }
             filters[$input.parent().index()] = value;
         });

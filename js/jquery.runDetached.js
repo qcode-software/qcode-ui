@@ -1,4 +1,7 @@
-// runDetached jQuery plugin. Detach current element from the DOM, call a function (optional), then re-attach.
+// runDetached jQuery plugin.
+// Detach this element, call a function (optional), then re-attach the element.
+// Function passed in is called in the scope of the current jQuery object
+// Only supports single-element jQuery object at this time.
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
         var $prev = this.prev();
