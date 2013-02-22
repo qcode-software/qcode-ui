@@ -30,7 +30,7 @@
 	    table.detach();
 
 	    toHide.css('display', "none");
-            colsToShow.css('display', "table-row");
+            colsToShow.css('display', "table-column");
             cellsToShow.css('display', "table-cell");
 
 	    // Reattach table to it's original position in the DOM.
