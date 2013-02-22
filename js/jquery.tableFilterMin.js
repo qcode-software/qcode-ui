@@ -3,20 +3,6 @@
     // keyup timer
     var timer;
 
-    jQuery.fn.runDetached = function(toDo) {
-        var $prev = this.prev();
-        if ( $prev.length == 0 ) {
-            var $parent = this.parent();
-        }
-        this.detach();
-        toDo.call(this[0]);
-        if ( $prev.length == 0 ) {
-            this.appendTo($parent);
-        } else {
-            this.insertAfter($prev);
-        }
-    }
-
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
         $table.find('thead>tr>th>input')
@@ -32,7 +18,7 @@
     }
 
     function updateFilters() {
-        $table = $(this);
+        $table = $this;
 
         // Clear the keyup timer
         window.clearTimeout(timer);
