@@ -5681,6 +5681,26 @@ function dbFormHTMLArea(oDiv) {
 
 }) (jQuery);
 
+/* ==== jquery.runDetached.js ==== */
+// runDetached jQuery plugin. Detach current element from the DOM, call a function (optional), then re-attach.
+;(function(jQuery) {
+    jQuery.fn.runDetached = function(toDo) {
+        var $prev = this.prev();
+        if ( $prev.length == 0 ) {
+            var $parent = this.parent();
+        }
+        this.detach();
+        if ( typeof toDo == "function" ) {
+            toDo.call(this);
+        }
+        if ( $prev.length == 0 ) {
+            this.appendTo($parent);
+        } else {
+            this.insertAfter($prev);
+        }
+    }
+})(jQuery);
+
 /* ==== jquery.sidebar.js ==== */
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
 ;(function($, window, document, undefined){
@@ -5786,18 +5806,19 @@ function dbFormHTMLArea(oDiv) {
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
         $table.find('thead>tr>th>input')
-            .on('click', function() {
-                $(this).textrange('set', "all");
-            })
             .on('keyup', function() {
                 window.clearTimeout(timer);
-                timer = window.setTimeout(updateFilters.bind($table), 400);
+                timer = window.setTimeout(function() {
+                    $table.runDetached(updateFilters);
+                }, 400);
             })
-            .on('change', updateFilters.bind($table));
+            .on('change', function() {
+                $table.runDetached(updateFilters);
+            });
     }
 
     function updateFilters() {
-        var $table = this;
+        $table = this;
 
         // Clear the keyup timer
         window.clearTimeout(timer);
@@ -5814,7 +5835,7 @@ function dbFormHTMLArea(oDiv) {
             filters[$input.parent().index()] = value;
         });
 
-        $('tbody>tr').each(function() {
+        $table.find('tbody>tr').each(function() {
             var $row = $(this);
             // Hide if row fails any of the filters, show otherwise
             var hide = false;
