@@ -4,26 +4,30 @@
         // ----------------------------------------
         // Show/hide columns when the user toggles the buttons
         // ----------------------------------------
-        jQuery(this).on('click',function(e) {           
+        jQuery(this).on('click',function(e) {
+            e.preventDefault();           
+            
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
-            var label = jQuery(e.delegateTarget).children('label');
+            if ( !jQuery(e.target).is(checkbox) ) {
+                // checkbox was not the event target, toggle checkbox state
+                checkbox.prop('checked', !checkbox.prop('checked'));
+                checkbox.change();
+            }            
+        });
+        jQuery(this).on('change',':checkbox',function(e) {           
+            var checkbox = jQuery(this);
             var sticky = checkbox.attr('sticky');
             var stickyURL = checkbox.attr('sticky_url');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            if ( !jQuery(e.target).is(checkbox) && !jQuery(e.target).is(label) ) {
-                // label or checkbox was not the event target, toggle checkbox state
-                checkbox.prop('checked', !checkbox.prop('checked'));
-            }             
-
             if ( checkbox.is(':checked') ) {
                 // Show columns
-                jQuery(this).addClass('checked');
+                jQuery(this).parent().addClass('checked');
                 jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
-                jQuery(this).removeClass('checked');
+                jQuery(this).parent().removeClass('checked');
                 jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
@@ -36,8 +40,8 @@
                 }
                 $.post('sticky_save.html', data);
             }
-        });
-
+        });        
+                
         // ----------------------------------------
         // Highlight columns when the user hovers over a button
         // ----------------------------------------
