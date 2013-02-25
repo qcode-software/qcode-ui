@@ -20,11 +20,11 @@
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
             if ( parseBoolean(sticky) ) {
@@ -46,14 +46,16 @@
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).addClass('hover');
+          jQuery(this).addClass('hover');
+          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).removeClass('hover');
+          jQuery(this).removeClass('hover');
+          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
         });   
 
         // Show/Hide columns on document ready
@@ -65,11 +67,11 @@
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
         });
     };

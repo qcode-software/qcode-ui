@@ -8060,8 +8060,8 @@ function dynamicResize(oContainer) {
 }
 
 
-/* ==== jquery.column_show_hide.js ==== */
-jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
+/* ==== jquery.columnsShowHide.js ==== */
+jQuery.fn.columnsShowHide = function(column_selector, showOrHide) {
     // Show or hide table columns. Call on the table, with a selector for the columns.
     // showOrHide is optional and takes either "show" or "hide", by default each column will toggle visibility
     jQuery(this).each(function() {
@@ -8070,12 +8070,12 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
         var hide_cols = $([]);
 
         if (showOrHide === "show") {
-	    show_cols = jQuery(column_selector, table);            
+	    show_cols = table.find(column_selector);            
         } else if (showOrHide === "hide") {
-	    hide_cols = jQuery(column_selector, table);
+	    hide_cols = table.find(column_selector);
         } else {
-	    hide_cols = jQuery(column_selector, table).filter(":visible");
-	    show_cols = jQuery(column_selector, table).filter(":hidden");
+	    hide_cols = table.find(column_selector).filter(":visible");
+	    show_cols = table.find(column_selector).filter(":hidden");
         }
 	
 	// Dettach table from DOM. 
@@ -8121,11 +8121,11 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
             if ( parseBoolean(sticky) ) {
@@ -8147,14 +8147,16 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).addClass('hover');
+          jQuery(this).addClass('hover');
+          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).removeClass('hover');
+          jQuery(this).removeClass('hover');
+          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
         });   
 
         // Show/Hide columns on document ready
@@ -8166,11 +8168,11 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
         });
     };
@@ -8409,7 +8411,7 @@ jQuery.fn.columns_show_hide = function(column_selector, showOrHide) {
 // runDetached jQuery plugin.
 // Detach this element, call a function (optional), then re-attach the element.
 // Function passed in is called in the scope of the current jQuery object
-// Only supports single-element jQuery object at this time.
+// Only supports single-element jQuery object.
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
         var $prev = this.prev();
