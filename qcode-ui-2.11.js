@@ -1471,14 +1471,14 @@ function dynamicResize(oContainer) {
 // Show and/or hide selected columns of tables
 // showHide is optional, if undefined selected columns will toggle visibility
 ;(function(undefined) {
-    jQuery.fn.columns_show_hide = function(column_selector, showHide) {
+    jQuery.fn.columnsShowHide = function(column_selector, showHide) {
         jQuery(this).each(function() {
 	    var table = jQuery(this);
             var cellsToShow = $([]);
             var colsToShow = $([]);
             var toHide = $([]);
 
-	    jQuery(column_selector, table).each(function() {
+	    table.find(column_selector).each(function() {
                 var column = jQuery(this);
                 var index = column.index();
                 var firstCell = table.find('tbody>tr:first-child>td').eq(index);
@@ -1500,7 +1500,55 @@ function dynamicResize(oContainer) {
 	    table.detach();
 
 	    toHide.css('display', "none");
-            colsToShow.css('display', "table-row");
+            colsToShow.css('display', "table-column");
+            cellsToShow.css('display', "table-cell");
+
+	    // Reattach table to it's original position in the DOM.
+	    if (table_next_sibling.length) {
+	        table.insertBefore(table_next_sibling);
+	    } else {		    
+	        table.appendTo(table_parent);
+	    }
+
+            table.trigger('resize');
+        });
+    };
+})();
+
+/* ==== jquery.columnsShowHide.js ==== */
+// Show and/or hide selected columns of tables
+// showHide is optional, if undefined selected columns will toggle visibility
+;(function(undefined) {
+    jQuery.fn.columnsShowHide = function(column_selector, showHide) {
+        jQuery(this).each(function() {
+	    var table = jQuery(this);
+            var cellsToShow = $([]);
+            var colsToShow = $([]);
+            var toHide = $([]);
+
+	    table.find(column_selector).each(function() {
+                var column = jQuery(this);
+                var index = column.index();
+                var firstCell = table.find('tbody>tr:first-child>td').eq(index);
+                var cells = table.find('thead>tr>th:nth-child(' + (index + 1) + '), tbody>tr>td:nth-child(' + (index + 1) + '), tfoot>tr>td:nth-child(' + (index + 1) + ')');
+
+                if ( (showHide === "hide") || (showHide === undefined && firstCell.is(':visible')) ) {
+                    toHide = toHide.add(cells);
+                    toHide = toHide.add(column);
+                } else if (showHide === undefined || showHide === "show") {
+                    cellsToShow = cellsToShow.add(cells);
+                    colsToShow = colsToShow.add(column);
+                }
+            });
+
+
+	    // Dettach table from DOM for performance gain.
+	    var table_parent = table.parent();
+	    var table_next_sibling = table.next();
+	    table.detach();
+
+	    toHide.css('display', "none");
+            colsToShow.css('display', "table-column");
             cellsToShow.css('display', "table-cell");
 
 	    // Reattach table to it's original position in the DOM.
@@ -1538,11 +1586,11 @@ function dynamicResize(oContainer) {
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
             if ( parseBoolean(sticky) ) {
@@ -1564,14 +1612,16 @@ function dynamicResize(oContainer) {
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).addClass('hover');
+          jQuery(this).addClass('hover');
+          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(colSelector, tableSelector).add(this).removeClass('hover');
+          jQuery(this).removeClass('hover');
+          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
         });   
 
         // Show/Hide columns on document ready
@@ -1583,11 +1633,11 @@ function dynamicResize(oContainer) {
             if ( checkbox.is(':checked') ) {
                 // Show columns
                 jQuery(this).addClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'show');
+                jQuery(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
                 jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columns_show_hide(colSelector,'hide');
+                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
             }
         });
     };
@@ -5682,7 +5732,10 @@ function dbFormHTMLArea(oDiv) {
 }) (jQuery);
 
 /* ==== jquery.runDetached.js ==== */
-// runDetached jQuery plugin. Detach current element from the DOM, call a function (optional), then re-attach.
+// runDetached jQuery plugin.
+// Detach this element, call a function (optional), then re-attach.
+// function is called in scope of element,
+// Only supports detaching a single element at a time
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
         var $prev = this.prev();

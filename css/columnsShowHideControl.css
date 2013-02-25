@@ -3,6 +3,7 @@
     font-weight:bold;
     margin-bottom: 10px;
     line-height: 1.5em;
+    white-space:nowrap;
 }
 .columnsShowHideControl {
     display:inline-block;
@@ -37,7 +38,7 @@
 .columnsShowHideControl.checked {
     background: #ece9d8;
 }
-.columnsShowHideControl.hover, col.hover {
+.columnsShowHideControl.hover, .colHighlight {
     background: #ffffdd;
 }
 .columnsShowHideControl.checked.hover {
