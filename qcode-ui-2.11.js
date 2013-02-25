@@ -1523,11 +1523,10 @@ function dynamicResize(oContainer) {
         // Show/hide columns when the user toggles the buttons
         // ----------------------------------------
         jQuery(this).on('click',function(e) {
-            e.preventDefault();           
-            
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             if ( !jQuery(e.target).is(checkbox) ) {
                 // checkbox was not the event target, toggle checkbox state
+                e.preventDefault();           
                 checkbox.prop('checked', !checkbox.prop('checked'));
                 checkbox.change();
             }            
