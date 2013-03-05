@@ -8441,7 +8441,6 @@ jQuery.fn.columnsShowHide = function(column_selector, showOrHide) {
 
     jQuery.fn.tableFilterMin = function() {
         var $table = $(this).filter('table');
-        $table.find('thead>tr>th>input').not('[type]').attr('type', "text");
         $table.find('thead>tr>th>input')
             .on('keyup', function() {
                 window.clearTimeout(timer);
