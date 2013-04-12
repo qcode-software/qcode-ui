@@ -1,0 +1,6 @@
+.ganttChart {
+    float: left;
+    overflow-x: scroll;
+    overflow-y: auto;
+    position: relative;
+}

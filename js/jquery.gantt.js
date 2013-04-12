@@ -10,6 +10,7 @@
 
             this.chart = $('<div>')
                 .data('gantt', this)
+                .addClass('ganttChart')
                 .width(this.options.width)
                 .height(this.options.height)
                 .insertAfter(this.table);
@@ -25,5 +26,8 @@
         destroy: function() {
             this.chart.remove();
         }
+    });
+
+    jQuery.widget('qcode.ganttRow', {
     });
 })(jQuery);
