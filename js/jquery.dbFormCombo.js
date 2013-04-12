@@ -1,7 +1,7 @@
 ;(function($, undefined) {
     $.widget('qcode.dbFormCombo', {
         options: {
-	    searchUrl: "",
+	    searchURL: "",
 	    searchLimit: 10,
 	    comboHeight: 200
         },
