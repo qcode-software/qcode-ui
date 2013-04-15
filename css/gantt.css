@@ -1,6 +1,20 @@
-.ganttChart {
+.ganttWrapper {
+    overflow: auto;
+}
+.ganttTable {
+    float: left;
+}
+.ganttChartFrame {
     float: left;
     overflow-x: scroll;
     overflow-y: auto;
+}
+.ganttChart {
     position: relative;
+}
+.ganttBar {
+    position: absolute;
+    background: lightgreen;
+    height: 0.5em;
+    z-index: 1;
 }
