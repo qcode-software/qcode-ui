@@ -2,30 +2,40 @@
     jQuery.widget('qcode.ganttRow', {
         options: {
             table: undefined,
+            barHeight: 10,
             columns: {
                 startDate: "[name=start_date]",
-                finishDate: "[name=finish_date]"
+                finishDate: "[name=finish_date]",
+                barClass: "[name=state]"
             }
         },
         _create: function() {
             this.row = this.element;
             this.chart = this.options.table.ganttChart('getChart');
-            this.bar = $('<div>')
-                .addClass('ganttBar')
-                .appendTo(this.chart);
+            this.calendar = this.options.table.ganttChart('getCalendar');
+            this.classes = "ganttBar";
+            this.bar = $('<div class="ganttBar">').appendTo(this.chart);
         },
         draw: function() {
             var rowPosition = this.row.positionRelativeTo(this.chart);
-            this.startDate = this.getStartDate();
-            this.finishDate = this.getFinishDate();
-            if ( isNaN(this.startDate.getDate()) || isNaN(this.finishDate.getDate()) ) {
+            var rowHeight = this.row.outerHeight();
+            var startDate = this.getStartDate();
+            var finishDate = this.getFinishDate();
+            if ( isNaN(startDate.getDate()) || isNaN(finishDate.getDate()) ) {
                 this.bar.hide();
             } else {
+                var left = this.calendar.ganttCalendar('date2positionLeft', startDate);
+                var right = this.calendar.ganttCalendar('date2positionRight', finishDate);
+                var oldClasses = this.classes;
+                this.classes = this.getClasses();
                 this.bar
-                    .css('top', rowPosition.top)
-                    .css('left', this.options.table.ganttChart('date2positionLeft', this.startDate))
-                    .css('right', this.options.table.ganttChart('date2positionRight', this.finishDate))
-                    .show();
+                    .show()
+                    .removeClass(oldClasses)
+                    .addClass(this.classes)
+                    .css('height', this.options.barHeight)
+                    .css('left', left)
+                    .css('right', right)
+                    .css('top', rowPosition.top + ((rowHeight - this.bar.height()) / 2));
             }
         },
         widget: function() {
@@ -35,10 +45,31 @@
             this.bar.remove();
         },
         getStartDate: function() {
-            return new Date(this.row.find(this.options.columns.startDate).text());
+            return new Date(this.getValue('startDate'));
         },
         getFinishDate: function() {
-            return new Date(this.row.find(this.options.columns.finishDate).text());
+            return new Date(this.getValue('finishDate'));
+        },
+        getValue: function(colName) {
+            return this.row.find(this.options.columns[colName]).text()
+        },
+        getClasses: function() {
+            var classes = ["ganttBar"];
+            if ( this.options.columns.barClass !== undefined ) {
+                classes.push(this.getValue('barClass'));
+            }
+            var startDate = this.getStartDate();
+            var finishDate = this.getFinishDate();
+            if ( ! (isNaN(startDate.getDate()) || isNaN(finishDate.getDate())) ) {
+                if ( startDate.getTime() > Date.today.getTime() ) {
+                    classes.push("future");
+                } else if ( finishDate.getTime() < Date.today.getTime() ) {
+                    classes.push("past");
+                } else {
+                    classes.push("present");
+                }
+            }
+            return classes.join(" ");
         }
     });
 })(jQuery);

@@ -14,7 +14,6 @@
 }
 .ganttBar {
     position: absolute;
-    background: lightgreen;
-    height: 0.5em;
+    background: lightblue;
     z-index: 1;
 }

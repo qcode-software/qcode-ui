@@ -2,15 +2,14 @@
     var scrollBarWidth = 18;
     jQuery.widget('qcode.ganttChart', {
         options: {
-            width: "1000px",
+            width: "100%",
             headerHeight: 40,
             columns: {
                 startDate: "[name=start_date]",
-                finishDate: "[name=finish_date]"
+                finishDate: "[name=finish_date]",
+                barClass: "[name=state]"
             },
-            grid: {
-                pxPerDay: 20
-            }
+            pxPerDay: 15
         },
         _create: function() {
             var GanttChart = this;
@@ -23,20 +22,37 @@
             this.wrapper.css('width', this.options.width);
 
             this.chartFrame = $('<div class="ganttChartFrame">')
-                .width(parseInt(this.options.width) - this.table.outerWidth())
+                .width(this.wrapper.width() - this.table.outerWidth())
                 .insertAfter(this.table);
 
             this.chart = $('<div class="ganttChart">')
                 .appendTo(this.chartFrame);
 
-            var minDate = new Date();
-            var maxDate = new Date();
+            this.calendar = $('<canvas class="ganttCalendar">')
+                .appendTo(this.chart);
+
             this.rows.each(function() {
                 var Row = $(this);
                 Row.ganttRow({
                     table: GanttChart.table,
                     columns: GanttChart.options.columns
                 });
+            });
+
+            this._on({
+                'dbRowActionReturn': this.draw
+            });
+
+            this.draw();
+            var scrollLeftDate = Date.today.getWeekStart();
+            scrollLeftDate.incrDays(-14);
+            this.chartFrame.scrollLeft(this.calendar.ganttCalendar('date2positionLeft', scrollLeftDate));
+        },
+        draw: function() {
+            var minDate = new Date();
+            var maxDate = new Date();
+            this.rows.each(function() {
+                var Row = $(this);
                 var startDate = Row.ganttRow('getStartDate');
                 var finishDate = Row.ganttRow('getFinishDate');
                 if ( ! isNaN(startDate.getTime()) ) {
@@ -50,27 +66,26 @@
             });
             minDate.incrDays(-7);
             maxDate.incrDays(14);
-            this.startDate = minDate;
-            this.finishDate = maxDate;
+            this.startDate = minDate.getWeekStart();
+            this.finishDate = maxDate.getWeekEnd();
 
-            this.chart.width((Date.daysBetween(this.finishDate, this.startDate)+1) * this.options.grid.pxPerDay);
 
-            this.canvas = $('<canvas>')
-                .attr('width', (Date.daysBetween(this.finishDate, this.startDate)+1) * this.options.grid.pxPerDay)
-                .attr('height', this.table.find('tbody').outerHeight() + this.options.headerHeight)
+            this.calendar
                 .ganttCalendar({
+                    height: this.table.find('tbody').outerHeight(),
+                    headerHeight: this.options.headerHeight,
                     startDate: this.startDate,
                     finishDate: this.finishDate,
-                    pxPerDay: this.options.grid.pxPerDay,
-                    headerHeight: this.options.headerHeight
+                    pxPerDay: this.options.pxPerDay
                 })
-                .appendTo(this.chart);
-            this.draw();
-        },
-        draw: function() {
+                .ganttCalendar('draw');
+            this.chart.width(this.calendar.width());
             this.rows.each(function() {
                 $(this).ganttRow('draw');
             });
+        },
+        setHighlight: function(name, highlight) {
+            this.calendar.ganttCalendar('option', 'highlightDays', jQuery.qcode.ganttCalendar.prototype.options.highlightDays.concat([highlight]));
         },
         widget: function() {
             return this.wrapper;
@@ -78,17 +93,15 @@
         getChart: function() {
             return this.chart;
         },
+        getCalendar: function() {
+            return this.calendar;
+        },
         destroy: function() {
+            this.calendar.ganttCalendar('destroy');
             this.rows.each(function() {
                 $(this).ganttRow('destroy');
             });
             this.chart.remove();
-        },
-        date2positionLeft: function(date) {
-            return Date.daysBetween(date, this.startDate) * this.options.grid.pxPerDay;
-        },
-        date2positionRight: function(date) {
-            return this.chart.width() - (Date.daysBetween(this.finishDate, date) * this.options.grid.pxPerDay);
         }
     });
 })(jQuery);
