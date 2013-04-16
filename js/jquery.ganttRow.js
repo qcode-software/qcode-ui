@@ -24,8 +24,8 @@
             if ( isNaN(startDate.getDate()) || isNaN(finishDate.getDate()) ) {
                 this.bar.hide();
             } else {
-                var left = this.calendar.ganttCalendar('date2positionLeft', startDate);
-                var right = this.calendar.ganttCalendar('date2positionRight', finishDate);
+                var left = this.calendar.calendar('date2positionLeft', startDate);
+                var right = this.calendar.calendar('date2positionRight', finishDate);
                 var oldClasses = this.classes;
                 this.classes = this.getClasses();
                 this.bar

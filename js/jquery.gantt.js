@@ -46,7 +46,7 @@
             this.draw();
             var scrollLeftDate = Date.today.getWeekStart();
             scrollLeftDate.incrDays(-14);
-            this.chartFrame.scrollLeft(this.calendar.ganttCalendar('date2positionLeft', scrollLeftDate));
+            this.chartFrame.scrollLeft(this.calendar.calendar('date2positionLeft', scrollLeftDate));
         },
         draw: function() {
             var minDate = new Date();
@@ -71,21 +71,20 @@
 
 
             this.calendar
-                .ganttCalendar({
+                .calendar({
                     height: this.table.find('tbody').outerHeight(),
                     headerHeight: this.options.headerHeight,
                     startDate: this.startDate,
                     finishDate: this.finishDate,
                     pxPerDay: this.options.pxPerDay
                 })
-                .ganttCalendar('draw');
+                .calendar('draw');
             this.chart.width(this.calendar.width());
             this.rows.each(function() {
                 $(this).ganttRow('draw');
             });
         },
         setHighlight: function(name, highlight) {
-            this.calendar.ganttCalendar('option', 'highlightDays', jQuery.qcode.ganttCalendar.prototype.options.highlightDays.concat([highlight]));
         },
         widget: function() {
             return this.wrapper;
@@ -97,7 +96,7 @@
             return this.calendar;
         },
         destroy: function() {
-            this.calendar.ganttCalendar('destroy');
+            this.calendar.calendar('destroy');
             this.rows.each(function() {
                 $(this).ganttRow('destroy');
             });
