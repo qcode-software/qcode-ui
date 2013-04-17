@@ -9,16 +9,20 @@
     overflow-x: scroll;
     overflow-y: auto;
 }
-.ganttChart .calendar {
+
+.calendar {
     position: relative;
 }
-.ganttChart .bar {
-    position: absolute;
-    background: lightblue;
-    z-index: 2;
+.calendar canvas {
+    display: block;
 }
 .calendar .dateHighlighter {
     position: absolute;
     background: lightgreen;
     z-index: 1;
+}
+.calendar .bar {
+    position: absolute;
+    background: lightblue;
+    z-index: 2;
 }

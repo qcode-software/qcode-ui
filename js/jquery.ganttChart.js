@@ -13,7 +13,7 @@
             barHeight: "0.5em"
         },
         _create: function() {
-            this.bars = $([]);
+            this.bars = [];
             this.table = this.element;
             this.rows = this.table.children('tbody').children('tr');
 
@@ -21,6 +21,7 @@
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
+            // Record the old margin in case we want to destroy this widget
             this.oldMargin = this.table.css('margin-top');
             this.table.css('margin-top', this.options.headerHeight - this.table.find('thead').outerHeight());
 
@@ -38,6 +39,7 @@
             this.chartFrame.scrollLeft(this.calendar.calendar('date2positionLeft', scrollLeftDate));*/
         },
         draw: function() {
+            // Draw (or redraw) this gantt chart
             var ganttChart = this;
 
             // Calculate a suitable range of dates for the calendar
@@ -46,12 +48,8 @@
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart.getRowStartDate(rowIndex);
                 var finishDate = ganttChart.getRowFinishDate(rowIndex);
-                if ( ! isNaN(startDate.getTime()) ) {
+                if ( ! (isNaN(startDate.getTime()) || isNaN(finishDate.getTime())) ) {
                     minDate = Date.min(minDate,startDate);
-                    maxDate = Date.max(maxDate,startDate);
-                }
-                if ( ! isNaN(finishDate.getTime()) ) {
-                    minDate = Date.min(minDate,finishDate);
                     maxDate = Date.max(maxDate,finishDate);
                 }
             });
@@ -60,46 +58,54 @@
             var startDate = minDate.getWeekStart();
             var finishDate = maxDate.getWeekEnd();
 
-            // Draw the calendar
-            this.calendar
-                .calendar({
-                    bodyHeight: this.table.find('tbody').outerHeight(),
-                    headerHeight: this.options.headerHeight,
-                    startDate: startDate,
-                    finishDate: finishDate,
-                    pxPerDay: this.options.pxPerDay,
-                    barHeight: this.options.barHeight
-                })
-                .calendar('draw');
+            // Initialize the calendar
+            this.calendar.calendar({
+                bodyHeight: this.table.find('tbody').outerHeight(),
+                headerHeight: this.options.headerHeight,
+                startDate: startDate,
+                finishDate: finishDate,
+                pxPerDay: this.options.pxPerDay,
+                barHeight: this.options.barHeight
+            })
 
             // Draw the bars (remove any existing bars first)
-            this.bars.remove();
-            this.bars = $([]);
+            $.each(this.bars, function(i, bar) {
+                bar.remove();
+            });
+            this.bars = [];
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart.getRowStartDate(rowIndex);
                 var finishDate = ganttChart.getRowFinishDate(rowIndex);
                 if ( ! (isNaN(startDate.getDate()) || isNaN(finishDate.getDate())) ) {
-                    var rowTop = $(domRow).positionRelativeTo(ganttChart.wrapper).top;
+                    var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
                     var bar = ganttChart.calendar.calendar('newBar', {
                         startDate: startDate,
                         finishDate: finishDate,
-                        verticalPosition: rowTop + ($(domRow).height() / 2),
+                        verticalPosition: verticalPosition,
                         addClasses: ganttChart.getCellValue('barClass', rowIndex)
                     });
-                    ganttChart.bars = ganttChart.bars.add(bar);
+                    ganttChart.bars.push(bar);
                 }
             });
+
+            // Draw the calendar
+            this.calendar.calendar('draw');
         },
         getRowStartDate: function(rowIndex) {
+            // Get the start date of a given row
             return new Date(this.getCellValue('startDate', rowIndex));
         },
         getRowFinishDate: function(rowIndex) {
+            // Get the finish date of a given row
             return new Date(this.getCellValue('finishDate', rowIndex));
         },
         getCellValue: function(colName, rowIndex) {
+            // Using the column selector from this.options.columns with the key colName,
+            // find the first matching cell in the indexed row, and return the contents.
             return this.rows.eq(rowIndex).find(this.options.columns[colName]).text();
         },
         newDateHighlighter: function(date, style) {
+            // Create and return a new date highlighter object
             return this.calendar.calendar('newDateHighlighter', date, style);
         },
         widget: function() {
@@ -109,6 +115,7 @@
             return this.calendar;
         },
         destroy: function() {
+            // Destroy this widget and return the table to its initial state
             this.bars.remove();
             this.calendar.calendar('destroy').remove();
             this.calendarFrame.remove();

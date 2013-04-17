@@ -12,35 +12,38 @@
                 lines: 'rgba(200,200,200,1)',
                 text: 'rgba(100,100,100,1)'
             },
-            barHeight: 15
+            barHeight: "10px"
         },
         _create: function() {
-            var canvas = this.element[0];
+            var domCanvas = this.element[0];
             this.element.wrap('<div class="calendar">');
             this.wrapper = this.element.parent();
-            if ( ! canvas.getContext ) {
+            if ( ! domCanvas.getContext ) {
                 $.error("Plugin qcode.calendar currently requires a canvas");
             }
-            this.ctx = canvas.getContext('2d');
+            this.context = domCanvas.getContext('2d');
             this.highlighters = [];
-            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
             this.bars = [];
+            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
         },
         draw: function() {
-            var ctx = this.ctx;
+            // draw (or redraw) the calendar
+            var ctx = this.context;
             var options = this.options;
 
-            // Update the canvas width/height in case options have changed, then clear the canvas.
+            // Recalculate width/height in case options have changed
             options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
             this.wrapper
                 .width(options.width)
                 .height(options.bodyHeight + options.headerHeight);
+            // Canvas html width/height attributes function differently to css width/height
             this.element
                 .attr('width', options.width)
-                .attr('bodyHeight', options.bodyHeight + options.headerHeight);
-
+                .attr('height', options.bodyHeight + options.headerHeight);
+            // Clear the canvas
             ctx.clearRect(0, 0, options.width, options.bodyHeight);
 
+            // Offset path to account for line width, and begin a path to draw all the grid lines
             var x = 0.5;
             ctx.beginPath();
             ctx.textBaseline = "middle";
@@ -51,8 +54,8 @@
 
                 // Header text
                 ctx.fillStyle = options.styles.text;
+                // Label start of week on mondays
                 if ( date.getDay() == 1 ) {
-                    // Label start of week on mondays
                     ctx.textAlign = "left";
                     ctx.fillText(date.getDate() + " " + date.getMonthShort(), x, (options.headerHeight / 4));
                     ctx.moveTo(x, 0);
@@ -65,7 +68,9 @@
                 if ( date.getDay() == 0 || date.getDay() == 6 ) {
                     ctx.fillStyle = this.options.styles.weekends;
                     ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.bodyHeight);
+
                 } else {
+                    // Draw a line down the right side of each day
                     ctx.moveTo(x + options.pxPerDay, options.headerHeight);
                     ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
                 }
@@ -73,7 +78,7 @@
                 date.incrDays(1);
             }
 
-            // Draw all the lines
+            // Actually draw all the lines
             ctx.strokeStyle = options.styles.lines;
             ctx.stroke();
 
@@ -99,11 +104,13 @@
             return this.wrapper;
         },
         newDateHighlighter: function(date, color) {
+            // Create and return a date highlighter attached to this calendar (see class defs. below)
             var highlighter = new DateHighlighter(this, date, color);
             this.highlighters.push(highlighter);
             return highlighter;
         },
         newBar: function(options) {
+            // Create and return a horizontal bar attached to this calendar (see class defs. below)
             var bar = new Bar($.extend({
                 barHeight: this.options.barHeight,
                 calendarWidget: this
@@ -112,13 +119,17 @@
             return bar;
         }
     });
+    // End of calendar widget
 
+
+    // DateHighlighter class
+    // This object highlights a single date in a calendar.
     function DateHighlighter(calendarWidget, date, color) {
         this.calendarWidget = calendarWidget;
         this.element = $('<div class="dateHighlighter">');
         this.element.appendTo(calendarWidget.wrapper);
-        this.setDate(date);
         this.setColor(color);
+        this.setDate(date);
     }
     $.extend(DateHighlighter.prototype, {
         setDate: function(newDate) {
@@ -142,19 +153,22 @@
             });
         }
     });
+    // End of DateHighlighter class
 
+
+    // Bar class
+    // A horizontal bar added to the calendar
     function Bar(options) {
         this.options = $.extend({
             startDate: undefined,
             finishDate: undefined,
-            barHeight: 15,
+            barHeight: "10px",
             verticalPosition: undefined,
             addClasses: "",
             calendarWidget: undefined
         }, options);
         this.element = $('<div>');
         this.element.appendTo(this.options.calendarWidget.wrapper);
-        this.draw();
     }
     $.extend(Bar.prototype, {
         draw: function() {
@@ -182,4 +196,5 @@
             this.element.remove();
         }
     });
+    // End of Bar class
 })(jQuery);
