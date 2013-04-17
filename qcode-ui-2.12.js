@@ -1446,32 +1446,189 @@ function dynamicResize(oContainer) {
     }
 }
 
-/* ==== jquery.calendarHighlighter.js ==== */
-// calendarHighlighter plugin, used with calendar plugin.
-// Uses the element to highlight dates in the calendar.
+/* ==== jquery.calendar.js ==== */
+// calendar plugin. Call on a canvas to draw a calendar
 ;(function($, undefined) {
-    jQuery.widget('qcode.calendarHighlighter', {
+    jQuery.widget('qcode.calendar', {
         options: {
-            date: undefined,
-            color: undefined,
-            calendar: undefined
+            bodyHeight: 150,
+            headerHeight: 40,
+            startDate: undefined,
+            finishDate: undefined,
+            pxPerDay: 20,
+            styles: {
+                weekends: 'rgba(220,220,220,1)',
+                lines: 'rgba(200,200,200,1)',
+                text: 'rgba(100,100,100,1)'
+            },
+            barHeight: 15
         },
-        _create: function(){
-            this.element.addClass('calendarHighlighter');
+        _create: function() {
+            var canvas = this.element[0];
+            this.element.wrap('<div class="calendar">');
+            this.wrapper = this.element.parent();
+            if ( ! canvas.getContext ) {
+                $.error("Plugin qcode.calendar currently requires a canvas");
+            }
+            this.ctx = canvas.getContext('2d');
+            this.highlighters = [];
+            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
+            this.bars = [];
         },
         draw: function() {
+            var ctx = this.ctx;
+            var options = this.options;
+
+            // Update the canvas width/height in case options have changed, then clear the canvas.
+            options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
+            this.wrapper
+                .width(options.width)
+                .height(options.bodyHeight + options.headerHeight);
             this.element
-                .background(this.options.color)
+                .attr('width', options.width)
+                .attr('bodyHeight', options.bodyHeight + options.headerHeight);
+
+            ctx.clearRect(0, 0, options.width, options.bodyHeight);
+
+            var x = 0.5;
+            ctx.beginPath();
+            ctx.textBaseline = "middle";
+
+            // Loop over all days from start date to finish date
+            var date = new Date(options.startDate.getTime());
+            while( date.getTime() <= options.finishDate.getTime() ) {
+
+                // Header text
+                ctx.fillStyle = options.styles.text;
+                if ( date.getDay() == 1 ) {
+                    // Label start of week on mondays
+                    ctx.textAlign = "left";
+                    ctx.fillText(date.getDate() + " " + date.getMonthShort(), x, (options.headerHeight / 4));
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, options.headerHeight);
+                }
+                ctx.textAlign = "center";
+                ctx.fillText(date.getDayLetter(), x + (options.pxPerDay / 2), (3 * options.headerHeight / 4));
+
+                // Highlight weekends
+                if ( date.getDay() == 0 || date.getDay() == 6 ) {
+                    ctx.fillStyle = this.options.styles.weekends;
+                    ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.bodyHeight);
+                } else {
+                    ctx.moveTo(x + options.pxPerDay, options.headerHeight);
+                    ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
+                }
+                x += options.pxPerDay;
+                date.incrDays(1);
+            }
+
+            // Draw all the lines
+            ctx.strokeStyle = options.styles.lines;
+            ctx.stroke();
+
+            // Redraw bars and highlights
+            $.each(this.highlighters, function(i, highlighter) {
+                highlighter.draw();
+            });
+            $.each(this.bars, function(i, bar) {
+                bar.draw();
+            });
+        },
+        date2positionLeft: function(date) {
+            // Return the px distance from the left edge of the calendar to the left edge of the given date
+            var left = Date.daysBetween(date, this.options.startDate) * this.options.pxPerDay;
+            return left;
+        },
+        date2positionRight: function(date) {
+            // Return the px distance from the right edge of the calendar to the right edge of the given date
+            var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
+            return right;
+        },
+        widget: function() {
+            return this.wrapper;
+        },
+        newDateHighlighter: function(date, color) {
+            var highlighter = new DateHighlighter(this, date, color);
+            this.highlighters.push(highlighter);
+            return highlighter;
+        },
+        newBar: function(options) {
+            var bar = new Bar($.extend({
+                barHeight: this.options.barHeight,
+                calendarWidget: this
+            }, options));
+            this.bars.push(bar);
+            return bar;
+        }
+    });
+
+    function DateHighlighter(calendarWidget, date, color) {
+        this.calendarWidget = calendarWidget;
+        this.element = $('<div class="dateHighlighter">');
+        this.element.appendTo(calendarWidget.wrapper);
+        this.setDate(date);
+        this.setColor(color);
+    }
+    $.extend(DateHighlighter.prototype, {
+        setDate: function(newDate) {
+            this.date = newDate;
+            this.draw();
+        },
+        setColor: function(newColor) {
+            this.element.css({
+                background: newColor
+            });
+        },
+        remove: function() {
+            this.element.remove();
+        },
+        draw: function() {
+            this.element.css({
+                top: this.calendarWidget.options.headerHeight,
+                bottom: 0,
+                left: this.calendarWidget.date2positionLeft(this.date),
+                right: this.calendarWidget.date2positionRight(this.date)
+            });
+        }
+    });
+
+    function Bar(options) {
+        this.options = $.extend({
+            startDate: undefined,
+            finishDate: undefined,
+            barHeight: 15,
+            verticalPosition: undefined,
+            addClasses: "",
+            calendarWidget: undefined
+        }, options);
+        this.element = $('<div>');
+        this.element.appendTo(this.options.calendarWidget.wrapper);
+        this.draw();
+    }
+    $.extend(Bar.prototype, {
+        draw: function() {
+            var classes = ["bar"].concat(this.options.addClasses);
+            if ( this.options.startDate.getTime() > Date.today.getTime() ) {
+                classes.push("future");
+            } else if ( this.options.finishDate.getTime() < Date.today.getTime() ) {
+                classes.push("past");
+            } else {
+                classes.push("present");
+            }
+            this.element
+                .removeClass(this.element.attr('class'))
+                .addClass(classes.join(" "))
                 .css({
-                    'top': this.options.calendar.bodyTop,
-                    'bottom': this.options.calendar.bodyBottom,
-                    'left': this.options.calendar.date2positionLeft(this.options.date),
-                    'right': this.options.calendar.date3positionRight(this.options.date)
+                    height: this.options.barHeight,
+                    left: this.options.calendarWidget.date2positionLeft(this.options.startDate),
+                    right: this.options.calendarWidget.date2positionRight(this.options.finishDate)
+                })
+                .css({
+                    top: this.options.verticalPosition - (this.element.height() / 2)
                 });
         },
-        _setOption: function(key, value) {
-            this._super();
-            this.draw();
+        remove: function() {
+            this.element.remove();
         }
     });
 })(jQuery);
@@ -5359,8 +5516,8 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.gantt.js ==== */
+// ganttChart plugin. Call on a table to make it into a gantt chart.
 ;(function($, undefined) {
-    var scrollBarWidth = 18;
     jQuery.widget('qcode.ganttChart', {
         options: {
             width: "100%",
@@ -5370,52 +5527,43 @@ function dbFormHTMLArea(oDiv) {
                 finishDate: "[name=finish_date]",
                 barClass: "[name=state]"
             },
-            pxPerDay: 15
+            pxPerDay: 15,
+            barHeight: "0.5em"
         },
         _create: function() {
-            var GanttChart = this;
+            this.bars = $([]);
             this.table = this.element;
             this.rows = this.table.children('tbody').children('tr');
-            this.table.css('margin-top', this.options.headerHeight - this.table.find('thead').outerHeight());
 
-            this.table.wrap('<div class="ganttWrapper">');
+            this.table.wrap('<div class="ganttChart wrapper">');
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
-            this.chartFrame = $('<div class="ganttChartFrame">')
+            this.oldMargin = this.table.css('margin-top');
+            this.table.css('margin-top', this.options.headerHeight - this.table.find('thead').outerHeight());
+
+            this.calendarFrame = $('<div class="calendarFrame">')
                 .width(this.wrapper.width() - this.table.outerWidth())
                 .insertAfter(this.table);
 
-            this.chart = $('<div class="ganttChart">')
-                .appendTo(this.chartFrame);
+            this.calendar = $('<canvas>').appendTo(this.calendarFrame);
 
-            this.calendar = $('<canvas class="ganttCalendar">')
-                .appendTo(this.chart);
-
-            this.rows.each(function() {
-                var Row = $(this);
-                Row.ganttRow({
-                    table: GanttChart.table,
-                    columns: GanttChart.options.columns
-                });
-            });
-
-            this._on({
-                'dbRowActionReturn': this.draw
-            });
+            this._on({'dbRowActionReturn': this.draw});
 
             this.draw();
-            var scrollLeftDate = Date.today.getWeekStart();
+            /*var scrollLeftDate = Date.today.getWeekStart();
             scrollLeftDate.incrDays(-14);
-            this.chartFrame.scrollLeft(this.calendar.calendar('date2positionLeft', scrollLeftDate));
+            this.chartFrame.scrollLeft(this.calendar.calendar('date2positionLeft', scrollLeftDate));*/
         },
         draw: function() {
+            var ganttChart = this;
+
+            // Calculate a suitable range of dates for the calendar
             var minDate = new Date();
             var maxDate = new Date();
-            this.rows.each(function() {
-                var Row = $(this);
-                var startDate = Row.ganttRow('getStartDate');
-                var finishDate = Row.ganttRow('getFinishDate');
+            this.rows.each(function(rowIndex, domRow) {
+                var startDate = ganttChart.getRowStartDate(rowIndex);
+                var finishDate = ganttChart.getRowFinishDate(rowIndex);
                 if ( ! isNaN(startDate.getTime()) ) {
                     minDate = Date.min(minDate,startDate);
                     maxDate = Date.max(maxDate,startDate);
@@ -5427,222 +5575,62 @@ function dbFormHTMLArea(oDiv) {
             });
             minDate.incrDays(-7);
             maxDate.incrDays(14);
-            this.startDate = minDate.getWeekStart();
-            this.finishDate = maxDate.getWeekEnd();
+            var startDate = minDate.getWeekStart();
+            var finishDate = maxDate.getWeekEnd();
 
-
+            // Draw the calendar
             this.calendar
                 .calendar({
-                    height: this.table.find('tbody').outerHeight(),
+                    bodyHeight: this.table.find('tbody').outerHeight(),
                     headerHeight: this.options.headerHeight,
-                    startDate: this.startDate,
-                    finishDate: this.finishDate,
-                    pxPerDay: this.options.pxPerDay
+                    startDate: startDate,
+                    finishDate: finishDate,
+                    pxPerDay: this.options.pxPerDay,
+                    barHeight: this.options.barHeight
                 })
                 .calendar('draw');
-            this.chart.width(this.calendar.width());
-            this.rows.each(function() {
-                $(this).ganttRow('draw');
+
+            // Draw the bars (remove any existing bars first)
+            this.bars.remove();
+            this.bars = $([]);
+            this.rows.each(function(rowIndex, domRow) {
+                var startDate = ganttChart.getRowStartDate(rowIndex);
+                var finishDate = ganttChart.getRowFinishDate(rowIndex);
+                if ( ! (isNaN(startDate.getDate()) || isNaN(finishDate.getDate())) ) {
+                    var rowTop = $(domRow).positionRelativeTo(ganttChart.wrapper).top;
+                    var bar = ganttChart.calendar.calendar('newBar', {
+                        startDate: startDate,
+                        finishDate: finishDate,
+                        verticalPosition: rowTop + ($(domRow).height() / 2),
+                        addClasses: ganttChart.getCellValue('barClass', rowIndex)
+                    });
+                    ganttChart.bars = ganttChart.bars.add(bar);
+                }
             });
         },
-        setHighlight: function(name, highlight) {
+        getRowStartDate: function(rowIndex) {
+            return new Date(this.getCellValue('startDate', rowIndex));
+        },
+        getRowFinishDate: function(rowIndex) {
+            return new Date(this.getCellValue('finishDate', rowIndex));
+        },
+        getCellValue: function(colName, rowIndex) {
+            return this.rows.eq(rowIndex).find(this.options.columns[colName]).text();
+        },
+        newDateHighlighter: function(date, style) {
+            return this.calendar.calendar('newDateHighlighter', date, style);
         },
         widget: function() {
             return this.wrapper;
-        },
-        getChart: function() {
-            return this.chart;
         },
         getCalendar: function() {
             return this.calendar;
         },
         destroy: function() {
-            this.calendar.calendar('destroy');
-            this.rows.each(function() {
-                $(this).ganttRow('destroy');
-            });
-            this.chart.remove();
-        }
-    });
-})(jQuery);
-
-/* ==== jquery.ganttCalendar.js ==== */
-;(function($, undefined) {
-    jQuery.widget('qcode.calendar', {
-        options: {
-            height: 150,
-            headerHeight: 40,
-            startDate: undefined,
-            finishDate: undefined,
-            pxPerDay: 20,
-            styles: {
-                weekends: 'rgba(220,220,220,1)',
-                lines: 'rgba(200,200,200,1)',
-                text: 'rgba(100,100,100,1)'
-            }
-        },
-        _create: function() {
-            var canvas = this.element[0];
-            this.element.wrap('<div class="calendar">');
-            this.wrapper = this.element.parent();
-            if ( ! canvas.getContext ) {
-                $.error("Plugin qcode.calendar currently requires a canvas");
-            }
-            this.ctx = canvas.getContext('2d');
-            this.highlighters = [
-                this.createHighlighter(Date.today, 'rgba(160,200,240,1)')
-            ];
-        },
-        draw: function() {
-            var ctx = this.ctx;
-            var options = this.options;
-
-            // Update the canvas width/height in case options have changed, then clear the canvas.
-            options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
-            this.wrapper
-                .width(options.width)
-                .height(options.height);
-            this.element
-                .attr('width', options.width)
-                .attr('height', options.height + options.headerHeight);
-
-            ctx.clearRect(0, 0, options.width, options.height);
-
-            var x = 0.5;
-            ctx.beginPath();
-            ctx.textBaseline = "middle";
-
-            // Loop over all days from start date to finish date
-            var date = new Date(options.startDate.getTime());
-            while( date.getTime() <= options.finishDate.getTime() ) {
-
-                // Header text
-                ctx.fillStyle = options.styles.text;
-                if ( date.getDay() == 1 ) {
-                    // Label start of week on mondays
-                    ctx.textAlign = "left";
-                    ctx.fillText(date.getDate() + " " + date.getMonthShort(), x, (options.headerHeight / 4));
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, options.headerHeight);
-                }
-                ctx.textAlign = "center";
-                ctx.fillText(date.getDayLetter(), x + (options.pxPerDay / 2), (3 * options.headerHeight / 4));
-
-                // Highlight weekends
-                if ( date.getDay() == 0 || date.getDay() == 6 ) {
-                    ctx.fillStyle = this.options.styles.weekends;
-                    ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.height);
-                } else {
-                    ctx.moveTo(x + options.pxPerDay, options.headerHeight);
-                    ctx.lineTo(x + options.pxPerDay, options.height + options.headerHeight);
-                }
-                x += options.pxPerDay;
-                date.incrDays(1);
-            }
-
-            // Draw all the lines
-            ctx.strokeStyle = options.styles.lines;
-            ctx.stroke();
-        },
-        date2positionLeft: function(date) {
-            // Return the px distance from the left edge of the calendar to the left edge of the given date
-            var left = Date.daysBetween(date, this.options.startDate) * this.options.pxPerDay;
-            return left;
-        },
-        date2positionRight: function(date) {
-            // Return the px distance from the right edge of the calendar to the right edge of the given date
-            var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
-            return right;
-        },
-        widget: function() {
-            return this.wrapper;
-        },
-        createHighlighter: function(date, color) {
-            // Create a calendarHighlighter, and return it
-            var calendar = $('<div>').appendTo(this.wrapper);
-            calendar.calendarHighlighter({
-                date: date,
-                color: color,
-                calendar: this
-            });
-            return calendar;
-        }
-    });
-})(jQuery);
-
-/* ==== jquery.ganttRow.js ==== */
-;(function($, undefined) {
-    jQuery.widget('qcode.ganttRow', {
-        options: {
-            table: undefined,
-            barHeight: 10,
-            columns: {
-                startDate: "[name=start_date]",
-                finishDate: "[name=finish_date]",
-                barClass: "[name=state]"
-            }
-        },
-        _create: function() {
-            this.row = this.element;
-            this.chart = this.options.table.ganttChart('getChart');
-            this.calendar = this.options.table.ganttChart('getCalendar');
-            this.classes = "ganttBar";
-            this.bar = $('<div class="ganttBar">').appendTo(this.chart);
-        },
-        draw: function() {
-            var rowPosition = this.row.positionRelativeTo(this.chart);
-            var rowHeight = this.row.outerHeight();
-            var startDate = this.getStartDate();
-            var finishDate = this.getFinishDate();
-            if ( isNaN(startDate.getDate()) || isNaN(finishDate.getDate()) ) {
-                this.bar.hide();
-            } else {
-                var left = this.calendar.calendar('date2positionLeft', startDate);
-                var right = this.calendar.calendar('date2positionRight', finishDate);
-                var oldClasses = this.classes;
-                this.classes = this.getClasses();
-                this.bar
-                    .show()
-                    .removeClass(oldClasses)
-                    .addClass(this.classes)
-                    .css('height', this.options.barHeight)
-                    .css('left', left)
-                    .css('right', right)
-                    .css('top', rowPosition.top + ((rowHeight - this.bar.height()) / 2));
-            }
-        },
-        widget: function() {
-            return this.bar;
-        },
-        destroy: function() {
-            this.bar.remove();
-        },
-        getStartDate: function() {
-            return new Date(this.getValue('startDate'));
-        },
-        getFinishDate: function() {
-            return new Date(this.getValue('finishDate'));
-        },
-        getValue: function(colName) {
-            return this.row.find(this.options.columns[colName]).text()
-        },
-        getClasses: function() {
-            var classes = ["ganttBar"];
-            if ( this.options.columns.barClass !== undefined ) {
-                classes.push(this.getValue('barClass'));
-            }
-            var startDate = this.getStartDate();
-            var finishDate = this.getFinishDate();
-            if ( ! (isNaN(startDate.getDate()) || isNaN(finishDate.getDate())) ) {
-                if ( startDate.getTime() > Date.today.getTime() ) {
-                    classes.push("future");
-                } else if ( finishDate.getTime() < Date.today.getTime() ) {
-                    classes.push("past");
-                } else {
-                    classes.push("present");
-                }
-            }
-            return classes.join(" ");
+            this.bars.remove();
+            this.calendar.calendar('destroy').remove();
+            this.calendarFrame.remove();
+            this.table.unwrap().css('margin-top', this.oldMargin);
         }
     });
 })(jQuery);

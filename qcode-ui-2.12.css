@@ -82,23 +82,28 @@
 }
 
 /* ==== gantt.css ==== */
-.ganttWrapper {
+.ganttChart.wrapper {
     overflow: auto;
 }
-.ganttTable {
+.ganttChart table {
     float: left;
 }
-.ganttChartFrame {
+.ganttChart .calendarFrame {
     float: left;
     overflow-x: scroll;
     overflow-y: auto;
 }
-.ganttChart {
+.ganttChart .calendar {
     position: relative;
 }
-.ganttBar {
+.ganttChart .bar {
     position: absolute;
     background: lightblue;
+    z-index: 2;
+}
+.calendar .dateHighlighter {
+    position: absolute;
+    background: lightgreen;
     z-index: 1;
 }
 
