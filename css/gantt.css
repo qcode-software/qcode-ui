@@ -12,6 +12,7 @@
 
 .calendar {
     position: relative;
+    overflow: hidden;
 }
 .calendar canvas {
     display: block;

@@ -17,7 +17,7 @@
                 barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
-            barHeight: "0.5em"
+            barHeight: "1em"
         },
         _create: function() {
             // Get options from custom attributes
@@ -61,8 +61,8 @@
             var minDate = Date.today;
             var maxDate = Date.today;
             this.rows.each(function(rowIndex, domRow) {
-                var startDate = ganttChart.getRowStartDate(rowIndex);
-                var finishDate = ganttChart.getRowFinishDate(rowIndex);
+                var startDate = ganttChart._getRowStartDate(rowIndex);
+                var finishDate = ganttChart._getRowFinishDate(rowIndex);
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
                     minDate = Date.min(minDate,startDate);
                     maxDate = Date.max(maxDate,finishDate);
@@ -81,7 +81,7 @@
                 finishDate: finishDate,
                 pxPerDay: this.options.pxPerDay,
                 barHeight: this.options.barHeight
-            })
+            });
 
             // Draw the bars (remove any existing bars first)
             $.each(this.bars, function(i, bar) {
@@ -89,15 +89,15 @@
             });
             this.bars = [];
             this.rows.each(function(rowIndex, domRow) {
-                var startDate = ganttChart.getRowStartDate(rowIndex);
-                var finishDate = ganttChart.getRowFinishDate(rowIndex);
+                var startDate = ganttChart._getRowStartDate(rowIndex);
+                var finishDate = ganttChart._getRowFinishDate(rowIndex);
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
                     var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
                     var bar = ganttChart.calendar.calendar('newBar', {
                         startDate: startDate,
                         finishDate: finishDate,
                         verticalPosition: verticalPosition,
-                        color: ganttChart.getCellValue('barColor', rowIndex)
+                        color: ganttChart._getCellValue('barColor', rowIndex)
                     });
                     ganttChart.bars.push(bar);
                 }
@@ -106,15 +106,15 @@
             // Draw the calendar
             this.calendar.calendar('draw');
         },
-        getRowStartDate: function(rowIndex) {
+        _getRowStartDate: function(rowIndex) {
             // Get the start date of a given row
-            return new Date(this.getCellValue('startDate', rowIndex));
+            return new Date(this._getCellValue('startDate', rowIndex));
         },
-        getRowFinishDate: function(rowIndex) {
+        _getRowFinishDate: function(rowIndex) {
             // Get the finish date of a given row
-            return new Date(this.getCellValue('finishDate', rowIndex));
+            return new Date(this._getCellValue('finishDate', rowIndex));
         },
-        getCellValue: function(colName, rowIndex) {
+        _getCellValue: function(colName, rowIndex) {
             // Using the column selector from this.options.columns with the key colName,
             // find the first matching cell in the indexed row, and return the contents.
             return this.rows.eq(rowIndex).findByColumn(this.options.columns[colName]).text();

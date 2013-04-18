@@ -93,14 +93,10 @@
     overflow-x: scroll;
     overflow-y: auto;
 }
-.ganttChart .calendar .bar {
-    position: absolute;
-    background: lightblue;
-    z-index: 2;
-}
 
 .calendar {
     position: relative;
+    overflow: hidden;
 }
 .calendar canvas {
     display: block;
@@ -109,6 +105,11 @@
     position: absolute;
     background: lightgreen;
     z-index: 1;
+}
+.calendar .bar {
+    position: absolute;
+    background: lightblue;
+    z-index: 2;
 }
 
 /* ==== hoverScroller.css ==== */
