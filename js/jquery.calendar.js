@@ -31,6 +31,13 @@
             var ctx = this.context;
             var options = this.options;
 
+            if ( ! Date.isValid(options.startDate) ) {
+                $.error("Invalid start date for calendar");
+            }
+            if ( ! Date.isValid(options.finishDate) ) {
+                $.error("Invalid finish date for calendar");
+            }
+
             // Recalculate width/height in case options have changed
             options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
             this.wrapper
@@ -145,12 +152,18 @@
             this.element.remove();
         },
         draw: function() {
-            this.element.css({
-                top: this.calendarWidget.options.headerHeight,
-                bottom: 0,
-                left: this.calendarWidget.date2positionLeft(this.date),
-                right: this.calendarWidget.date2positionRight(this.date)
-            });
+            if ( Date.isValid(this.date) ) {
+                this.element
+                    .show()
+                    .css({
+                        top: this.calendarWidget.options.headerHeight,
+                        bottom: 0,
+                        left: this.calendarWidget.date2positionLeft(this.date),
+                        right: this.calendarWidget.date2positionRight(this.date)
+                    });
+            } else {
+                this.element.hide();
+            }
         }
     });
     // End of DateHighlighter class
@@ -164,26 +177,17 @@
             finishDate: undefined,
             barHeight: "10px",
             verticalPosition: undefined,
-            addClasses: "",
+            color: "lightblue",
             calendarWidget: undefined
         }, options);
-        this.element = $('<div>');
+        this.element = $('<div class="bar">');
         this.element.appendTo(this.options.calendarWidget.wrapper);
     }
     $.extend(Bar.prototype, {
         draw: function() {
-            var classes = ["bar"].concat(this.options.addClasses);
-            if ( this.options.startDate.getTime() > Date.today.getTime() ) {
-                classes.push("future");
-            } else if ( this.options.finishDate.getTime() < Date.today.getTime() ) {
-                classes.push("past");
-            } else {
-                classes.push("present");
-            }
             this.element
-                .removeClass(this.element.attr('class'))
-                .addClass(classes.join(" "))
                 .css({
+                    'background-color': this.options.color,
                     height: this.options.barHeight,
                     left: this.options.calendarWidget.date2positionLeft(this.options.startDate),
                     right: this.options.calendarWidget.date2positionRight(this.options.finishDate)

@@ -163,3 +163,13 @@ $.fn.setObjectValue = function(value) {
     });		 
     return this;
 }
+
+// Filter to only table cells in a column
+$.fn.findByColumn = function(colSelector) {
+    var newSelection = $([]);
+    var cells = this.find('td, th');
+    this.closest('table').find('col').filter(colSelector).each(function(j, col) {
+        newSelection = newSelection.add(cells.filter(':nth-child('+($(col).index()+1)+')'));
+    });
+    return this.pushStack(newSelection);
+}

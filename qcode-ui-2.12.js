@@ -809,16 +809,23 @@ function parseBoolean(value) {
 /* ==== date.js ==== */
 // Extensions for the javascript Date function
 ;(function() {
+    // ==============================
     // Constants
+    // ==============================
     var millisecondsPerDay = 1000 * 60 * 60 * 24;
     var dayLetter = ["S", "M", "T", "W", "T", "F", "S"];
     var monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+    // ==============================
     // Methods
+    // ==============================
     Date.prototype.incrDays = function(days) {
+        // Move this date forward by a number of days. Accepts negative and non-integer values.
         this.setTime(this.getTime() + (days * millisecondsPerDay));
     }
     Date.prototype.getWeekStart = function(base) {
+        // Get a new date object representing the first day of this date's week.
+        // Optional: base - the day to start the week on. 0 = Sunday, 1 = Monday, etc.
         base = coalesce(base, 1);
         var days_to_subtract = this.getDay() - base;
         if (days_to_subtract < 0) {
@@ -827,6 +834,8 @@ function parseBoolean(value) {
         return new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
     }
     Date.prototype.getWeekEnd = function(base) {
+        // Get a new date object representing the last day of this date's week.
+        // Optional: base - the day to start the week on. 0 = Sunday, 1 = Monday, etc.
         base = coalesce(base, 1);
         var days_to_add = base + 6 - this.getDay();
         if (days_to_add > 6) {
@@ -835,14 +844,19 @@ function parseBoolean(value) {
         return new Date(this.getTime() + (days_to_add * millisecondsPerDay));
     }
     Date.prototype.getDayLetter = function() {
+        // Get the first letter of this date's day of week name
         return dayLetter[this.getDay()];
     }
     Date.prototype.getMonthShort = function() {
+        // Get the short name of this date's month
         return monthShort[this.getMonth()];
     }
 
+    // ==============================
     // Static functions
+    // ==============================
     Date.min = function() {
+        // Returns a the earliest from the dates passed in - takes any number of arguments
         var min = Infinity;
         for(var i = arguments.length; i > 0; i--) {
             min = Math.min(min, arguments[i - 1].getTime());
@@ -850,6 +864,7 @@ function parseBoolean(value) {
         return new Date(min);
     }
     Date.max = function() {
+        // Returns a the latest from the dates passed in - takes any number of arguments
         var max = -Infinity;
         for(var i = arguments.length; i > 0; i--) {
             max = Math.max(max, arguments[i - 1].getTime());
@@ -857,12 +872,21 @@ function parseBoolean(value) {
         return new Date(max);
     }
     Date.daysBetween = function(date1, date2) {
+        // Returns the number of days between date1 and date2 (negative if date1 is earlier than date2)
+        // May fail if the date objects represent different times of day
         var milliseconds = date1.getTime() - date2.getTime();
         return Math.round(milliseconds / millisecondsPerDay);
     }
+    Date.isValid = function(date) {
+        // Returns true if passed a valid date object. Returns false if the argument is not a valid date object
+        return (date instanceof Date) && ( ! isNaN(date.getTime()) );
+    }
 
+    // ==============================
     // Static properties
+    // ==============================
     var now = new Date();
+    // A date representing mindnight (00:00:00) today
     Date.today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
 })();
 
@@ -1461,35 +1485,45 @@ function dynamicResize(oContainer) {
                 lines: 'rgba(200,200,200,1)',
                 text: 'rgba(100,100,100,1)'
             },
-            barHeight: 15
+            barHeight: "10px"
         },
         _create: function() {
-            var canvas = this.element[0];
+            var domCanvas = this.element[0];
             this.element.wrap('<div class="calendar">');
             this.wrapper = this.element.parent();
-            if ( ! canvas.getContext ) {
+            if ( ! domCanvas.getContext ) {
                 $.error("Plugin qcode.calendar currently requires a canvas");
             }
-            this.ctx = canvas.getContext('2d');
+            this.context = domCanvas.getContext('2d');
             this.highlighters = [];
-            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
             this.bars = [];
+            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
         },
         draw: function() {
-            var ctx = this.ctx;
+            // draw (or redraw) the calendar
+            var ctx = this.context;
             var options = this.options;
 
-            // Update the canvas width/height in case options have changed, then clear the canvas.
+            if ( ! Date.isValid(options.startDate) ) {
+                $.error("Invalid start date for calendar");
+            }
+            if ( ! Date.isValid(options.finishDate) ) {
+                $.error("Invalid finish date for calendar");
+            }
+
+            // Recalculate width/height in case options have changed
             options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
             this.wrapper
                 .width(options.width)
                 .height(options.bodyHeight + options.headerHeight);
+            // Canvas html width/height attributes function differently to css width/height
             this.element
                 .attr('width', options.width)
                 .attr('height', options.bodyHeight + options.headerHeight);
-
+            // Clear the canvas
             ctx.clearRect(0, 0, options.width, options.bodyHeight);
 
+            // Offset path to account for line width, and begin a path to draw all the grid lines
             var x = 0.5;
             ctx.beginPath();
             ctx.textBaseline = "middle";
@@ -1500,8 +1534,8 @@ function dynamicResize(oContainer) {
 
                 // Header text
                 ctx.fillStyle = options.styles.text;
+                // Label start of week on mondays
                 if ( date.getDay() == 1 ) {
-                    // Label start of week on mondays
                     ctx.textAlign = "left";
                     ctx.fillText(date.getDate() + " " + date.getMonthShort(), x, (options.headerHeight / 4));
                     ctx.moveTo(x, 0);
@@ -1514,7 +1548,9 @@ function dynamicResize(oContainer) {
                 if ( date.getDay() == 0 || date.getDay() == 6 ) {
                     ctx.fillStyle = this.options.styles.weekends;
                     ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.bodyHeight);
+
                 } else {
+                    // Draw a line down the right side of each day
                     ctx.moveTo(x + options.pxPerDay, options.headerHeight);
                     ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
                 }
@@ -1522,7 +1558,7 @@ function dynamicResize(oContainer) {
                 date.incrDays(1);
             }
 
-            // Draw all the lines
+            // Actually draw all the lines
             ctx.strokeStyle = options.styles.lines;
             ctx.stroke();
 
@@ -1548,11 +1584,13 @@ function dynamicResize(oContainer) {
             return this.wrapper;
         },
         newDateHighlighter: function(date, color) {
+            // Create and return a date highlighter attached to this calendar (see class defs. below)
             var highlighter = new DateHighlighter(this, date, color);
             this.highlighters.push(highlighter);
             return highlighter;
         },
         newBar: function(options) {
+            // Create and return a horizontal bar attached to this calendar (see class defs. below)
             var bar = new Bar($.extend({
                 barHeight: this.options.barHeight,
                 calendarWidget: this
@@ -1561,13 +1599,17 @@ function dynamicResize(oContainer) {
             return bar;
         }
     });
+    // End of calendar widget
 
+
+    // DateHighlighter class
+    // This object highlights a single date in a calendar.
     function DateHighlighter(calendarWidget, date, color) {
         this.calendarWidget = calendarWidget;
         this.element = $('<div class="dateHighlighter">');
         this.element.appendTo(calendarWidget.wrapper);
-        this.setDate(date);
         this.setColor(color);
+        this.setDate(date);
     }
     $.extend(DateHighlighter.prototype, {
         setDate: function(newDate) {
@@ -1583,42 +1625,42 @@ function dynamicResize(oContainer) {
             this.element.remove();
         },
         draw: function() {
-            this.element.css({
-                top: this.calendarWidget.options.headerHeight,
-                bottom: 0,
-                left: this.calendarWidget.date2positionLeft(this.date),
-                right: this.calendarWidget.date2positionRight(this.date)
-            });
+            if ( Date.isValid(this.date) ) {
+                this.element
+                    .show()
+                    .css({
+                        top: this.calendarWidget.options.headerHeight,
+                        bottom: 0,
+                        left: this.calendarWidget.date2positionLeft(this.date),
+                        right: this.calendarWidget.date2positionRight(this.date)
+                    });
+            } else {
+                this.element.hide();
+            }
         }
     });
+    // End of DateHighlighter class
 
+
+    // Bar class
+    // A horizontal bar added to the calendar
     function Bar(options) {
         this.options = $.extend({
             startDate: undefined,
             finishDate: undefined,
-            barHeight: 15,
+            barHeight: "10px",
             verticalPosition: undefined,
-            addClasses: "",
+            color: "lightblue",
             calendarWidget: undefined
         }, options);
-        this.element = $('<div>');
+        this.element = $('<div class="bar">');
         this.element.appendTo(this.options.calendarWidget.wrapper);
-        this.draw();
     }
     $.extend(Bar.prototype, {
         draw: function() {
-            var classes = ["bar"].concat(this.options.addClasses);
-            if ( this.options.startDate.getTime() > Date.today.getTime() ) {
-                classes.push("future");
-            } else if ( this.options.finishDate.getTime() < Date.today.getTime() ) {
-                classes.push("past");
-            } else {
-                classes.push("present");
-            }
             this.element
-                .removeClass(this.element.attr('class'))
-                .addClass(classes.join(" "))
                 .css({
+                    'background-color': this.options.color,
                     height: this.options.barHeight,
                     left: this.options.calendarWidget.date2positionLeft(this.options.startDate),
                     right: this.options.calendarWidget.date2positionRight(this.options.finishDate)
@@ -1631,6 +1673,7 @@ function dynamicResize(oContainer) {
             this.element.remove();
         }
     });
+    // End of Bar class
 })(jQuery);
 
 /* ==== jquery.colInherit.js ==== */
@@ -5517,6 +5560,13 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.ganttChart.js ==== */
 // ganttChart plugin. Call on a table to make it into a gantt chart.
+// options -
+//  width: any css width, width of the entire chart (table + calendar)
+//  headerHeight: integer, height of the chart header
+//  columns: object mapping keys to any jQuery selector/element/elementArray/object
+//   use "columns" to match columns containing the row start dates, finish dates and bar colors
+//  pxPerDay: integer, width of 1 day in the calendar
+//  barHeight: any css height, height of the bars
 ;(function($, undefined) {
     jQuery.widget('qcode.ganttChart', {
         options: {
@@ -5525,51 +5575,57 @@ function dbFormHTMLArea(oDiv) {
             columns: {
                 startDate: "[name=start_date]",
                 finishDate: "[name=finish_date]",
-                barClass: "[name=state]"
+                barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
             barHeight: "0.5em"
         },
         _create: function() {
-            this.bars = $([]);
+            // Get options from custom attributes
+            $.each(this.options, (function(name, value) {
+                this.options[name] = coalesce(this.element.attr(name), value);
+            }).bind(this));
+            this.options = $.extend(this.element.data(this.widgetName), this.options);
+
+            // Initialise some properties
+            this.bars = [];
             this.table = this.element;
             this.rows = this.table.children('tbody').children('tr');
 
+            // Wrap the whole thing in a div
             this.table.wrap('<div class="ganttChart wrapper">');
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
+            // Record the old margin in case we want to destroy this widget
             this.oldMargin = this.table.css('margin-top');
             this.table.css('margin-top', this.options.headerHeight - this.table.find('thead').outerHeight());
 
+            // Create a scrolling window for the calendar
             this.calendarFrame = $('<div class="calendarFrame">')
                 .width(this.wrapper.width() - this.table.outerWidth())
                 .insertAfter(this.table);
 
+            // Create a canvas for the calendar
             this.calendar = $('<canvas>').appendTo(this.calendarFrame);
 
+            // In case the table is a dbGrid, listen for updates.
             this._on({'dbRowActionReturn': this.draw});
 
             this.draw();
-            /*var scrollLeftDate = Date.today.getWeekStart();
-            scrollLeftDate.incrDays(-14);
-            this.chartFrame.scrollLeft(this.calendar.calendar('date2positionLeft', scrollLeftDate));*/
         },
         draw: function() {
+            // Draw (or redraw) this gantt chart
             var ganttChart = this;
 
             // Calculate a suitable range of dates for the calendar
-            var minDate = new Date();
-            var maxDate = new Date();
+            var minDate = Date.today;
+            var maxDate = Date.today;
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart.getRowStartDate(rowIndex);
                 var finishDate = ganttChart.getRowFinishDate(rowIndex);
-                if ( ! isNaN(startDate.getTime()) ) {
+                if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
                     minDate = Date.min(minDate,startDate);
-                    maxDate = Date.max(maxDate,startDate);
-                }
-                if ( ! isNaN(finishDate.getTime()) ) {
-                    minDate = Date.min(minDate,finishDate);
                     maxDate = Date.max(maxDate,finishDate);
                 }
             });
@@ -5578,46 +5634,54 @@ function dbFormHTMLArea(oDiv) {
             var startDate = minDate.getWeekStart();
             var finishDate = maxDate.getWeekEnd();
 
-            // Draw the calendar
-            this.calendar
-                .calendar({
-                    bodyHeight: this.table.find('tbody').outerHeight(),
-                    headerHeight: this.options.headerHeight,
-                    startDate: startDate,
-                    finishDate: finishDate,
-                    pxPerDay: this.options.pxPerDay,
-                    barHeight: this.options.barHeight
-                })
-                .calendar('draw');
+            // Initialize the calendar
+            this.calendar.calendar({
+                bodyHeight: this.table.find('tbody').outerHeight(),
+                headerHeight: this.options.headerHeight,
+                startDate: startDate,
+                finishDate: finishDate,
+                pxPerDay: this.options.pxPerDay,
+                barHeight: this.options.barHeight
+            })
 
             // Draw the bars (remove any existing bars first)
-            this.bars.remove();
-            this.bars = $([]);
+            $.each(this.bars, function(i, bar) {
+                bar.remove();
+            });
+            this.bars = [];
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart.getRowStartDate(rowIndex);
                 var finishDate = ganttChart.getRowFinishDate(rowIndex);
-                if ( ! (isNaN(startDate.getDate()) || isNaN(finishDate.getDate())) ) {
-                    var rowTop = $(domRow).positionRelativeTo(ganttChart.wrapper).top;
+                if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                    var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
                     var bar = ganttChart.calendar.calendar('newBar', {
                         startDate: startDate,
                         finishDate: finishDate,
-                        verticalPosition: rowTop + ($(domRow).height() / 2),
-                        addClasses: ganttChart.getCellValue('barClass', rowIndex)
+                        verticalPosition: verticalPosition,
+                        color: ganttChart.getCellValue('barColor', rowIndex)
                     });
-                    ganttChart.bars = ganttChart.bars.add(bar);
+                    ganttChart.bars.push(bar);
                 }
             });
+
+            // Draw the calendar
+            this.calendar.calendar('draw');
         },
         getRowStartDate: function(rowIndex) {
+            // Get the start date of a given row
             return new Date(this.getCellValue('startDate', rowIndex));
         },
         getRowFinishDate: function(rowIndex) {
+            // Get the finish date of a given row
             return new Date(this.getCellValue('finishDate', rowIndex));
         },
         getCellValue: function(colName, rowIndex) {
-            return this.rows.eq(rowIndex).find(this.options.columns[colName]).text();
+            // Using the column selector from this.options.columns with the key colName,
+            // find the first matching cell in the indexed row, and return the contents.
+            return this.rows.eq(rowIndex).findByColumn(this.options.columns[colName]).text();
         },
         newDateHighlighter: function(date, style) {
+            // Create and return a new date highlighter object
             return this.calendar.calendar('newDateHighlighter', date, style);
         },
         widget: function() {
@@ -5627,6 +5691,7 @@ function dbFormHTMLArea(oDiv) {
             return this.calendar;
         },
         destroy: function() {
+            // Destroy this widget and return the table to its initial state
             this.bars.remove();
             this.calendar.calendar('destroy').remove();
             this.calendarFrame.remove();
@@ -7924,6 +7989,16 @@ $.fn.setObjectValue = function(value) {
 	}
     });		 
     return this;
+}
+
+// Filter to only table cells in a column
+$.fn.findByColumn = function(colSelector) {
+    var newSelection = $([]);
+    var cells = this.find('td, th');
+    this.closest('table').find('col').filter(colSelector).each(function(j, col) {
+        newSelection = newSelection.add(cells.filter(':nth-child('+($(col).index()+1)+')'));
+    });
+    return this.pushStack(newSelection);
 }
 
 /* ==== tabCtl.js ==== */
