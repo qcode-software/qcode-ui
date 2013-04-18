@@ -65,10 +65,11 @@
                 if ( date.getDay() == 0 || date.getDay() == 6 ) {
                     ctx.fillStyle = this.options.styles.weekends;
                     ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.bodyHeight);
-                } else {
-                    ctx.moveTo(x + options.pxPerDay, options.headerHeight);
-                    ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
                 }
+                // Draw vertical lines at the end of each day
+                ctx.moveTo(x + options.pxPerDay, options.headerHeight);
+                ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
+                
                 x += options.pxPerDay;
                 date.incrDays(1);
             }
