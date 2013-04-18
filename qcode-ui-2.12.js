@@ -1486,7 +1486,7 @@ function dynamicResize(oContainer) {
                 .height(options.bodyHeight + options.headerHeight);
             this.element
                 .attr('width', options.width)
-                .attr('bodyHeight', options.bodyHeight + options.headerHeight);
+                .attr('height', options.bodyHeight + options.headerHeight);
 
             ctx.clearRect(0, 0, options.width, options.bodyHeight);
 
@@ -5515,7 +5515,7 @@ function dbFormHTMLArea(oDiv) {
     };
 })(jQuery);
 
-/* ==== jquery.gantt.js ==== */
+/* ==== jquery.ganttChart.js ==== */
 // ganttChart plugin. Call on a table to make it into a gantt chart.
 ;(function($, undefined) {
     jQuery.widget('qcode.ganttChart', {
