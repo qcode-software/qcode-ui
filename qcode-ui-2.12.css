@@ -83,13 +83,11 @@
 
 /* ==== gantt.css ==== */
 .ganttChart.wrapper {
-    overflow: auto;
-}
-.ganttChart table {
-    float: left;
+    position: relative;
+    padding: 0.1px;
 }
 .ganttChart .calendarFrame {
-    float: left;
+    position: absolute;
     overflow-x: scroll;
     overflow-y: auto;
 }

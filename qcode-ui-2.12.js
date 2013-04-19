@@ -5567,6 +5567,7 @@ function dbFormHTMLArea(oDiv) {
 //  pxPerDay: integer, width of 1 day in the calendar
 //  barHeight: any css height, height of the bars
 ;(function($, undefined) {
+    var scrollBarWidth = "18px";
     jQuery.widget('qcode.ganttChart', {
         options: {
             width: "100%",
@@ -5597,12 +5598,21 @@ function dbFormHTMLArea(oDiv) {
             this.wrapper.css('width', this.options.width);
 
             // Record the old margin in case we want to destroy this widget
-            this.oldMargin = this.table.css('margin-top');
-            this.table.css('margin-top', this.options.headerHeight - this.table.find('thead').outerHeight());
+            this.oldMarginTop = this.table.css('margin-top');
+            this.oldMarginBottom = this.table.css('margin-bottom');
+            this.table.css({
+                'margin-top': this.options.headerHeight - this.table.find('thead').outerHeight(),
+                'margin-bottom': scrollBarWidth
+            });
 
             // Create a scrolling window for the calendar
             this.calendarFrame = $('<div class="calendarFrame">')
-                .width(this.wrapper.width() - this.table.outerWidth())
+                .css({
+                    left: this.table.outerWidth(),
+                    right: 0,
+                    top: 0,
+                    bottom: 0
+                })
                 .insertAfter(this.table);
 
             // Create a canvas for the calendar
@@ -5694,7 +5704,7 @@ function dbFormHTMLArea(oDiv) {
             this.bars.remove();
             this.calendar.calendar('destroy').remove();
             this.calendarFrame.remove();
-            this.table.unwrap().css('margin-top', this.oldMargin);
+            this.table.unwrap().css('margin-top', this.oldMarginTop);
         }
     });
 })(jQuery);
