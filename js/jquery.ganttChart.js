@@ -115,6 +115,10 @@
 
             // Draw the calendar
             this.calendar.calendar('draw');
+
+            // Google Chrome bug fix hack
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
         },
         _getRowStartDate: function(rowIndex) {
             // Get the start date of a given row
