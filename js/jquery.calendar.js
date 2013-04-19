@@ -161,7 +161,7 @@
                         right: this.calendarWidget.date2positionRight(this.date)
                     });
             } else {
-                this.element.hide();
+                $.error("Invalid Date");
             }
         }
     });

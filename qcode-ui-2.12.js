@@ -1634,7 +1634,7 @@ function dynamicResize(oContainer) {
                         right: this.calendarWidget.date2positionRight(this.date)
                     });
             } else {
-                this.element.hide();
+                $.error("Invalid Date");
             }
         }
     });
@@ -5618,8 +5618,8 @@ function dbFormHTMLArea(oDiv) {
             var ganttChart = this;
 
             // Calculate a suitable range of dates for the calendar
-            var minDate = Date.today;
-            var maxDate = Date.today;
+            var minDate = new Date(Date.today.getTime());
+            var maxDate = new Date(Date.today.getTime());
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
