@@ -3,7 +3,8 @@
     // ==============================
     // Constants
     // ==============================
-    var millisecondsPerDay = 1000 * 60 * 60 * 24;
+    var millisecondsPerMinute = 1000 * 60;
+    var millisecondsPerDay =  millisecondsPerMinute * 60 * 24;
     var dayLetter = ["S", "M", "T", "W", "T", "F", "S"];
     var monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -12,7 +13,12 @@
     // ==============================
     Date.prototype.incrDays = function(days) {
         // Move this date forward by a number of days. Accepts negative and non-integer values.
+        var oldOffset = this.getTimezoneOffset();
         this.setTime(this.getTime() + (days * millisecondsPerDay));
+        var newOffset = this.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            this.setTime(this.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
     }
     Date.prototype.getWeekStart = function(base) {
         // Get a new date object representing the first day of this date's week.
@@ -22,7 +28,13 @@
         if (days_to_subtract < 0) {
             days_to_subtract += 7;
         }
-        return new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
     }
     Date.prototype.getWeekEnd = function(base) {
         // Get a new date object representing the last day of this date's week.
@@ -32,7 +44,13 @@
         if (days_to_add > 6) {
             days_to_add -= 7;
         }
-        return new Date(this.getTime() + (days_to_add * millisecondsPerDay));
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() - (days_to_add * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
     }
     Date.prototype.getDayLetter = function() {
         // Get the first letter of this date's day of week name
@@ -64,7 +82,6 @@
     }
     Date.daysBetween = function(date1, date2) {
         // Returns the number of days between date1 and date2 (negative if date1 is earlier than date2)
-        // May fail if the date objects represent different times of day
         var milliseconds = date1.getTime() - date2.getTime();
         return Math.round(milliseconds / millisecondsPerDay);
     }
