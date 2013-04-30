@@ -60,12 +60,14 @@
 
             // In case the table is a dbGrid, listen for updates.
             this._on({'dbRowActionReturn': this.draw});
+            this._on({'resize': this.draw});
 
             this.draw();
         },
         draw: function() {
             // Draw (or redraw) this gantt chart
             var ganttChart = this;
+            this.calendarFrame.css('left', this.table.outerWidth());
 
             // Calculate a suitable range of dates for the calendar
             var minDate = new Date(Date.today.getTime());
