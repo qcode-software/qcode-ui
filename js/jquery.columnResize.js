@@ -31,7 +31,7 @@
             case 'break-word':
                 break;
             default:
-                $.error('Unrecognised value for options.overflow - supported optionsd are "shrink", "shrink-one-line", "normal", "break-word"');
+                $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
             }
 
