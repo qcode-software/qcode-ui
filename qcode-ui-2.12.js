@@ -812,7 +812,8 @@ function parseBoolean(value) {
     // ==============================
     // Constants
     // ==============================
-    var millisecondsPerDay = 1000 * 60 * 60 * 24;
+    var millisecondsPerMinute = 1000 * 60;
+    var millisecondsPerDay =  millisecondsPerMinute * 60 * 24;
     var dayLetter = ["S", "M", "T", "W", "T", "F", "S"];
     var monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -821,7 +822,12 @@ function parseBoolean(value) {
     // ==============================
     Date.prototype.incrDays = function(days) {
         // Move this date forward by a number of days. Accepts negative and non-integer values.
+        var oldOffset = this.getTimezoneOffset();
         this.setTime(this.getTime() + (days * millisecondsPerDay));
+        var newOffset = this.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            this.setTime(this.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
     }
     Date.prototype.getWeekStart = function(base) {
         // Get a new date object representing the first day of this date's week.
@@ -831,7 +837,13 @@ function parseBoolean(value) {
         if (days_to_subtract < 0) {
             days_to_subtract += 7;
         }
-        return new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
     }
     Date.prototype.getWeekEnd = function(base) {
         // Get a new date object representing the last day of this date's week.
@@ -841,7 +853,13 @@ function parseBoolean(value) {
         if (days_to_add > 6) {
             days_to_add -= 7;
         }
-        return new Date(this.getTime() + (days_to_add * millisecondsPerDay));
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() - (days_to_add * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
     }
     Date.prototype.getDayLetter = function() {
         // Get the first letter of this date's day of week name
@@ -873,7 +891,6 @@ function parseBoolean(value) {
     }
     Date.daysBetween = function(date1, date2) {
         // Returns the number of days between date1 and date2 (negative if date1 is earlier than date2)
-        // May fail if the date objects represent different times of day
         var milliseconds = date1.getTime() - date2.getTime();
         return Math.round(milliseconds / millisecondsPerDay);
     }
@@ -1753,6 +1770,43 @@ function dynamicResize(oContainer) {
 	    });
 	});
 	return this;
+    }
+})(jQuery);
+
+/* ==== jquery.columnResize.js ==== */
+// Column Resize plugin
+// Uses jQuery UI resizable, but resizes the entire column and breaks words if the column gets too small
+;(function($, undefined) {
+    $.fn.columnResize = function(options) {
+        var options = $.extend({
+            'word-break': "auto"
+        }, options);
+
+        this.find('th').each(function() {
+            $(this).resizable({
+                handles: "e",
+                resize: onResize
+            });                
+        });
+
+        function onResize(e, ui) {
+            var th = $(this);
+            var index = th.index();
+            var table = th.closest('table');
+            var col = table.find('col').filter(':nth-child('+(index+1)+')');
+            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+            if ( options['word-break'] === "auto" ) {
+                th.add(cells).add(col).css('word-break', 'normal');
+                th.add(col).add(cells).width(ui.size.width);
+                if ( th.width() != ui.size.width ) {
+                    th.add(cells).add(col).css('word-break', 'break-all');
+                }
+            } else {
+                col.add(cells).width(ui.size.width);
+            }
+            event.stopPropagation;
+            table.trigger('resize');
+        }
     }
 })(jQuery);
 
@@ -3789,15 +3843,16 @@ function dynamicResize(oContainer) {
 		this.find(name, value);
 	    }
 	},
-	save: function() {
+	save: function(async) {
+            async = coalesce(async, false);
 	    switch( this.settings.formType ) {
 	    case "update":
 		this.setState('updating');
-		this.formAction('update', this.settings.updateURL);
+		this.formAction('update', this.settings.updateURL,undefined,undefined,async);
 		break;
 	    case "add":
 		this.setState('updating');
-		this.formAction('add', this.settings.addURL);
+		this.formAction('add', this.settings.addURL,undefined,undefined,async);
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
@@ -5620,12 +5675,14 @@ function dbFormHTMLArea(oDiv) {
 
             // In case the table is a dbGrid, listen for updates.
             this._on({'dbRowActionReturn': this.draw});
+            this._on({'resize': this.draw});
 
             this.draw();
         },
         draw: function() {
             // Draw (or redraw) this gantt chart
             var ganttChart = this;
+            this.calendarFrame.css('left', this.table.outerWidth());
 
             // Calculate a suitable range of dates for the calendar
             var minDate = new Date(Date.today.getTime());
