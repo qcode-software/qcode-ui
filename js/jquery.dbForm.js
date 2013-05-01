@@ -42,15 +42,16 @@
 		this.find(name, value);
 	    }
 	},
-	save: function() {
+	save: function(async) {
+            async = coalesce(async, false);
 	    switch( this.settings.formType ) {
 	    case "update":
 		this.setState('updating');
-		this.formAction('update', this.settings.updateURL);
+		this.formAction('update', this.settings.updateURL,undefined,undefined,async);
 		break;
 	    case "add":
 		this.setState('updating');
-		this.formAction('add', this.settings.addURL);
+		this.formAction('add', this.settings.addURL,undefined,undefined,async);
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
