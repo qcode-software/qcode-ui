@@ -18,7 +18,7 @@
                 barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
-            barHeight: "1em"
+            barHeight: "10px"
         },
         _create: function() {
             // Get options from custom attributes
@@ -59,8 +59,12 @@
             this.calendar = $('<canvas>').appendTo(this.calendarFrame);
 
             // In case the table is a dbGrid, listen for updates.
-            this._on({'dbRowActionReturn': this.draw});
-            this._on({'resize': this.draw});
+            this._on({'dbRowActionReturn': function() {
+                this.draw();
+            }});
+            this._on({'resize': function(event) {
+                //3this.draw();
+            }});
 
             this.draw();
         },
@@ -147,7 +151,9 @@
         },
         destroy: function() {
             // Destroy this widget and return the table to its initial state
-            this.bars.remove();
+            this.bars.each(function() {
+                this.remove();
+            });
             this.calendar.calendar('destroy').remove();
             this.calendarFrame.remove();
             this.table.unwrap().css('margin-top', this.oldMarginTop);

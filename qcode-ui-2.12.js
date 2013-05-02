@@ -1506,8 +1506,6 @@ function dynamicResize(oContainer) {
         },
         _create: function() {
             var domCanvas = this.element[0];
-            this.element.wrap('<div class="calendar">');
-            this.wrapper = this.element.parent();
             if ( ! domCanvas.getContext ) {
                 $.error("Plugin qcode.calendar currently requires a canvas");
             }
@@ -1530,9 +1528,7 @@ function dynamicResize(oContainer) {
 
             // Recalculate width/height in case options have changed
             options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
-            this.wrapper
-                .width(options.width)
-                .height(options.bodyHeight + options.headerHeight);
+
             // Canvas html width/height attributes function differently to css width/height
             this.element
                 .attr('width', options.width)
@@ -1596,9 +1592,6 @@ function dynamicResize(oContainer) {
             var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
             return right;
         },
-        widget: function() {
-            return this.wrapper;
-        },
         newDateHighlighter: function(date, color) {
             // Create and return a date highlighter attached to this calendar (see class defs. below)
             var highlighter = new DateHighlighter(this, date, color);
@@ -1622,34 +1615,33 @@ function dynamicResize(oContainer) {
     // This object highlights a single date in a calendar.
     function DateHighlighter(calendarWidget, date, color) {
         this.calendarWidget = calendarWidget;
-        this.element = $('<div class="dateHighlighter">');
-        this.element.appendTo(calendarWidget.wrapper);
-        this.setColor(color);
-        this.setDate(date);
+        this.color = color;
+        this.date = date;
+        this.draw();
     }
     $.extend(DateHighlighter.prototype, {
         setDate: function(newDate) {
             this.date = newDate;
-            this.draw();
+            this.calendarWidget.draw();
         },
         setColor: function(newColor) {
-            this.element.css({
-                background: newColor
-            });
+            this.color = newColor;
+            this.draw();
         },
         remove: function() {
             this.element.remove();
         },
         draw: function() {
             if ( Date.isValid(this.date) ) {
-                this.element
-                    .show()
-                    .css({
-                        top: this.calendarWidget.options.headerHeight,
-                        bottom: 0,
-                        left: this.calendarWidget.date2positionLeft(this.date),
-                        right: this.calendarWidget.date2positionRight(this.date)
-                    });
+                var left = this.calendarWidget.date2positionLeft(this.date);
+                var right = this.calendarWidget.date2positionRight(this.date);
+                var width = this.calendarWidget.option('width') - left - right;
+                var top = this.calendarWidget.option('headerHeight');
+                var bottom = 0;
+                var height = this.calendarWidget.option('bodyHeight');
+                ctx = this.calendarWidget.context;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(left, top, width, height);
             } else {
                 $.error("Invalid Date");
             }
@@ -1669,24 +1661,22 @@ function dynamicResize(oContainer) {
             color: "lightblue",
             calendarWidget: undefined
         }, options);
-        this.element = $('<div class="bar">');
-        this.element.appendTo(this.options.calendarWidget.wrapper);
     }
     $.extend(Bar.prototype, {
         draw: function() {
-            this.element
-                .css({
-                    'background-color': this.options.color,
-                    height: this.options.barHeight,
-                    left: this.options.calendarWidget.date2positionLeft(this.options.startDate),
-                    right: this.options.calendarWidget.date2positionRight(this.options.finishDate)
-                })
-                .css({
-                    top: this.options.verticalPosition - (this.element.height() / 2)
-                });
+            var ctx = this.options.calendarWidget.context;
+            var left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
+            var right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
+            var width = this.options.calendarWidget.option('width') - left - right;
+            var top = this.options.verticalPosition - (parseInt(this.options.barHeight) / 2);
+            var height = parseInt(this.options.barHeight);
+            ctx.fillStyle = this.options.color;
+            ctx.fillRect(left, top, width, height);
         },
         remove: function() {
-            this.element.remove();
+            var bars = this.options.calendarWidget.bars;
+            var index = bars.indexOf(this);
+            bars.splice(index, 1);
         }
     });
     // End of Bar class
@@ -1807,7 +1797,7 @@ function dynamicResize(oContainer) {
             case 'break-word':
                 break;
             default:
-                $.error('Unrecognised value for options.overflow - supported optionsd are "shrink", "shrink-one-line", "normal", "break-word"');
+                $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
             }
 
@@ -5687,7 +5677,7 @@ function dbFormHTMLArea(oDiv) {
                 barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
-            barHeight: "1em"
+            barHeight: "10px"
         },
         _create: function() {
             // Get options from custom attributes
@@ -5728,8 +5718,12 @@ function dbFormHTMLArea(oDiv) {
             this.calendar = $('<canvas>').appendTo(this.calendarFrame);
 
             // In case the table is a dbGrid, listen for updates.
-            this._on({'dbRowActionReturn': this.draw});
-            this._on({'resize': this.draw});
+            this._on({'dbRowActionReturn': function() {
+                this.draw();
+            }});
+            this._on({'resize': function(event) {
+                //3this.draw();
+            }});
 
             this.draw();
         },
@@ -5816,7 +5810,9 @@ function dbFormHTMLArea(oDiv) {
         },
         destroy: function() {
             // Destroy this widget and return the table to its initial state
-            this.bars.remove();
+            this.bars.each(function() {
+                this.remove();
+            });
             this.calendar.calendar('destroy').remove();
             this.calendarFrame.remove();
             this.table.unwrap().css('margin-top', this.oldMarginTop);
