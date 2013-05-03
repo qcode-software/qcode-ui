@@ -45,7 +45,7 @@
             days_to_add -= 7;
         }
         var oldOffset = this.getTimezoneOffset();
-        var newDate =  new Date(this.getTime() - (days_to_add * millisecondsPerDay));
+        var newDate =  new Date(this.getTime() + (days_to_add * millisecondsPerDay));
         var newOffset = newDate.getTimezoneOffset();
         if ( oldOffset != newOffset ) {
             newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
