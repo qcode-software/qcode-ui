@@ -854,7 +854,7 @@ function parseBoolean(value) {
             days_to_add -= 7;
         }
         var oldOffset = this.getTimezoneOffset();
-        var newDate =  new Date(this.getTime() - (days_to_add * millisecondsPerDay));
+        var newDate =  new Date(this.getTime() + (days_to_add * millisecondsPerDay));
         var newOffset = newDate.getTimezoneOffset();
         if ( oldOffset != newOffset ) {
             newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
@@ -1665,6 +1665,12 @@ function dynamicResize(oContainer) {
     $.extend(Bar.prototype, {
         draw: function() {
             var ctx = this.options.calendarWidget.context;
+            ctx.beginPath();
+            ctx.moveTo(0, this.options.verticalPosition + 0.5);
+            ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
+            ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
+            ctx.stroke();
+
             var left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
             var right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
             var width = this.options.calendarWidget.option('width') - left - right;
@@ -5733,18 +5739,28 @@ function dbFormHTMLArea(oDiv) {
             this.calendarFrame.css('left', this.table.outerWidth());
 
             // Calculate a suitable range of dates for the calendar
-            var minDate = new Date(Date.today.getTime());
-            var maxDate = new Date(Date.today.getTime());
+            var minDate;
+            var maxDate;
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
+                
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
-                    minDate = Date.min(minDate,startDate);
-                    maxDate = Date.max(maxDate,finishDate);
+                    if ( Date.isValid(minDate) && Date.isValid(maxDate) ) {
+                        minDate = Date.min(minDate,startDate);
+                        maxDate = Date.max(maxDate,finishDate);
+                    } else {
+                        minDate = startDate;
+                        maxDate = finishDate;
+                    }
                 }
             });
-            minDate.incrDays(-7);
-            maxDate.incrDays(14);
+            if ( ! Date.isValid(maxDate) || ! Date.isValid(minDate) ) {
+                var minDate = new Date(Date.today.getTime());
+                var maxDate = new Date(Date.today.getTime());
+                minDate.incrDays(-7);
+                maxDate.incrDays(14);
+            }
             var startDate = minDate.getWeekStart();
             var finishDate = maxDate.getWeekEnd();
 

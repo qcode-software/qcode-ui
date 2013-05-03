@@ -74,18 +74,28 @@
             this.calendarFrame.css('left', this.table.outerWidth());
 
             // Calculate a suitable range of dates for the calendar
-            var minDate = new Date(Date.today.getTime());
-            var maxDate = new Date(Date.today.getTime());
+            var minDate;
+            var maxDate;
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
+                
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
-                    minDate = Date.min(minDate,startDate);
-                    maxDate = Date.max(maxDate,finishDate);
+                    if ( Date.isValid(minDate) && Date.isValid(maxDate) ) {
+                        minDate = Date.min(minDate,startDate);
+                        maxDate = Date.max(maxDate,finishDate);
+                    } else {
+                        minDate = startDate;
+                        maxDate = finishDate;
+                    }
                 }
             });
-            minDate.incrDays(-7);
-            maxDate.incrDays(14);
+            if ( ! Date.isValid(maxDate) || ! Date.isValid(minDate) ) {
+                var minDate = new Date(Date.today.getTime());
+                var maxDate = new Date(Date.today.getTime());
+                minDate.incrDays(-7);
+                maxDate.incrDays(14);
+            }
             var startDate = minDate.getWeekStart();
             var finishDate = maxDate.getWeekEnd();
 

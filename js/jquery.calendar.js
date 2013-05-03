@@ -175,6 +175,12 @@
     $.extend(Bar.prototype, {
         draw: function() {
             var ctx = this.options.calendarWidget.context;
+            ctx.beginPath();
+            ctx.moveTo(0, this.options.verticalPosition + 0.5);
+            ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
+            ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
+            ctx.stroke();
+
             var left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
             var right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
             var width = this.options.calendarWidget.option('width') - left - right;
