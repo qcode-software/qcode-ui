@@ -13,6 +13,9 @@
             width: "100%",
             headerHeight: 40,
             columns: {
+                rowID: "[name=task_id]",
+                dependencyIDs: "[name=dependency_ids]",
+                dependentIDs: "[name=dependent_ids]",
                 startDate: "[name=start_date]",
                 finishDate: "[name=finish_date]",
                 barColor: "[name=bar_color]"
@@ -119,7 +122,7 @@
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
                     var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
-                    var bar = ganttChart.calendar.calendar('newBar', {
+                    var bar = new Task({
                         startDate: startDate,
                         finishDate: finishDate,
                         verticalPosition: verticalPosition,
@@ -169,4 +172,16 @@
             this.table.unwrap().css('margin-top', this.oldMarginTop);
         }
     });
+
+    var Task = (function() {
+        var superProto = $.qcode.calendar.Bar.prototype;
+        var Task = function(options) {
+            superProto.constructor.call(this, options);
+        }
+        Task.prototype = Object.create(superProto);
+        $.extend(Task.prototype, superProto, {
+            constructor: Task
+        });
+        return Task;
+    })();
 })(jQuery);

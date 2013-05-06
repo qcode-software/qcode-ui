@@ -118,6 +118,8 @@
             return bar;
         }
     });
+    jQuery.qcode.calendar.DateHighlighter = DateHighlighter;
+    jQuery.qcode.calendar.Bar = Bar;
     // End of calendar widget
 
 
@@ -167,24 +169,25 @@
             startDate: undefined,
             finishDate: undefined,
             barHeight: "10px",
+            rowHeight: undefined,
             verticalPosition: undefined,
             color: "lightblue",
             calendarWidget: undefined
         }, options);
+        this.options.rowHeight = coalesce(this.options.rowHeight, parseInt(this.options.barHeight) * 2);
         this.hover = false;
+        this.highlight = false;
         this.moveListener = this.moveListener.bind(this);
         this.leaveListener = this.leaveListener.bind(this);
+        this.clickListener = this.clickListener.bind(this);
     }
     $.extend(Bar.prototype, {
         draw: function() {
             var ctx = this.options.calendarWidget.context;
 
-            if ( this.hover ) {
-                ctx.beginPath();
-                ctx.moveTo(0, this.options.verticalPosition + 0.5);
-                ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
-                ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
-                ctx.stroke();
+            if ( this.hover || this.highlight ) {
+                ctx.strokeStyle = 'grey';
+                ctx.strokeRect(-0.5, 0.5 + this.options.verticalPosition - (this.options.rowHeight / 2), this.options.calendarWidget.option('width') + 1, this.options.rowHeight - 1);
             }
 
             this.left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
@@ -221,11 +224,19 @@
             this.hover = false;
             this.mouseleave();
         },
+        clickListener: function(event) {
+            this.click();
+        },
         mouseenter: function() {
+            this.options.calendarWidget.element.on('click', this.clickListener);
             this.options.calendarWidget.draw();
         },
         mouseleave: function() {
+            this.options.calendarWidget.element.off('click', this.clickListener);
             this.options.calendarWidget.draw();
+        },
+        click: function() {
+            this.highlight = ! this.highlight;
         },
         remove: function() {
             this.options.calendarWidget.element.off('mousemove', this.moveListener);
