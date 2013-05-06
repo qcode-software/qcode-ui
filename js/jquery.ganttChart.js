@@ -63,7 +63,7 @@
                 this.draw();
             }});
             this._on({'resize': function(event) {
-                //3this.draw();
+                this.draw();
             }});
 
             this.draw();

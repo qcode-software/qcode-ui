@@ -171,25 +171,65 @@
             color: "lightblue",
             calendarWidget: undefined
         }, options);
+        this.hover = false;
+        this.moveListener = this.moveListener.bind(this);
+        this.leaveListener = this.leaveListener.bind(this);
     }
     $.extend(Bar.prototype, {
         draw: function() {
             var ctx = this.options.calendarWidget.context;
-            ctx.beginPath();
-            ctx.moveTo(0, this.options.verticalPosition + 0.5);
-            ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
-            ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
-            ctx.stroke();
 
-            var left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
-            var right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
-            var width = this.options.calendarWidget.option('width') - left - right;
-            var top = this.options.verticalPosition - (parseInt(this.options.barHeight) / 2);
-            var height = parseInt(this.options.barHeight);
+            if ( this.hover ) {
+                ctx.beginPath();
+                ctx.moveTo(0, this.options.verticalPosition + 0.5);
+                ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
+                ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
+                ctx.stroke();
+            }
+
+            this.left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
+            this.right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
+            this.width = this.options.calendarWidget.option('width') - this.left - this.right;
+            this.top = this.options.verticalPosition - (parseInt(this.options.barHeight) / 2);
+            this.height = parseInt(this.options.barHeight);
             ctx.fillStyle = this.options.color;
-            ctx.fillRect(left, top, width, height);
+            ctx.fillRect(this.left, this.top, this.width, this.height);
+
+            this.options.calendarWidget.element.on('mousemove', this.moveListener);
+        },
+        moveListener: function(event) {
+            var canvas = this.options.calendarWidget.element;
+            var offset = canvas.offset();
+            if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
+                 && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
+                 && (event.pageY > offset.top + this.top - canvas.scrollTop())
+                 && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
+                if ( ! this.hover ) {
+                    this.hover = true;
+                    this.mouseenter();
+                    this.options.calendarWidget.element.one('mouseleave', this.leaveListener);
+                }
+            } else {
+                if ( this.hover ) {
+                    this.hover = false;
+                    this.mouseleave();
+                    this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
+                }
+            }
+        },
+        leaveListener: function(event) {
+            this.hover = false;
+            this.mouseleave();
+        },
+        mouseenter: function() {
+            this.options.calendarWidget.draw();
+        },
+        mouseleave: function() {
+            this.options.calendarWidget.draw();
         },
         remove: function() {
+            this.options.calendarWidget.element.off('mousemove', this.moveListener);
+            this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
             var bars = this.options.calendarWidget.bars;
             var index = bars.indexOf(this);
             bars.splice(index, 1);
