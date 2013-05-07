@@ -4,7 +4,7 @@
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
 // - shrink: reduce the font size (down to min-font-size) until the content fits.
 // - shrink-one-line (default): as shrink, but force no wrapping
-// - word-break: force word-break to try and make the content fit.
+// - break-word: force word break to try and make the content fit.
 ;(function($, undefined) {
     $.fn.columnResize = function(options) {
         var options = $.extend({
