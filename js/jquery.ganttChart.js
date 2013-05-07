@@ -4,10 +4,10 @@
 //  headerHeight: integer, height of the chart header
 //  columns: object mapping keys to any jQuery selector/element/elementArray/object
 //   use "columns" to match columns containing the row start dates, finish dates and bar colors
+//   rowID to give each task a unique ID, dependen(cy/t)IDs hold space-separated list of IDs to reference.
 //  pxPerDay: integer, width of 1 day in the calendar
 //  barHeight: integer, px height of the bars
 ;(function($, undefined) {
-    var scrollBarWidth = "18px";
     jQuery.widget('qcode.ganttChart', {
         options: {
             width: "100%",
@@ -40,14 +40,6 @@
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
-            // Record the old margin in case we want to destroy this widget
-            this.oldMarginTop = this.table.css('margin-top');
-            this.oldMarginBottom = this.table.css('margin-bottom');
-            this.table.css({
-                'margin-top': this.options.headerHeight - this.table.find('thead').outerHeight(),
-                'margin-bottom': scrollBarWidth
-            });
-
             // Create a scrolling window for the calendar
             this.calendarFrame = $('<div class="calendarFrame">')
                 .css({
@@ -57,12 +49,27 @@
                     bottom: 0
                 })
                 .insertAfter(this.table);
+            var scrollBarWidth = this.calendarFrame.height() - this.calendarFrame[0].scrollHeight;
+
+            // Record the old margin in case we want to destroy this widget
+            this.oldMarginTop = this.table.css('margin-top');
+            this.oldMarginBottom = this.table.css('margin-bottom');
+            this.table.css({
+                'margin-top': this.options.headerHeight - this.table.find('thead').outerHeight(),
+                'margin-bottom': scrollBarWidth
+            });
 
             // Create a canvas for the calendar
-            this.calendar = $('<canvas>').appendTo(this.calendarFrame);
+            this.calendar = $('<canvas class="calendar">').appendTo(this.calendarFrame);
 
             // In case the table is a dbGrid, listen for updates.
-            this._on({'dbRowActionReturn': function() {
+            this._on({'dbRowActionReturn': function(event, action, xmlDoc, status, jqXHR) {
+                var ganttChart = this;
+                $('records other_record', xmlDoc).each(function(i, record) {
+                    var taskID = $(record).children('task_id').text();
+                    var barColor = $(record).children('bar_color').text();
+                    ganttChart._getRowByID(taskID).dbRow('setCellValue', 'bar_color', barColor);
+                });
                 this.draw();
             }});
             this._on({'resize': function(event) {
@@ -119,7 +126,6 @@
             this.bars = [];
 
             var Task = ganttChart.constructor.Task;
-            var calendarWidget = this.calendar.data('calendar');
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
@@ -159,13 +165,14 @@
                         });
                     }
                     var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
-                    var bar = new Task(calendarWidget, {
+                    var bar = new Task(ganttChart.calendar, {
                         startDate: startDate,
                         finishDate: finishDate,
                         verticalPosition: verticalPosition,
                         color: ganttChart._getCellValue('barColor', rowIndex),
                         dependencies: dependencies,
-                        dependents: dependents
+                        dependents: dependents,
+                        rowHeight: $(domRow).height()
                     });
                     ganttChart.calendar.calendar('addObject', bar);
                     ganttChart.bars.push(bar);
@@ -223,54 +230,76 @@
             this.table.unwrap().css('margin-top', this.oldMarginTop);
         }
     });
+    // End of ganttChart widget
+    // ============================================================
 
-    $.qcode.ganttChart.Task = function(calendarWidget, options) {
+
+    // ============================================================
+    // class Task
+    // extends jQuery.qcode.calendar.Bar
+    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependancies
+    // Takes dependencies and dependents as arrays of objects with properties "date" and "verticalPosition"
+    // ============================================================
+    // Wait for first instantiation to initialise the class, to ensure the superclass is initialised first
+    $.qcode.ganttChart.Task = function(calendarCanvas, options) {
         var superProto = $.qcode.calendar.Bar.prototype;
-        $.qcode.ganttChart.Task = function(calendarWidget, options) {
-            superProto.constructor.call(this, calendarWidget, options);
+
+        // Constructor function
+        var Task = function(calendarCanvas, options) {
+            superProto.constructor.call(this, calendarCanvas, options);
             this.options = $.extend({
                 dependencyColor: 'grey',
                 dependentColor: 'grey',
+                highlightColor: 'lightyellow',
+                highlightEdge: 'lightgrey',
+                dependencies: [],
+                dependents: [],
                 radius: 20
             }, this.options);
             this.options.rowHeight = coalesce(this.options.rowHeight, this.options.barHeight * 2);
             this.highlight = false;
             this
                 .on('mouseenter', function() {
-                    this.calendarWidget.draw();
+                    this.calendarCanvas.calendar('draw');
                 })
                 .on('mouseleave', function() {
-                    this.calendarWidget.draw();
+                    this.calendarCanvas.calendar('draw');
                 })
                 .on('click', function() {
                     this.highlight = ! this.highlight;
+                    this.calendarCanvas.calendar('draw');
                 });
         }
-        $.qcode.ganttChart.Task.prototype = $.extend(Object.create(superProto), {
-            constructor: $.qcode.ganttChart.Task,
+
+        Task.prototype = $.extend(Object.create(superProto), {
+            constructor: Task,
             draw: function() {
+                // Draw this task.
                 superProto.draw.call(this);
                 if ( this.hover || this.highlight ) {
                     var ctx = this.context;
 
                     var highlight = {
                         x: 0,
-                        width: this.calendarWidget.option('width'),
+                        width: this.calendarCanvas.calendar('option','width'),
                         y: this.options.verticalPosition - (this.options.rowHeight / 2),
                         height: this.options.rowHeight
                     }
                     ctx.globalCompositeOperation = 'destination-over';
-                    ctx.strokeStyle = 'lightgrey';
-                    ctx.fillStyle = 'lightyellow';
-                    ctx.strokeRect(highlight.x - 0.5, highlight.y - 0.5, highlight.width + 1, highlight.height + 1);
+                    if ( this.highlight ) {
+                        ctx.strokeStyle = this.options.highlightEdge;
+                        ctx.strokeRect(highlight.x - 0.5, highlight.y - 0.5, highlight.width + 1, highlight.height + 1);
+                    }
+                    ctx.fillStyle = this.options.highlightColor;
                     ctx.fillRect(highlight.x, highlight.y, highlight.width, highlight.height);
 
                     ctx.globalCompositeOperation = 'source-over';
-                    this.drawDependencies();
-                    this.drawDependents();
+                    this._drawDependencies();
+                    this._drawDependents();
                 }
             },
-            drawDependencies: function() {
+            _drawDependencies: function() {
+                // Draw lines to this task's dependencies
                 var task = this;
                 var ctx = this.context;
                 var start = {
@@ -282,7 +311,7 @@
                 $.each(this.options.dependencies, function(i, dependency) {
                     ctx.moveTo(start.x,start.y);
                     var end = {
-                        x: task.calendarWidget.options.width - task.calendarWidget.date2positionRight(dependency.date),
+                        x: task.calendarCanvas.calendar('option','width') - task.calendarCanvas.calendar('date2positionRight',dependency.date),
                         y: dependency.verticalPosition
                     }
                     var cp1 = {
@@ -297,7 +326,8 @@
                 });
                 ctx.stroke();
             },
-            drawDependents: function() {
+            _drawDependents: function() {
+                // Draw lines to this task's dependents
                 var task = this;
                 var ctx = this.context;
                 var start = {
@@ -309,7 +339,7 @@
                 $.each(this.options.dependents, function(i, dependency) {
                     ctx.moveTo(start.x,start.y);
                     var end = {
-                        x: task.calendarWidget.date2positionLeft(dependency.date),
+                        x: task.calendarCanvas.calendar('date2positionLeft',dependency.date),
                         y: dependency.verticalPosition
                     }
                     var cp1 = {
@@ -325,6 +355,11 @@
                 ctx.stroke();
             }
         });
-        return new $.qcode.ganttChart.Task(calendarWidget, options);
+
+        // The first time this function runs, it replaces itself with the class then returns and instance of the class.
+        jQuery.qcode.ganttChart.Task = Task;
+        return new Task(calendarCanvas, options);
     };
+    // End of class Task
+    // ============================================================
 })(jQuery);
