@@ -1501,8 +1501,7 @@ function dynamicResize(oContainer) {
                 weekends: 'rgba(220,220,220,1)',
                 lines: 'rgba(200,200,200,1)',
                 text: 'rgba(100,100,100,1)'
-            },
-            barHeight: "10px"
+            }
         },
         _create: function() {
             var domCanvas = this.element[0];
@@ -1510,9 +1509,11 @@ function dynamicResize(oContainer) {
                 $.error("Plugin qcode.calendar currently requires a canvas");
             }
             this.context = domCanvas.getContext('2d');
-            this.highlighters = [];
-            this.bars = [];
-            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
+            this.canvasObjects = [];
+            this.newDateHighlighter({
+                date: Date.today,
+                color: 'rgba(160,200,240,1)'
+            });
         },
         draw: function() {
             // draw (or redraw) the calendar
@@ -1575,11 +1576,8 @@ function dynamicResize(oContainer) {
             ctx.stroke();
 
             // Redraw bars and highlights
-            $.each(this.highlighters, function(i, highlighter) {
-                highlighter.draw();
-            });
-            $.each(this.bars, function(i, bar) {
-                bar.draw();
+            $.each(this.canvasObjects, function(i, object) {
+                object.draw();
             });
         },
         date2positionLeft: function(date) {
@@ -1592,139 +1590,186 @@ function dynamicResize(oContainer) {
             var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
             return right;
         },
-        newDateHighlighter: function(date, color) {
+        newDateHighlighter: function(options) {
             // Create and return a date highlighter attached to this calendar (see class defs. below)
-            var highlighter = new DateHighlighter(this, date, color);
-            this.highlighters.push(highlighter);
+            var highlighter = new this.constructor.DateHighlighter(this, options);
+            this.addObject(highlighter);
             return highlighter;
         },
         newBar: function(options) {
             // Create and return a horizontal bar attached to this calendar (see class defs. below)
-            var bar = new Bar($.extend({
-                barHeight: this.options.barHeight,
-                calendarWidget: this
-            }, options));
-            this.bars.push(bar);
+            var bar = new this.constructor.Bar(this, options);
+            this.addObject(bar);
             return bar;
+        },
+        addObject: function(canvasObject) {
+            this.canvasObjects.push(canvasObject);
+        },
+        removeObject: function(canvasObject) {
+            var index = this.canvasObjects.indexOf(canvasObject);
+            this.canvasObjects.splice(index, 1);
         }
     });
     // End of calendar widget
 
 
+    jQuery.qcode.calendar.CanvasObject = (function() {
+        var CanvasObject = function(calendarWidget, options) {
+            this.calendarWidget = calendarWidget;
+            this.context = this.calendarWidget.context;
+            this.options = $.extend({
+                color: 'lightblue'
+            }, options);
+            this.left = this.options.left;
+            this.width = this.options.width;
+            this.top = this.options.top;
+            this.height = this.options.height;
+            this.hover = false;
+            this._eventHandlers = {
+                mouseenter: [],
+                mouseleave: [],
+                click: []
+            };
+
+            this._moveListener = this._moveListener.bind(this);
+            this._leaveListener = this._leaveListener.bind(this);
+            this._clickListener = this._clickListener.bind(this);
+
+            this.calendarWidget.element.on('mousemove', this._moveListener);
+        }
+        $.extend(CanvasObject.prototype, {
+            remove: function() {
+                this.calendarWidget.element.off('mousemove', this._moveListener);
+                this.calendarWidget.element.off('mousemove', this._leaveListener);
+                this.calendarWidget.element.off('mousemove', this._clickListener);
+                this.calendarWidget.removeObject(this);
+            },
+            draw: function() {
+                var ctx = this.context;
+                ctx.fillStyle = this.options.color;
+                ctx.fillRect(this.left, this.top, this.width, this.height);
+            },
+            on: function(eventName, handler) {
+                if ( ! Array.isArray(this._eventHandlers[eventName]) ) {
+                    $.error('Event ' + eventName + ' not supported by canvas object');
+                }
+                this._eventHandlers[eventName].push(handler);
+                return this;
+            },
+            off: function(eventName, handler) {
+                var index = this._eventHandlers[eventName].indexOf(handler);
+                this._eventHandlers.splice(index, 1);
+                return this;
+            },
+            _moveListener: function(event) {
+                var canvasObject = this;
+                var canvas = this.calendarWidget.element;
+                var offset = canvas.offset();
+                if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
+                     && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
+                     && (event.pageY > offset.top + this.top - canvas.scrollTop())
+                     && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
+                    if ( ! this.hover ) {
+                        this.hover = true;
+                        this.calendarWidget.element.on('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseenter'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarWidget.element.one('mouseleave', this.leaveListener);
+                    }
+                } else {
+                    if ( this.hover ) {
+                        this.hover = false;
+                        this.calendarWidget.element.off('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarWidget.element.off('mouseleave', this.leaveListener);
+                    }
+                }
+            },
+            _leaveListener: function(event) {
+                var canvasObject = this;
+                this.hover = false;
+                this.calendarWidget.element.off('click', this._clickListener);
+                $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+            _clickListener: function(event) {
+                var canvasObject = this;
+                $.each(this._eventHandlers['click'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+        });
+        return CanvasObject;
+    })();
+
+
     // DateHighlighter class
     // This object highlights a single date in a calendar.
-    function DateHighlighter(calendarWidget, date, color) {
-        this.calendarWidget = calendarWidget;
-        this.color = color;
-        this.date = date;
-        this.draw();
-    }
-    $.extend(DateHighlighter.prototype, {
-        setDate: function(newDate) {
-            this.date = newDate;
-            this.calendarWidget.draw();
-        },
-        setColor: function(newColor) {
-            this.color = newColor;
+    jQuery.qcode.calendar.DateHighlighter = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var DateHighlighter = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
             this.draw();
-        },
-        remove: function() {
-            this.element.remove();
-        },
-        draw: function() {
-            if ( Date.isValid(this.date) ) {
-                var left = this.calendarWidget.date2positionLeft(this.date);
-                var right = this.calendarWidget.date2positionRight(this.date);
-                var width = this.calendarWidget.option('width') - left - right;
-                var top = this.calendarWidget.option('headerHeight');
-                var bottom = 0;
-                var height = this.calendarWidget.option('bodyHeight');
-                ctx = this.calendarWidget.context;
-                ctx.fillStyle = this.color;
-                ctx.fillRect(left, top, width, height);
-            } else {
-                $.error("Invalid Date");
-            }
         }
-    });
+        DateHighlighter.prototype = $.extend(Object.create(superProto), {
+            constructor: DateHighlighter,
+            setDate: function(newDate) {
+                this.options.date = newDate;
+                this.calendarWidget.draw();
+            },
+            setColor: function(newColor) {
+                this.options.color = newColor;
+                this.draw();
+            },
+            draw: function() {
+                if ( ! Date.isValid(this.options.date) ) {
+                    $.error("Invalid Date");
+                }
+                this.left = this.calendarWidget.date2positionLeft(this.options.date);
+                this.right = this.calendarWidget.date2positionRight(this.options.date);
+                this.width = this.calendarWidget.option('width') - this.left - this.right;
+                this.top = this.calendarWidget.option('headerHeight');
+                this.height = this.calendarWidget.option('bodyHeight');
+                superProto.draw.call(this);
+            }
+        });
+        return DateHighlighter;
+    })();
     // End of DateHighlighter class
 
 
     // Bar class
     // A horizontal bar added to the calendar
-    function Bar(options) {
-        this.options = $.extend({
-            startDate: undefined,
-            finishDate: undefined,
-            barHeight: "10px",
-            verticalPosition: undefined,
-            color: "lightblue",
-            calendarWidget: undefined
-        }, options);
-        this.hover = false;
-        this.moveListener = this.moveListener.bind(this);
-        this.leaveListener = this.leaveListener.bind(this);
-    }
-    $.extend(Bar.prototype, {
-        draw: function() {
-            var ctx = this.options.calendarWidget.context;
-
-            if ( this.hover ) {
-                ctx.beginPath();
-                ctx.moveTo(0, this.options.verticalPosition + 0.5);
-                ctx.lineTo(this.options.calendarWidget.option('width'), this.options.verticalPosition + 0.5);
-                ctx.strokeStyle = this.options.calendarWidget.option('styles').lines;
-                ctx.stroke();
-            }
-
-            this.left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
-            this.right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
-            this.width = this.options.calendarWidget.option('width') - this.left - this.right;
-            this.top = this.options.verticalPosition - (parseInt(this.options.barHeight) / 2);
-            this.height = parseInt(this.options.barHeight);
-            ctx.fillStyle = this.options.color;
-            ctx.fillRect(this.left, this.top, this.width, this.height);
-
-            this.options.calendarWidget.element.on('mousemove', this.moveListener);
-        },
-        moveListener: function(event) {
-            var canvas = this.options.calendarWidget.element;
-            var offset = canvas.offset();
-            if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
-                 && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
-                 && (event.pageY > offset.top + this.top - canvas.scrollTop())
-                 && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
-                if ( ! this.hover ) {
-                    this.hover = true;
-                    this.mouseenter();
-                    this.options.calendarWidget.element.one('mouseleave', this.leaveListener);
-                }
-            } else {
-                if ( this.hover ) {
-                    this.hover = false;
-                    this.mouseleave();
-                    this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
-                }
-            }
-        },
-        leaveListener: function(event) {
-            this.hover = false;
-            this.mouseleave();
-        },
-        mouseenter: function() {
-            this.options.calendarWidget.draw();
-        },
-        mouseleave: function() {
-            this.options.calendarWidget.draw();
-        },
-        remove: function() {
-            this.options.calendarWidget.element.off('mousemove', this.moveListener);
-            this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
-            var bars = this.options.calendarWidget.bars;
-            var index = bars.indexOf(this);
-            bars.splice(index, 1);
+    jQuery.qcode.calendar.Bar = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var Bar = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
+            this.options = $.extend({
+                startDate: undefined,
+                finishDate: undefined,
+                barHeight: 10,
+                rowHeight: undefined,
+                verticalPosition: undefined
+            }, this.options);
         }
-    });
+        Bar.prototype = $.extend(Object.create(superProto), {
+            constructor: Bar,
+            draw: function() {
+                this.left = this.calendarWidget.date2positionLeft(this.options.startDate);
+                this.right = this.calendarWidget.date2positionRight(this.options.finishDate);
+                this.width = this.calendarWidget.option('width') - this.left - this.right;
+                this.top = this.options.verticalPosition - (this.options.barHeight / 2);
+                this.height = this.options.barHeight;
+
+                superProto.draw.call(this);
+            }
+        });
+        return Bar;
+    })();
     // End of Bar class
 })(jQuery);
 
@@ -1816,7 +1861,7 @@ function dynamicResize(oContainer) {
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
 // - shrink: reduce the font size (down to min-font-size) until the content fits.
 // - shrink-one-line (default): as shrink, but force no wrapping
-// - word-break: force word-break to try and make the content fit.
+// - break-word: force word break to try and make the content fit.
 ;(function($, undefined) {
     $.fn.columnResize = function(options) {
         var options = $.extend({
@@ -5710,7 +5755,7 @@ function dbFormHTMLArea(oDiv) {
 //  columns: object mapping keys to any jQuery selector/element/elementArray/object
 //   use "columns" to match columns containing the row start dates, finish dates and bar colors
 //  pxPerDay: integer, width of 1 day in the calendar
-//  barHeight: any css height, height of the bars
+//  barHeight: integer, px height of the bars
 ;(function($, undefined) {
     var scrollBarWidth = "18px";
     jQuery.widget('qcode.ganttChart', {
@@ -5718,12 +5763,15 @@ function dbFormHTMLArea(oDiv) {
             width: "100%",
             headerHeight: 40,
             columns: {
+                rowID: "[name=task_id]",
+                dependencyIDs: "[name=dependency_ids]",
+                dependentIDs: "[name=dependent_ids]",
                 startDate: "[name=start_date]",
                 finishDate: "[name=finish_date]",
                 barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
-            barHeight: "10px"
+            barHeight: 10
         },
         _create: function() {
             // Get options from custom attributes
@@ -5819,17 +5867,57 @@ function dbFormHTMLArea(oDiv) {
                 bar.remove();
             });
             this.bars = [];
+
+            var Task = ganttChart.constructor.Task;
+            var calendarWidget = this.calendar.data('calendar');
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                    var dependents = [];
+                    var dependencies = [];
+                    var list = ganttChart._getCellValue('dependentIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(' '), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var date = ganttChart._getRowStartDate(row.index());
+                            dependents.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
+                    var list = ganttChart._getCellValue('dependencyIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(" "), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var date = ganttChart._getRowFinishDate(row.index());
+                            dependencies.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
                     var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
-                    var bar = ganttChart.calendar.calendar('newBar', {
+                    var bar = new Task(calendarWidget, {
                         startDate: startDate,
                         finishDate: finishDate,
                         verticalPosition: verticalPosition,
-                        color: ganttChart._getCellValue('barColor', rowIndex)
+                        color: ganttChart._getCellValue('barColor', rowIndex),
+                        dependencies: dependencies,
+                        dependents: dependents
                     });
+                    ganttChart.calendar.calendar('addObject', bar);
                     ganttChart.bars.push(bar);
                 }
             });
@@ -5854,9 +5942,20 @@ function dbFormHTMLArea(oDiv) {
             // find the first matching cell in the indexed row, and return the contents.
             return this.rows.eq(rowIndex).findByColumn(this.options.columns[colName]).text();
         },
+        _getRowByID: function(ID) {
+            // Search the rowID column for ID, return the first matching row.
+            var row = $([]);
+            this.rows.findByColumn(this.options.columns.rowID).each(function(i, cell) {
+                if ($(cell).text() == ID) {
+                    row = $(cell).parent();
+                    return false;
+                }
+            });
+            return row;
+        },
         newDateHighlighter: function(date, style) {
             // Create and return a new date highlighter object
-            return this.calendar.calendar('newDateHighlighter', date, style);
+            return this.calendar.calendar('newDateHighlighter', {date: date, color: style});
         },
         widget: function() {
             return this.wrapper;
@@ -5874,6 +5973,110 @@ function dbFormHTMLArea(oDiv) {
             this.table.unwrap().css('margin-top', this.oldMarginTop);
         }
     });
+
+    $.qcode.ganttChart.Task = function(calendarWidget, options) {
+        var superProto = $.qcode.calendar.Bar.prototype;
+        $.qcode.ganttChart.Task = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
+            this.options = $.extend({
+                dependencyColor: 'grey',
+                dependentColor: 'grey',
+                radius: 20
+            }, this.options);
+            this.options.rowHeight = coalesce(this.options.rowHeight, this.options.barHeight * 2);
+            this.highlight = false;
+            this
+                .on('mouseenter', function() {
+                    this.calendarWidget.draw();
+                })
+                .on('mouseleave', function() {
+                    this.calendarWidget.draw();
+                })
+                .on('click', function() {
+                    this.highlight = ! this.highlight;
+                });
+        }
+        $.qcode.ganttChart.Task.prototype = $.extend(Object.create(superProto), {
+            constructor: $.qcode.ganttChart.Task,
+            draw: function() {
+                superProto.draw.call(this);
+                if ( this.hover || this.highlight ) {
+                    var ctx = this.context;
+
+                    var highlight = {
+                        x: 0,
+                        width: this.calendarWidget.option('width'),
+                        y: this.options.verticalPosition - (this.options.rowHeight / 2),
+                        height: this.options.rowHeight
+                    }
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.strokeStyle = 'lightgrey';
+                    ctx.fillStyle = 'lightyellow';
+                    ctx.strokeRect(highlight.x - 0.5, highlight.y - 0.5, highlight.width + 1, highlight.height + 1);
+                    ctx.fillRect(highlight.x, highlight.y, highlight.width, highlight.height);
+
+                    ctx.globalCompositeOperation = 'source-over';
+                    this.drawDependencies();
+                    this.drawDependents();
+                }
+            },
+            drawDependencies: function() {
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependencyColor;
+                ctx.beginPath();
+                $.each(this.options.dependencies, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarWidget.options.width - task.calendarWidget.date2positionRight(dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x - task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x + task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            },
+            drawDependents: function() {
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.width + this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependentColor;
+                ctx.beginPath();
+                $.each(this.options.dependents, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarWidget.date2positionLeft(dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x + task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x - task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            }
+        });
+        return new $.qcode.ganttChart.Task(calendarWidget, options);
+    };
 })(jQuery);
 
 /* ==== jquery.hoverScroller.js ==== */
@@ -6157,7 +6360,13 @@ function dbFormHTMLArea(oDiv) {
 // nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
 (function ($, undefined) {
     $.fn.positionRelativeTo = function(target) {
+        if ( ! this.length ) {
+            $.error('positionRelativeTo called on empty object');
+        }
 	var target = $(target);
+        if ( ! target.length ) {
+            $.error('positionRelativeTo called with empty target');
+        }
 	var $body = $('body');
 
 	// Find chain of offset parents from this element to body
@@ -6166,12 +6375,18 @@ function dbFormHTMLArea(oDiv) {
 	while ( ! current.is($body) ) {
 	    current = current.offsetParent();
 	    myOffsetParents = myOffsetParents.add(current);
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called on a detached object?');
+            }
 	}
 
 	// Search offset parents from target element up until a common offset parent is found
 	current = target;
 	while ( ! current.is(myOffsetParents) ) {
 	    current = current.offsetParent();
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
+            }
 	}
 	var commonOffsetParent = current;
 
@@ -6185,7 +6400,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    myPosition.left += positionOfCurrent.left;
 	    myPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
@@ -6202,7 +6417,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    targetPosition.left += positionOfCurrent.left;
 	    targetPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
