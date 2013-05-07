@@ -5,7 +5,7 @@
 //  columns: object mapping keys to any jQuery selector/element/elementArray/object
 //   use "columns" to match columns containing the row start dates, finish dates and bar colors
 //  pxPerDay: integer, width of 1 day in the calendar
-//  barHeight: any css height, height of the bars
+//  barHeight: integer, px height of the bars
 ;(function($, undefined) {
     var scrollBarWidth = "18px";
     jQuery.widget('qcode.ganttChart', {
@@ -21,7 +21,7 @@
                 barColor: "[name=bar_color]"
             },
             pxPerDay: 15,
-            barHeight: "10px"
+            barHeight: 10
         },
         _create: function() {
             // Get options from custom attributes
@@ -117,17 +117,57 @@
                 bar.remove();
             });
             this.bars = [];
+
+            var Task = ganttChart.constructor.Task;
+            var calendarWidget = this.calendar.data('calendar');
             this.rows.each(function(rowIndex, domRow) {
                 var startDate = ganttChart._getRowStartDate(rowIndex);
                 var finishDate = ganttChart._getRowFinishDate(rowIndex);
                 if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                    var dependents = [];
+                    var dependencies = [];
+                    var list = ganttChart._getCellValue('dependentIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(' '), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var date = ganttChart._getRowStartDate(row.index());
+                            dependents.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
+                    var list = ganttChart._getCellValue('dependencyIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(" "), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var date = ganttChart._getRowFinishDate(row.index());
+                            dependencies.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
                     var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
-                    var bar = new Task({
+                    var bar = new Task(calendarWidget, {
                         startDate: startDate,
                         finishDate: finishDate,
                         verticalPosition: verticalPosition,
-                        color: ganttChart._getCellValue('barColor', rowIndex)
+                        color: ganttChart._getCellValue('barColor', rowIndex),
+                        dependencies: dependencies,
+                        dependents: dependents
                     });
+                    ganttChart.calendar.calendar('addObject', bar);
                     ganttChart.bars.push(bar);
                 }
             });
@@ -152,9 +192,20 @@
             // find the first matching cell in the indexed row, and return the contents.
             return this.rows.eq(rowIndex).findByColumn(this.options.columns[colName]).text();
         },
+        _getRowByID: function(ID) {
+            // Search the rowID column for ID, return the first matching row.
+            var row = $([]);
+            this.rows.findByColumn(this.options.columns.rowID).each(function(i, cell) {
+                if ($(cell).text() == ID) {
+                    row = $(cell).parent();
+                    return false;
+                }
+            });
+            return row;
+        },
         newDateHighlighter: function(date, style) {
             // Create and return a new date highlighter object
-            return this.calendar.calendar('newDateHighlighter', date, style);
+            return this.calendar.calendar('newDateHighlighter', {date: date, color: style});
         },
         widget: function() {
             return this.wrapper;
@@ -173,15 +224,107 @@
         }
     });
 
-    var Task = (function() {
+    $.qcode.ganttChart.Task = function(calendarWidget, options) {
         var superProto = $.qcode.calendar.Bar.prototype;
-        var Task = function(options) {
-            superProto.constructor.call(this, options);
+        $.qcode.ganttChart.Task = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
+            this.options = $.extend({
+                dependencyColor: 'grey',
+                dependentColor: 'grey',
+                radius: 20
+            }, this.options);
+            this.options.rowHeight = coalesce(this.options.rowHeight, this.options.barHeight * 2);
+            this.highlight = false;
+            this
+                .on('mouseenter', function() {
+                    this.calendarWidget.draw();
+                })
+                .on('mouseleave', function() {
+                    this.calendarWidget.draw();
+                })
+                .on('click', function() {
+                    this.highlight = ! this.highlight;
+                });
         }
-        Task.prototype = Object.create(superProto);
-        $.extend(Task.prototype, superProto, {
-            constructor: Task
+        $.qcode.ganttChart.Task.prototype = $.extend(Object.create(superProto), {
+            constructor: $.qcode.ganttChart.Task,
+            draw: function() {
+                superProto.draw.call(this);
+                if ( this.hover || this.highlight ) {
+                    var ctx = this.context;
+
+                    var highlight = {
+                        x: 0,
+                        width: this.calendarWidget.option('width'),
+                        y: this.options.verticalPosition - (this.options.rowHeight / 2),
+                        height: this.options.rowHeight
+                    }
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.strokeStyle = 'lightgrey';
+                    ctx.fillStyle = 'lightyellow';
+                    ctx.strokeRect(highlight.x - 0.5, highlight.y - 0.5, highlight.width + 1, highlight.height + 1);
+                    ctx.fillRect(highlight.x, highlight.y, highlight.width, highlight.height);
+
+                    ctx.globalCompositeOperation = 'source-over';
+                    this.drawDependencies();
+                    this.drawDependents();
+                }
+            },
+            drawDependencies: function() {
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependencyColor;
+                ctx.beginPath();
+                $.each(this.options.dependencies, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarWidget.options.width - task.calendarWidget.date2positionRight(dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x - task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x + task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            },
+            drawDependents: function() {
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.width + this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependentColor;
+                ctx.beginPath();
+                $.each(this.options.dependents, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarWidget.date2positionLeft(dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x + task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x - task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            }
         });
-        return Task;
-    })();
+        return new $.qcode.ganttChart.Task(calendarWidget, options);
+    };
 })(jQuery);

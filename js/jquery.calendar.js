@@ -11,8 +11,7 @@
                 weekends: 'rgba(220,220,220,1)',
                 lines: 'rgba(200,200,200,1)',
                 text: 'rgba(100,100,100,1)'
-            },
-            barHeight: "10px"
+            }
         },
         _create: function() {
             var domCanvas = this.element[0];
@@ -20,9 +19,11 @@
                 $.error("Plugin qcode.calendar currently requires a canvas");
             }
             this.context = domCanvas.getContext('2d');
-            this.highlighters = [];
-            this.bars = [];
-            this.newDateHighlighter(Date.today, 'rgba(160,200,240,1)');
+            this.canvasObjects = [];
+            this.newDateHighlighter({
+                date: Date.today,
+                color: 'rgba(160,200,240,1)'
+            });
         },
         draw: function() {
             // draw (or redraw) the calendar
@@ -85,11 +86,8 @@
             ctx.stroke();
 
             // Redraw bars and highlights
-            $.each(this.highlighters, function(i, highlighter) {
-                highlighter.draw();
-            });
-            $.each(this.bars, function(i, bar) {
-                bar.draw();
+            $.each(this.canvasObjects, function(i, object) {
+                object.draw();
             });
         },
         date2positionLeft: function(date) {
@@ -102,149 +100,185 @@
             var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
             return right;
         },
-        newDateHighlighter: function(date, color) {
+        newDateHighlighter: function(options) {
             // Create and return a date highlighter attached to this calendar (see class defs. below)
-            var highlighter = new DateHighlighter(this, date, color);
-            this.highlighters.push(highlighter);
+            var highlighter = new this.constructor.DateHighlighter(this, options);
+            this.addObject(highlighter);
             return highlighter;
         },
         newBar: function(options) {
             // Create and return a horizontal bar attached to this calendar (see class defs. below)
-            var bar = new Bar($.extend({
-                barHeight: this.options.barHeight,
-                calendarWidget: this
-            }, options));
-            this.bars.push(bar);
+            var bar = new this.constructor.Bar(this, options);
+            this.addObject(bar);
             return bar;
+        },
+        addObject: function(canvasObject) {
+            this.canvasObjects.push(canvasObject);
+        },
+        removeObject: function(canvasObject) {
+            var index = this.canvasObjects.indexOf(canvasObject);
+            this.canvasObjects.splice(index, 1);
         }
     });
-    jQuery.qcode.calendar.DateHighlighter = DateHighlighter;
-    jQuery.qcode.calendar.Bar = Bar;
     // End of calendar widget
+
+
+    jQuery.qcode.calendar.CanvasObject = (function() {
+        var CanvasObject = function(calendarWidget, options) {
+            this.calendarWidget = calendarWidget;
+            this.context = this.calendarWidget.context;
+            this.options = $.extend({
+                color: 'lightblue'
+            }, options);
+            this.left = this.options.left;
+            this.width = this.options.width;
+            this.top = this.options.top;
+            this.height = this.options.height;
+            this.hover = false;
+            this._eventHandlers = {
+                mouseenter: [],
+                mouseleave: [],
+                click: []
+            };
+
+            this._moveListener = this._moveListener.bind(this);
+            this._leaveListener = this._leaveListener.bind(this);
+            this._clickListener = this._clickListener.bind(this);
+
+            this.calendarWidget.element.on('mousemove', this._moveListener);
+        }
+        $.extend(CanvasObject.prototype, {
+            remove: function() {
+                this.calendarWidget.element.off('mousemove', this._moveListener);
+                this.calendarWidget.element.off('mousemove', this._leaveListener);
+                this.calendarWidget.element.off('mousemove', this._clickListener);
+                this.calendarWidget.removeObject(this);
+            },
+            draw: function() {
+                var ctx = this.context;
+                ctx.fillStyle = this.options.color;
+                ctx.fillRect(this.left, this.top, this.width, this.height);
+            },
+            on: function(eventName, handler) {
+                if ( ! Array.isArray(this._eventHandlers[eventName]) ) {
+                    $.error('Event ' + eventName + ' not supported by canvas object');
+                }
+                this._eventHandlers[eventName].push(handler);
+                return this;
+            },
+            off: function(eventName, handler) {
+                var index = this._eventHandlers[eventName].indexOf(handler);
+                this._eventHandlers.splice(index, 1);
+                return this;
+            },
+            _moveListener: function(event) {
+                var canvasObject = this;
+                var canvas = this.calendarWidget.element;
+                var offset = canvas.offset();
+                if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
+                     && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
+                     && (event.pageY > offset.top + this.top - canvas.scrollTop())
+                     && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
+                    if ( ! this.hover ) {
+                        this.hover = true;
+                        this.calendarWidget.element.on('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseenter'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarWidget.element.one('mouseleave', this.leaveListener);
+                    }
+                } else {
+                    if ( this.hover ) {
+                        this.hover = false;
+                        this.calendarWidget.element.off('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarWidget.element.off('mouseleave', this.leaveListener);
+                    }
+                }
+            },
+            _leaveListener: function(event) {
+                var canvasObject = this;
+                this.hover = false;
+                this.calendarWidget.element.off('click', this._clickListener);
+                $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+            _clickListener: function(event) {
+                var canvasObject = this;
+                $.each(this._eventHandlers['click'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+        });
+        return CanvasObject;
+    })();
 
 
     // DateHighlighter class
     // This object highlights a single date in a calendar.
-    function DateHighlighter(calendarWidget, date, color) {
-        this.calendarWidget = calendarWidget;
-        this.color = color;
-        this.date = date;
-        this.draw();
-    }
-    $.extend(DateHighlighter.prototype, {
-        setDate: function(newDate) {
-            this.date = newDate;
-            this.calendarWidget.draw();
-        },
-        setColor: function(newColor) {
-            this.color = newColor;
+    jQuery.qcode.calendar.DateHighlighter = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var DateHighlighter = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
             this.draw();
-        },
-        remove: function() {
-            this.element.remove();
-        },
-        draw: function() {
-            if ( Date.isValid(this.date) ) {
-                var left = this.calendarWidget.date2positionLeft(this.date);
-                var right = this.calendarWidget.date2positionRight(this.date);
-                var width = this.calendarWidget.option('width') - left - right;
-                var top = this.calendarWidget.option('headerHeight');
-                var bottom = 0;
-                var height = this.calendarWidget.option('bodyHeight');
-                ctx = this.calendarWidget.context;
-                ctx.fillStyle = this.color;
-                ctx.fillRect(left, top, width, height);
-            } else {
-                $.error("Invalid Date");
-            }
         }
-    });
+        DateHighlighter.prototype = $.extend(Object.create(superProto), {
+            constructor: DateHighlighter,
+            setDate: function(newDate) {
+                this.options.date = newDate;
+                this.calendarWidget.draw();
+            },
+            setColor: function(newColor) {
+                this.options.color = newColor;
+                this.draw();
+            },
+            draw: function() {
+                if ( ! Date.isValid(this.options.date) ) {
+                    $.error("Invalid Date");
+                }
+                this.left = this.calendarWidget.date2positionLeft(this.options.date);
+                this.right = this.calendarWidget.date2positionRight(this.options.date);
+                this.width = this.calendarWidget.option('width') - this.left - this.right;
+                this.top = this.calendarWidget.option('headerHeight');
+                this.height = this.calendarWidget.option('bodyHeight');
+                superProto.draw.call(this);
+            }
+        });
+        return DateHighlighter;
+    })();
     // End of DateHighlighter class
 
 
     // Bar class
     // A horizontal bar added to the calendar
-    function Bar(options) {
-        this.options = $.extend({
-            startDate: undefined,
-            finishDate: undefined,
-            barHeight: "10px",
-            rowHeight: undefined,
-            verticalPosition: undefined,
-            color: "lightblue",
-            calendarWidget: undefined
-        }, options);
-        this.options.rowHeight = coalesce(this.options.rowHeight, parseInt(this.options.barHeight) * 2);
-        this.hover = false;
-        this.highlight = false;
-        this.moveListener = this.moveListener.bind(this);
-        this.leaveListener = this.leaveListener.bind(this);
-        this.clickListener = this.clickListener.bind(this);
-    }
-    $.extend(Bar.prototype, {
-        draw: function() {
-            var ctx = this.options.calendarWidget.context;
-
-            if ( this.hover || this.highlight ) {
-                ctx.strokeStyle = 'grey';
-                ctx.strokeRect(-0.5, 0.5 + this.options.verticalPosition - (this.options.rowHeight / 2), this.options.calendarWidget.option('width') + 1, this.options.rowHeight - 1);
-            }
-
-            this.left = this.options.calendarWidget.date2positionLeft(this.options.startDate);
-            this.right = this.options.calendarWidget.date2positionRight(this.options.finishDate);
-            this.width = this.options.calendarWidget.option('width') - this.left - this.right;
-            this.top = this.options.verticalPosition - (parseInt(this.options.barHeight) / 2);
-            this.height = parseInt(this.options.barHeight);
-            ctx.fillStyle = this.options.color;
-            ctx.fillRect(this.left, this.top, this.width, this.height);
-
-            this.options.calendarWidget.element.on('mousemove', this.moveListener);
-        },
-        moveListener: function(event) {
-            var canvas = this.options.calendarWidget.element;
-            var offset = canvas.offset();
-            if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
-                 && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
-                 && (event.pageY > offset.top + this.top - canvas.scrollTop())
-                 && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
-                if ( ! this.hover ) {
-                    this.hover = true;
-                    this.mouseenter();
-                    this.options.calendarWidget.element.one('mouseleave', this.leaveListener);
-                }
-            } else {
-                if ( this.hover ) {
-                    this.hover = false;
-                    this.mouseleave();
-                    this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
-                }
-            }
-        },
-        leaveListener: function(event) {
-            this.hover = false;
-            this.mouseleave();
-        },
-        clickListener: function(event) {
-            this.click();
-        },
-        mouseenter: function() {
-            this.options.calendarWidget.element.on('click', this.clickListener);
-            this.options.calendarWidget.draw();
-        },
-        mouseleave: function() {
-            this.options.calendarWidget.element.off('click', this.clickListener);
-            this.options.calendarWidget.draw();
-        },
-        click: function() {
-            this.highlight = ! this.highlight;
-        },
-        remove: function() {
-            this.options.calendarWidget.element.off('mousemove', this.moveListener);
-            this.options.calendarWidget.element.off('mouseleave', this.leaveListener);
-            var bars = this.options.calendarWidget.bars;
-            var index = bars.indexOf(this);
-            bars.splice(index, 1);
+    jQuery.qcode.calendar.Bar = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var Bar = function(calendarWidget, options) {
+            superProto.constructor.call(this, calendarWidget, options);
+            this.options = $.extend({
+                startDate: undefined,
+                finishDate: undefined,
+                barHeight: 10,
+                rowHeight: undefined,
+                verticalPosition: undefined
+            }, this.options);
         }
-    });
+        Bar.prototype = $.extend(Object.create(superProto), {
+            constructor: Bar,
+            draw: function() {
+                this.left = this.calendarWidget.date2positionLeft(this.options.startDate);
+                this.right = this.calendarWidget.date2positionRight(this.options.finishDate);
+                this.width = this.calendarWidget.option('width') - this.left - this.right;
+                this.top = this.options.verticalPosition - (this.options.barHeight / 2);
+                this.height = this.options.barHeight;
+
+                superProto.draw.call(this);
+            }
+        });
+        return Bar;
+    })();
     // End of Bar class
 })(jQuery);
