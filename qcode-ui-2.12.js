@@ -5944,7 +5944,8 @@ function dbFormHTMLArea(oDiv) {
                                 console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
                                 return;
                             }
-                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
                             var date = ganttChart._getRowStartDate(row.index());
                             dependents.push({
                                 date: date,
@@ -5960,7 +5961,8 @@ function dbFormHTMLArea(oDiv) {
                                 console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
                                 return;
                             }
-                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
+                            var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
                             var date = ganttChart._getRowFinishDate(row.index());
                             dependencies.push({
                                 date: date,
@@ -5968,7 +5970,9 @@ function dbFormHTMLArea(oDiv) {
                             });
                         });
                     }
-                    var verticalPosition = $(domRow).positionRelativeTo(ganttChart.wrapper).top + ($(domRow).height() / 2);
+                    var row = $(domRow);
+                    var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2)
                     var bar = new Task(ganttChart.calendar, {
                         startDate: startDate,
                         finishDate: finishDate,
@@ -5976,7 +5980,7 @@ function dbFormHTMLArea(oDiv) {
                         color: ganttChart._getCellValue('barColor', rowIndex),
                         dependencies: dependencies,
                         dependents: dependents,
-                        rowHeight: $(domRow).height()
+                        rowHeight: (row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width')))
                     });
                     ganttChart.calendar.calendar('addObject', bar);
                     ganttChart.bars.push(bar);
@@ -6078,14 +6082,11 @@ function dbFormHTMLArea(oDiv) {
                 dependencies: [],
                 dependents: [],
                 radius: 20,
-                layer: 3
+                layer: 4
             }),
             draw: function(layer) {
                 // Draw this task.
-                if ( (layer === undefined || layer === 2)
-                     && (this.hover || this.highlighted)
-                   ) {
-
+                if ( (layer === undefined || layer === 2) && (this.hover || this.highlighted) ) {
                     // Draw the highlight/hover bar
                     var ctx = this.context;
                     var highlight = {
@@ -6101,6 +6102,7 @@ function dbFormHTMLArea(oDiv) {
                     ctx.fillStyle = this.options.highlightColor;
                     ctx.fillRect(highlight.left, highlight.top, highlight.width, highlight.height);
 
+                } else if ( (layer === undefined || layer === 3) && (this.hover || this.highlighted) ) {
                     // Draw the dependency lines
                     this._drawDependencies();
                     this._drawDependents();
