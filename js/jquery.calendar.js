@@ -89,9 +89,16 @@
             ctx.stroke();
 
             // Redraw bars and highlights
+            var topLayer = 0;
             $.each(this.canvasObjects, function(i, object) {
-                object.draw();
+                topLayer = Math.max(object.topLayer(), topLayer);
+                object.update();
             });
+            for (var layer = 0; layer <= topLayer; layer++) {
+                $.each(this.canvasObjects, function(i, object) {
+                    object.draw(layer);
+                });
+            }
         },
         date2positionLeft: function(date) {
             // Return the px distance from the left edge of the calendar to the left edge of the given date
@@ -118,6 +125,7 @@
         addObject: function(canvasObject) {
             // Add a canvas object (such as a bar or date highlight) to the calendar
             this.canvasObjects.push(canvasObject);
+            this.draw();
         },
         removeObject: function(canvasObject) {
             // Remove a canvas object from the calendar
@@ -133,10 +141,10 @@
     // ============================================================
 
 
-    // ============================================================
+    // ======================================================================
     // Class CanvasObject
     // draws a rectangle on the canvas and binds mouse events for it.
-    // ============================================================
+    // ======================================================================
     jQuery.qcode.calendar.CanvasObject = (function() {
         var CanvasObject = function(calendarCanvas, options) {
             // calendarCanvas should be a jQuery object holding the canvas
@@ -144,13 +152,7 @@
             this.context = this.calendarCanvas.calendar('getContext');
 
             // Initialise options
-            this.options = $.extend({
-                color: 'lightblue'
-            }, options);
-            this.left = this.options.left;
-            this.width = this.options.width;
-            this.top = this.options.top;
-            this.height = this.options.height;
+            this.options = $.extend(Object.create(this.options), options);
 
             // True during mouse hover
             this.hover = false;
@@ -170,18 +172,26 @@
             this.calendarCanvas.on('mousemove', this._moveListener);
         }
         $.extend(CanvasObject.prototype, {
-            remove: function() {
-                // Remove all event listeners and remove this from the calendar
-                this.calendarCanvas.off('mousemove', this._moveListener);
-                this.calendarCanvas.off('mousemove', this._leaveListener);
-                this.calendarCanvas.off('mousemove', this._clickListener);
-                this.calendarCanvas.calendar('removeObject',this);
+            options: {
+                color: 'lightblue',
+                layer: 1
             },
-            draw: function() {
+            update: function() {
+                this.left = this.options.left;
+                this.width = this.options.width;
+                this.top = this.options.top;
+                this.height = this.options.height;
+            },
+            draw: function(layer) {
                 // Draw/redraw this object
-                var ctx = this.context;
-                ctx.fillStyle = this.options.color;
-                ctx.fillRect(this.left, this.top, this.width, this.height);
+                if ( layer === undefined || layer === this.options.layer ) {
+                    var ctx = this.context;
+                    ctx.fillStyle = this.options.color;
+                    ctx.fillRect(this.left, this.top, this.width, this.height);
+                }
+            },
+            topLayer: function() {
+                return this.options.layer;
             },
             on: function(eventName, handler) {
                 // Bind an event handler to one of the mouse events provided by this class
@@ -196,6 +206,13 @@
                 var index = this._eventHandlers[eventName].indexOf(handler);
                 this._eventHandlers.splice(index, 1);
                 return this;
+            },
+            remove: function() {
+                // Remove all event listeners and remove this from the calendar
+                this.calendarCanvas.off('mousemove', this._moveListener);
+                this.calendarCanvas.off('mousemove', this._leaveListener);
+                this.calendarCanvas.off('mousemove', this._clickListener);
+                this.calendarCanvas.calendar('removeObject',this);
             },
             _moveListener: function(event) {
                 // Listens to mousemove events on the canvas in order to detect mouseenter/mouseleave events
@@ -259,7 +276,6 @@
         var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
         var DateHighlighter = function(calendarCanvas, options) {
             superProto.constructor.call(this, calendarCanvas, options);
-            this.draw();
         }
         DateHighlighter.prototype = $.extend(Object.create(superProto), {
             constructor: DateHighlighter,
@@ -269,18 +285,17 @@
             },
             setColor: function(newColor) {
                 this.options.color = newColor;
-                this.draw();
+                this.calendarCanvas.calendar('draw');
             },
-            draw: function() {
+            update: function(){
                 if ( ! Date.isValid(this.options.date) ) {
                     $.error("Invalid Date");
-                }
+                } 
                 this.left = this.calendarCanvas.calendar('date2positionLeft',this.options.date);
                 this.right = this.calendarCanvas.calendar('date2positionRight',this.options.date);
                 this.width = this.calendarCanvas.calendar('option', 'width') - this.left - this.right;
                 this.top = this.calendarCanvas.calendar('option','headerHeight');
                 this.height = this.calendarCanvas.calendar('option','bodyHeight');
-                superProto.draw.call(this);
             }
         });
         return DateHighlighter;
@@ -298,24 +313,22 @@
         var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
         var Bar = function(calendarCanvas, options) {
             superProto.constructor.call(this, calendarCanvas, options);
-            this.options = $.extend({
-                startDate: undefined,
-                finishDate: undefined,
-                barHeight: 10,
-                rowHeight: undefined,
-                verticalPosition: undefined
-            }, this.options);
         }
         Bar.prototype = $.extend(Object.create(superProto), {
             constructor: Bar,
-            draw: function() {
+            options: $.extend(Object.create(superProto.options), {
+                startDate: undefined,
+                finishDate: undefined,
+                barHeight: 10,
+                verticalPosition: undefined,
+                layer: 2
+            }),
+            update: function() {
                 this.left = this.calendarCanvas.calendar('date2positionLeft',this.options.startDate);
                 this.right = this.calendarCanvas.calendar('date2positionRight',this.options.finishDate);
                 this.width = this.calendarCanvas.calendar('option','width') - this.left - this.right;
                 this.top = this.options.verticalPosition - (this.options.barHeight / 2);
                 this.height = this.options.barHeight;
-
-                superProto.draw.call(this);
             }
         });
         return Bar;

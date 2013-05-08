@@ -247,17 +247,8 @@
         // Constructor function
         var Task = function(calendarCanvas, options) {
             superProto.constructor.call(this, calendarCanvas, options);
-            this.options = $.extend({
-                dependencyColor: 'grey',
-                dependentColor: 'grey',
-                highlightColor: 'lightyellow',
-                highlightEdge: 'lightgrey',
-                dependencies: [],
-                dependents: [],
-                radius: 20
-            }, this.options);
             this.options.rowHeight = coalesce(this.options.rowHeight, this.options.barHeight * 2);
-            this.highlight = false;
+            this.highlighted = false;
             this
                 .on('mouseenter', function() {
                     this.calendarCanvas.calendar('draw');
@@ -266,37 +257,51 @@
                     this.calendarCanvas.calendar('draw');
                 })
                 .on('click', function() {
-                    this.highlight = ! this.highlight;
+                    this.highlighted = ! this.highlighted;
                     this.calendarCanvas.calendar('draw');
                 });
         }
 
+        // Properties and methods
         Task.prototype = $.extend(Object.create(superProto), {
             constructor: Task,
-            draw: function() {
+            options: $.extend(Object.create(superProto.options), {
+                rowHeight: undefined,
+                dependencyColor: 'grey',
+                dependentColor: 'grey',
+                highlightColor: 'lightyellow',
+                highlightEdge: 'lightgrey',
+                dependencies: [],
+                dependents: [],
+                radius: 20,
+                layer: 3
+            }),
+            draw: function(layer) {
                 // Draw this task.
-                superProto.draw.call(this);
-                if ( this.hover || this.highlight ) {
-                    var ctx = this.context;
+                if ( (layer === undefined || layer === 2)
+                     && (this.hover || this.highlighted)
+                   ) {
 
+                    // Draw the highlight/hover bar
+                    var ctx = this.context;
                     var highlight = {
-                        x: 0,
+                        left: 0,
                         width: this.calendarCanvas.calendar('option','width'),
-                        y: this.options.verticalPosition - (this.options.rowHeight / 2),
+                        top: this.options.verticalPosition - (this.options.rowHeight / 2),
                         height: this.options.rowHeight
                     }
-                    ctx.globalCompositeOperation = 'destination-over';
-                    if ( this.highlight ) {
+                    if ( this.highlighted ) {
                         ctx.strokeStyle = this.options.highlightEdge;
-                        ctx.strokeRect(highlight.x - 0.5, highlight.y - 0.5, highlight.width + 1, highlight.height + 1);
+                        ctx.strokeRect(highlight.left - 0.5, highlight.top - 0.5, highlight.width + 1, highlight.height + 1);
                     }
                     ctx.fillStyle = this.options.highlightColor;
-                    ctx.fillRect(highlight.x, highlight.y, highlight.width, highlight.height);
+                    ctx.fillRect(highlight.left, highlight.top, highlight.width, highlight.height);
 
-                    ctx.globalCompositeOperation = 'source-over';
+                    // Draw the dependency lines
                     this._drawDependencies();
                     this._drawDependents();
                 }
+                superProto.draw.call(this, layer);
             },
             _drawDependencies: function() {
                 // Draw lines to this task's dependencies
