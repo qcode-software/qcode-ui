@@ -104,8 +104,9 @@
                 var minDate = new Date(Date.today.getTime());
                 var maxDate = new Date(Date.today.getTime());
                 minDate.incrDays(-7);
-                maxDate.incrDays(14);
+                maxDate.incrDays(7);
             }
+            maxDate.incrDays(7);
             var startDate = minDate.getWeekStart();
             var finishDate = maxDate.getWeekEnd();
 
