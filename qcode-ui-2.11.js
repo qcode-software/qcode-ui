@@ -3359,7 +3359,7 @@ function dynamicResize(oContainer) {
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(){
+	onMouseDown: function(event){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -3417,11 +3417,11 @@ function dynamicResize(oContainer) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
 	},
-	editorBlur: function(){
+	editorBlur: function(event){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
 	},
-        editorValueChange: function(){
+        editorValueChange: function(event){
 	    if ( this.getValue() !== this.editor('getValue') ) {
 	        this.getRecord().dbRecord('setState', 'dirty');
             }
@@ -3820,7 +3820,7 @@ function dynamicResize(oContainer) {
 ;(function($, undefined) {
     $.widget('qcode.dbFormCombo', {
         options: {
-	    searchUrl: "",
+	    searchURL: "",
 	    searchLimit: 10,
 	    comboHeight: 200
         },
@@ -4826,16 +4826,16 @@ function dbFormHTMLArea(oDiv) {
 	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown');
+		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
                 'editorValueChange .editable': function(event) {
-                    $(event.currentTarget).dbField('editorValueChange');
+                    $(event.currentTarget).dbField('editorValueChange', event);
                 },
 		'editorBlur .editable': function(event) {
-		    $(event.currentTarget).dbField('editorBlur');
+		    $(event.currentTarget).dbField('editorBlur', event);
 		}
 	    });
 	    this._on(window, {

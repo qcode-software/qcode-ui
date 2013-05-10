@@ -92,7 +92,7 @@
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(){
+	onMouseDown: function(event){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -150,11 +150,11 @@
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
 	},
-	editorBlur: function(){
+	editorBlur: function(event){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
 	},
-        editorValueChange: function(){
+        editorValueChange: function(event){
 	    if ( this.getValue() !== this.editor('getValue') ) {
 	        this.getRecord().dbRecord('setState', 'dirty');
             }
