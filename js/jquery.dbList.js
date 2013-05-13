@@ -1,3 +1,4 @@
+// A table, with 1 row selected, which can be updated from the server.
 ;(function($, undefined) {
     $.widget('qcode.dbList', {
         options: {
