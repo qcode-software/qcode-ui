@@ -27,12 +27,22 @@ if (!Function.prototype.bind) {
 
 // Support for Object.create in earlier browsers
 if (!Object.create) {
-    Object.create = function (o) {
-        if (arguments.length > 1) {
-            throw new Error('Object.create implementation only accepts the first parameter.');
-        }
+    Object.create = function (p, o) {
         function F() {}
-        F.prototype = o;
-        return new F();
+        F.prototype = p;
+        var object = new F();
+        if (arguments.length > 1) {
+            console.warn('Object.create implementation incomplete');
+            jQuery.extent(object, o);
+        }
+        return object;
     };
+}
+
+if (typeof console == "undefined") {
+    console = {
+        log: function() {},
+        warn: function() {},
+        info: function() {}
+    }
 }
