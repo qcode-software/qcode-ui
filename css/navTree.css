@@ -1,0 +1,42 @@
+ul.navtree {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.navtree ul {
+    display: none;
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 0 0.5em;
+    border-bottom: 1px solid lightgrey;
+}
+.navtree .highlight {
+    background: yellow;
+}
+.navtree .highlight-2 {
+    background: lightblue;
+    color: white;
+}
+.navtree .highlight-2 a {
+    color: darkblue;
+}
+.navtree .highlight-2 span {
+    color: lightgrey;
+}
+.navtree span {
+    color: #303030;
+    cursor: pointer;
+}
+.navtree .expand,
+.navtree .collapse {
+    font-family: courier, monospace;
+    display: inline-block;
+    border: 1px solid lightgrey;
+    width: 1em;
+    height: 1em;
+    color: grey;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 0.5em;
+    cursor: pointer;
+}
