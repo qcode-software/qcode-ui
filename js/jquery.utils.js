@@ -173,31 +173,3 @@ $.fn.findByColumn = function(colSelector) {
     });
     return this.pushStack(newSelection);
 };
-
-(function(undefined) {
-    $.fn.actionConfirm = function() {
-        this.on('click', function(event) {
-	    var link = jQuery(this);
-	    if ( ( ! link.is('.disabled')) && link.attr('href') ) {
-	        var url = link.attr('href');
-	        jQuery('<div>')
-		    .text('Are you sure you want to ' + link.text() + '?')
-		    .dialog({
-		        title: link.text(),
-		        buttons: {
-			    Yes: function(){
-			        window.location = url;
-			    },
-			    No: function() {
-			        jQuery(this).dialog('close').dialog('destroy').remove();
-			    }
-		        },
-		        modal: true,
-		        width: 400,
-		        height: 200
-		    });
-	        event.preventDefault();
-	    }
-        });
-    }
-})();
