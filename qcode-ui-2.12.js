@@ -1386,6 +1386,37 @@ function dynamicResize(oContainer) {
     }
 }
 
+/* ==== jquery.actionConfirm.js ==== */
+// actionConfirm plugin
+// Call on <a>, generates a modal dialog asking the user to confirm when the user tries to use the link.
+;(function($, undefined) {
+    $.fn.actionConfirm = function() {
+        this.on('click', function(event) {
+	    var link = $(this);
+	    if ( ( ! link.is('.disabled')) && link.attr('href') ) {
+	        var url = link.attr('href');
+	        $('<div>')
+		    .text('Are you sure you want to ' + link.text() + '?')
+		    .dialog({
+		        title: link.text(),
+		        buttons: {
+			    Yes: function(){
+			        window.location = url;
+			    },
+			    No: function() {
+			        $(this).dialog('close').dialog('destroy').remove();
+			    }
+		        },
+		        modal: true,
+		        width: 400,
+		        height: 200
+		    });
+	        event.preventDefault();
+	    }
+        });
+    }
+})(jQuery);
+
 /* ==== jquery.colInherit.js ==== */
 // colInherit plugin
 // Call on tables to copy classes and inline styles from column elements onto cell elements
@@ -5549,7 +5580,13 @@ function dbFormHTMLArea(oDiv) {
 // nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
 (function ($, undefined) {
     $.fn.positionRelativeTo = function(target) {
+        if ( ! this.length ) {
+            $.error('positionRelativeTo called on empty object');
+        }
 	var target = $(target);
+        if ( ! target.length ) {
+            $.error('positionRelativeTo called with empty target');
+        }
 	var $body = $('body');
 
 	// Find chain of offset parents from this element to body
@@ -5558,12 +5595,18 @@ function dbFormHTMLArea(oDiv) {
 	while ( ! current.is($body) ) {
 	    current = current.offsetParent();
 	    myOffsetParents = myOffsetParents.add(current);
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called on a detached object?');
+            }
 	}
 
 	// Search offset parents from target element up until a common offset parent is found
 	current = target;
 	while ( ! current.is(myOffsetParents) ) {
 	    current = current.offsetParent();
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
+            }
 	}
 	var commonOffsetParent = current;
 
@@ -5577,7 +5620,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    myPosition.left += positionOfCurrent.left;
 	    myPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
@@ -5594,7 +5637,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    targetPosition.left += positionOfCurrent.left;
 	    targetPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
@@ -7396,7 +7439,7 @@ function dbFormHTMLArea(oDiv) {
 // Used for inheritance. Prefer Object.create
 function heir(p) {
     return Object.create(o);
-}
+};
 
 // Returns the first non-undefined argument
 function coalesce() {
@@ -7405,7 +7448,7 @@ function coalesce() {
 	    return arguments[i];
 	}
     }
-}
+};
 
 // Takes an url with query data and splits it, returning the path (with no data) and an object representing the data as name/value pairs.
 function splitURL(url) {
@@ -7432,9 +7475,9 @@ function splitURL(url) {
 	'path': path,
 	'data': data
     }
-}
+};
 
-// Focus on the first focussable element of a form. Considers all descendants regarless of depth.
+// Focus on the first focussable element of a form. Considers all descendants regardless of depth.
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
@@ -7442,7 +7485,7 @@ function formFocus(form) {
 	    return false;
 	}
     });
-}
+};
 // Focus on the first focussable child of element. Only inspects immediate children (does not traverse further down the DOM).
 function focusFirstChild(element) {
     $(element).children().each(function(){
@@ -7451,17 +7494,17 @@ function focusFirstChild(element) {
 	    return false;
 	}
     });
-}
+};
 
 function stripHTML(html) {
     return html.replace(/<[^>]+>/gi,"");
-}
+};
 function escapeHTML(str) {
     return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
-}
+};
 function unescapeHTML(str) {
     return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
-}
+};
 
 function urlSet(url,name,value) {
     var re = /([^\?]+)\??(.*)/;
@@ -7470,7 +7513,7 @@ function urlSet(url,name,value) {
     var queryString = RegExp.$2;
     url = path + "?" + urlDataSet(queryString,name,value);
     return url;
-}
+};
 
 function urlDataSet(data,name,value) {
     var list = new Array();
@@ -7494,7 +7537,7 @@ function urlDataSet(data,name,value) {
     
     data=list.join("&");
     return data;
-}
+};
 
 function httpPost(url,data,handler,errorHandler,async) {
     jQuery.ajax ({
@@ -7533,7 +7576,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
-}
+};
 
 // linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
@@ -7542,7 +7585,7 @@ $.fn.linkNoHistory = function() {
 	event.preventDefault();
     });
     return this;
-}
+};
 
 $.fn.setObjectValue = function(value) {
     // Set the value of the target elements based on their type.
@@ -7557,7 +7600,17 @@ $.fn.setObjectValue = function(value) {
 	}
     });		 
     return this;
-}
+};
+
+// Filter to only table cells in a column
+$.fn.findByColumn = function(colSelector) {
+    var newSelection = $([]);
+    var cells = this.find('td, th');
+    this.closest('table').find('col').filter(colSelector).each(function(j, col) {
+        newSelection = newSelection.add(cells.filter(':nth-child('+($(col).index()+1)+')'));
+    });
+    return this.pushStack(newSelection);
+};
 
 /* ==== tabCtl.js ==== */
 function tabCtl(oCtl) {
