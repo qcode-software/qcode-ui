@@ -173,3 +173,14 @@ $.fn.findByColumn = function(colSelector) {
     });
     return this.pushStack(newSelection);
 };
+
+function parseBoolean(value) {
+  value = stripHTML(String(value)).toLowerCase();
+  var truth = ['true','yes','y','1','t'];
+  for (var i=0;i<truth.length;i++) {
+    if ( value == truth[i].toLowerCase() ) {
+      return true;
+    } 
+  }
+  return false;
+}
