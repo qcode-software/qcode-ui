@@ -173,3 +173,30 @@ $.fn.findByColumn = function(colSelector) {
     });
     return this.pushStack(newSelection);
 };
+
+function parseBoolean(value) {
+  value = stripHTML(String(value)).toLowerCase();
+  var truth = ['true','yes','y','1','t'];
+  for (var i=0;i<truth.length;i++) {
+    if ( value == truth[i].toLowerCase() ) {
+      return true;
+    } 
+  }
+  return false;
+}
+
+;(function($, undefined) {
+    $.fn.hrefClick = function() {
+        if ( this.length == 0 || this.attr('href') === undefined ) {
+            return this;
+        }
+        if ( this.length > 1 || ( ! this.is('a')) ) {
+            $.error('Invalid usage of hrefClick');
+        }
+        var clickEvent = jQuery.Event('click');
+        this.trigger(clickEvent);
+        if ( ! clickEvent.isDefaultPrevented() ) {
+            window.location = this.attr('href');
+        }
+    }
+})(jQuery);
