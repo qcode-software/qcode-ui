@@ -75,7 +75,7 @@
                 .data('target', this.element)
                 .prependTo(this.element)
                 .hide();
-            if ( this.element.hasClass('current') ) {
+            if ( this.element.hasClass('current') || this.element.find('li.current').not('container').length > 0) {
                 this.options.root.navTree('setAnchor');
                 this.expand(false);
             }
