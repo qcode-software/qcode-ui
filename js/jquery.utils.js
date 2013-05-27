@@ -184,3 +184,19 @@ function parseBoolean(value) {
   }
   return false;
 }
+
+;(function($, undefined) {
+    $.fn.hrefClick = function() {
+        if ( this.length == 0 || this.attr('href') === undefined ) {
+            return this;
+        }
+        if ( this.length > 1 || ( ! this.is('a')) ) {
+            $.error('Invalid usage of hrefClick');
+        }
+        var clickEvent = jQuery.Event('click');
+        this.trigger(clickEvent);
+        if ( ! clickEvent.isDefaultPrevented() ) {
+            window.location = this.attr('href');
+        }
+    }
+})(jQuery);
