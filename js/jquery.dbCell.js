@@ -1,5 +1,8 @@
 (function($, window, document, undefined){
     $.widget("qcode.dbCell", {
+        options: {
+            deleteKey: 'delete'
+        },
 	_create: function(){
 	    this.keyUpTimer
 	},
@@ -217,8 +220,16 @@
 		    break;
 		}
 	    case 46: // Delete Key
-		grid.dbGrid('delete');
-		break;
+                if ( this.options.deleteKey === 'delete'
+                     || ( this.options.deleteKey === 'ctrlDelete'
+                          && event.ctrlKey
+                        )
+                   ) {
+		    grid.dbGrid('delete');
+		    break;
+                } else {
+                    return true;
+                }
 	    case 13: // Return Key
 		grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
 		if ( grid.dbGrid('getCurrentCell').is(cell) ) {

@@ -4,7 +4,8 @@
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true	    
+	    statusBar: true,
+            deleteKey: 'delete'
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -18,7 +19,7 @@
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar', 'deleteKey'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -162,6 +163,7 @@
 		    newCell.dbCell('cellIn');		    
 		}
 	    }
+            newCell.dbCell('option', 'deleteKey', this.options.deleteKey);
 	},
 	find: function(colName, search){
 	    // Search within ColName.
