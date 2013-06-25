@@ -149,8 +149,10 @@
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
 	     switch(e.which) {

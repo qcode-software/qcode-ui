@@ -149,6 +149,7 @@
 	    if ( newField.length === 1 ) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
+	    event.preventDefault();
 	},
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.

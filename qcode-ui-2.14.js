@@ -183,14 +183,24 @@ if (!Function.prototype.bind) {
 
 // Support for Object.create in earlier browsers
 if (!Object.create) {
-    Object.create = function (o) {
-        if (arguments.length > 1) {
-            throw new Error('Object.create implementation only accepts the first parameter.');
-        }
+    Object.create = function (p, o) {
         function F() {}
-        F.prototype = o;
-        return new F();
+        F.prototype = p;
+        var object = new F();
+        if (arguments.length > 1) {
+            console.warn('Object.create implementation incomplete');
+            jQuery.extent(object, o);
+        }
+        return object;
     };
+}
+
+if (typeof console == "undefined") {
+    console = {
+        log: function() {},
+        warn: function() {},
+        info: function() {}
+    }
 }
 
 /* ==== bvwLib1.0.js ==== */
@@ -2310,6 +2320,9 @@ function dynamicResize(oContainer) {
 /* ==== jquery.dbCell.js ==== */
 (function($, window, document, undefined){
     $.widget("qcode.dbCell", {
+        options: {
+            deleteKey: 'delete'
+        },
 	_create: function(){
 	    this.keyUpTimer
 	},
@@ -2527,8 +2540,16 @@ function dynamicResize(oContainer) {
 		    break;
 		}
 	    case 46: // Delete Key
-		grid.dbGrid('delete');
-		break;
+                if ( this.options.deleteKey === 'delete'
+                     || ( this.options.deleteKey === 'ctrlDelete'
+                          && event.ctrlKey
+                        )
+                   ) {
+		    grid.dbGrid('delete');
+		    break;
+                } else {
+                    return true;
+                }
 	    case 13: // Return Key
 		grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
 		if ( grid.dbGrid('getCurrentCell').is(cell) ) {
@@ -2734,8 +2755,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
 	     switch(e.which) {
@@ -3094,8 +3117,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
@@ -3344,8 +3369,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -3540,8 +3567,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -3744,8 +3773,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -3948,6 +3979,7 @@ function dynamicResize(oContainer) {
 	    if ( newField.length === 1 ) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
+	    event.preventDefault();
 	},
 	editorBlur: function(){
 	    // When the editor becomes blurred, move out.
@@ -4620,7 +4652,8 @@ function dbFormHTMLArea(oDiv) {
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true	    
+	    statusBar: true,
+            deleteKey: 'delete'
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -4634,7 +4667,7 @@ function dbFormHTMLArea(oDiv) {
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar', 'deleteKey'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -4778,6 +4811,7 @@ function dbFormHTMLArea(oDiv) {
 		    newCell.dbCell('cellIn');		    
 		}
 	    }
+            newCell.dbCell('option', 'deleteKey', this.options.deleteKey);
 	},
 	find: function(colName, search){
 	    // Search within ColName.
