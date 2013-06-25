@@ -316,7 +316,7 @@
         }
         Bar.prototype = $.extend(Object.create(superProto), {
             constructor: Bar,
-            options: Object.create(superProto.options, {
+            options: $.extend(Object.create(superProto.options), {
                 startDate: undefined,
                 finishDate: undefined,
                 barHeight: 10,

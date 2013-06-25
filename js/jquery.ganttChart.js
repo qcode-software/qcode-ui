@@ -270,7 +270,7 @@
         // Properties and methods
         Task.prototype = $.extend(Object.create(superProto), {
             constructor: Task,
-            options: Object.create(superProto.options, {
+            options: $.extend(Object.create(superProto.options), {
                 rowHeight: undefined,
                 dependencyColor: 'grey',
                 dependentColor: 'grey',
