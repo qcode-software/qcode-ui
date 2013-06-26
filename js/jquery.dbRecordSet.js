@@ -16,16 +16,16 @@
 	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown');
+		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
                 'editorValueChange .editable': function(event) {
-                    $(event.currentTarget).dbField('editorValueChange');
+                    $(event.currentTarget).dbField('editorValueChange', event);
                 },
 		'editorBlur .editable': function(event) {
-		    $(event.currentTarget).dbField('editorBlur');
+		    $(event.currentTarget).dbField('editorBlur', event);
 		}
 	    });
 	    this._on(window, {

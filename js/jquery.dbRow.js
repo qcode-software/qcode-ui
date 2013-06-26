@@ -217,10 +217,10 @@
 	},
 	setCellValue: function(colName, value){
 	    // Set the value of the cell corresponding to colName.
-	    var colIndex = $('col[name='+colName+']', this.colgroup).index();
+	    var colIndex = $('col[name='+colName+']', this.getColgroup()).index();
 	    if ( colIndex !== -1 ) {
 		var cell = this.element.children('td').eq(colIndex);
-		cell.dbCell('setValue',value);	    
+		cell.dbCell('setValue',value);
 	    }
 	},
 	delete: function(async){

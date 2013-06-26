@@ -325,36 +325,62 @@
 	return data;
     }
 
+    // Provide interaction as a jQuery plugin
     $.fn.dbForm = function(method) {
 	var args = arguments;
 	var forms = this;
 	var returnVal;
 
 	forms.each(function(){
+
+            // Get the dbForm object for this element, create one if none exists
 	    var dbForm = $(this).data('dbForm');
 	    if ( ! dbForm ) {
 		dbForm = new DbForm($(this));
 		$(this).data('dbForm', dbForm);
 	    }
+
+            // With no arguments or an options object, call the init method
 	    if ( typeof method == "object" || typeof method == "undefined" ) {
 		dbForm.init.apply( dbForm, args );
+
 	    } else if ( typeof dbForm[method] == "function" ) {
+                // Method call
 		returnVal = dbForm[method].apply( dbForm, Array.prototype.slice.call( args, 1 ) );
-		if ( typeof returnVal != "undefined" ) {
-		    return returnVal;
-		}
+
 	    } else if ( typeof dbForm.settings[method] != "undefined" && args.length == 1 ) {
-		return dbForm.settings[method];
+                // Get a setting value
+		returnVal = dbForm.settings[method];
+
 	    } else if ( typeof dbForm.settings[method] != "undefined" && args.length == 2 ) {
+                // Set a setting value
 		dbForm.settings[method] = args[1];
+
 	    } else if ( typeof dbForm[method] != "undefined" && args.length == 1 ) {
-		return dbForm[method];
+                // Get a class variable
+		returnVal = dbForm[method];
+
 	    } else if ( typeof dbForm[method] != "undefined" && args.length == 2 ) {
+                // Set a class variable
 		dbForm[method] = args[1];
+
 	    } else {
 		$.error( 'Method or property ' + method + ' does not exist on jQuery.dbForm' );
 	    }
+
+            // Break the loop if we have a return value.
+            if ( typeof returnVal != "undefined" ) {
+                return false;
+            }
+
 	});
-	return forms;
+        // For methods with a return value and for getting setting values/class variables, return the value.
+	if ( typeof returnVal != "undefined" ) {
+	    return returnVal;
+
+	} else {
+            // Return the original jQuery object for chaining
+	    return forms;
+        }
     };
 })(jQuery);

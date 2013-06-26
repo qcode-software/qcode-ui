@@ -1,7 +1,7 @@
 // Used for inheritance. Prefer Object.create
 function heir(p) {
     return Object.create(o);
-}
+};
 
 // Returns the first non-undefined argument
 function coalesce() {
@@ -10,7 +10,7 @@ function coalesce() {
 	    return arguments[i];
 	}
     }
-}
+};
 
 // Takes an url with query data and splits it, returning the path (with no data) and an object representing the data as name/value pairs.
 function splitURL(url) {
@@ -37,9 +37,9 @@ function splitURL(url) {
 	'path': path,
 	'data': data
     }
-}
+};
 
-// Focus on the first focussable element of a form. Considers all descendants regarless of depth.
+// Focus on the first focussable element of a form. Considers all descendants regardless of depth.
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
@@ -47,7 +47,7 @@ function formFocus(form) {
 	    return false;
 	}
     });
-}
+};
 // Focus on the first focussable child of element. Only inspects immediate children (does not traverse further down the DOM).
 function focusFirstChild(element) {
     $(element).children().each(function(){
@@ -56,17 +56,17 @@ function focusFirstChild(element) {
 	    return false;
 	}
     });
-}
+};
 
 function stripHTML(html) {
     return html.replace(/<[^>]+>/gi,"");
-}
+};
 function escapeHTML(str) {
     return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
-}
+};
 function unescapeHTML(str) {
     return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
-}
+};
 
 function urlSet(url,name,value) {
     var re = /([^\?]+)\??(.*)/;
@@ -75,7 +75,7 @@ function urlSet(url,name,value) {
     var queryString = RegExp.$2;
     url = path + "?" + urlDataSet(queryString,name,value);
     return url;
-}
+};
 
 function urlDataSet(data,name,value) {
     var list = new Array();
@@ -99,7 +99,7 @@ function urlDataSet(data,name,value) {
     
     data=list.join("&");
     return data;
-}
+};
 
 function httpPost(url,data,handler,errorHandler,async) {
     jQuery.ajax ({
@@ -138,7 +138,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
-}
+};
 
 // linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
@@ -147,7 +147,7 @@ $.fn.linkNoHistory = function() {
 	event.preventDefault();
     });
     return this;
-}
+};
 
 $.fn.setObjectValue = function(value) {
     // Set the value of the target elements based on their type.
@@ -162,7 +162,7 @@ $.fn.setObjectValue = function(value) {
 	}
     });		 
     return this;
-}
+};
 
 // Filter to only table cells in a column
 $.fn.findByColumn = function(colSelector) {
@@ -172,4 +172,31 @@ $.fn.findByColumn = function(colSelector) {
         newSelection = newSelection.add(cells.filter(':nth-child('+($(col).index()+1)+')'));
     });
     return this.pushStack(newSelection);
+};
+
+function parseBoolean(value) {
+  value = stripHTML(String(value)).toLowerCase();
+  var truth = ['true','yes','y','1','t'];
+  for (var i=0;i<truth.length;i++) {
+    if ( value == truth[i].toLowerCase() ) {
+      return true;
+    } 
+  }
+  return false;
 }
+
+;(function($, undefined) {
+    $.fn.hrefClick = function() {
+        if ( this.length == 0 || this.attr('href') === undefined ) {
+            return this;
+        }
+        if ( this.length > 1 || ( ! this.is('a')) ) {
+            $.error('Invalid usage of hrefClick');
+        }
+        var clickEvent = jQuery.Event('click');
+        this.trigger(clickEvent);
+        if ( ! clickEvent.isDefaultPrevented() ) {
+            window.location = this.attr('href');
+        }
+    }
+})(jQuery);
