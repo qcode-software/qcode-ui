@@ -118,6 +118,11 @@
     background: url("../images/up.png") no-repeat top center black;
 }
 
+/* ==== imageCombo.css ==== */
+.imageWrapper {
+    display: table-cell;
+}
+
 /* ==== sidebar.css ==== */
 /* Sidebar */
 .sidebar {

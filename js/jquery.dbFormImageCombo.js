@@ -53,8 +53,7 @@
                     this._whenLoaded(function() {
                         this.imageWrapper.stop().animate({
                             'width': this.image.width() + "px",
-                            'height': this.image.height() + "px",
-                            'line-height': this.image.height() + "px"
+                            'height': this.image.height() + "px"
                         });
                     });
                 });
@@ -63,8 +62,7 @@
                 this._whenLoaded(function() {
                     this.imageWrapper.stop().animate({
                         'width': this.image.width() + "px",
-                        'height': this.image.height() + "px",
-                        'line-height': this.image.height() + "px"
+                        'height': this.image.height() + "px"
                     });
                 });
             }
