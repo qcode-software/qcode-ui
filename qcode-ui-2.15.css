@@ -81,6 +81,21 @@
     background-color:lightgrey;
 }
 
+/* ==== gantt.css ==== */
+.ganttChart.wrapper {
+    position: relative;
+    padding: 0.1px;
+}
+.ganttChart .calendarFrame {
+    position: absolute;
+    overflow-x: scroll;
+    overflow-y: auto;
+}
+
+.calendar {
+    display: block;
+}
+
 /* ==== hoverScroller.css ==== */
 .hoverScrollerContainer {
     position: relative;

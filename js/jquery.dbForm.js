@@ -1,30 +1,62 @@
-(function($, undefined){
+// dbForm plugin
+;(function($, window, undefined){
+    // ============================================================
+    // dbForm class
+    // ============================================================
+
+    // Constructor function
     function DbForm(form) {
 	this.form = $(form);
 	this.elements = $([]);
     }
+
+    // ============================================================
+
+    // Public methods
     $.extend(DbForm.prototype, {
 	init: function(options) {
+            // Initialise the dbForm
+
+            // Default settings
 	    this.settings = $.extend({
-		formType: "update",
+		formType: "update", // Update, add, or submit
+                updateType: "manual", //(with formType=="update"): manual, keyup, focus, or blur
 		enabled: true,
 		checkOnExit: true,
-		initialFocus: true
+		initialFocus: true,
+                initialFind: undefined, // "name=value"
+                dataURL: undefined,
+                qryURL: undefined,
+                updateURL: undefined,
+                addURL: undefined,
+                submitURL: undefined,
+                searchURL: undefined,
+                deleteURL: undefined,
+                formActionReturn: undefined // function
 	    }, options);
 	    if ( typeof this.settings.formActionReturn == "function" ) {
 		this.form.on('formActionReturn.DbForm', this.settings.formActionReturn);
 	    }
 
+            // Class variables
 	    this.state = 'current';
+
 	    this.divStatus = this.form.find('div.clsDbFormDivStatus').last();
-	    this.elements = this.elements.add('input', this.form).add('select', this.form).add('textarea', this.form).add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
-	    this.error = undefined;
+
+	    this.elements = this.elements
+                .add('input', this.form)
+                .add('select', this.form)
+                .add('textarea', this.form)
+                .add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
+
 	    if ( typeof this.settings.dataURL != "undefined" ) {
 		this.formAction('requery', this.settings.dataURL);
 	    }
 	    if ( typeof this.settings.qryURL != "undefined" ) {
 		this.nav('FIRST');
 	    }
+
+            // Event listeners
 	    this.form.on('change.DbForm', 'select', this.setDirty.bind(this));
 	    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
 	    if ( this.settings.checkOnExit && this.settings.formType === "update" ) {
@@ -33,9 +65,44 @@
 	    this.form.on('keydown.DbForm', onKeyDown.bind(this));
 	    this.form.on('keypress.DbForm', onKeyPress.bind(this));
 	    this.form.on('submit.DbForm', onSubmit.bind(this));
+            if ( this.settings.formType == "update" ) {
+                var dbForm = this;
+                switch ( this.settings.updateType ) {
+                case "focus":
+                    this.form.on('focusin', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            if ( dbForm.state == 'dirty' ) {
+                                dbForm.save();
+                            }
+                        }
+                    });
+                    break;
+                case "blur":
+                    this.form.on('focusout', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            if ( dbForm.state == 'dirty' ) {
+                                dbForm.save();
+                            }
+                        }
+                    });
+                    break;
+                case "keyup":
+                    this.form.on('keyup', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            cancelDelayedSave.call(dbForm);
+                            dbForm.keyUpTimer = window.setTimeout(dbForm.save.bind(dbForm),750);
+                        }
+                    });
+                    break;
+                }
+            }
+
+            // Should initial focus go to this form?
 	    if ( this.settings.initialFocus ) {
 		this.focus();
 	    }
+            
+            // Do we have an inital search?
 	    if ( typeof this.settings.initialFind == "string" ) {
 		var name = this.settings.initialFind.split('=')[0];
 		var value = this.settings.initialFind.split('=')[1];
@@ -168,6 +235,11 @@
 	    }
 	}
     });
+    // End of public methods
+
+    // ============================================================
+
+    // Private methods
     function onBeforeUnload() {
 	if ( this.state == 'dirty' ) {
 	    if (window.confirm('Do you want to save your changes?')) {
@@ -199,7 +271,6 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-
     function formActionSuccess(xmlDoc, type) {
 	var dbForm = this;
 	$('records > record *', xmlDoc).each(function(i, xmlNode){
@@ -285,7 +356,6 @@
 	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
 	this.form.trigger('formActionError.dbForm', [errorMessage]);
     }
-
     function formData(form) {
 	var data = {};
 	this.elements
@@ -324,8 +394,17 @@
 	    });
 	return data;
     }
+    function cancelDelayedSave() {
+	if ( this.keyUpTimer !== undefined ) {
+	    clearTimeout(this.keyUpTimer);
+	}
+	this.keyUpTimer = undefined;
+    }
+    // End of private methods
 
-    // Provide interaction as a jQuery plugin
+    // ============================================================
+
+    // Provide jQuery plugin interface
     $.fn.dbForm = function(method) {
 	var args = arguments;
 	var forms = this;
@@ -383,4 +462,5 @@
 	    return forms;
         }
     };
-})(jQuery);
+    // End of dbForm plugin
+})(jQuery, window);

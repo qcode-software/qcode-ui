@@ -183,15 +183,126 @@ if (!Function.prototype.bind) {
 
 // Support for Object.create in earlier browsers
 if (!Object.create) {
-    Object.create = function (o) {
-        if (arguments.length > 1) {
-            throw new Error('Object.create implementation only accepts the first parameter.');
-        }
+    Object.create = function (p, o) {
         function F() {}
-        F.prototype = o;
-        return new F();
+        F.prototype = p;
+        var object = new F();
+        if (arguments.length > 1) {
+            console.warn('Object.create implementation incomplete');
+            jQuery.extent(object, o);
+        }
+        return object;
     };
 }
+
+if (typeof console == "undefined") {
+    console = {
+        log: function() {},
+        warn: function() {},
+        info: function() {}
+    }
+}
+
+/* ==== date.js ==== */
+// Extensions for the javascript Date function
+;(function() {
+    // ==============================
+    // Constants
+    // ==============================
+    var millisecondsPerMinute = 1000 * 60;
+    var millisecondsPerDay =  millisecondsPerMinute * 60 * 24;
+    var dayLetter = ["S", "M", "T", "W", "T", "F", "S"];
+    var monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // ==============================
+    // Methods
+    // ==============================
+    Date.prototype.incrDays = function(days) {
+        // Move this date forward by a number of days. Accepts negative and non-integer values.
+        var oldOffset = this.getTimezoneOffset();
+        this.setTime(this.getTime() + (days * millisecondsPerDay));
+        var newOffset = this.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            this.setTime(this.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+    }
+    Date.prototype.getWeekStart = function(base) {
+        // Get a new date object representing the first day of this date's week.
+        // Optional: base - the day to start the week on. 0 = Sunday, 1 = Monday, etc.
+        base = coalesce(base, 1);
+        var days_to_subtract = this.getDay() - base;
+        if (days_to_subtract < 0) {
+            days_to_subtract += 7;
+        }
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() - (days_to_subtract * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
+    }
+    Date.prototype.getWeekEnd = function(base) {
+        // Get a new date object representing the last day of this date's week.
+        // Optional: base - the day to start the week on. 0 = Sunday, 1 = Monday, etc.
+        base = coalesce(base, 1);
+        var days_to_add = base + 6 - this.getDay();
+        if (days_to_add > 6) {
+            days_to_add -= 7;
+        }
+        var oldOffset = this.getTimezoneOffset();
+        var newDate =  new Date(this.getTime() + (days_to_add * millisecondsPerDay));
+        var newOffset = newDate.getTimezoneOffset();
+        if ( oldOffset != newOffset ) {
+            newDate.setTime(newDate.getTime() - (oldOffset - newOffset) * millisecondsPerMinute);
+        }
+        return newDate;
+    }
+    Date.prototype.getDayLetter = function() {
+        // Get the first letter of this date's day of week name
+        return dayLetter[this.getDay()];
+    }
+    Date.prototype.getMonthShort = function() {
+        // Get the short name of this date's month
+        return monthShort[this.getMonth()];
+    }
+
+    // ==============================
+    // Static functions
+    // ==============================
+    Date.min = function() {
+        // Returns a the earliest from the dates passed in - takes any number of arguments
+        var min = Infinity;
+        for(var i = arguments.length; i > 0; i--) {
+            min = Math.min(min, arguments[i - 1].getTime());
+        }
+        return new Date(min);
+    }
+    Date.max = function() {
+        // Returns a the latest from the dates passed in - takes any number of arguments
+        var max = -Infinity;
+        for(var i = arguments.length; i > 0; i--) {
+            max = Math.max(max, arguments[i - 1].getTime());
+        }
+        return new Date(max);
+    }
+    Date.daysBetween = function(date1, date2) {
+        // Returns the number of days between date1 and date2 (negative if date1 is earlier than date2)
+        var milliseconds = date1.getTime() - date2.getTime();
+        return Math.round(milliseconds / millisecondsPerDay);
+    }
+    Date.isValid = function(date) {
+        // Returns true if passed a valid date object. Returns false if the argument is not a valid date object
+        return (date instanceof Date) && ( ! isNaN(date.getTime()) );
+    }
+
+    // ==============================
+    // Static properties
+    // ==============================
+    var now = new Date();
+    // A date representing mindnight (00:00:00) today
+    Date.today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+})();
 
 /* ==== dbHeader.js ==== */
 function dbHeader(oTable) {
@@ -344,6 +455,346 @@ function dynamicResize(oContainer) {
     }
 })(jQuery);
 
+/* ==== jquery.calendar.js ==== */
+;(function($, undefined) {
+    // ======================================================================
+    // calendar widget plugin. Call on a <canvas> to draw a calendar
+    // ======================================================================
+    jQuery.widget('qcode.calendar', {
+        options: {
+            bodyHeight: 150,
+            headerHeight: 40,
+            startDate: undefined,
+            finishDate: undefined,
+            pxPerDay: 20,
+            styles: {
+                weekends: 'rgba(220,220,220,1)',
+                lines: 'rgba(200,200,200,1)',
+                text: 'rgba(100,100,100,1)'
+            }
+        },
+        _create: function() {
+            var domCanvas = this.element[0];
+            if ( ! domCanvas.getContext ) {
+                $.error("Plugin qcode.calendar requires a canvas");
+            }
+            this.context = domCanvas.getContext('2d');
+            this.canvasObjects = [];
+            this.newDateHighlighter({
+                date: Date.today,
+                color: 'rgba(160,200,240,1)'
+            });
+        },
+        draw: function() {
+            // draw (or redraw) the calendar
+            var ctx = this.context;
+            var options = this.options;
+
+            if ( ! Date.isValid(options.startDate) ) {
+                $.error("Invalid start date for calendar");
+            }
+            if ( ! Date.isValid(options.finishDate) ) {
+                $.error("Invalid finish date for calendar");
+            }
+
+            // Recalculate width/height in case options have changed
+            options.width = (Date.daysBetween(options.finishDate, options.startDate) + 1) * options.pxPerDay;
+
+            // Use canvas html width/height attributes, NOT css width/height
+            this.element
+                .attr('width', options.width)
+                .attr('height', options.bodyHeight + options.headerHeight);
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, options.width, options.bodyHeight);
+
+            // Offset path to account for line width, and begin a path to draw all the grid lines
+            var x = 0.5;
+            ctx.beginPath();
+            ctx.textBaseline = "middle";
+
+            // Loop over all days from start date to finish date
+            var date = new Date(options.startDate.getTime());
+            while( date.getTime() <= options.finishDate.getTime() ) {
+
+                // Header text
+                ctx.fillStyle = options.styles.text;
+                // Label start of week on mondays
+                if ( date.getDay() == 1 ) {
+                    ctx.textAlign = "left";
+                    ctx.fillText(date.getDate() + " " + date.getMonthShort(), x, (options.headerHeight / 4));
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, options.headerHeight);
+                }
+                ctx.textAlign = "center";
+                ctx.fillText(date.getDayLetter(), x + (options.pxPerDay / 2), (3 * options.headerHeight / 4));
+
+                // Highlight weekends
+                if ( date.getDay() == 0 || date.getDay() == 6 ) {
+                    ctx.fillStyle = this.options.styles.weekends;
+                    ctx.fillRect(x, options.headerHeight, options.pxPerDay, options.bodyHeight);
+                }
+                // Draw vertical lines at the end of each day
+                ctx.moveTo(x + options.pxPerDay, options.headerHeight);
+                ctx.lineTo(x + options.pxPerDay, options.bodyHeight + options.headerHeight);
+                
+                x += options.pxPerDay;
+                date.incrDays(1);
+            }
+
+            // Actually draw all the lines
+            ctx.strokeStyle = options.styles.lines;
+            ctx.stroke();
+
+            // Redraw bars and highlights
+            var topLayer = 0;
+            $.each(this.canvasObjects, function(i, object) {
+                topLayer = Math.max(object.topLayer(), topLayer);
+                object.update();
+            });
+            for (var layer = 0; layer <= topLayer; layer++) {
+                $.each(this.canvasObjects, function(i, object) {
+                    object.draw(layer);
+                });
+            }
+        },
+        date2positionLeft: function(date) {
+            // Return the px distance from the left edge of the calendar to the left edge of the given date
+            var left = Date.daysBetween(date, this.options.startDate) * this.options.pxPerDay;
+            return left;
+        },
+        date2positionRight: function(date) {
+            // Return the px distance from the right edge of the calendar to the right edge of the given date
+            var right = Date.daysBetween(this.options.finishDate, date) * this.options.pxPerDay;
+            return right;
+        },
+        newDateHighlighter: function(options) {
+            // Create and return a date highlighter attached to this calendar (see class defs. below)
+            var highlighter = new this.constructor.DateHighlighter(this.element, options);
+            this.addObject(highlighter);
+            return highlighter;
+        },
+        newBar: function(options) {
+            // Create and return a horizontal bar attached to this calendar (see class defs. below)
+            var bar = new this.constructor.Bar(this.element, options);
+            this.addObject(bar);
+            return bar;
+        },
+        addObject: function(canvasObject) {
+            // Add a canvas object (such as a bar or date highlight) to the calendar
+            this.canvasObjects.push(canvasObject);
+            this.draw();
+        },
+        removeObject: function(canvasObject) {
+            // Remove a canvas object from the calendar
+            var index = this.canvasObjects.indexOf(canvasObject);
+            this.canvasObjects.splice(index, 1);
+        },
+        getContext: function() {
+            // Returns the drawing context of the canvas
+            return this.context;
+        }
+    });
+    // End of calendar widget
+    // ============================================================
+
+
+    // ======================================================================
+    // Class CanvasObject
+    // draws a rectangle on the canvas and binds mouse events for it.
+    // ======================================================================
+    jQuery.qcode.calendar.CanvasObject = (function() {
+        var CanvasObject = function(calendarCanvas, options) {
+            // calendarCanvas should be a jQuery object holding the canvas
+            this.calendarCanvas = calendarCanvas;
+            this.context = this.calendarCanvas.calendar('getContext');
+
+            // Initialise options
+            this.options = $.extend(Object.create(this.options), options);
+
+            // True during mouse hover
+            this.hover = false;
+
+            // Initialise store for event handlers
+            this._eventHandlers = {
+                mouseenter: [],
+                mouseleave: [],
+                click: []
+            };
+
+            // Listeners need to be passed in to jquery's on and off methods, so need to be bound to this instance
+            this._moveListener = this._moveListener.bind(this);
+            this._leaveListener = this._leaveListener.bind(this);
+            this._clickListener = this._clickListener.bind(this);
+
+            this.calendarCanvas.on('mousemove', this._moveListener);
+        }
+        $.extend(CanvasObject.prototype, {
+            options: {
+                color: 'lightblue',
+                layer: 1
+            },
+            update: function() {
+                this.left = this.options.left;
+                this.width = this.options.width;
+                this.top = this.options.top;
+                this.height = this.options.height;
+            },
+            draw: function(layer) {
+                // Draw/redraw this object
+                if ( layer === undefined || layer === this.options.layer ) {
+                    var ctx = this.context;
+                    ctx.fillStyle = this.options.color;
+                    ctx.fillRect(this.left, this.top, this.width, this.height);
+                }
+            },
+            topLayer: function() {
+                return this.options.layer;
+            },
+            on: function(eventName, handler) {
+                // Bind an event handler to one of the mouse events provided by this class
+                if ( ! Array.isArray(this._eventHandlers[eventName]) ) {
+                    $.error('Event ' + eventName + ' not supported by canvas object');
+                }
+                this._eventHandlers[eventName].push(handler);
+                return this;
+            },
+            off: function(eventName, handler) {
+                // Remove an event bound with on()
+                var index = this._eventHandlers[eventName].indexOf(handler);
+                this._eventHandlers.splice(index, 1);
+                return this;
+            },
+            remove: function() {
+                // Remove all event listeners and remove this from the calendar
+                this.calendarCanvas.off('mousemove', this._moveListener);
+                this.calendarCanvas.off('mousemove', this._leaveListener);
+                this.calendarCanvas.off('mousemove', this._clickListener);
+                this.calendarCanvas.calendar('removeObject',this);
+            },
+            _moveListener: function(event) {
+                // Listens to mousemove events on the canvas in order to detect mouseenter/mouseleave events
+                var canvasObject = this;
+                var canvas = this.calendarCanvas;
+                var offset = canvas.offset();
+                if ( (event.pageX > offset.left + this.left - canvas.scrollLeft())
+                     && (event.pageX < offset.left + this.left + this.width - canvas.scrollLeft())
+                     && (event.pageY > offset.top + this.top - canvas.scrollTop())
+                     && (event.pageY < offset.top + this.top + this.height - canvas.scrollTop()) ) {
+                    // Mouse is inside this object - if it wasn't already then fire mouseenter and begin listening for click events. Also listen for the mouse leaving the canvas entirely.
+                    if ( ! this.hover ) {
+                        this.hover = true;
+                        this.calendarCanvas.on('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseenter'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarCanvas.one('mouseleave', this.leaveListener);
+                    }
+                } else {
+                    // Mouse is outside the object - if it wasn't already then fire mouseleave and stop listening for click
+                    if ( this.hover ) {
+                        this.hover = false;
+                        this.calendarCanvas.off('click', this._clickListener);
+                        $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                            handler.call(canvasObject, event);
+                        });
+                        this.calendarCanvas.off('mouseleave', this.leaveListener);
+                    }
+                }
+            },
+            _leaveListener: function(event) {
+                // Listens for mouseleave fired on the canvas
+                var canvasObject = this;
+                this.hover = false;
+                this.calendarCanvas.off('click', this._clickListener);
+                $.each(this._eventHandlers['mouseleave'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+            _clickListener: function(event) {
+                // Listens for clicks on the canvas
+                var canvasObject = this;
+                $.each(this._eventHandlers['click'], function(i, handler) {
+                    handler.call(canvasObject, event);
+                });
+            },
+        });
+        return CanvasObject;
+    })();
+    // End of class CanvasObject
+    // ============================================================
+
+
+    // ============================================================
+    // DateHighlighter class
+    // Extends CanvasObject
+    // This object highlights a single date in a calendar.
+    // ============================================================
+    jQuery.qcode.calendar.DateHighlighter = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var DateHighlighter = function(calendarCanvas, options) {
+            superProto.constructor.call(this, calendarCanvas, options);
+        }
+        DateHighlighter.prototype = $.extend(Object.create(superProto), {
+            constructor: DateHighlighter,
+            setDate: function(newDate) {
+                this.options.date = newDate;
+                this.calendarCanvas.calendar('draw');
+            },
+            setColor: function(newColor) {
+                this.options.color = newColor;
+                this.calendarCanvas.calendar('draw');
+            },
+            update: function(){
+                if ( ! Date.isValid(this.options.date) ) {
+                    $.error("Invalid Date");
+                } 
+                this.left = this.calendarCanvas.calendar('date2positionLeft',this.options.date);
+                this.right = this.calendarCanvas.calendar('date2positionRight',this.options.date);
+                this.width = this.calendarCanvas.calendar('option', 'width') - this.left - this.right;
+                this.top = this.calendarCanvas.calendar('option','headerHeight');
+                this.height = this.calendarCanvas.calendar('option','bodyHeight');
+            }
+        });
+        return DateHighlighter;
+    })();
+    // End of DateHighlighter class
+    // ============================================================
+
+
+    // ============================================================
+    // Bar class
+    // Extends CanvasObject
+    // A horizontal bar added to the calendar
+    // ============================================================
+    jQuery.qcode.calendar.Bar = (function() {
+        var superProto = jQuery.qcode.calendar.CanvasObject.prototype;
+        var Bar = function(calendarCanvas, options) {
+            superProto.constructor.call(this, calendarCanvas, options);
+        }
+        Bar.prototype = $.extend(Object.create(superProto), {
+            constructor: Bar,
+            options: $.extend(Object.create(superProto.options), {
+                startDate: undefined,
+                finishDate: undefined,
+                barHeight: 10,
+                verticalPosition: undefined,
+                layer: 2
+            }),
+            update: function() {
+                this.left = this.calendarCanvas.calendar('date2positionLeft',this.options.startDate);
+                this.right = this.calendarCanvas.calendar('date2positionRight',this.options.finishDate);
+                this.width = this.calendarCanvas.calendar('option','width') - this.left - this.right;
+                this.top = this.options.verticalPosition - (this.options.barHeight / 2);
+                this.height = this.options.barHeight;
+            }
+        });
+        return Bar;
+    })();
+    // End of Bar class
+    // ============================================================
+})(jQuery);
+
 /* ==== jquery.colInherit.js ==== */
 // colInherit plugin
 // Call on tables to copy classes and inline styles from column elements onto cell elements
@@ -422,6 +873,97 @@ function dynamicResize(oContainer) {
 	    });
 	});
 	return this;
+    }
+})(jQuery);
+
+/* ==== jquery.columnResize.js ==== */
+// Column Resize plugin
+// Uses jQuery UI resizable, but resizes the entire column
+// If the content does not fit the column, use behaviour defined by overflow options:
+// - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
+// - shrink: reduce the font size (down to min-font-size) until the content fits.
+// - shrink-one-line (default): as shrink, but force no wrapping
+// - break-word: force word break to try and make the content fit.
+;(function($, undefined) {
+    $.fn.columnResize = function(options) {
+        var options = $.extend({
+            overflow: "shrink-one-line",
+            'min-font-size': 1
+        }, options);
+
+        this.find('th').each(function() {
+            var th = $(this);
+            var index = th.index();
+            var table = th.closest('table');
+            var col = table.find('col').filter(':nth-child('+(index+1)+')');
+            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+
+            switch ( options.overflow ) {
+            case 'shrink-one-line':
+                th.add(cells).add(col).css('white-space', "nowrap");
+            case 'shrink':
+                th.add(cells).add(col).each(function() {
+                    $(this).data('original-font-size', parseInt($(this).css('font-size')));
+                });
+                break;
+            case 'normal':
+            case 'break-word':
+                break;
+            default:
+                $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
+                break;
+            }
+
+            th.resizable({
+                handles: "e",
+                resize: onResize
+            });                
+        });
+
+        function onResize(e, ui) {
+            var th = $(this);
+            var index = th.index();
+            var table = th.closest('table');
+            var col = table.find('col').filter(':nth-child('+(index+1)+')');
+            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+
+            switch ( options.overflow ) {
+            case 'break-word':
+                th.add(cells).add(col).css('word-break', 'normal');
+                th.add(col).add(cells).width(ui.size.width);
+                if ( th.width() != ui.size.width ) {
+                    th.add(cells).add(col).css('word-break', 'break-all');
+                }
+                break;
+
+            case 'shrink-one-line':
+            case 'shrink':
+                th.add(col).add(cells).width(ui.size.width);
+                th.add(cells).add(col).each(function() {
+                    $(this).css('font-size', $(this).data('original-font-size'));
+                });
+                
+                var tooSmall = false;
+                while ( th.width() != ui.size.width && ! tooSmall ) {
+                    th.add(cells).add(col).each(function() {
+                        var fontSize = parseInt($(this).css('font-size')) - 1;
+                        if (fontSize < options['min-font-size']) {
+                            tooSmall = true;
+                        } else {
+                            $(this).css('font-size', fontSize);
+                        }
+                    });
+                }
+                break;
+
+            default:
+                col.add(cells).width(ui.size.width);
+                break;
+            }
+            event.stopPropagation;
+            table.trigger('resize');
+        }
+        return this;
     }
 })(jQuery);
 
@@ -736,6 +1278,9 @@ function dynamicResize(oContainer) {
 /* ==== jquery.dbCell.js ==== */
 (function($, window, document, undefined){
     $.widget("qcode.dbCell", {
+        options: {
+            deleteKey: 'delete'
+        },
 	_create: function(){
 	    this.keyUpTimer
 	},
@@ -953,8 +1498,16 @@ function dynamicResize(oContainer) {
 		    break;
 		}
 	    case 46: // Delete Key
-		grid.dbGrid('delete');
-		break;
+                if ( this.options.deleteKey === 'delete'
+                     || ( this.options.deleteKey === 'ctrlDelete'
+                          && event.ctrlKey
+                        )
+                   ) {
+		    grid.dbGrid('delete');
+		    break;
+                } else {
+                    return true;
+                }
 	    case 13: // Return Key
 		grid.dbGrid('cellChange', grid.dbGrid('cellRightOf', cell));
 		if ( grid.dbGrid('getCurrentCell').is(cell) ) {
@@ -1160,8 +1713,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
 	     switch(e.which) {
@@ -1520,8 +2075,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
@@ -1770,8 +2327,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -1966,8 +2525,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -2170,8 +2731,10 @@ function dynamicResize(oContainer) {
 		'shiftKey': e.shiftKey, 
 		'which': e.which
 	    });
-	    e.preventDefault();
 	    this.currentElement.trigger(event);
+            if ( event.isDefaultPrevented() ) {
+	        e.preventDefault();
+            }
 	},
 	_inputOnKeyUp: function(e) {
             this.currentElement.trigger('editorValueChange');
@@ -2374,6 +2937,7 @@ function dynamicResize(oContainer) {
 	    if ( newField.length === 1 ) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
+	    event.preventDefault();
 	},
 	editorBlur: function(event){
 	    // When the editor becomes blurred, move out.
@@ -2414,33 +2978,65 @@ function dynamicResize(oContainer) {
 })(jQuery);
 
 /* ==== jquery.dbForm.js ==== */
-(function($, undefined){
+// dbForm plugin
+;(function($, window, undefined){
+    // ============================================================
+    // dbForm class
+    // ============================================================
+
+    // Constructor function
     function DbForm(form) {
 	this.form = $(form);
 	this.elements = $([]);
     }
+
+    // ============================================================
+
+    // Public methods
     $.extend(DbForm.prototype, {
 	init: function(options) {
+            // Initialise the dbForm
+
+            // Default settings
 	    this.settings = $.extend({
-		formType: "update",
+		formType: "update", // Update, add, or submit
+                updateType: "manual", //(with formType=="update"): manual, keyup, focus, or blur
 		enabled: true,
 		checkOnExit: true,
-		initialFocus: true
+		initialFocus: true,
+                initialFind: undefined, // "name=value"
+                dataURL: undefined,
+                qryURL: undefined,
+                updateURL: undefined,
+                addURL: undefined,
+                submitURL: undefined,
+                searchURL: undefined,
+                deleteURL: undefined,
+                formActionReturn: undefined // function
 	    }, options);
 	    if ( typeof this.settings.formActionReturn == "function" ) {
 		this.form.on('formActionReturn.DbForm', this.settings.formActionReturn);
 	    }
 
+            // Class variables
 	    this.state = 'current';
+
 	    this.divStatus = this.form.find('div.clsDbFormDivStatus').last();
-	    this.elements = this.elements.add('input', this.form).add('select', this.form).add('textarea', this.form).add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
-	    this.error = undefined;
+
+	    this.elements = this.elements
+                .add('input', this.form)
+                .add('select', this.form)
+                .add('textarea', this.form)
+                .add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
+
 	    if ( typeof this.settings.dataURL != "undefined" ) {
 		this.formAction('requery', this.settings.dataURL);
 	    }
 	    if ( typeof this.settings.qryURL != "undefined" ) {
 		this.nav('FIRST');
 	    }
+
+            // Event listeners
 	    this.form.on('change.DbForm', 'select', this.setDirty.bind(this));
 	    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
 	    if ( this.settings.checkOnExit && this.settings.formType === "update" ) {
@@ -2449,24 +3045,60 @@ function dynamicResize(oContainer) {
 	    this.form.on('keydown.DbForm', onKeyDown.bind(this));
 	    this.form.on('keypress.DbForm', onKeyPress.bind(this));
 	    this.form.on('submit.DbForm', onSubmit.bind(this));
+            if ( this.settings.formType == "update" ) {
+                var dbForm = this;
+                switch ( this.settings.updateType ) {
+                case "focus":
+                    this.form.on('focusin', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            if ( dbForm.state == 'dirty' ) {
+                                dbForm.save();
+                            }
+                        }
+                    });
+                    break;
+                case "blur":
+                    this.form.on('focusout', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            if ( dbForm.state == 'dirty' ) {
+                                dbForm.save();
+                            }
+                        }
+                    });
+                    break;
+                case "keyup":
+                    this.form.on('keyup', function(event) {
+                        if ( $(event.target).is(dbForm.elements) ) {
+                            cancelDelayedSave.call(dbForm);
+                            dbForm.keyUpTimer = window.setTimeout(dbForm.save.bind(dbForm),750);
+                        }
+                    });
+                    break;
+                }
+            }
+
+            // Should initial focus go to this form?
 	    if ( this.settings.initialFocus ) {
 		this.focus();
 	    }
+            
+            // Do we have an inital search?
 	    if ( typeof this.settings.initialFind == "string" ) {
 		var name = this.settings.initialFind.split('=')[0];
 		var value = this.settings.initialFind.split('=')[1];
 		this.find(name, value);
 	    }
 	},
-	save: function() {
+	save: function(async) {
+            async = coalesce(async, false);
 	    switch( this.settings.formType ) {
 	    case "update":
 		this.setState('updating');
-		this.formAction('update', this.settings.updateURL);
+		this.formAction('update', this.settings.updateURL,undefined,undefined,async);
 		break;
 	    case "add":
 		this.setState('updating');
-		this.formAction('add', this.settings.addURL);
+		this.formAction('add', this.settings.addURL,undefined,undefined,async);
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
@@ -2583,6 +3215,11 @@ function dynamicResize(oContainer) {
 	    }
 	}
     });
+    // End of public methods
+
+    // ============================================================
+
+    // Private methods
     function onBeforeUnload() {
 	if ( this.state == 'dirty' ) {
 	    if (window.confirm('Do you want to save your changes?')) {
@@ -2614,7 +3251,6 @@ function dynamicResize(oContainer) {
     function onKeyPress() {
 	this.setState('dirty');
     }
-
     function formActionSuccess(xmlDoc, type) {
 	var dbForm = this;
 	$('records > record *', xmlDoc).each(function(i, xmlNode){
@@ -2700,7 +3336,6 @@ function dynamicResize(oContainer) {
 	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
 	this.form.trigger('formActionError.dbForm', [errorMessage]);
     }
-
     function formData(form) {
 	var data = {};
 	this.elements
@@ -2739,8 +3374,17 @@ function dynamicResize(oContainer) {
 	    });
 	return data;
     }
+    function cancelDelayedSave() {
+	if ( this.keyUpTimer !== undefined ) {
+	    clearTimeout(this.keyUpTimer);
+	}
+	this.keyUpTimer = undefined;
+    }
+    // End of private methods
 
-    // Provide interaction as a jQuery plugin
+    // ============================================================
+
+    // Provide jQuery plugin interface
     $.fn.dbForm = function(method) {
 	var args = arguments;
 	var forms = this;
@@ -2798,7 +3442,8 @@ function dynamicResize(oContainer) {
 	    return forms;
         }
     };
-})(jQuery);
+    // End of dbForm plugin
+})(jQuery, window);
 
 /* ==== jquery.dbFormCombo.js ==== */
 ;(function($, undefined) {
@@ -3071,7 +3716,8 @@ function dbFormHTMLArea(oDiv) {
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true	    
+	    statusBar: true,
+            deleteKey: 'delete'
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -3085,7 +3731,7 @@ function dbFormHTMLArea(oDiv) {
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar', 'deleteKey'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -3229,6 +3875,7 @@ function dbFormHTMLArea(oDiv) {
 		    newCell.dbCell('cellIn');		    
 		}
 	    }
+            newCell.dbCell('option', 'deleteKey', this.options.deleteKey);
 	},
 	find: function(colName, search){
 	    // Search within ColName.
@@ -4250,6 +4897,381 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	});
     };
+})(jQuery);
+
+/* ==== jquery.ganttChart.js ==== */
+// ganttChart plugin. Call on a table to make it into a gantt chart.
+// options -
+//  width: any css width, width of the entire chart (table + calendar)
+//  headerHeight: integer, height of the chart header
+//  columns: object mapping keys to any jQuery selector/element/elementArray/object
+//   use "columns" to match columns containing the row start dates, finish dates and bar colors
+//   rowID to give each task a unique ID, dependen(cy/t)IDs hold space-separated list of IDs to reference.
+//  pxPerDay: integer, width of 1 day in the calendar
+//  barHeight: integer, px height of the bars
+;(function($, undefined) {
+    jQuery.widget('qcode.ganttChart', {
+        options: {
+            width: "100%",
+            headerHeight: 40,
+            columns: {
+                rowID: "[name=task_id]",
+                dependencyIDs: "[name=dependency_ids]",
+                dependentIDs: "[name=dependent_ids]",
+                startDate: "[name=start_date]",
+                finishDate: "[name=finish_date]",
+                barColor: "[name=bar_color]"
+            },
+            pxPerDay: 15,
+            barHeight: 10
+        },
+        _create: function() {
+            // Get options from custom attributes
+            $.each(this.options, (function(name, value) {
+                this.options[name] = coalesce(this.element.attr(name), value);
+            }).bind(this));
+            this.options = $.extend(this.element.data(this.widgetName), this.options);
+
+            // Initialise some properties
+            this.bars = [];
+            this.table = this.element;
+            this.rows = this.table.children('tbody').children('tr');
+
+            // Wrap the whole thing in a div
+            this.table.wrap('<div class="ganttChart wrapper">');
+            this.wrapper = this.table.parent();
+            this.wrapper.css('width', this.options.width);
+
+            // Create a scrolling window for the calendar
+            this.calendarFrame = $('<div class="calendarFrame">')
+                .css({
+                    left: this.table.outerWidth(),
+                    right: 0,
+                    top: 0,
+                    bottom: 0
+                })
+                .insertAfter(this.table);
+            var scrollBarWidth = this.calendarFrame.height() - this.calendarFrame[0].scrollHeight;
+
+            // Record the old margin in case we want to destroy this widget
+            this.oldMarginTop = this.table.css('margin-top');
+            this.oldMarginBottom = this.table.css('margin-bottom');
+            this.table.css({
+                'margin-top': this.options.headerHeight - this.table.find('thead').outerHeight(),
+                'margin-bottom': scrollBarWidth
+            });
+
+            // Create a canvas for the calendar
+            this.calendar = $('<canvas class="calendar">').appendTo(this.calendarFrame);
+
+            // In case the table is a dbGrid, listen for updates.
+            this._on({'dbRowActionReturn': function(event, action, xmlDoc, status, jqXHR) {
+                var ganttChart = this;
+                $('records other_record', xmlDoc).each(function(i, record) {
+                    var taskID = $(record).children('task_id').text();
+                    var barColor = $(record).children('bar_color').text();
+                    ganttChart._getRowByID(taskID).dbRow('setCellValue', 'bar_color', barColor);
+                });
+                this.draw();
+            }});
+            this._on({'resize': function(event) {
+                this.draw();
+            }});
+
+            this.draw();
+        },
+        draw: function() {
+            // Draw (or redraw) this gantt chart
+            var ganttChart = this;
+            this.calendarFrame.css('left', this.table.outerWidth());
+
+            // Calculate a suitable range of dates for the calendar
+            var minDate;
+            var maxDate;
+            this.rows.each(function(rowIndex, domRow) {
+                var startDate = ganttChart._getRowStartDate(rowIndex);
+                var finishDate = ganttChart._getRowFinishDate(rowIndex);
+                
+                if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                    if ( Date.isValid(minDate) && Date.isValid(maxDate) ) {
+                        minDate = Date.min(minDate,startDate);
+                        maxDate = Date.max(maxDate,finishDate);
+                    } else {
+                        minDate = startDate;
+                        maxDate = finishDate;
+                    }
+                }
+            });
+            if ( ! Date.isValid(maxDate) || ! Date.isValid(minDate) ) {
+                var minDate = new Date(Date.today.getTime());
+                var maxDate = new Date(Date.today.getTime());
+                minDate.incrDays(-7);
+                maxDate.incrDays(7);
+            }
+            maxDate.incrDays(7);
+            var startDate = minDate.getWeekStart();
+            var finishDate = maxDate.getWeekEnd();
+
+            // Initialize the calendar
+            this.calendar.calendar({
+                bodyHeight: this.table.find('tbody').outerHeight(),
+                headerHeight: this.options.headerHeight,
+                startDate: startDate,
+                finishDate: finishDate,
+                pxPerDay: this.options.pxPerDay,
+                barHeight: this.options.barHeight
+            });
+
+            // Draw the bars (remove any existing bars first)
+            $.each(this.bars, function(i, bar) {
+                bar.remove();
+            });
+            this.bars = [];
+
+            var Task = ganttChart.constructor.Task;
+            this.rows.each(function(rowIndex, domRow) {
+                var startDate = ganttChart._getRowStartDate(rowIndex);
+                var finishDate = ganttChart._getRowFinishDate(rowIndex);
+                if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                    var dependents = [];
+                    var dependencies = [];
+                    var list = ganttChart._getCellValue('dependentIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(' '), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                            var date = ganttChart._getRowStartDate(row.index());
+                            dependents.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
+                    var list = ganttChart._getCellValue('dependencyIDs', rowIndex);
+                    if ( list.length > 0 ) {
+                        $.each(list.split(" "), function(i, rowID) {
+                            var row = ganttChart._getRowByID(rowID);
+                            if ( row.length !== 1 ) {
+                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                                return;
+                            }
+                            var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                            var date = ganttChart._getRowFinishDate(row.index());
+                            dependencies.push({
+                                date: date,
+                                verticalPosition: verticalPosition
+                            });
+                        });
+                    }
+                    var row = $(domRow);
+                    var cell = row.children().first();
+                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2)
+                    var bar = new Task(ganttChart.calendar, {
+                        startDate: startDate,
+                        finishDate: finishDate,
+                        verticalPosition: verticalPosition,
+                        color: ganttChart._getCellValue('barColor', rowIndex),
+                        dependencies: dependencies,
+                        dependents: dependents,
+                        rowHeight: (row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width')))
+                    });
+                    ganttChart.calendar.calendar('addObject', bar);
+                    ganttChart.bars.push(bar);
+                }
+            });
+
+            // Draw the calendar
+            this.calendar.calendar('draw');
+
+            // Google Chrome bug fix hack
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
+        },
+        _getRowStartDate: function(rowIndex) {
+            // Get the start date of a given row
+            return new Date(this._getCellValue('startDate', rowIndex));
+        },
+        _getRowFinishDate: function(rowIndex) {
+            // Get the finish date of a given row
+            return new Date(this._getCellValue('finishDate', rowIndex));
+        },
+        _getCellValue: function(colName, rowIndex) {
+            // Using the column selector from this.options.columns with the key colName,
+            // find the first matching cell in the indexed row, and return the contents.
+            return this.rows.eq(rowIndex).findByColumn(this.options.columns[colName]).text();
+        },
+        _getRowByID: function(ID) {
+            // Search the rowID column for ID, return the first matching row.
+            var row = $([]);
+            this.rows.findByColumn(this.options.columns.rowID).each(function(i, cell) {
+                if ($(cell).text() == ID) {
+                    row = $(cell).parent();
+                    return false;
+                }
+            });
+            return row;
+        },
+        newDateHighlighter: function(date, style) {
+            // Create and return a new date highlighter object
+            return this.calendar.calendar('newDateHighlighter', {date: date, color: style});
+        },
+        widget: function() {
+            return this.wrapper;
+        },
+        getCalendar: function() {
+            return this.calendar;
+        },
+        destroy: function() {
+            // Destroy this widget and return the table to its initial state
+            this.bars.each(function() {
+                this.remove();
+            });
+            this.calendar.calendar('destroy').remove();
+            this.calendarFrame.remove();
+            this.table.unwrap().css('margin-top', this.oldMarginTop);
+        }
+    });
+    // End of ganttChart widget
+    // ============================================================
+
+
+    // ============================================================
+    // class Task
+    // extends jQuery.qcode.calendar.Bar
+    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependancies
+    // Takes dependencies and dependents as arrays of objects with properties "date" and "verticalPosition"
+    // ============================================================
+    // Wait for first instantiation to initialise the class, to ensure the superclass is initialised first
+    $.qcode.ganttChart.Task = function(calendarCanvas, options) {
+        var superProto = $.qcode.calendar.Bar.prototype;
+
+        // Constructor function
+        var Task = function(calendarCanvas, options) {
+            superProto.constructor.call(this, calendarCanvas, options);
+            this.options.rowHeight = coalesce(this.options.rowHeight, this.options.barHeight * 2);
+            this.highlighted = false;
+            this
+                .on('mouseenter', function() {
+                    this.calendarCanvas.calendar('draw');
+                })
+                .on('mouseleave', function() {
+                    this.calendarCanvas.calendar('draw');
+                })
+                .on('click', function() {
+                    this.highlighted = ! this.highlighted;
+                    this.calendarCanvas.calendar('draw');
+                });
+        }
+
+        // Properties and methods
+        Task.prototype = $.extend(Object.create(superProto), {
+            constructor: Task,
+            options: $.extend(Object.create(superProto.options), {
+                rowHeight: undefined,
+                dependencyColor: 'grey',
+                dependentColor: 'grey',
+                highlightColor: 'lightyellow',
+                highlightEdge: 'lightgrey',
+                dependencies: [],
+                dependents: [],
+                radius: 20,
+                layer: 4
+            }),
+            draw: function(layer) {
+                // Draw this task.
+                if ( (layer === undefined || layer === 2) && (this.hover || this.highlighted) ) {
+                    // Draw the highlight/hover bar
+                    var ctx = this.context;
+                    var highlight = {
+                        left: 0,
+                        width: this.calendarCanvas.calendar('option','width'),
+                        top: this.options.verticalPosition - (this.options.rowHeight / 2),
+                        height: this.options.rowHeight
+                    }
+                    if ( this.highlighted ) {
+                        ctx.strokeStyle = this.options.highlightEdge;
+                        ctx.strokeRect(highlight.left - 0.5, highlight.top - 0.5, highlight.width + 1, highlight.height + 1);
+                    }
+                    ctx.fillStyle = this.options.highlightColor;
+                    ctx.fillRect(highlight.left, highlight.top, highlight.width, highlight.height);
+
+                } else if ( (layer === undefined || layer === 3) && (this.hover || this.highlighted) ) {
+                    // Draw the dependency lines
+                    this._drawDependencies();
+                    this._drawDependents();
+                }
+                superProto.draw.call(this, layer);
+            },
+            _drawDependencies: function() {
+                // Draw lines to this task's dependencies
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependencyColor;
+                ctx.beginPath();
+                $.each(this.options.dependencies, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarCanvas.calendar('option','width') - task.calendarCanvas.calendar('date2positionRight',dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x - task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x + task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            },
+            _drawDependents: function() {
+                // Draw lines to this task's dependents
+                var task = this;
+                var ctx = this.context;
+                var start = {
+                    x: this.width + this.left,
+                    y: this.options.verticalPosition
+                };
+                ctx.strokeStyle = this.options.dependentColor;
+                ctx.beginPath();
+                $.each(this.options.dependents, function(i, dependency) {
+                    ctx.moveTo(start.x,start.y);
+                    var end = {
+                        x: task.calendarCanvas.calendar('date2positionLeft',dependency.date),
+                        y: dependency.verticalPosition
+                    }
+                    var cp1 = {
+                        x: start.x + task.options.radius,
+                        y: start.y
+                    }
+                    var cp2 = {
+                        x: end.x - task.options.radius,
+                        y: end.y
+                    }
+                    ctx.bezierCurveTo(cp1.x,cp1.y,cp2.x,cp2.y,end.x,end.y);
+                });
+                ctx.stroke();
+            }
+        });
+
+        // The first time this function runs, it replaces itself with the class then returns and instance of the class.
+        jQuery.qcode.ganttChart.Task = Task;
+        return new Task(calendarCanvas, options);
+    };
+    // End of class Task
+    // ============================================================
 })(jQuery);
 
 /* ==== jquery.hoverScroller.js ==== */
@@ -6591,6 +7613,7 @@ function parseBoolean(value) {
         }
     }
 })(jQuery);
+
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {
