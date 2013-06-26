@@ -193,1079 +193,6 @@ if (!Object.create) {
     };
 }
 
-/* ==== bvwLib1.0.js ==== */
-function Mod(a, b) { return a-Math.floor(a/b)*b }
-function getContainingElmt(elmt,tagName) {
-	while (elmt.tagName != tagName) {
-		if (elmt.parentElement) {
-			elmt = elmt.parentElement;
-		} else {
-			throw "This element does not have a parent with the tag " + tagName;
-		}
-	}
-	return elmt;
-}
-function getNodeIndex(elmt) {
-	var oParent = elmt.parentElement;
-	for(var i=0;i<oParent.childNodes.length;i++) {
-		if ( oParent.childNodes[i] == elmt ) {
-			return i;
-		}
-	}
-}
-function setObjectValue(elmt,value) {
- out: {
-   if ( elmt.tagName == "SELECT" ) {
-     setOptionValue(elmt,value);
-     break out;
-   }
-   if ( elmt.tagName == "INPUT") {
-     if ( elmt.type == "checkbox"  ) {
-       setCheckboxValue(elmt,value);
-       break out;
-     }
-     elmt.value = value;
-     break out;
-   }
-   if ( elmt.tagName == "TEXTAREA") {
-     elmt.innerText = value;
-     break out;
-   }
-   if ( elmt.className == 'clsRadioGroup' ) {
-     setRadioGroupValue(elmt,elmt.name,value);
-     break out;
-   }
-   // Default
-   elmt.innerHTML = value;
- }
-}
-function getObjectValue(elmt) {
-    if ( elmt.tagName == "SELECT" ) {
-	return getOptionValue(elmt);
-    }
-    if ( elmt.tagName == "INPUT") {
-	if ( elmt.type == "checkbox"  ) {
-	    return getCheckboxValue(elmt);
-	}
-	return elmt.value;
-    }
-    if ( elmt.tagName == "TEXTAREA") {
-	return elmt.innerText;
-    }
-    if ( elmt.className == 'clsRadioGroup' ) {
-	return getRadioGroupValue(elmt,elmt.name);
-    }
-    // Default
-    return elmt.innerHTML;
-}
-
-function setRadioGroupValue(form,name,value) {
-	// form may be a container like div rather than form
-	var elements = form.getElementsByTagName('INPUT');
-	for(var i=0;i<elements.length;i++) {
-		var elmt = elements[i];
-		if (elmt.name == name && elmt.value == value ) {
-			elmt.checked = true;
-			return true;
-		}
-	}
-}
-
-function getRadioGroupValue(form,name) {
-	// form may be a container like div rather than form
-	var elements = form.getElementsByTagName('INPUT');
-	for(var i=0;i<elements.length;i++) {
-		var elmt = elements[i];
-		if (elmt.name == name && elmt.checked) {
-			return elmt.value;
-		}
-	}
-	return undefined;
-}
-
-function setCheckboxValue(checkbox,value) {
-	var truth = ['true','yes','y','1','t'];
-	var checked = false;
-	for (var i=0;i<truth.length;i++) {
-		if ( value.toUpperCase() == truth[i].toUpperCase() ) {
-			checked = true;
-		} 
-	}
-	if ( checked == true ) {
-		checkbox.checked = true;
-	} else {
-		checkbox.checked = false;
-	}
-}
-function getCheckboxValue(checkbox) {
-	if ( checkbox.checked == true ) {
-		return checkbox.value;
-	} else {
-		return "";
-	}
-}
-function getBoolboxValue(checkbox) {
-	if ( checkbox.checked == true ) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-function getOptionValue(dropdown) {
-   var myindex=dropdown.selectedIndex;
-   return dropdown.options[myindex].value;
-}
-function setOptionValue(dropdown,value) {
-	for(var i=0;i<dropdown.options.length;i++) {
-		if ( dropdown.options[i].value == value ) {
-			dropdown.selectedIndex = i;
-		}
-	}
-}
-
-function revealHeight(obj,stepSize,interval) {
-  var savedHeight = obj.scrollHeight;
-  var savedOverflowY = obj.style.overflowY;
-  obj.style.height =1;
-  obj.style.overflowY = 'hidden';
-  
-  var timerID = window.setInterval(reveal,interval);
-  
-  function reveal() {
-    var height = obj.clientHeight;
-    if ( height < savedHeight ) {
-      obj.style.height = height + stepSize;
-    } else {
-      window.clearInterval(timerID);
-      obj.style.overflowY = savedOverflowY;
-    }
-  }
-}
-
-function getPixelLeft(elmt) {
-	var left = 0;
-	while (elmt.offsetParent ) {
-		left += elmt.offsetLeft - elmt.scrollLeft;
-		elmt = elmt.offsetParent;
-	}
-	return left;
-}
-function getPixelTop(elmt) {
-	var top = 0;
-	while (elmt.offsetParent) {
-		top += elmt.offsetTop - elmt.scrollTop;
-		elmt = elmt.offsetParent;
-	}
-	return top;
-}
-
-
-function formFocus(form) {
-	// Find the first control to focus on
-	out: {
-		for (var i=0;i<form.elements.length;i++) {
-			var ctl = form.elements[i];
-			try {
-				ctl.focus();
-				break out;
-			} catch(e) {
-				var e;
-				continue;
-			}
-		}
-	}
-}
-
-function focusFirstChild(elmt) {
-	// Find the first child to focus on
-	out: {
-		for (var i=0;i<elmt.children.length;i++) {
-			var oChild = elmt.children[i];
-			try {
-				oChild.focus();
-				break out;
-			} catch(e) {
-				var e;
-				continue;
-			}
-		}
-	}
-}
-
-function urlSet(url,name,value) {
-	var re = /([^\?]+)\??(.*)/;
-	re.exec(url);
-	var path = RegExp.$1;
-	var queryString = RegExp.$2;
-	url = path + "?" + urlDataSet(queryString,name,value);
-	return url;
-}
-
-function urlDataSet(data,name,value) {
-  var list = new Array();
-  var a = new Array();
-  var b = new Array();
-  var c = new Array();
-  
-  if ( data != "" ) {
-    var a = data.split('&');
-  }
-  for (var i=0;i<a.length;i++) {
-    b = a[i].split('=');
-    var n = decodeURIComponent(b[0].replace(/\+/g,' '));
-    var v = decodeURIComponent(b[1].replace(/\+/g,' '));
-    c[n]=v;
-  }
-  c[name] = value;
-  for (key in c) {
-    list.push(encodeURIComponent(key) + "=" + encodeURIComponent(c[key]));
-  }
-  
-  data=list.join("&");
-  return data;
-}
-
-function urlGet(url,name) {
-  var re = /([^\?]+)\??(.*)/;
-  re.exec(url);
-  var path = RegExp.$1;
-  var queryString = RegExp.$2;
-  return urlDataGet(queryString,name);
-}
-
-function urlDataGet(data,name) {
-  var list = new Array();
-  var a = new Array();
-  var b = new Array();
-  var c = new Array();
-  
-  if ( data != "" ) {
-    var a = data.split('&');
-  }
-  for (var i=0;i<a.length;i++) {
-    b = a[i].split('=');
-    if (name == decodeURIComponent(b[0].replace(/\+/g,' '))) {
-      return decodeURIComponent(b[1].replace(/\+/g,' '));
-    }
-  }
-  return null;
-}
-
-function atEditStart(elmt) {
-	if (elmt.isContentEditable) {
-		var rngSelected = elmt.document.selection.createRange();
-		if ( elmt.tagName == 'INPUT' ) {
-			var rngElmt = elmt.createTextRange();
-		} else {
-			var rngElmt = elmt.document.body.createTextRange();
-			rngElmt.moveToElementText(elmt);
-		}
-		if (rngSelected.compareEndPoints("StartToStart",rngElmt)==0) {
-			return true;
-		} else {
-			return false;
-		}
-	} else {
-		return true;
-	}
-}
-function atEditEnd(elmt) {
-	if (elmt.isContentEditable) {
-		var rngSelected = elmt.document.selection.createRange();
-		if ( elmt.tagName == "INPUT") {
-			var rngElmt = elmt.createTextRange();
-		} else {
-			var rngElmt = elmt.document.body.createTextRange();
-			rngElmt.moveToElementText(elmt);
-		}
-		if (rngSelected.compareEndPoints("EndToEnd",rngElmt)==0) {
-			return true;
-		} else {
-			return false;
-		}
-	} else {
-		return true;
-	}
-}
-function xmlToChildIDs(xmlDoc,qry,elmt) {
-  var rec = xmlDoc.selectSingleNode(qry);
-  if ( rec ) {
-    for(var i=0;i<rec.childNodes.length;i++) {
-      var oNode = rec.childNodes[i];
-      var name=oNode.nodeName;
-      var value = oNode.text;
-      var oObjects = getChildElmtsById(elmt,name);
-      for ( var j in oObjects ) {
-	setObjectValue(oObjects[j],value);
-      }
-    }
-  }
-}
-
-function getChildElementById(elmt,id) {
-	var coll = elmt.all.item(id);
-	if ( coll == null ) {
-		return null;
-	}
-	if (coll.length != null && coll[0].id == id) {
-		return coll[0];
-	} else {
-		return coll;
-	}
-}
-
-function getChildElementByTagName(elmt,tagName) {
-  var elements = elmt.getElementsByTagName(tagName);
-  for(var i=0;i<elements.length;i++) {
-    var elmt = elements[i];
-    if (elmt.tagName == tagName) {
-      return elmt;
-    }
-  }
-}
-
-function getChildElmtsById(elmt,id) {
-  var coll = elmt.all.item(id);
-  var elmts = new Array();
-  if (coll == null) {
-    return elmts;
-  }
-  if (coll.tagName == undefined ) { 
-    for(var i=0;i<coll.length;i++) {
-      var obj = coll[i];
-      if (obj.id == id) {
-	elmts.push(obj);
-      }
-    }
-  } else {
-    elmts.push(coll);
-  }
-  return elmts;
-}
-
-function xmlToID(xmlDoc,qry,elmt) {
-	var rec = xmlDoc.selectSingleNode(qry);
-	if ( rec ) {
-		var value = rec.text;
-		setObjectValue(elmt,value);
-	}
-}
-
-function hideElementsByTagName(tagName) {
-	var elmts = document.body.getElementsByTagName(tagName);
-	for(var i=0;i<elmts.length;i++) {
-		elmts[i].style.visibility = "hidden";
-	}
-}
-
-function showElementsByTagName(tagName) {
-	var elmts = document.body.getElementsByTagName(tagName);
-	for(var i=0;i<elmts.length;i++) {
-		elmts[i].style.visibility = "";
-	}
-}
-
-function getChildElementsWithClassName(elmt,tagName,className) { 
-   var nodes = elmt.getElementsByTagName(tagName); 
-   var elmts = new Array(); 
-   for (var i = 0; i < nodes.length; i++) { 
-      if (nodes[i].className == className) { 
-         elmts.push(nodes[i]); 
-      }
-   } 
-   return elmts; 
-}
-
-function setCookie(name,value,days) {
-	if (days) {
-		var date=new Date();
-		date.setTime(date.getTime()+(days*24*60*60*1000));
-		var expires="; expires="+date.toGMTString();
-	} 
-	else expires = "";
-	document.cookie = name+"="+value+expires+"; path=/";
-};
-
-function getCookie(name) {
-	var nameEQ = name+"=";
-	var ca = document.cookie.split(';');
-	for(var i=0;i<ca.length;i++) {
-		var c=ca[i];
-		while (c.charAt(0)==' ') c=c.substring(1,c.length);
-		if (c.indexOf(nameEQ)==0) return c.substring(nameEQ.length,c.length);
-	}
-	return '';
-};
-
-function deleteCookie(name) {
-	setCookie(name,"",-1);
-};
-
-function actionConfirm(oLink) {
-	if ( window.confirm('Are you sure you want to ' + oLink.innerText) ) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-function stripHTML(html) {
-  return html.replace(/<[^>]+>/gi,"");
-}
-
-function formEncode(form) {
-	var list = new Array;
-	for(var i=0;i<form.elements.length;i++) {
-		var value = new String;
-		var elmt = form.elements[i];
-		var name = elmt.name;
-		out: {
-			 if (elmt.tagName=="INPUT") {
-				if ( elmt.type == "checkbox" ) {
-					value = getCheckboxValue(elmt);
-					break out;
-				} 	
-				value = elmt.value
-				break out;
-			}
-			if ( elmt.tagName == "TEXTAREA") {
-				value = elmt.value
-				break out;
-			}
-			if (elmt.tagName=="SELECT") {
-				value = getOptionValue(elmt)
-				break out;
-			}
-			// Default
-			value = elmt.value;
-		}
-		if ( name != "" ) {
-			list.push(encodeURIComponent(name) + "=" + encodeURIComponent(value));
-		}
-	}
-	return list.join("&");
-}
-
-function formCall(oForm,url,handler) {
-	if ( handler == undefined ) {
-		handler = formCallReturn;
-	}
-	var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-	xmlhttp.Open("POST",url,false);
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4) handler(oForm,xmlhttp);
-    }
-	xmlhttp.Send(formEncode(oForm));
-}
-
-function formCallReturn(oForm,xmlhttp) {
-	var xmlDoc = xmlhttp.responseXML;
-	var error;
-	// HTTP ERROR
-	if ( xmlhttp.status != 200 ) {
-		error = "Error ! Expected response 200 but got " + xmlhttp.status;
-		setState('error');
-		setStatus(error);
-		alert(error);
-	}
-	// XML ERROR
-	var xmlError = xmlDoc.parseError;
-	if (xmlError.errorCode != 0) {
-		error = "Error ! " + xmlError.reason;
-		alert("We have a problem.\n" + error);
-	} else {
-		// USER ERROR
-		var rec = xmlDoc.selectSingleNode('error');
-		if ( rec ) {
-			error=rec.text;
-			alert("We have a problem..\n\n" + stripHTML(error));
-		} else {
-			// form
-			xmlToChildIDs(xmlDoc,'records/record',oForm);
-			// html
-			xmlToChildIDs(xmlDoc,'records/html',oForm.document);	
-			if ( oForm.onFormActionReturn != undefined ) {
-				oForm.onFormActionReturn(action);
-			}
-		}
-	}
-}
-
-function httpPost(url,data,handler,errorHandler,async,type,elmt) {
-  if ( window.XMLHttpRequest ) {
-    var xmlhttp = new XMLHttpRequest();
-  } else {
-    var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  }
-  xmlhttp.open("POST",url,async);
-	
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4) {
-			var errorMessage;
-	
-			// HTTP ERROR
-			if ( xmlhttp.status != 200 && xmlhttp.status != 0 ) {
-				errorMessage = "Error ! Expected response 200 but got " + xmlhttp.status;
-				return errorHandler(errorMessage,'HTTP',type,elmt);
-			}
-			// XML ERROR
-			var xmlDoc = xmlhttp.responseXML;
-			var xmlError = xmlDoc.parseError;
-			if (xmlError.errorCode != 0) {
-				errorMessage = xmlError.reason;
-				return errorHandler(errorMessage,'XML',type,elmt);
-			}
-			// USER ERROR
-			var rec = xmlDoc.selectSingleNode('error');
-			if ( rec ) {
-				var errorMessage = rec.text;
-				return errorHandler(errorMessage,'USER',type,elmt);
-			}
-			// NORMAL COMPLETION
-			handler(xmlhttp,type,elmt);
-		}
-    }
-	
-	xmlhttp.send(data);
-}
-
-function httpGet(url,handler,errorHandler,async,type,elmt) {
-    if ( window.XMLHttpRequest ) {
-	var xmlhttp = new XMLHttpRequest();
-    } else {
-	var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-    }
-    xmlhttp.open("GET",url,async);
-	
-    xmlhttp.onreadystatechange = function() {
-	if (xmlhttp.readyState == 4) {
-	    var errorMessage;
-	
-	    // HTTP ERROR
-	    if ( xmlhttp.status != 200 && xmlhttp.status != 0 ) {
-		errorMessage = "Error ! Expected response 200 but got " + xmlhttp.status;
-		return errorHandler(errorMessage,'HTTP',type,elmt);
-	    }
-	    // XML ERROR
-	    var xmlDoc = xmlhttp.responseXML;
-	    var xmlError = xmlDoc.parseError;
-	    if (xmlError.errorCode != 0) {
-		errorMessage = xmlError.reason;
-		return errorHandler(errorMessage,'XML',type,elmt);
-	    }
-	    // USER ERROR
-	    var rec = xmlDoc.selectSingleNode('error');
-	    if ( rec ) {
-		var errorMessage = rec.text;
-		return errorHandler(errorMessage,'USER',type,elmt);
-	    }
-	    // NORMAL COMPLETION
-	    handler(xmlhttp,type,elmt);
-	}
-    }
-    xmlhttp.send();
-}
-
-function fetch(url,data,handler,errorHandler,async,oCallback) {
-	//var xmlhttp = new XMLHttpRequest();
-	var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-	xmlhttp.open("POST",url,async);
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4) {
-			var errorMessage;
-
-			// HTTP ERROR
-			if ( xmlhttp.status != 200 && xmlhttp.status != 0 ) {
-				errorMessage = "Error ! Expected response 200 but got " + xmlhttp.status;
-				return errorHandler(errorMessage,'HTTP',oCallback);
-			}
-			// NORMAL COMPLETION
-			handler(xmlhttp.responseText,oCallback);
-		}
-	}
-    xmlhttp.send(data);
-}
-
-function escapeHTML(str) {
-	return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
-}
-function unescapeHTML(str) {
-	return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
-}
-
-function parseBoolean(value) {
-  value = stripHTML(String(value)).toLowerCase();
-  var truth = ['true','yes','y','1','t'];
-  for (var i=0;i<truth.length;i++) {
-    if ( value == truth[i].toLowerCase() ) {
-      return true;
-    } 
-  }
-  return false;
-}
-
-
-/* ==== dbForm.js ==== */
-function dbForm(oForm) { 
-
-// Methods
-oForm.save=save;
-oForm.formAction = formAction;
-oForm.focus = focus;
-oForm.nav=nav;
-oForm.find=find;
-oForm.del=del;
-
-// Parameters
-if (oForm.formType == undefined) { oForm.formType = 'update' } 
-if (oForm.enabled == undefined) { oForm.enabled = "true" }
-if (oForm.checkOnExit == undefined) { oForm.checkOnExit = "true" }
-if (oForm.initialFocus == undefined) { oForm.initialFocus = "true" }
-// vars
-var state;
-var error;
-var oDivStatus;
-var elmts=new Array;
-
-// Events onFormActionReturn
-
-// Init
-init();
-//
-
-function init() {
-  // defaults;
-  state = 'current';
-  
-  // Find the form's status div
-  var divs = oForm.getElementsByTagName('DIV');
-  for(var i=0;i<divs.length;i++) {
-    var oDiv = divs[i];
-    if ( oDiv.className == 'clsDbFormDivStatus') {
-      oDivStatus = oDiv;
-    }
-  }
-  
-  var e = oForm.getElementsByTagName('INPUT');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
-  
-  var e = oForm.getElementsByTagName('SELECT');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
-  
-  var e = oForm.getElementsByTagName('TEXTAREA');
-  for(var i=0;i<e.length;i++) {
-    elmts.push(e[i]);
-  }
-  
-  var e = oForm.getElementsByTagName('DIV');
-  for(var i=0;i<e.length;i++) {
-    if ( e[i].className == 'clsDbFormHTMLArea' || e[i].className == 'clsRadioGroup' ) {
-      elmts.push(e[i]);
-    }
-  }
-  
-  if ( oForm.dataURL !=undefined ) {
-    formAction('requery',oForm.dataURL);
-  }
-  if ( oForm.qryURL !=undefined ) {
-    nav('FIRST');
-  }
-  // Look for dropdowns and attach onchange behavior
-  for(var i=0;i<elmts.length;i++) {
-    var elmt = elmts[i];
-    if (elmt.tagName=='SELECT') {
-      elmt.attachEvent('onchange',setDirty);
-    }
-    if (elmt.tagName=='INPUT' && elmt.type=='checkbox') {
-      elmt.attachEvent('onclick',setDirty);
-    }
-    if (elmt.tagName=='INPUT' && elmt.type=='radio') {
-      elmt.attachEvent('onclick',setDirty);
-    }
-  }
-  
-  // document unload
-  if ( oForm.checkOnExit == "true" && oForm.formType=="update") {
-    window.attachEvent('onbeforeunload',onBeforeUnload);
-  }
-  oForm.attachEvent('onkeydown',onKeyDown);
-  oForm.attachEvent('onkeypress',onKeyPress);
-  oForm.attachEvent('onsubmit',onSubmit);
-  if ( oForm.initialFocus == "true" ) {
-    focus();
-  }
-  if (oForm.initialFind!=undefined) {
-      var name=oForm.initialFind.split('=')[0];
-      var value=oForm.initialFind.split('=')[1];
-      find(name,value);
-  }
-}
- 
-function focus() {
-   // Find the first control to focus on
- out: {
-   for (var i=0;i<oForm.elements.length;i++) {
-     var ctl = oForm.elements[i];
-     try {
-       ctl.focus();
-       break out;
-     } catch(e) {
-       var e;
-       continue;
-     }
-   }
- }
- }
-
-function onBeforeUnload() {
-   if ( state == 'dirty' ) {
-     if (window.confirm('Do you want to save your changes?')) {
-       save();
-       if (state == 'error' ) {
-	 event.returnValue = "Your changes could not been saved.\nStay on the current page to correct.";
-       }
-     }
-   }
-   oForm.save=undefined;
-   oForm.formAction=undefined;
-   oForm.focus=undefined;
-}
-
-function onSubmit() {
-  if ( oForm.formType == 'submit' ) {
-    return true;
-  }
-  return false;
-}
-
-function onKeyDown() {
-  var e = window.event;
-  if ( e.keyCode == 83 && e.ctrlKey ) {
-    // Ctrl+S
-    save();
-    e.returnValue = false;
-  }
-  // Backspace
-  if ( e.keyCode == 8) {
-    setState('dirty');
-  }
-}
-
-function onKeyPress() {
-  setState('dirty');
-}
-
-function setDirty() {
-  setState('dirty');
-}
-
-function setState(newState) {
- out: {
-   if ( newState == 'dirty' ) {
-     var span ='<span style="color:blue;cursor:hand;text-decoration:underline" onclick="' + oForm.id + '.save()">save</span>';
-     setStatus('Editing ... To ' + span + ' type Ctrl+S');
-     if ( oForm.nav_new) {
-       if ( oForm.addURL ) {
-	 oForm.nav_new.disabled=false;
-       } else {
-	 oForm.nav_new.disabled=true;
-       }
-     }
-     if ( oForm.nav_prev ) {
-       oForm.nav_prev.disabled=false;
-       oForm.nav_next.disabled=false;
-     }
-     break out;
-   }
-   if ( newState == 'updating' ) {
-     setStatus('Updating ...');
-     break out;
-   }
-   if ( newState == 'current' ) {
-     if ( state =='updating' ) {
-       setStatus('Saved.');
-     } else if (state=='loading') {
-       setStatus('');
-     } else if (state=='deleting') {
-       setStatus('Deleted.');
-     } else {
-       setStatus('');
-     }
-     break out;
-   }
-   if ( newState == 'error' ) {
-     break out;
-   }
- }
- state = newState;
-}
-
-function save(async) {
-  if ( oForm.formType == 'update' ) {
-    setState('updating');
-    formAction('update',oForm.updateURL);
-  }
-  if ( oForm.formType == 'add' ) {
-    setState('updating');
-    formAction('add',oForm.addURL);
-  }
-  if ( oForm.formType == 'submit' ) {
-    // oForm submit
-    oForm.action = oForm.submitURL;		
-    for(var i=0;i<elmts.length;i++) {
-      var elmt = elmts[i];
-      if ( elmt.tagName=='DIV' && elmt.className == 'clsDbFormHTMLArea' ) {
-	var oInput = document.createElement('INPUT');
-	oInput.type='hidden';
-	oInput.name = elmt.name;
-	oInput.value= elmt.innerHTML;
-	oForm.appendChild(oInput);
-      }
-      if ( elmt.tagName=='INPUT' && elmt.type == 'checkbox' && elmt.boolean && elmt.checked!=true) {
-	var oInput = document.createElement('INPUT');
-	oInput.type='hidden';
-	oInput.name = elmt.name;
-	oInput.value= "false";
-	oForm.appendChild(oInput);
-      }
-    }
-    oForm.submit();
-  }
-}
-
-function del() {
-  if ( window.confirm('Delete the current record?') ) {
-    setState('deleting');
-    formAction('delete',oForm.deleteURL);
-  }
-}
-
-function nav(navTo) {
-   oForm.navTo.value = navTo;
-   if ( state=='dirty' ) {
-     save();
-   } else {
-     setState('loading');
-     formAction('qry',oForm.qryURL);
-   }
-}
-
-function find(name,value) {
-  if ( state=='dirty' ) {
-    save();
-  } else {
-    setState('loading');
-  }
-  handler = formActionReturn;
-  var url = oForm.searchURL;
-  var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.Open("POST",url,false);
-  var action = new Object;
-  action.type = 'search';
-  action.xmlhttp = xmlhttp;
-  
-  xmlhttp.onreadystatechange = function() {
-    if (xmlhttp.readyState == 4) handler(action);
-  }
-  var data = encodeURIComponent(name) + "=" + encodeURIComponent(value)
-  xmlhttp.Send(data);
-}
-
-function formAction(type,url,handler,async) {
-  if ( handler == undefined ) {
-    handler = formActionReturn;
-  }
-  if ( async == undefined ) {
-    async = false;
-  }
-  var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  xmlhttp.Open("POST",url,async);
-  var action = new Object;
-  action.type = type;
-  action.xmlhttp = xmlhttp;
-  
-  xmlhttp.onreadystatechange = function() {
-    if (xmlhttp.readyState == 4) handler(action);
-  }
-  xmlhttp.Send(formEncode(oForm));
-}
-
-
-function formActionReturn(action) {
-  var xmlhttp = action.xmlhttp;	
-  var type = action.type;
-  var xmlDoc = xmlhttp.responseXML;
-  var error;
-  // HTTP ERROR
-  if ( xmlhttp.status != 200 ) {
-    error = "Error ! Expected response 200 but got " + xmlhttp.status;
-    setState('error');
-    setStatus(error);
-    alert("Your changes could not be saved.\n" + error);
-    return false;
-  }
-  // XML ERROR
-  var xmlError = xmlDoc.parseError;
-  if (xmlError.errorCode != 0) {
-    error = "Error ! " + xmlError.reason;
-    setState('error');
-    setStatus(error);
-    alert("Your changes could not be saved.\n" + error);
-    return false;
-  }
-  // USER ERROR
-  var rec = xmlDoc.selectSingleNode('error');
-  if ( rec ) {
-    error=rec.text;
-    setState('error');
-    setStatus(error);
-    alert("Your changes could not be saved.\n\n" + stripHTML(error));
-    return false;
-  }
-  // NORMAL COMPLETION
-  // form
-  xmlToChildIDs(xmlDoc,'records/record',oForm);
-  // html
-  xmlToChildIDs(xmlDoc,'records/html',oForm.document);
-  
-  if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
-    setState('current');
-  }
-  
-  // Info
-  var rec = xmlDoc.selectSingleNode('records/info');
-  if ( rec ) {
-    setStatus(rec.text);
-  }
-  // Alert
-  var rec = xmlDoc.selectSingleNode('records/alert');
-  if ( rec ) {
-    alert(rec.text);
-  }
-  // Nav
-  if ( oForm.recordsLength && oForm.recordNumber) {
-    var recordsLength =  oForm.recordsLength.value;
-    var recordNumber = oForm.recordNumber.value;
-    if ( recordNumber==1 ) {
-      oForm.nav_first.disabled=true;
-      oForm.nav_prev.disabled=true;
-    } else {
-      oForm.nav_first.disabled=false;
-      oForm.nav_prev.disabled=false;
-    }
-    if ( recordNumber==recordsLength ) {
-      oForm.nav_last.disabled=true;
-      oForm.nav_next.disabled=true;
-    } else {
-      oForm.nav_last.disabled=false;
-      oForm.nav_next.disabled=false;
-    }
-    if ( recordNumber==0 ) {
-      // New Record
-      oForm.formType='add';
-      oForm.nav_new.disabled=true;
-      oForm.nav_prev.disabled=true;
-      oForm.nav_next.disabled=true;
-      oForm.nav_del.disabled=true;
-    } else {
-       oForm.formType='update';
-       if ( oForm.addURL ) {
-	 oForm.nav_new.disabled=false;
-       } else {
-	 oForm.nav_new.disabled=true;
-       }
-       if ( oForm.deleteURL ) {
-	 oForm.nav_del.disabled=false;
-       } else {
-	 oForm.nav_del.disabled=true;
-       }
-    }
-    document.getElementById('recordIndicator').innerHTML=recordNumber + ' of ' + recordsLength;
-    oForm.navTo.value='HERE';
-  }
-  // Event onFormActionReturn
-  if ( oForm.onFormActionReturn != undefined ) {
-    oForm.onFormActionReturn(action);
-  }
-}
-
-// Status Message
-function setStatus(msg) {
-  if ( oDivStatus != undefined ) {
-    setObjectValue(oDivStatus,msg);
-  }
-}
-
-function formEncode(form) {
-  var list = new Array;
-  for(var i=0;i<elmts.length;i++) {
-    var value = new String;
-    var elmt = elmts[i];
-    var name = elmt.name;
-    if (name == "") { continue }
-    if (elmt.type == "checkbox" && elmt.boolean!="true" && !elmt.checked) { continue }
-    if (elmt.type == "radio" && !elmt.checked) { continue }
-    if (elmt.tagName=="DIV" && elmt.className=='clsRadioGroup') {
-      // The value is found under INPUT's of type radio
-      continue;
-    }
-  out: {
-      if (elmt.tagName=="INPUT") {
-	if ( elmt.type == "checkbox" ) {
-	  if ( elmt.boolean ) {
-	    value = getBoolboxValue(elmt);
-	  } else {
-	    value = getCheckboxValue(elmt);
-	  }
-	  break out;
-	} 	
-	value = elmt.value
-	  break out;
-      }
-      if ( elmt.tagName == "TEXTAREA") {
-	value = elmt.value
-	  break out;
-      }
-      if (elmt.tagName=="SELECT") {
-	value = getOptionValue(elmt)
-	  break out;
-      }
-      
-      // Default
-      value = elmt.innerHTML;
-    }
-    list.push(encodeURIComponent(name) + "=" + encodeURIComponent(value));
-  }
-  return list.join("&");
-}
-
-//
-}
-
-
-/* ==== dbFormHTMLArea.js ==== */
-function dbFormHTMLArea(oDiv) {
-
-var oDiv;
-var oForm = getContainingElmt(oDiv,'FORM');
-oForm.attachEvent('onsubmit',onSubmit);
-
-function onSubmit() {
-	var oInput = document.createElement('INPUT');
-	oInput.type='hidden';
-	oInput.name = oDiv.name;
-	oInput.value= oDiv.innerHTML;
-	oForm.appendChild(oInput);
-}
-
-// End 
-}
-
 /* ==== dbHeader.js ==== */
 function dbHeader(oTable) {
   // Resize table columns
@@ -1385,6 +312,37 @@ function dynamicResize(oContainer) {
 	}
     }
 }
+
+/* ==== jquery.actionConfirm.js ==== */
+// actionConfirm plugin
+// Call on <a>, generates a modal dialog asking the user to confirm when the user tries to use the link.
+;(function($, undefined) {
+    $.fn.actionConfirm = function() {
+        this.on('click', function(event) {
+	    var link = $(this);
+	    if ( ( ! link.is('.disabled')) && link.attr('href') ) {
+	        var url = link.attr('href');
+	        $('<div>')
+		    .text('Are you sure you want to ' + link.text() + '?')
+		    .dialog({
+		        title: link.text(),
+		        buttons: {
+			    Yes: function(){
+			        window.location = url;
+			    },
+			    No: function() {
+			        $(this).dialog('close').dialog('destroy').remove();
+			    }
+		        },
+		        modal: true,
+		        width: 400,
+		        height: 200
+		    });
+	        event.preventDefault();
+	    }
+        });
+    }
+})(jQuery);
 
 /* ==== jquery.colInherit.js ==== */
 // colInherit plugin
@@ -3359,7 +2317,7 @@ function dynamicResize(oContainer) {
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(){
+	onMouseDown: function(event){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -3417,11 +2375,11 @@ function dynamicResize(oContainer) {
 		recordSet.dbRecordSet('fieldChange', newField);
 	    }
 	},
-	editorBlur: function(){
+	editorBlur: function(event){
 	    // When the editor becomes blurred, move out.
 	    this.fieldOut();
 	},
-        editorValueChange: function(){
+        editorValueChange: function(event){
 	    if ( this.getValue() !== this.editor('getValue') ) {
 	        this.getRecord().dbRecord('setState', 'dirty');
             }
@@ -3782,37 +2740,63 @@ function dynamicResize(oContainer) {
 	return data;
     }
 
+    // Provide interaction as a jQuery plugin
     $.fn.dbForm = function(method) {
 	var args = arguments;
 	var forms = this;
 	var returnVal;
 
 	forms.each(function(){
+
+            // Get the dbForm object for this element, create one if none exists
 	    var dbForm = $(this).data('dbForm');
 	    if ( ! dbForm ) {
 		dbForm = new DbForm($(this));
 		$(this).data('dbForm', dbForm);
 	    }
+
+            // With no arguments or an options object, call the init method
 	    if ( typeof method == "object" || typeof method == "undefined" ) {
 		dbForm.init.apply( dbForm, args );
+
 	    } else if ( typeof dbForm[method] == "function" ) {
+                // Method call
 		returnVal = dbForm[method].apply( dbForm, Array.prototype.slice.call( args, 1 ) );
-		if ( typeof returnVal != "undefined" ) {
-		    return returnVal;
-		}
+
 	    } else if ( typeof dbForm.settings[method] != "undefined" && args.length == 1 ) {
-		return dbForm.settings[method];
+                // Get a setting value
+		returnVal = dbForm.settings[method];
+
 	    } else if ( typeof dbForm.settings[method] != "undefined" && args.length == 2 ) {
+                // Set a setting value
 		dbForm.settings[method] = args[1];
+
 	    } else if ( typeof dbForm[method] != "undefined" && args.length == 1 ) {
-		return dbForm[method];
+                // Get a class variable
+		returnVal = dbForm[method];
+
 	    } else if ( typeof dbForm[method] != "undefined" && args.length == 2 ) {
+                // Set a class variable
 		dbForm[method] = args[1];
+
 	    } else {
 		$.error( 'Method or property ' + method + ' does not exist on jQuery.dbForm' );
 	    }
+
+            // Break the loop if we have a return value.
+            if ( typeof returnVal != "undefined" ) {
+                return false;
+            }
+
 	});
-	return forms;
+        // For methods with a return value and for getting setting values/class variables, return the value.
+	if ( typeof returnVal != "undefined" ) {
+	    return returnVal;
+
+	} else {
+            // Return the original jQuery object for chaining
+	    return forms;
+        }
     };
 })(jQuery);
 
@@ -3820,7 +2804,7 @@ function dynamicResize(oContainer) {
 ;(function($, undefined) {
     $.widget('qcode.dbFormCombo', {
         options: {
-	    searchUrl: "",
+	    searchURL: "",
 	    searchLimit: 10,
 	    comboHeight: 200
         },
@@ -4826,16 +3810,16 @@ function dbFormHTMLArea(oDiv) {
 	    // Elements with class "editable" are editable fields.
 	    this._on({
 		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown');
+		    $(event.currentTarget).dbField('onMouseDown', event);
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
 		},
                 'editorValueChange .editable': function(event) {
-                    $(event.currentTarget).dbField('editorValueChange');
+                    $(event.currentTarget).dbField('editorValueChange', event);
                 },
 		'editorBlur .editable': function(event) {
-		    $(event.currentTarget).dbField('editorBlur');
+		    $(event.currentTarget).dbField('editorBlur', event);
 		}
 	    });
 	    this._on(window, {
@@ -5121,10 +4105,10 @@ function dbFormHTMLArea(oDiv) {
 	},
 	setCellValue: function(colName, value){
 	    // Set the value of the cell corresponding to colName.
-	    var colIndex = $('col[name='+colName+']', this.colgroup).index();
+	    var colIndex = $('col[name='+colName+']', this.getColgroup()).index();
 	    if ( colIndex !== -1 ) {
 		var cell = this.element.children('td').eq(colIndex);
-		cell.dbCell('setValue',value);	    
+		cell.dbCell('setValue',value);
 	    }
 	},
 	delete: function(async){
@@ -5549,7 +4533,13 @@ function dbFormHTMLArea(oDiv) {
 // nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
 (function ($, undefined) {
     $.fn.positionRelativeTo = function(target) {
+        if ( ! this.length ) {
+            $.error('positionRelativeTo called on empty object');
+        }
 	var target = $(target);
+        if ( ! target.length ) {
+            $.error('positionRelativeTo called with empty target');
+        }
 	var $body = $('body');
 
 	// Find chain of offset parents from this element to body
@@ -5558,12 +4548,18 @@ function dbFormHTMLArea(oDiv) {
 	while ( ! current.is($body) ) {
 	    current = current.offsetParent();
 	    myOffsetParents = myOffsetParents.add(current);
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called on a detached object?');
+            }
 	}
 
 	// Search offset parents from target element up until a common offset parent is found
 	current = target;
 	while ( ! current.is(myOffsetParents) ) {
 	    current = current.offsetParent();
+            if ( current.length !== 1 ) {
+                $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
+            }
 	}
 	var commonOffsetParent = current;
 
@@ -5577,7 +4573,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    myPosition.left += positionOfCurrent.left;
 	    myPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
@@ -5594,7 +4590,7 @@ function dbFormHTMLArea(oDiv) {
 	    var positionOfCurrent = current.position();
 	    targetPosition.left += positionOfCurrent.left;
 	    targetPosition.top += positionOfCurrent.top;
-	    current = current.offsetParent();   
+	    current = current.offsetParent();
 	}
 	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
@@ -7396,7 +6392,7 @@ function dbFormHTMLArea(oDiv) {
 // Used for inheritance. Prefer Object.create
 function heir(p) {
     return Object.create(o);
-}
+};
 
 // Returns the first non-undefined argument
 function coalesce() {
@@ -7405,7 +6401,7 @@ function coalesce() {
 	    return arguments[i];
 	}
     }
-}
+};
 
 // Takes an url with query data and splits it, returning the path (with no data) and an object representing the data as name/value pairs.
 function splitURL(url) {
@@ -7432,9 +6428,9 @@ function splitURL(url) {
 	'path': path,
 	'data': data
     }
-}
+};
 
-// Focus on the first focussable element of a form. Considers all descendants regarless of depth.
+// Focus on the first focussable element of a form. Considers all descendants regardless of depth.
 function formFocus(form) {
     $(form).find('input, textarea, select').each(function(){
 	$(this).focus();
@@ -7442,7 +6438,7 @@ function formFocus(form) {
 	    return false;
 	}
     });
-}
+};
 // Focus on the first focussable child of element. Only inspects immediate children (does not traverse further down the DOM).
 function focusFirstChild(element) {
     $(element).children().each(function(){
@@ -7451,17 +6447,17 @@ function focusFirstChild(element) {
 	    return false;
 	}
     });
-}
+};
 
 function stripHTML(html) {
     return html.replace(/<[^>]+>/gi,"");
-}
+};
 function escapeHTML(str) {
     return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&#34;").replace(/\'/g,"&#39;");
-}
+};
 function unescapeHTML(str) {
     return str.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&#34;/g,'"').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
-}
+};
 
 function urlSet(url,name,value) {
     var re = /([^\?]+)\??(.*)/;
@@ -7470,7 +6466,7 @@ function urlSet(url,name,value) {
     var queryString = RegExp.$2;
     url = path + "?" + urlDataSet(queryString,name,value);
     return url;
-}
+};
 
 function urlDataSet(data,name,value) {
     var list = new Array();
@@ -7494,7 +6490,7 @@ function urlDataSet(data,name,value) {
     
     data=list.join("&");
     return data;
-}
+};
 
 function httpPost(url,data,handler,errorHandler,async) {
     jQuery.ajax ({
@@ -7533,7 +6529,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
-}
+};
 
 // linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
@@ -7542,7 +6538,7 @@ $.fn.linkNoHistory = function() {
 	event.preventDefault();
     });
     return this;
-}
+};
 
 $.fn.setObjectValue = function(value) {
     // Set the value of the target elements based on their type.
@@ -7557,96 +6553,44 @@ $.fn.setObjectValue = function(value) {
 	}
     });		 
     return this;
+};
+
+// Filter to only table cells in a column
+$.fn.findByColumn = function(colSelector) {
+    var newSelection = $([]);
+    var cells = this.find('td, th');
+    this.closest('table').find('col').filter(colSelector).each(function(j, col) {
+        newSelection = newSelection.add(cells.filter(':nth-child('+($(col).index()+1)+')'));
+    });
+    return this.pushStack(newSelection);
+};
+
+function parseBoolean(value) {
+  value = stripHTML(String(value)).toLowerCase();
+  var truth = ['true','yes','y','1','t'];
+  for (var i=0;i<truth.length;i++) {
+    if ( value == truth[i].toLowerCase() ) {
+      return true;
+    } 
+  }
+  return false;
 }
 
-/* ==== tabCtl.js ==== */
-function tabCtl(oCtl) {
-
-var currentTab;
-
-// Init
-initTab: {
-	for (var i=0;i<oCtl.children.length;i++) {
-		var oSpan = oCtl.children[i];
-		if (oSpan.selected == "true") {
-			tabIn(oSpan);
-			break initTab;
-		}
-	}
-	// not found so use first
-	var oSpan = oCtl.firstChild;
-	tabIn(oSpan);
-}
-
-oCtl.attachEvent('onmouseup',onMouseUp);
-document.attachEvent('onkeyup',onKeyUp);
-
-// Tab strip control
-
-function onMouseUp() {
-	if ( window.event.srcElement.tagName == 'SPAN' ) {
-		var oSpan = window.event.srcElement;
-		tabChange(oSpan);
-	}
-}
-
-function tabChange(oSpan) {
-	tabOut(currentTab);
-	tabIn(oSpan);
-}
-	
-function tabIn(oSpan) {
-	var id = oSpan.forPage;
-	var oDiv = document.getElementById(id);
-	oDiv.style.display='block';
-	oSpan.runtimeStyle.cursor='auto';
-	oSpan.runtimeStyle.backgroundColor='#ece9d8';
-	currentTab = oSpan;
-	if (currentTab.onTabIn != undefined) {
-		if (typeof(currentTab.onTabIn == "string")) {
-			eval(currentTab.onTabIn.toString());
-		}
-		if (typeof(currentTab.onTabIn == "function")) {
-			currentTab.onTabIn();
-		}
-	}
-	
-	var elmts = getChildElementsWithClassName(oDiv,'TABLE','clsDbGrid')
-	if (elmts.length > 0) {
-		elmts[0].focus();
-	}
-	var elmts = getChildElementsWithClassName(oDiv,'FORM','clsDbForm')
-	if (elmts.length > 0) {
-		elmts[0].focus();
-	}
-	
-}
-
-function tabOut(oSpan) {
-	var id = oSpan.forPage;
-	var oDiv = document.getElementById(id);
-	oDiv.style.display='none';
-	oSpan.runtimeStyle.cursor='hand';
-	oSpan.runtimeStyle.backgroundColor='Ivory';
-}
-
-function onKeyUp() {
-	var e = window.event;
-	if ( e.altKey ) {
-		var accessKey = String.fromCharCode(e.keyCode).toLowerCase();
-		for (var i=0;i<oCtl.children.length;i++) {
-			var oSpan = oCtl.children[i];
-			if (oSpan.accessKey == accessKey) {
-				tabChange(oSpan);
-			}
-		}
-	}
-	e.returnValue=false;
-	e.cancelBubble = true;
-}
-
-// end tabCtl
-}  
+;(function($, undefined) {
+    $.fn.hrefClick = function() {
+        if ( this.length == 0 || this.attr('href') === undefined ) {
+            return this;
+        }
+        if ( this.length > 1 || ( ! this.is('a')) ) {
+            $.error('Invalid usage of hrefClick');
+        }
+        var clickEvent = jQuery.Event('click');
+        this.trigger(clickEvent);
+        if ( ! clickEvent.isDefaultPrevented() ) {
+            window.location = this.attr('href');
+        }
+    }
+})(jQuery);
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {
@@ -7658,229 +6602,6 @@ function tableRowHighlight(oTable) {
 	    jQuery(this).toggleClass('clsHighlight');
 	});
 }
-
-/* ==== thSortMenu.js ==== */
-function thSortMenu(oSpan) {
-  var oTH;
-  var oTable;
-  var oTBody;
-  var oColGroup;
-  var oMenu;
-  var oBody = document.body;
-  var timerID;
-  var interval = 400;
-  var indicator;
-  var colName;
-  var colType;
-  var sortCols;
-  var sortType;
-  var primarySortCol;
-  var savedBackgroundColor;
-
-  oSpan.attachEvent('onmouseup',onMouseUp);
-
-  if (oSpan.parentElement.tagName=='TH') {
-    oTH=oSpan.parentElement;
-  } else {	
-    oTH=oSpan.parentElement.forTH;
-  }
-
-  function onMouseUp() { 
-    if (!oMenu) {
-      oTable=getContainingElmt(oTH,'TABLE');
-      oTBody=oTable.tBodies[0];
-      oColGroup=getChildElementByTagName(oTable,'COLGROUP');
-      colName = oColGroup.childNodes[oTH.cellIndex].name;
-      colType = getColType(oColGroup,oTH.cellIndex);
-      
-      if (urlGet(document.location.href,'sortCols')) {
-	sortCols = urlGet(document.location.href,'sortCols');
-      } else {
-	  //sortCols =  sortColsDefault(oColGroup);
-	  sortCols = "";
-      }
-      sortType = getSortType(sortCols,colName);
-      primarySortCol = (firstSortCol(sortCols) == colName);
-      
-      savedBackgroundColor = oSpan.parentElement.style.backgroundColor;
-
-      oMenu=document.createElement('DIV');
-      oMenu.className='clsSortMenu';
-      oBody.appendChild(oMenu);
-
-      oMenu.style.zIndex=3;
-    
-
-      oMenu.style.position='absolute';
-      oMenu.style.visibility='hidden';
-      oMenu.attachEvent('onmouseout',menuMouseOut);
-      oMenu.attachEvent('onmouseover',menuMouseOver);
-      oSpan.attachEvent('onmouseout',onMouseOut);
-      oSpan.attachEvent('onmouseover',onMouseOver);
-  
-      var ascURL = urlSet(document.location.href,'sortCols',sortColsPush(sortCols,colName,'ASC'));
-      var descURL = urlSet(document.location.href,'sortCols',sortColsPush(sortCols,colName,'DESC'));
- 
-      var ascLink;
-      var descLink;
-      if (colType=='NUMERIC') {
-	ascLink = 'Sort&nbsp;Low&nbsp;to&nbsp;High';
-	descLink = 'Sort&nbsp;High&nbsp;to&nbsp;Low';
-      } else if (colType=='DATE') {
-	ascLink = 'Sort&nbsp;Old&nbsp;to&nbsp;New';
-	descLink = 'Sort&nbsp;New&nbsp;to&nbsp;Old';
-      } else {
-	ascLink = 'Sort&nbsp;A-Z';
-	descLink = 'Sort&nbsp;Z-A';
-      }
-      if ( primarySortCol ) {
-	if ( sortType == 'ASC' ) {
-	  oMenu.innerHTML = '<a href="' + descURL + '" onclick="location.replace(this.href);return false;">' + descLink + '</a>';
-	} else {
-	  oMenu.innerHTML = '<a href="' + ascURL + '" onclick="location.replace(this.href);return false;">' + ascLink + '</a>';
-	}
-      } else {
-	oMenu.innerHTML = '<div style="margin-bottom:4px;"><a href="' + ascURL + '" onclick="location.replace(this.href);return false;">' + ascLink + '</a>' + '</div><div>' +  '<a href="' + descURL + '" onclick="location.replace(this.href);return false;">' + descLink + '</a></div>';
-      }
-    }
-    oSpan.parentElement.style.backgroundColor='#FFFFE9';
-    oMenu.style.top=event.clientY;
-    if ( event.clientX + oMenu.offsetWidth > oBody.clientWidth ) {
-      oMenu.style.left= oBody.clientWidth - oMenu.offsetWidth;
-    } else {
-      oMenu.style.left=event.clientX;
-    }
-    oMenu.style.visibility='visible';
-  }
-
- function onMouseOut() {
-   if ( !timerID ) {
-     timerID=window.setInterval(menuHide,interval);
-   }
- }
- function onMouseOver() {
-   if ( timerID ) {
-     window.clearInterval(timerID);
-     timerID=undefined;
-   }
- }
- 
- function menuMouseOut() {
-   if ( !timerID ) {
-     timerID=window.setInterval(menuHide,interval);
-   }
- }
- function menuMouseOver() {
-   if ( timerID ) {
-     window.clearInterval(timerID);
-     timerID=undefined;
-   }
- }
- 
- function menuHide() {
-     oMenu.style.visibility='hidden';
-     oSpan.parentElement.style.backgroundColor=savedBackgroundColor;
- }
- 
- function getColType(oColGroup,index) {
-   if ( oColGroup && oColGroup.childNodes[index].className) {
-     var className=oColGroup.childNodes[index].className;
-     if ( className == 'clsNumber' ||  className == 'clsMoney') {
-       return 'NUMERIC';
-     } else if ( className=='clsDate' ) {
-       return 'DATE';
-     } else {
-       return 'ALPHA';
-     }
-   } else {
-     return 'ALPHA';
-   }
- }
-
- function getColTypeByInspection(oTBody,index) {
-   var numerics = 0;
-   var dates=0;
-   var alphas=0;
-   var reNumeric=/^(\+|-)?[0-9,]*(\.[0-9]*)?$/;
-   var reDate=/^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}$/;
-   for(var i=0;i<oTBody.rows.length;i++) {
-     var str=oTBody.rows[i].cells[index].innerText;
-     if ( str == '' ) {
-       continue;
-     }
-     if ( reNumeric.test(str) ) {
-       numerics++;
-     } else if ( reDate.test(str) ) {
-       dates++;
-     } else {
-       alphas++;
-       return 'ALPHA';
-     }
-   }
-   if ( alphas==0 && dates==0 && numerics>0 ) {
-     return 'NUMERIC';
-   } else if (  alphas==0 && numerics==0 && dates>0 ) {
-     return 'DATE';
-   } else {
-     return 'ALPHA';
-   }
- }
-
- function getSortType(sortCols,colName) {
-   var temp = new Array();
-   temp = sortCols.split(" ");
-   for (var i=0;i<temp.length;i++) {
-     if ( temp[i]==colName ) {
-       if (i<temp.length && temp[i+1]=='DESC') {
-	 return 'DESC';
-       } else {
-	 return 'ASC';
-       }
-     }
-   }
-   return null;
- }
-
- function firstSortCol(sortCols) {
-   var temp = new Array();
-   temp = sortCols.split(" ");
-   return temp[0];
- }
-
- function sortColsPush(sortCols,colName,direction) {
-   var temp = new Array();
-   var newlist = new Array();
-   temp = sortCols.split(" ");
-   newlist.push(colName);
-   if ( direction == 'DESC' ) {
-     newlist.push('DESC');
-   }
-   for (var i=0;i<temp.length;i++) {
-     if ( temp[i]==colName ) {
-       if (i<temp.length && (temp[i+1]=='ASC' || temp[i+1]=='DESC' )) {
-	 i++;
-       }
-       continue;
-     } else {
-       newlist.push(temp[i]);
-     }
-   }
-   return newlist.join(' ');
- }
-
- function sortColsDefault(oColGroup) {
-   var list = new Array();
-   for (var i=0;i<oColGroup.childNodes.length && i<=1;i++) {
-     if ( oColGroup.childNodes[i].name ) {
-       list.push(oColGroup.childNodes[i].name) ;
-     }
-   }
-   return list.join(" ");
- }
-
- // END
-}
-
 
 /* ==== wiky.js ==== */
 /*	This work is licensed under Creative Commons GNU LGPL License.
