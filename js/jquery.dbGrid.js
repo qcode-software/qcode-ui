@@ -215,7 +215,7 @@
 		    row.dbRow('delete', false)
 		}
 	    }
-	    if ( row.dbRow('option', 'type') == 'add' ) {
+	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') == 'dirty' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
 		    this.setStatusBarMsg('Deleted.');

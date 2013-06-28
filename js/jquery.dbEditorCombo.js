@@ -41,6 +41,7 @@
 		})
 		.hide();
 	    this._on(this.editor, {
+                'focus': this._inputOnFocus,
 		'keydown': this._inputOnKeyDown,
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
@@ -292,6 +293,9 @@
 	        e.preventDefault();
             }
 	},
+        _inputOnFocus: function(e) {
+	    this.search();
+        },
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
                 this._valueChanged();

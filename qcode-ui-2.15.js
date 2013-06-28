@@ -1829,6 +1829,7 @@ function dynamicResize(oContainer) {
 		})
 		.hide();
 	    this._on(this.editor, {
+                'focus': this._inputOnFocus,
 		'keydown': this._inputOnKeyDown,
 		'keyup': this._inputOnKeyUp,
 		'cut': this._inputOnCut,
@@ -2080,6 +2081,9 @@ function dynamicResize(oContainer) {
 	        e.preventDefault();
             }
 	},
+        _inputOnFocus: function(e) {
+	    this.search();
+        },
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
                 this._valueChanged();
@@ -3925,7 +3929,7 @@ function dbFormHTMLArea(oDiv) {
 		    row.dbRow('delete', false)
 		}
 	    }
-	    if ( row.dbRow('option', 'type') == 'add' ) {
+	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') == 'dirty' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
 		    this.setStatusBarMsg('Deleted.');
@@ -5887,6 +5891,50 @@ function dbFormHTMLArea(oDiv) {
     }
 })(jQuery, window);
 
+/* ==== jquery.tableRowDeleteButton.js ==== */
+;(function($, undefined) {
+    $.fn.tableRowDeleteButton = function() {
+        var buttons = this;
+        buttons.each(function() {
+            var button = $(this);
+            var table = button.closest('table');
+            if ( table.find('.clsHighlight').length > 0 ) {
+                button.removeClass('disabled');
+            } else {
+                button.addClass('disabled');
+            }
+            button.on('click', function() {
+                if ( ! button.hasClass('disabled') ) {
+                    var rows = table.find('.clsHighlight')
+		    if ( window.confirm("Delete these " + rows.length + " records?") ) {
+                        rows.each(function(i, row) {
+                            if ( $(row).dbRow('option', 'type') == 'add' && $(row).dbRow('getState') != 'dirty') {
+                                $(row).removeClass('clsHighlight');
+                                return;
+                            }
+                            $(row).dbRow('delete', true);
+                        });
+                    }
+                }
+            });
+            table.on('toggleHighlight', function(event) {
+                if ( table.find('.clsHighlight').length > 0 ) {
+                    button.removeClass('disabled');
+                } else {
+                    button.addClass('disabled');
+                }
+            });
+            button.on('mousedown', function() {
+                button.addClass('clicking');
+                button.one('mouseup mouseleave', function() {
+                    button.removeClass('clicking');
+                });
+            });
+        });
+        return buttons;
+    }
+})(jQuery);
+
 /* ==== jquery.tablesorter.js ==== */
 /*
  * 
@@ -7615,13 +7663,14 @@ function parseBoolean(value) {
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {
-	jQuery(oTable).find("tr").click(function(event) {
-	    var target_td = jQuery(event.target).closest("td")[0];
-	    if ( jQuery(oTable).is(".clsDbGrid, .clsDbFlexGrid") && oTable.isCellEditable(target_td) ) {
-		return; 
-	    }
-	    jQuery(this).toggleClass('clsHighlight');
-	});
+    jQuery(oTable).on('click', 'tr', function(event) {
+	var target_td = jQuery(event.target).closest("td");
+	if ( jQuery(oTable).is(".clsDbGrid, .clsDbFlexGrid") && target_td.dbCell('isEditable') ) {
+	    return; 
+	}
+	jQuery(this).toggleClass('clsHighlight');
+        $(event.target).trigger('toggleHighlight');
+    });
 }
 
 /* ==== wiky.js ==== */
