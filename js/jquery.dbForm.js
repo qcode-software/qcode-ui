@@ -67,32 +67,27 @@
 	    this.form.on('submit.DbForm', onSubmit.bind(this));
             if ( this.settings.formType == "update" ) {
                 var dbForm = this;
+                var saveHandler = function(event) {
+                    if ( $(event.target).is(dbForm.elements) && dbForm.state == 'dirty' ) {
+                        dbForm.save();
+                    }
+                }
                 switch ( this.settings.updateType ) {
                 case "focus":
-                    this.form.on('focusin', function(event) {
-                        if ( $(event.target).is(dbForm.elements) ) {
-                            if ( dbForm.state == 'dirty' ) {
-                                dbForm.save();
-                            }
-                        }
-                    });
+                    this.form.on('focusin.DbForm', saveHandler);
+                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 case "blur":
-                    this.form.on('focusout', function(event) {
-                        if ( $(event.target).is(dbForm.elements) ) {
-                            if ( dbForm.state == 'dirty' ) {
-                                dbForm.save();
-                            }
-                        }
-                    });
+                    this.form.on('focusout.DbForm', saveHandler);
                     break;
                 case "keyup":
-                    this.form.on('keyup', function(event) {
+                    this.form.on('keyup.DbForm', function(event) {
                         if ( $(event.target).is(dbForm.elements) ) {
                             cancelDelayedSave.call(dbForm);
                             dbForm.keyUpTimer = window.setTimeout(dbForm.save.bind(dbForm),750);
                         }
                     });
+                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 }
             }

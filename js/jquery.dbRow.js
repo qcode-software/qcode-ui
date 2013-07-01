@@ -131,6 +131,7 @@
 	},
 	actionReturn: function(action, xmlDoc, status, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
+            console.log("Action return: " + Date.now());
 	    var grid = this.getGrid();
 
 	    this.xmlSetValues(xmlDoc);

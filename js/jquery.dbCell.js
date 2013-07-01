@@ -259,12 +259,30 @@
 	    event.stopPropagation();
 	    return false
 	},
+        onMouseDown: function(event) {
+            this.hasMouseDown = true;
+            this._on({
+                'mouseleave': function() {
+                    this.hasMouseDown = false;
+                    this._off(this.element, 'mouseleave');
+                }
+            });
+        },
 	onMouseUp: function(event){
 	    // Mouse up event on an editable cell - call changeCell
 	    var grid = this.getGrid();
 
+            // mousedown did not occur on this cell
+            if ( ! this.hasMouseDown ) {
+                return true;
+            }
+            this.hasMouseDown = false;
+            this._off(this.element, 'mouseleave');
+
 	    // Cell is not editable
-	    if ( ! this.isEditable() ) { return true; } 
+	    if ( ! this.isEditable() ) {
+                return true;
+            } 
 	    
 	    grid.dbGrid('cellChange', this.element);
 	},

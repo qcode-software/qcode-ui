@@ -190,6 +190,7 @@
             // Google Chrome bug fix hack
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
+            console.log("Finished drawing: " + Date.now());
         },
         _getRowStartDate: function(rowIndex) {
             // Get the start date of a given row

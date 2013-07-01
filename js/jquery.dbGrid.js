@@ -50,6 +50,9 @@
 	    if ( dbGrid.option('enabled') ) {
 		// Event listeners - instead of separate event listeners for each cell, delegated event listeners are added to the dbGrid.
 		dbGrid._on(dbGrid.tbody, {
+		    'mousedown td': function(event){
+			$(event.currentTarget).dbCell('onMouseDown');
+		    },
 		    'mouseup td': function(event){
 			$(event.currentTarget).dbCell('onMouseUp');
 		    },
