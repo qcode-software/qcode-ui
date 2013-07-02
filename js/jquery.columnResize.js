@@ -52,7 +52,7 @@
             case 'break-word':
                 th.add(cells).add(col).css('word-break', 'normal');
                 th.add(col).add(cells).width(ui.size.width);
-                if ( th.width() != ui.size.width ) {
+                if ( th.width() > ui.size.width ) {
                     th.add(cells).add(col).css('word-break', 'break-all');
                 }
                 break;
@@ -65,7 +65,7 @@
                 });
                 
                 var tooSmall = false;
-                while ( th.width() != ui.size.width && ! tooSmall ) {
+                while ( th.width() > ui.size.width && ! tooSmall ) {
                     th.add(cells).add(col).each(function() {
                         var fontSize = parseInt($(this).css('font-size')) - 1;
                         if (fontSize < options['min-font-size']) {

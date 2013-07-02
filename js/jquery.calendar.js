@@ -1,4 +1,4 @@
-;(function($, undefined) {
+;(function($, window, undefined) {
     // ======================================================================
     // calendar widget plugin. Call on a <canvas> to draw a calendar
     // ======================================================================
@@ -26,8 +26,25 @@
                 date: Date.today,
                 color: 'rgba(160,200,240,1)'
             });
+            this.drawTimeout = undefined;
         },
-        draw: function() {
+        draw: function(async) {
+            var async = coalesce(async, true);
+            var calendar = this;
+            if ( async ) {
+                if ( this.drawTimeout === undefined ) {
+                    this.drawTimeout = window.setZeroTimeout(function() {
+                        calendar._drawNow();
+                        calendar.drawTimeout = undefined;
+                    });
+                }
+            } else {
+                this._drawNow();
+                window.clearZeroTimeout(this.drawTimeout);
+                this.drawTimeout = undefined;
+            }
+        },
+        _drawNow: function() {
             // draw (or redraw) the calendar
             var ctx = this.context;
             var options = this.options;
@@ -335,4 +352,4 @@
     })();
     // End of Bar class
     // ============================================================
-})(jQuery);
+})(jQuery, window);

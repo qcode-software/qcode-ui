@@ -52,22 +52,29 @@
 	},
 	setValue: function(value){
 	    var cellType = this.getType();
+            var oldWidth = this.element.width();
+            var oldHeight = this.element.height();
 
             if ( cellType === "htmlarea" || cellType === "html" ) {
 		this.element.html(value);
+
             } else if ( cellType === "bool" ) {
 		if ( parseBoolean(value) ) {
 		    this.element.html("<span class='clsTrue'>Yes</span>");
 		} else {
 		    this.element.html("<span class='clsFalse'>No</span>");
 		}
+
 	    } else if ( this.element.is(':input') ) {
                 this.element.val(value);
+
             } else {
                 this.element.text(value);
             }
 
-            this.element.trigger('resize');
+            if ( this.element.width() !== oldWidth || this.element.height() !== oldHeight ) {
+                this.element.trigger('resize');
+            }
 	},
 	isEditable: function() {
 	    var row = this.getRow();

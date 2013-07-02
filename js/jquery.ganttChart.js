@@ -34,6 +34,7 @@
             this.bars = [];
             this.table = this.element;
             this.rows = this.table.children('tbody').children('tr');
+            this.drawTimeout = undefined;
 
             // Wrap the whole thing in a div
             this.table.wrap('<div class="ganttChart wrapper">');
@@ -70,15 +71,126 @@
                     var barColor = $(record).children('bar_color').text();
                     ganttChart._getRowByID(taskID).dbRow('setCellValue', 'bar_color', barColor);
                 });
-                this.draw();
+                var targetRowIndex = $(event.target).index();
+                this.rowUpdate(targetRowIndex);
+                this.getDependentRows(targetRowIndex).each(function(i, row) {
+                    ganttChart.rowUpdate($(row).index());
+                });
+                this.getDependencyRows(targetRowIndex).each(function(i, row) {
+                    ganttChart.rowUpdate($(row).index());
+                });
             }});
+
+            var rowHeights = [];
+            this.element.find('tr').each(function(i, row) {
+                rowHeights[i] = $(row).height();
+            });
+            var tableWidth = this.element.width();
             this._on({'resize': function(event) {
-                this.draw();
+                var rowHeightChanged = false;
+                var tableWidthChanged = false;
+                this.element.find('tr').each(function(i, row) {
+                    var height = $(row).height();
+                    if ( rowHeights[i] != height ) {
+                        rowHeights[i] = height;
+                        rowHeightChanged = true;
+                    }
+                });
+                if ( tableWidth != this.element.width() ) {
+                    tableWidth = this.element.width();
+                    this.calendarFrame.css('left', this.table.outerWidth());
+                }
+                if ( rowHeightChanged ) {
+                    this.draw();
+                }
             }});
 
             this.draw();
         },
-        draw: function() {
+        rowUpdate: function(rowIndex) {
+            var ganttChart = this;
+            this.bars[rowIndex].remove();
+            this.bars[rowIndex] = undefined;
+            var rowData = ganttChart._getRowData(rowIndex);
+            var Task = ganttChart.constructor.Task;
+            if ( rowData !== false ) {
+                var bar = new Task(ganttChart.calendar, rowData);
+                ganttChart.calendar.calendar('addObject', bar);
+                ganttChart.bars[rowIndex] = bar;
+            }
+            // Redraw the calendar
+            this.calendar.calendar('draw');
+
+            // Google Chrome bug fix hack
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
+            this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
+        },
+        _getRowData: function(rowIndex) {
+            var ganttChart = this;
+            var startDate = ganttChart._getRowStartDate(rowIndex);
+            var finishDate = ganttChart._getRowFinishDate(rowIndex);
+
+            if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
+                var dependents = [];
+                var dependencies = [];
+
+                ganttChart.getDependentRows(rowIndex).each(function(i, row) {
+                    var row = $(row);
+                    var cell = row.children().first();
+                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                    var date = ganttChart._getRowStartDate(row.index());
+                    dependents.push({
+                        date: date,
+                        verticalPosition: verticalPosition
+                    });
+                });
+
+                ganttChart.getDependencyRows(rowIndex).each(function(i, row) {
+                    var row = $(row);
+                    var cell = row.children().first();
+                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                    var date = ganttChart._getRowFinishDate(row.index());
+                    dependencies.push({
+                        date: date,
+                        verticalPosition: verticalPosition
+                    });
+                });
+
+                var row = this.rows.eq(rowIndex);
+                var cell = row.children().first();
+                var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+
+                return {
+                    startDate: startDate,
+                    finishDate: finishDate,
+                    verticalPosition: verticalPosition,
+                    color: ganttChart._getCellValue('barColor', rowIndex),
+                    dependencies: dependencies,
+                    dependents: dependents,
+                    rowHeight: (row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))),
+                    row: $(row)
+                }
+            } else {
+                return false
+            }
+        },
+        draw: function(async) {
+            var async = coalesce(async, true);
+            var ganttChart = this;
+            if ( async ) {
+                if ( this.drawTimeout === undefined ) {
+                    this.drawTimeout = window.setZeroTimeout(function() {
+                        ganttChart._drawNow();
+                        ganttChart.drawTimeout = undefined;
+                    });
+                }
+            } else {
+                this._drawNow();
+                window.clearZeroTimeout(this.drawTimeout);
+                this.drawTimeout = undefined;
+            }
+        },
+        _drawNow: function() {
             // Draw (or redraw) this gantt chart
             var ganttChart = this;
             this.calendarFrame.css('left', this.table.outerWidth());
@@ -122,65 +234,21 @@
 
             // Draw the bars (remove any existing bars first)
             $.each(this.bars, function(i, bar) {
-                bar.remove();
+                if ( bar !== undefined ) {
+                    bar.remove();
+                }
             });
             this.bars = [];
 
             var Task = ganttChart.constructor.Task;
             this.rows.each(function(rowIndex, domRow) {
-                var startDate = ganttChart._getRowStartDate(rowIndex);
-                var finishDate = ganttChart._getRowFinishDate(rowIndex);
-                if ( Date.isValid(startDate) && Date.isValid(finishDate) ) {
-                    var dependents = [];
-                    var dependencies = [];
-                    var list = ganttChart._getCellValue('dependentIDs', rowIndex);
-                    if ( list.length > 0 ) {
-                        $.each(list.split(' '), function(i, rowID) {
-                            var row = ganttChart._getRowByID(rowID);
-                            if ( row.length !== 1 ) {
-                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
-                                return;
-                            }
-                            var cell = row.children().first();
-                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
-                            var date = ganttChart._getRowStartDate(row.index());
-                            dependents.push({
-                                date: date,
-                                verticalPosition: verticalPosition
-                            });
-                        });
-                    }
-                    var list = ganttChart._getCellValue('dependencyIDs', rowIndex);
-                    if ( list.length > 0 ) {
-                        $.each(list.split(" "), function(i, rowID) {
-                            var row = ganttChart._getRowByID(rowID);
-                            if ( row.length !== 1 ) {
-                                console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
-                                return;
-                            }
-                            var cell = row.children().first();
-                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
-                            var date = ganttChart._getRowFinishDate(row.index());
-                            dependencies.push({
-                                date: date,
-                                verticalPosition: verticalPosition
-                            });
-                        });
-                    }
-                    var row = $(domRow);
-                    var cell = row.children().first();
-                            var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2)
-                    var bar = new Task(ganttChart.calendar, {
-                        startDate: startDate,
-                        finishDate: finishDate,
-                        verticalPosition: verticalPosition,
-                        color: ganttChart._getCellValue('barColor', rowIndex),
-                        dependencies: dependencies,
-                        dependents: dependents,
-                        rowHeight: (row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width')))
-                    });
+                var rowData = ganttChart._getRowData(rowIndex);
+                if ( rowData !== false ) {
+                    var bar = new Task(ganttChart.calendar, rowData);
                     ganttChart.calendar.calendar('addObject', bar);
-                    ganttChart.bars.push(bar);
+                    ganttChart.bars[rowIndex] = bar;
+                } else {
+                    ganttChart.bars[rowIndex] = undefined;
                 }
             });
 
@@ -190,7 +258,6 @@
             // Google Chrome bug fix hack
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
-            console.log("Finished drawing: " + Date.now());
         },
         _getRowStartDate: function(rowIndex) {
             // Get the start date of a given row
@@ -215,6 +282,38 @@
                 }
             });
             return row;
+        },
+        getDependentRows: function(rowIndex) {
+            var ganttChart = this;
+            var rows = [];
+            var list = ganttChart._getCellValue('dependentIDs', rowIndex);
+            if ( list.length > 0 ) {
+                $.each(list.split(' '), function(i, rowID) {
+                    var row = ganttChart._getRowByID(rowID);
+                    if ( row.length !== 1 ) {
+                        console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                        return;
+                    }
+                    rows.push(row[0]);
+                });
+            }
+            return $(rows);
+        },
+        getDependencyRows: function(rowIndex) {
+            var ganttChart = this;
+            var rows = [];
+            var list = ganttChart._getCellValue('dependencyIDs', rowIndex);
+            if ( list.length > 0 ) {
+                $.each(list.split(' '), function(i, rowID) {
+                    var row = ganttChart._getRowByID(rowID);
+                    if ( row.length !== 1 ) {
+                        console.log('Could not find taskID ' + rowID + ' from row index ' + rowIndex);
+                        return;
+                    }
+                    rows.push(row[0]);
+                });
+            }
+            return $(rows);
         },
         newDateHighlighter: function(date, style) {
             // Create and return a new date highlighter object
@@ -263,7 +362,7 @@
                     this.calendarCanvas.calendar('draw');
                 })
                 .on('click', function() {
-                    this.highlighted = ! this.highlighted;
+                    this.options.row.data('highlighted', ! this.options.row.data('highlighted'));
                     this.calendarCanvas.calendar('draw');
                 });
         }
@@ -280,11 +379,12 @@
                 dependencies: [],
                 dependents: [],
                 radius: 20,
-                layer: 4
+                layer: 4,
+                row: undefined
             }),
             draw: function(layer) {
                 // Draw this task.
-                if ( (layer === undefined || layer === 2) && (this.hover || this.highlighted) ) {
+                if ( (layer === undefined || layer === 2) && (this.hover || this.options.row.data('highlighted')) ) {
                     // Draw the highlight/hover bar
                     var ctx = this.context;
                     var highlight = {
@@ -293,14 +393,14 @@
                         top: this.options.verticalPosition - (this.options.rowHeight / 2),
                         height: this.options.rowHeight
                     }
-                    if ( this.highlighted ) {
+                    if ( this.options.row.data('highlighted') ) {
                         ctx.strokeStyle = this.options.highlightEdge;
                         ctx.strokeRect(highlight.left - 0.5, highlight.top - 0.5, highlight.width + 1, highlight.height + 1);
                     }
                     ctx.fillStyle = this.options.highlightColor;
                     ctx.fillRect(highlight.left, highlight.top, highlight.width, highlight.height);
 
-                } else if ( (layer === undefined || layer === 3) && (this.hover || this.highlighted) ) {
+                } else if ( (layer === undefined || layer === 3) && (this.hover || this.options.row.data('highlighted')) ) {
                     // Draw the dependency lines
                     this._drawDependencies();
                     this._drawDependents();
