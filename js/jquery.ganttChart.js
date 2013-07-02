@@ -81,6 +81,8 @@
                 });
             }});
 
+            // When the table is resized, check whether the table width or any row height has changed
+            // Redraw as needed
             var rowHeights = [];
             this.element.find('tr').each(function(i, row) {
                 rowHeights[i] = $(row).height();
@@ -108,6 +110,7 @@
             this.draw();
         },
         rowUpdate: function(rowIndex) {
+            // Update a single row
             var ganttChart = this;
             this.bars[rowIndex].remove();
             this.bars[rowIndex] = undefined;
@@ -126,6 +129,7 @@
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
         },
         _getRowData: function(rowIndex) {
+            // Get the data for a single row, as used by the Tasks object
             var ganttChart = this;
             var startDate = ganttChart._getRowStartDate(rowIndex);
             var finishDate = ganttChart._getRowFinishDate(rowIndex);
@@ -175,6 +179,9 @@
             }
         },
         draw: function(async) {
+            // Redraw the gantt chart. If async is true (default),
+            // wait until all event handlers are finished
+            // so that we only redraw once.
             var async = coalesce(async, true);
             var ganttChart = this;
             if ( async ) {

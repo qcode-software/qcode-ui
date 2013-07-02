@@ -5025,6 +5025,8 @@ function dbFormHTMLArea(oDiv) {
                 });
             }});
 
+            // When the table is resized, check whether the table width or any row height has changed
+            // Redraw as needed
             var rowHeights = [];
             this.element.find('tr').each(function(i, row) {
                 rowHeights[i] = $(row).height();
@@ -5052,7 +5054,7 @@ function dbFormHTMLArea(oDiv) {
             this.draw();
         },
         rowUpdate: function(rowIndex) {
-            console.time('rowUpdate');
+            // Update a single row
             var ganttChart = this;
             this.bars[rowIndex].remove();
             this.bars[rowIndex] = undefined;
@@ -5069,9 +5071,9 @@ function dbFormHTMLArea(oDiv) {
             // Google Chrome bug fix hack
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() + 1);
             this.calendarFrame.scrollLeft(this.calendarFrame.scrollLeft() - 1);
-            console.timeEnd('rowUpdate');
         },
         _getRowData: function(rowIndex) {
+            // Get the data for a single row, as used by the Tasks object
             var ganttChart = this;
             var startDate = ganttChart._getRowStartDate(rowIndex);
             var finishDate = ganttChart._getRowFinishDate(rowIndex);
@@ -5121,6 +5123,9 @@ function dbFormHTMLArea(oDiv) {
             }
         },
         draw: function(async) {
+            // Redraw the gantt chart. If async is true (default),
+            // wait until all event handlers are finished
+            // so that we only redraw once.
             var async = coalesce(async, true);
             var ganttChart = this;
             if ( async ) {
@@ -7803,53 +7808,60 @@ function parseBoolean(value) {
     }
 })(jQuery);
 
-// Only add setZeroTimeout to the window object, and hide everything
-// else in a closure.
+// setZeroTimeout / clearZeroTimeout
+// equivalent to setTimeout(function, 0) but uses window.postMessage to bypass browser minimum timeouts
+// In other words, schedule a function to be executed after all the other event handlers are finished
+// Does not take additional arguments (use closures instead)
 (function(window, undefined) {
-    var timeouts = [];
-    var ids = {};
-    var messageName = "zero-timeout-message";
-    var nextID = 0;
+    if ( window.postMessage ) {
+        var timeouts = []; // Array of functions
+        var ids = {}; // Hash of keys, used by clearZeroTimeout, refernecing indices of timeouts
+        var messageName = "zero-timeout-message";
+        var nextID = 0;
 
-    // Like setTimeout, but only takes a function argument.  There's
-    // no time argument (always zero) and no arguments (you have to
-    // use a closure).
-    function setZeroTimeout(fn) {
-        nextID++;
-        timeouts.push(fn);
-        ids[nextID] = timeouts.length - 1;
-        window.postMessage(messageName, "*");
-        return nextID;
-    }
-
-    function clearZeroTimeout(index) {
-        if ( ids[index] !== undefined ) {
-            timeouts.splice(ids[index], 1);
-            delete ids[nextID];
+        function setZeroTimeout(fn) {
+            nextID++;
+            timeouts.push(fn);
+            ids[nextID] = timeouts.length - 1;
+            window.postMessage(messageName, "*");
+            return nextID;
         }
-    }
 
-    function handleMessage(event) {
-        if (event.source == window && event.data == messageName) {
-            event.stopPropagation();
-            if (timeouts.length > 0) {
-                var fn = timeouts.shift();
-                for (index in ids) {
-                    if ( ids[index] === timeouts.length ) {
-                        delete ids[index];
-                        break;
-                    }
-                }
-                fn();
+        function clearZeroTimeout(index) {
+            if ( ids[index] !== undefined ) {
+                timeouts.splice(ids[index], 1);
+                delete ids[nextID];
             }
         }
+
+        function handleMessage(event) {
+            if (event.source == window && event.data == messageName) {
+                event.stopPropagation();
+                if (timeouts.length > 0) {
+                    var fn = timeouts.shift();
+                    for (index in ids) {
+                        if ( ids[index] === timeouts.length ) {
+                            delete ids[index];
+                            break;
+                        }
+                    }
+                    fn();
+                }
+            }
+        }
+
+        window.addEventListener("message", handleMessage, true);
+
+        window.setZeroTimeout = setZeroTimeout;
+        window.clearZeroTimeout = clearZeroTimeout;
+    } else {
+        window.setZeroTimeout = function(fn) {
+            return window.setTimeout(fn, 0);
+        }
+        window.clearZeroTimeout = function(timeout) {
+            window.clearTimeout(timeout);
+        }
     }
-
-    window.addEventListener("message", handleMessage, true);
-
-    // Add the one thing we want added to the window object.
-    window.setZeroTimeout = setZeroTimeout;
-    window.clearZeroTimeout = clearZeroTimeout;
 })(window);
 
 /* ==== tableRowHighlight.js ==== */
