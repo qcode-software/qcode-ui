@@ -1,4 +1,7 @@
-(function($, window, document, undefined){
+// ============================================================
+// dbCell plugin - a single table gell in a database grid
+// ============================================================
+;(function($, window, document, undefined){
     $.widget("qcode.dbCell", {
 	_create: function(){
 	    this.keyUpTimer
@@ -73,8 +76,8 @@
 	    if ( row.dbRow('getState') === 'updating' ) {
 		return false;
 	    } 
-	    // Is the column visible
-	    if ( col.hasClass('clsHidden') ) {
+	    // Is the cell visible/hidden
+	    if ( ! this.element.is(':visible') ) {
 		return false;
 	    }
 	    // No name defined

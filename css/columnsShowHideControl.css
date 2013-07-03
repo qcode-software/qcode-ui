@@ -1,11 +1,11 @@
-.columnsShowHideToolbar .title {
+.columns-show-hide-toolbar .title {
     font-size:120%;
     font-weight:bold;
     margin-bottom: 10px;
     line-height: 1.5em;
     white-space:nowrap;
 }
-.columnsShowHideControl {
+.columns-show-hide-control {
     display:inline-block;
     float:left;
     width:100px;
@@ -17,7 +17,7 @@
     line-height: 1.5em;
     margin-bottom: 8px;
 }
-.columnsShowHideControlDivider {
+.columns-show-hide-control-divider {
     display:inline-block;
     float:left;
     width:2px;
@@ -27,20 +27,20 @@
     margin-right:8px;
     margin-bottom: 8px;
 }
-.columnsShowHideControl label {
+.columns-show-hide-control label {
     float: left;
     color: blue;
 }
-.columnsShowHideControl input {
+.columns-show-hide-control input {
     float: right;
     vertical-align: center;
  }
-.columnsShowHideControl.checked {
+.columns-show-hide-control.checked {
     background: #ece9d8;
 }
-.columnsShowHideControl.hover, .colHighlight {
+.columns-show-hide-control.hover, .highlight {
     background: #ffffdd;
 }
-.columnsShowHideControl.checked.hover {
+.columns-show-hide-control.checked.hover {
     background: #ffffcd;
 }

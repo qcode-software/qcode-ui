@@ -50,7 +50,7 @@
             var tableSelector = checkbox.attr('table_selector');
 
           jQuery(this).addClass('hover');
-          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
+          jQuery(tableSelector).find(colSelector).addClass('column-highlight');
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
@@ -58,7 +58,7 @@
             var tableSelector = checkbox.attr('table_selector');
 
           jQuery(this).removeClass('hover');
-          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
+          jQuery(tableSelector).find(colSelector).removeClass('column-highlight');
         });   
 
         // Show/Hide columns on document ready

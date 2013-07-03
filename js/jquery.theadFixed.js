@@ -3,9 +3,9 @@
 
     $.widget('qcode.theadFixed', {
 	options: {
-	    'wrapperClass': "theadFixed-wrapper",
-	    'scrollWrapperClass': "theadFixed-scrollWrapper",
-	    'scrollBoxClass': "theadFixed-scrollBox",
+	    'wrapperClass': "thead-fixed-wrapper",
+	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
+	    'scrollBoxClass': "thead-fixed-scroll-box",
 	    'height': "500px"
 	},
 	_create: function() {

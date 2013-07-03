@@ -59,9 +59,9 @@
 	},
 	getColType: function(col) {
 	    // Get the sort type of the given column
-	    if ( col.hasClass('clsNumber') || col.hasClass('clsMoney') ) {
+	    if ( col.hasClass('number') || col.hasClass('money') ) {
 		return 'numeric';
-	    } else if ( col.hasClass('clsDate') ) {
+	    } else if ( col.hasClass('date') ) {
 		return 'date';
 	    } else {
 		return 'alpha';
@@ -103,7 +103,7 @@
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('thSortMenu')
+		.addClass('th-sort-menu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",

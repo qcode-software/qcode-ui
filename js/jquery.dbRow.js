@@ -46,7 +46,7 @@
 		    grid.dbGrid('createNewRow');
 		}
 		if ( oldState === 'current' || oldState === 'error' ) {
-		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		    var message = $('<span>').text('Editing ... to ').append(span).append(', type Ctrl+S');
 		}
 		break;

@@ -155,7 +155,7 @@ $.fn.setObjectValue = function(value) {
 	var element = $(this);
 	if ( element.is('select, input, textarea') ) {
 	    element.val(value);
-	} else if ( element.is('.clsRadioGroup') ) {
+	} else if ( element.is('.radio-group') ) {
 		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
 	} else {
 	    element.html(value);

@@ -21,7 +21,7 @@
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
-		.addClass('dbEditorBool')
+		.addClass('db-editor boolean')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute"

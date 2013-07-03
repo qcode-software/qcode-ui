@@ -11,7 +11,7 @@
 	    // check saveType attr
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 	    // Ensure recordSet class is set
-	    this.element.addClass('recordSet');
+	    this.element.addClass('record-set');
 
 	    // Elements with class "editable" are editable fields.
 	    this._on({

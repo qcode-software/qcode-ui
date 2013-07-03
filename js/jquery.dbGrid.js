@@ -28,7 +28,7 @@
 
 	    // Create Optional Status Bar
 	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="clsDbGridDivStatus">');
+		dbGrid.statusBar = $('<div class="db-grid-status">');
 		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
 		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
 		dbGrid.element.after(dbGrid.statusBar);
@@ -39,7 +39,7 @@
 
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
-	    dbGrid.editorDiv.addClass('clsDbGridDivEditor');
+	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);

@@ -100,9 +100,9 @@
 })(jQuery);
 
 /* ==== 0.jquery-ui-hacks.js ==== */
-(function($) {
+;(function($) {
     if ( $.isFunction($.widget) ) {
-	var slice = Array.prototype.slice
+	var slice = Array.prototype.slice;
 
 	$.widget.bridge = function( name, object ) {
 	    var fullName = object.prototype.widgetFullName || name;
@@ -526,7 +526,7 @@ function dynamicResize(oContainer) {
             var tableSelector = checkbox.attr('table_selector');
 
           jQuery(this).addClass('hover');
-          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
+          jQuery(tableSelector).find(colSelector).addClass('column-highlight');
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
@@ -534,7 +534,7 @@ function dynamicResize(oContainer) {
             var tableSelector = checkbox.attr('table_selector');
 
           jQuery(this).removeClass('hover');
-          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
+          jQuery(tableSelector).find(colSelector).removeClass('column-highlight');
         });   
 
         // Show/Hide columns on document ready
@@ -734,7 +734,10 @@ function dynamicResize(oContainer) {
 })(jQuery);
 
 /* ==== jquery.dbCell.js ==== */
-(function($, window, document, undefined){
+// ============================================================
+// dbCell plugin - a single table gell in a database grid
+// ============================================================
+;(function($, window, document, undefined){
     $.widget("qcode.dbCell", {
 	_create: function(){
 	    this.keyUpTimer
@@ -809,8 +812,8 @@ function dynamicResize(oContainer) {
 	    if ( row.dbRow('getState') === 'updating' ) {
 		return false;
 	    } 
-	    // Is the column visible
-	    if ( col.hasClass('clsHidden') ) {
+	    // Is the cell visible/hidden
+	    if ( ! this.element.is(':visible') ) {
 		return false;
 	    }
 	    // No name defined
@@ -1032,7 +1035,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
-		.addClass('dbEditorBool')
+		.addClass('db-editor boolean')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute"
@@ -1261,7 +1264,7 @@ function dynamicResize(oContainer) {
 	    });
 
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorCombo')
+		.addClass('db-editor combo')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute",
@@ -1282,7 +1285,7 @@ function dynamicResize(oContainer) {
 	    });
 
 	    this.comboOptions = $('<div>')
-		.addClass('dbEditorComboOptions')
+		.addClass('options-container')
 		.appendTo(this.element)
 		.css({
 		    'position':'absolute',
@@ -1622,7 +1625,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
-		.addClass('dbEditorHTMLArea')
+		.addClass('db-editor html-area')
 		.appendTo(this.element)
 		.css({
 		    'overflow': "auto",
@@ -1845,7 +1848,7 @@ function dynamicResize(oContainer) {
 		'resize': this.repaint
 	    });
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorText')
+		.addClass('db-editor text')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute", 
@@ -2041,7 +2044,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
-		.addClass('dbEditorTextArea')
+		.addClass('db-editor text-area')
 		.css({
 		    'position': "absolute", 
 		    'resize': "none", 
@@ -2227,7 +2230,7 @@ function dynamicResize(oContainer) {
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
-    $.widget( "qcode.dbField", {
+    $.widget("qcode.dbField", {
 	_create: function() {
 	    // saveType
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
@@ -2432,8 +2435,8 @@ function dynamicResize(oContainer) {
 	    }
 
 	    this.state = 'current';
-	    this.divStatus = this.form.find('div.clsDbFormDivStatus').last();
-	    this.elements = this.elements.add('input', this.form).add('select', this.form).add('textarea', this.form).add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
+	    this.divStatus = this.form.find('.db-form-status').last();
+	    this.elements = this.elements.add('input', this.form).add('select', this.form).add('textarea', this.form).add('.db-form-html-area, radio-group', this.form);
 	    this.error = undefined;
 	    if ( typeof this.settings.dataURL != "undefined" ) {
 		this.formAction('requery', this.settings.dataURL);
@@ -2470,7 +2473,7 @@ function dynamicResize(oContainer) {
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
-		this.elements.filter('div.clsDbFormHTMLArea').each(function(i, div){
+		this.elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
 			$('<input type="hidden">')
 			    .attr('name', $(div).attr('name'))
@@ -2546,7 +2549,7 @@ function dynamicResize(oContainer) {
 	setState: function(newState) {
 	    switch(newState) {
 	    case "dirty":
-		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		var message = $('<span>').text('Editing ... To ').append(span).append(', type Ctrl+S');
 		this.setStatus(message);
 		this.form.find('[name="nav_new"]').prop('disabled', ( ! this.settings.addURL) );
@@ -2692,13 +2695,13 @@ function dynamicResize(oContainer) {
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
 	// Event onFormActionReturn
-	this.form.trigger('formActionReturn.dbForm', [type])
+	this.form.trigger('formActionReturn', [type])
     }
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
 	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
-	this.form.trigger('formActionError.dbForm', [errorMessage]);
+	this.form.trigger('formActionError', [errorMessage]);
     }
 
     function formData(form) {
@@ -2707,7 +2710,7 @@ function dynamicResize(oContainer) {
 	    .filter(function(){ return $(this).prop('name') != ""; })
 	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
-	    .filter(function(){ return ! $(this).is('div.clsRadioGroup'); })
+	    .not('div.radio-group')
 	    .each(function(){
 		var name = $(this).attr('name');
 		var value = "";
@@ -3023,7 +3026,7 @@ function dbFormHTMLArea(oDiv) {
             // Add a wrapper to cope with change in image size
             this.image.wrap('<div>');
             this.imageWrapper = this.image.parent();
-            this.imageWrapper.addClass('imageWrapper');
+            this.imageWrapper.addClass('image-wrapper');
         },
         loadImage: function() {
             // Attempt to load a new image based on the chosen filename
@@ -3095,7 +3098,7 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Create Optional Status Bar
 	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="clsDbGridDivStatus">');
+		dbGrid.statusBar = $('<div class="db-grid-status">');
 		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
 		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
 		dbGrid.element.after(dbGrid.statusBar);
@@ -3106,7 +3109,7 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
-	    dbGrid.editorDiv.addClass('clsDbGridDivEditor');
+	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);
@@ -3805,7 +3808,7 @@ function dbFormHTMLArea(oDiv) {
 	    // check saveType attr
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 	    // Ensure recordSet class is set
-	    this.element.addClass('recordSet');
+	    this.element.addClass('record-set');
 
 	    // Elements with class "editable" are editable fields.
 	    this._on({
@@ -3934,7 +3937,7 @@ function dbFormHTMLArea(oDiv) {
 		    grid.dbGrid('createNewRow');
 		}
 		if ( oldState === 'current' || oldState === 'error' ) {
-		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		    var message = $('<span>').text('Editing ... to ').append(span).append(', type Ctrl+S');
 		}
 		break;
@@ -4266,8 +4269,8 @@ function dbFormHTMLArea(oDiv) {
 	    scrollSpeed: 0.3,
 	    snapTime: 100
 	}, options);
-	var scrollBox = settings.scrollBox.addClass('hoverScroller');
-	var container = settings.container.addClass('hoverScrollerContainer');
+	var scrollBox = settings.scrollBox.addClass('hover-scroller');
+	var container = settings.container.addClass('hover-scroller-container');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
 
@@ -5907,7 +5910,7 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.textrange.js ==== */
 /* ==== jquery.textrange.js ==== */
-(function($) {
+(function($, undefined) {
     var textrange = {
         get: function(property) {
             var selectionText="";
@@ -5917,7 +5920,7 @@ function dbFormHTMLArea(oDiv) {
             var selectionEnd
             var text = this.is(':input') ?  this.val() :  this.text();
 
-            if (this.is(':input') && this[0].selectionStart != undefined) {
+            if (this.is(':input') && this[0].selectionStart !== undefined) {
                 // Standards compliant input elements
                 selectionStart = this[0].selectionStart;
                 selectionEnd = this[0].selectionEnd;
@@ -6127,9 +6130,9 @@ function dbFormHTMLArea(oDiv) {
 	},
 	getColType: function(col) {
 	    // Get the sort type of the given column
-	    if ( col.hasClass('clsNumber') || col.hasClass('clsMoney') ) {
+	    if ( col.hasClass('number') || col.hasClass('money') ) {
 		return 'numeric';
-	    } else if ( col.hasClass('clsDate') ) {
+	    } else if ( col.hasClass('date') ) {
 		return 'date';
 	    } else {
 		return 'alpha';
@@ -6171,7 +6174,7 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('thSortMenu')
+		.addClass('th-sort-menu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",
@@ -6207,9 +6210,9 @@ function dbFormHTMLArea(oDiv) {
 
     $.widget('qcode.theadFixed', {
 	options: {
-	    'wrapperClass': "theadFixed-wrapper",
-	    'scrollWrapperClass': "theadFixed-scrollWrapper",
-	    'scrollBoxClass': "theadFixed-scrollBox",
+	    'wrapperClass': "thead-fixed-wrapper",
+	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
+	    'scrollBoxClass': "thead-fixed-scroll-box",
 	    'height': "500px"
 	},
 	_create: function() {
@@ -6546,7 +6549,7 @@ $.fn.setObjectValue = function(value) {
 	var element = $(this);
 	if ( element.is('select, input, textarea') ) {
 	    element.val(value);
-	} else if ( element.is('.clsRadioGroup') ) {
+	} else if ( element.is('.radio-group') ) {
 		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
 	} else {
 	    element.html(value);
@@ -6594,13 +6597,13 @@ function parseBoolean(value) {
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {
-	jQuery(oTable).find("tr").click(function(event) {
-	    var target_td = jQuery(event.target).closest("td")[0];
-	    if ( jQuery(oTable).is(".clsDbGrid, .clsDbFlexGrid") && oTable.isCellEditable(target_td) ) {
-		return; 
-	    }
-	    jQuery(this).toggleClass('clsHighlight');
-	});
+    jQuery(oTable).find("tr").click(function(event) {
+	var target_td = jQuery(event.target).closest("td")[0];
+	if ( jQuery(oTable).is(".db-grid, .db-flex-grid") && oTable.isCellEditable(target_td) ) {
+	    return; 
+	}
+	jQuery(this).toggleClass('highlight');
+    });
 }
 
 /* ==== wiky.js ==== */
