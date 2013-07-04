@@ -32,7 +32,7 @@ function dbCells(oDiv) {
   var divs = oDiv.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oCell = divs[i];
-    if ( oCell.className == 'clsDbCell') {
+    if ( oCell.className == 'db-cell') {
       cells.push(oCell);
       oCell.save=save;
     }
@@ -281,10 +281,10 @@ function save(oCell,async) {
 
 function cellOnMouseUp() {
   var oNode = window.event.srcElement;
-  while (oNode.className!='clsDbCell' && oNode.parentNode) {
+  while (oNode.className!='db-cell' && oNode.parentNode) {
     oNode = oNode.parentNode;
   }
-  if (oNode.className == 'clsDbCell') {
+  if (oNode.className == 'db-cell') {
     if ( isCellEditable(oNode) ) {
       cellChange(oNode);
     }

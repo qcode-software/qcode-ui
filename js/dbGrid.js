@@ -68,7 +68,7 @@ function dbGrid(oTable) {
       throw "This behavior requires a COLGROUP"
 	}
     // Parents Next Sibling should be the status Div containing a table
-      if ( jQuery(oTable).hasClass('clsDbGrid') ) {
+      if ( jQuery(oTable).hasClass('db-grid') ) {
       oStatusTable = oTable.parentElement.nextSibling.firstChild;
     } else {
       oStatusTable = undefined;
@@ -551,7 +551,7 @@ function cellOnKeyDown(e) {
       // Return
       cellChange(moveRight(elmt));
       if ( currentCell == elmt ) {
-	// Cell unchanged at bottom right boundery
+	// Cell unchanged at bottom right boundary
 	save();
       }	
     }
@@ -661,7 +661,7 @@ function isCellEditable(oTD) {
     return false;
   } 
   // Is the column visible
-  if (oCol.className == 'clsHidden') {
+  if (oCol.className == 'hidden') {
     return false;
   }
   // No name defined
@@ -712,9 +712,9 @@ function isTabStop(oTD) {
 	 return oTR.cells[i].innerHTML=value;
        } else if ( oCol.type=='bool' ) {
 	 if ( parseBoolean(value) ) {
-	   return oTR.cells[i].innerHTML="<span class='clsTrue'>Yes</span>";
+	   return oTR.cells[i].innerHTML="<span class='true'>Yes</span>";
 	 } else {
-	   return oTR.cells[i].innerHTML="<span class='clsFalse'>No</span>";
+	   return oTR.cells[i].innerHTML="<span class='false'>No</span>";
 	 }
        } else {
 	 return oTR.cells[i].innerHTML=escapeHTML(value);

@@ -33,7 +33,7 @@ function init() {
   var divs = oForm.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv = divs[i];
-      if ( jQuery(oDiv).hasClass('clsDbFormDivStatus') ) {
+      if ( jQuery(oDiv).hasClass('db-form-status') ) {
       oDivStatus = oDiv;
     }
   }
@@ -55,7 +55,7 @@ function init() {
   
   var e = oForm.getElementsByTagName('DIV');
   for(var i=0;i<e.length;i++) {
-    if ( e[i].className == 'clsDbFormHTMLArea' || e[i].className == 'clsRadioGroup' ) {
+    if ( e[i].className == 'db-form-html-area' || e[i].className == 'radio-group' ) {
       elmts.push(e[i]);
     }
   }
@@ -210,7 +210,7 @@ function save(async) {
     oForm.action = oForm.submitURL;		
     for(var i=0;i<elmts.length;i++) {
       var elmt = elmts[i];
-      if ( elmt.tagName=='DIV' && elmt.className == 'clsDbFormHTMLArea' ) {
+      if ( elmt.tagName=='DIV' && elmt.className == 'db-form-html-area' ) {
 	var oInput = document.createElement('INPUT');
 	oInput.type='hidden';
 	oInput.name = elmt.name;
@@ -401,7 +401,7 @@ function formEncode(form) {
     if (name == "") { continue }
     if (elmt.type == "checkbox" && elmt.boolean!="true" && !elmt.checked) { continue }
     if (elmt.type == "radio" && !elmt.checked) { continue }
-    if (elmt.tagName=="DIV" && elmt.className=='clsRadioGroup') {
+    if (elmt.tagName=="DIV" && elmt.className=='radio-group') {
       // The value is found under INPUT's of type radio
       continue;
     }

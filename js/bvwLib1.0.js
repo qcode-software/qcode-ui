@@ -35,7 +35,7 @@ function setObjectValue(elmt,value) {
      elmt.innerText = value;
      break out;
    }
-   if ( elmt.className == 'clsRadioGroup' ) {
+   if ( elmt.className == 'radio-group' ) {
      setRadioGroupValue(elmt,elmt.name,value);
      break out;
    }
@@ -56,7 +56,7 @@ function getObjectValue(elmt) {
     if ( elmt.tagName == "TEXTAREA") {
 	return elmt.innerText;
     }
-    if ( elmt.className == 'clsRadioGroup' ) {
+    if ( elmt.className == 'radio-group' ) {
 	return getRadioGroupValue(elmt,elmt.name);
     }
     // Default
