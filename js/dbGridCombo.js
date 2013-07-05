@@ -1,7 +1,7 @@
 function dbGridCombo(callback) {
     // vars
     var editor = $('<input type="text">')
-	.addClass('dbEditorCombo')
+	.addClass('db-editor combo')
 	.css({
 	    'position': "absolute", 
 	    'background': "white", 
@@ -13,7 +13,7 @@ function dbGridCombo(callback) {
 	})
 	.hide();
     var comboOptions = $('<div>')
-	.addClass('dbEditorComboOptions')
+	.addClass('options-container')
 	.appendTo(document.body)
 	.css({
 	    'position':'absolute',

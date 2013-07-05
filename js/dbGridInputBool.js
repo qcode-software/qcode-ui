@@ -136,12 +136,12 @@ function hide() {
 }
 
 function setTrue() {
-  oHTMLArea.innerHTML='<span class=clsTrue>Yes</span>';
+  oHTMLArea.innerHTML='<span class=true>Yes</span>';
 
 }
 
 function setFalse() {
-  oHTMLArea.innerHTML='<span class=clsFalse>No</span>';
+  oHTMLArea.innerHTML='<span class=false>No</span>';
 
 }
 

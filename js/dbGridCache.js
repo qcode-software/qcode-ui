@@ -68,7 +68,7 @@ function init() {
 		throw "This behavior requires a COLGROUP"
 	}
 	// Status Div
-	var divs = getChildElementsWithClassName(document,'DIV','clsDbGridDivStatus');
+	var divs = getChildElementsWithClassName(document,'DIV','db-grid-status');
 	for (var i=0;i<divs.length;i++) {
 		if (divs[i].forTable == oTable.id) {
 			oDivStatus = divs[i];
@@ -529,7 +529,7 @@ function isCellEditable(oTD) {
 		return false;
 	} 
 	// Is the column visible
-	if (oColGroup.children[oTD.cellIndex].className == 'clsHidden') {
+	if (oColGroup.children[oTD.cellIndex].className == 'hidden') {
 		return false;
 	}
 	// Assume current

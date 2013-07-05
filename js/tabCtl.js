@@ -49,11 +49,11 @@ function tabIn(oSpan) {
 		}
 	}
 	
-	var elmts = getChildElementsWithClassName(oDiv,'TABLE','clsDbGrid')
+	var elmts = getChildElementsWithClassName(oDiv,'TABLE','db-grid')
 	if (elmts.length > 0) {
 		elmts[0].focus();
 	}
-	var elmts = getChildElementsWithClassName(oDiv,'FORM','clsDbForm')
+	var elmts = getChildElementsWithClassName(oDiv,'FORM','db-form')
 	if (elmts.length > 0) {
 		elmts[0].focus();
 	}

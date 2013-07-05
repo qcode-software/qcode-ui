@@ -30,7 +30,7 @@ function theadFixed(oContainer) {
   
   oDivThead.style.backgroundColor='white';
   oDivThead.style.zIndex=1;
-  oDivThead.className='clsNoPrint';
+  oDivThead.className='no-print';
 
   oDivThead.forTable=oTable;
   oTable.theadFixed=oDivThead;
@@ -192,10 +192,10 @@ function window.onbeforeprint() {
   var divs=document.body.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv=divs[i];
-    if ( oDiv.className == 'clsNoPrint') {
+    if ( oDiv.className == 'no-print') {
       oDiv.style.display='none';
     }
-    if ( oDiv.className == 'clsScroll' ||  oDiv.className == 'clsDbGridDiv' ) {
+    if ( oDiv.className == 'scroll' ||  oDiv.className == 'db-grid-wrapper' ) {
       oDiv.savedOverflowX= oDiv.currentStyle.overflowX;
       oDiv.style.overflowX='visible';
     }
@@ -206,10 +206,10 @@ function window.onafterprint() {
   var divs=document.body.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv=divs[i];
-    if ( oDiv.className == 'clsNoPrint') {
+    if ( oDiv.className == 'no-print') {
       oDiv.style.display='block';
     }
-    if ( oDiv.className == 'clsScroll' ||  oDiv.className == 'clsDbGridDiv' ) {
+    if ( oDiv.className == 'scroll' ||  oDiv.className == 'db-grid-wrapper' ) {
       oDiv.style.overflowX=oDiv.savedOverflowX;
     }
   }

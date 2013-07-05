@@ -43,7 +43,7 @@ function thSortMenu(oSpan) {
       savedBackgroundColor = oSpan.parentElement.style.backgroundColor;
 
       oMenu=document.createElement('DIV');
-      oMenu.className='clsSortMenu';
+      oMenu.className='sort-menu';
       oBody.appendChild(oMenu);
 
       oMenu.style.zIndex=3;
@@ -123,9 +123,9 @@ function thSortMenu(oSpan) {
  function getColType(oColGroup,index) {
    if ( oColGroup && oColGroup.childNodes[index].className) {
      var className=oColGroup.childNodes[index].className;
-     if ( className == 'clsNumber' ||  className == 'clsMoney') {
+     if ( className == 'number' ||  className == 'money') {
        return 'NUMERIC';
-     } else if ( className=='clsDate' ) {
+     } else if ( className=='date' ) {
        return 'DATE';
      } else {
        return 'ALPHA';
