@@ -1,6 +1,6 @@
 (function($){
-  // ResizeableHeight Class Constructor - vertical resize on bottom border
-  var ResizeableHeight = function(resizeElmt) {
+  // ResizableHeight Class Constructor - vertical resize on bottom border
+  var ResizableHeight = function(resizeElmt) {
     // Private Class Variables
     var inZone = false;
     var inResize = false;
@@ -11,10 +11,10 @@
     var resizeElmnt = resizeElmt;
     
     // Events
-    resizeElmnt.on('mousemove.resizeableHeight', onMouseMoveResizeElmt);
-    resizeElmnt.on('mousedown.resizeableHeight', onMouseDownResizeElmt);
-    jQuery(document).on('mouseup.resizeableHeight',onMouseUpWindow);
-    jQuery(document).on('mousemove.resizeableHeight', onMouseMoveWindow);
+    resizeElmnt.on('mousemove.resizableHeight', onMouseMoveResizeElmt);
+    resizeElmnt.on('mousedown.resizableHeight', onMouseDownResizeElmt);
+    jQuery(document).on('mouseup.resizableHeight',onMouseUpWindow);
+    jQuery(document).on('mousemove.resizableHeight', onMouseMoveWindow);
     
     // Private Class Methods
     function onMouseMoveResizeElmt(e) {
@@ -54,18 +54,18 @@
     }
   };
 
-  // Make ResizeableHeight Class available as a jquery plugin
-  $.fn.resizeableHeight = function() {
+  // Make ResizableHeight Class available as a jquery plugin
+  $.fn.resizableHeight = function() {
     var elmts = this
 
-    // Initialise ResizeableHeight objects for each elmt unless this has already been done
+    // Initialise ResizableHeight objects for each elmt unless this has already been done
     for ( var i=0; i< elmts.size(); i++ ) {
       var elmt = elmts.eq(i);
-      var resizeableHeight = elmt.data('resizeableHeight');
+      var resizableHeight = elmt.data('resizableHeight');
 
-      if ( ! resizeableHeight ) {
-	resizeableHeight = new ResizeableHeight(elmt);
-	elmt.data('resizeableHeight',resizeableHeight);
+      if ( ! resizableHeight ) {
+	resizableHeight = new ResizableHeight(elmt);
+	elmt.data('resizableHeight',resizableHeight);
       }
     }
     
