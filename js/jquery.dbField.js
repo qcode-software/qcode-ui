@@ -21,7 +21,7 @@
             //this.editor('destroy');
         },
 	getRecordSet: function() {
-	    return this.element.closest('.recordSet');
+	    return this.element.closest('.record-set');
 	},
 	getRecord: function(){
 	    return this.element.closest('.record');

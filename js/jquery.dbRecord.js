@@ -28,7 +28,7 @@
             this.element.find('.editable').dbField('destroy');
         },
 	getRecordSet: function() {
-	    return this.element.closest('.recordSet');
+	    return this.element.closest('.record-set');
 	}, 
 	getState: function() {
 	    return this.state;
