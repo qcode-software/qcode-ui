@@ -64,7 +64,7 @@
 .columns-show-hide-control.checked {
     background: #ece9d8;
 }
-.columns-show-hide-control.hover, .highlight {
+.columns-show-hide-control.hover, col.highlight {
     background: #ffffdd;
 }
 .columns-show-hide-control.checked.hover {

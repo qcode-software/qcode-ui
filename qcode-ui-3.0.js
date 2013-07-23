@@ -515,7 +515,7 @@ function dynamicResize(oContainer) {
                 }
                 $.post('sticky_save.html', data);
             }
-        });        
+        });
                 
         // ----------------------------------------
         // Highlight columns when the user hovers over a button
@@ -525,17 +525,19 @@ function dynamicResize(oContainer) {
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).addClass('hover');
-          jQuery(tableSelector).find(colSelector).addClass('column-highlight');
+            jQuery(this).addClass('hover');
+            jQuery(tableSelector).find(colSelector).filter('col').addClass('highlight');
+            jQuery(tableSelector).runDetached();
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).removeClass('hover');
-          jQuery(tableSelector).find(colSelector).removeClass('column-highlight');
-        });   
+            jQuery(this).removeClass('hover');
+            jQuery(tableSelector).find(colSelector).filter('col').removeClass('highlight');
+            jQuery(tableSelector).runDetached();
+        });
 
         // Show/Hide columns on document ready
         jQuery(this).each(function() {
@@ -4687,24 +4689,41 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.runDetached.js ==== */
 // runDetached jQuery plugin.
-// Detach this element, call a function (optional), then re-attach.
-// function is called in scope of element,
-// Only supports detaching a single element at a time
+// Detach selected elements, call a function (optional), then re-attach.
+// function is called in scope of the jQuery object
+// If the function returns a value, return that. Otherwise return the jQuery object for chaining.
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
-        var $prev = this.prev();
-        if ( $prev.length == 0 ) {
-            var $parent = this.parent();
-        }
+        var returnValue;
+
+        // For each element, store a re-insertion point. This will either be the previous sibling, or the parent.
+        var previousSibling = {};
+        var parent = {};
+        this.each(function(index) {
+            previousSibling[index] = $(this).prev();
+            if ( previousSibling[index].length === 0 ) {
+                parent[index] = $(this).parent();
+            }
+        });
+
+        // Detach the elements
         this.detach();
+
+        // Run the function
         if ( typeof toDo == "function" ) {
-            toDo.call(this);
+            returnValue = toDo.call(this);
         }
-        if ( $prev.length == 0 ) {
-            this.appendTo($parent);
-        } else {
-            this.insertAfter($prev);
-        }
+
+        // Re-attach the elements
+        this.each(function(index) {
+            if ( previousSibling[index].length === 0 ) {
+                $(this).prependTo(parent[index]);
+            } else {
+                $(this).insertAfter(previousSibling[index]);
+            }
+        });
+
+        return coalesce(returnValue, this);
     }
 })(jQuery);
 

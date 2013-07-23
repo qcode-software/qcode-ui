@@ -39,7 +39,7 @@
                 }
                 $.post('sticky_save.html', data);
             }
-        });        
+        });
                 
         // ----------------------------------------
         // Highlight columns when the user hovers over a button
@@ -49,17 +49,19 @@
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).addClass('hover');
-          jQuery(tableSelector).find(colSelector).addClass('column-highlight');
+            jQuery(this).addClass('hover');
+            jQuery(tableSelector).find(colSelector).filter('col').addClass('highlight');
+            jQuery(tableSelector).runDetached();
         });
         jQuery(this).on('mouseleave', function(e) {
             var checkbox = jQuery(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).removeClass('hover');
-          jQuery(tableSelector).find(colSelector).removeClass('column-highlight');
-        });   
+            jQuery(this).removeClass('hover');
+            jQuery(tableSelector).find(colSelector).filter('col').removeClass('highlight');
+            jQuery(tableSelector).runDetached();
+        });
 
         // Show/Hide columns on document ready
         jQuery(this).each(function() {
