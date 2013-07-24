@@ -1,8 +1,8 @@
 // Show and/or hide selected columns of tables
-// showHide is optional, if undefined selected columns will toggle visibility
-;(function(undefined) {
-    jQuery.fn.columnsShowHide = function(column_selector, showHide) {
-        jQuery(this).each(function() {
+// showHide is an optional string "show" or "hide", if undefined selected columns will toggle visibility
+;(function($, undefined) {
+    $.fn.columnsShowHide = function(column_selector, showHide) {
+        $(this).each(function() {
 	    var table = jQuery(this);
             var cellsToShow = $([]);
             var colsToShow = $([]);
@@ -23,24 +23,14 @@
                 }
             });
 
-
-	    // Dettach table from DOM for performance gain.
-	    var table_parent = table.parent();
-	    var table_next_sibling = table.next();
-	    table.detach();
-
-	    toHide.css('display', "none");
-            colsToShow.css('display', "table-column");
-            cellsToShow.css('display', "table-cell");
-
-	    // Reattach table to it's original position in the DOM.
-	    if (table_next_sibling.length) {
-	        table.insertBefore(table_next_sibling);
-	    } else {		    
-	        table.appendTo(table_parent);
-	    }
+	    // Detach table from DOM for performance gain.
+	    table.runDetached(function() {
+	        toHide.css('display', "none");
+                colsToShow.css('display', "table-column");
+                cellsToShow.css('display', "table-cell");
+            });
 
             table.trigger('resize');
         });
     };
-})();
+})(jQuery);

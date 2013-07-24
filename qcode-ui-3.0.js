@@ -427,10 +427,10 @@ function dynamicResize(oContainer) {
 
 /* ==== jquery.columnsShowHide.js ==== */
 // Show and/or hide selected columns of tables
-// showHide is optional, if undefined selected columns will toggle visibility
-;(function(undefined) {
-    jQuery.fn.columnsShowHide = function(column_selector, showHide) {
-        jQuery(this).each(function() {
+// showHide is an optional string "show" or "hide", if undefined selected columns will toggle visibility
+;(function($, undefined) {
+    $.fn.columnsShowHide = function(column_selector, showHide) {
+        $(this).each(function() {
 	    var table = jQuery(this);
             var cellsToShow = $([]);
             var colsToShow = $([]);
@@ -451,46 +451,36 @@ function dynamicResize(oContainer) {
                 }
             });
 
-
-	    // Dettach table from DOM for performance gain.
-	    var table_parent = table.parent();
-	    var table_next_sibling = table.next();
-	    table.detach();
-
-	    toHide.css('display', "none");
-            colsToShow.css('display', "table-column");
-            cellsToShow.css('display', "table-cell");
-
-	    // Reattach table to it's original position in the DOM.
-	    if (table_next_sibling.length) {
-	        table.insertBefore(table_next_sibling);
-	    } else {		    
-	        table.appendTo(table_parent);
-	    }
+	    // Detach table from DOM for performance gain.
+	    table.runDetached(function() {
+	        toHide.css('display', "none");
+                colsToShow.css('display', "table-column");
+                cellsToShow.css('display', "table-cell");
+            });
 
             table.trigger('resize');
         });
     };
-})();
+})(jQuery);
 
 /* ==== jquery.columnsShowHideControl.js ==== */
 // Initialise column show/hide control
-;(function(undefined) {
-    jQuery.fn.columnsShowHideControl = function() {
+;(function($, undefined) {
+    $.fn.columnsShowHideControl = function() {
         // ----------------------------------------
         // Show/hide columns when the user toggles the buttons
         // ----------------------------------------
-        jQuery(this).on('click',function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
-            if ( !jQuery(e.target).is(checkbox) ) {
+        $(this).on('click',function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
+            if ( ! ($(e.target).is(checkbox) || $(e.target).is('label')) ) {
                 // checkbox was not the event target, toggle checkbox state
                 e.preventDefault();           
                 checkbox.prop('checked', !checkbox.prop('checked'));
                 checkbox.change();
-            }            
+            }
         });
-        jQuery(this).on('change',':checkbox',function(e) {           
-            var checkbox = jQuery(this);
+        $(this).on('change',':checkbox',function(e) {           
+            var checkbox = $(this);
             var sticky = checkbox.attr('sticky');
             var stickyURL = checkbox.attr('sticky_url');
             var colSelector = checkbox.attr('col_selector');
@@ -498,12 +488,12 @@ function dynamicResize(oContainer) {
 
             if ( checkbox.is(':checked') ) {
                 // Show columns
-                jQuery(this).parent().addClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'show');
+                $(this).parent().addClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
-                jQuery(this).parent().removeClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
+                $(this).parent().removeClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
             if ( parseBoolean(sticky) ) {
@@ -520,43 +510,47 @@ function dynamicResize(oContainer) {
         // ----------------------------------------
         // Highlight columns when the user hovers over a button
         // ----------------------------------------
-        jQuery(this).on('mouseenter', function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+        $(this).on('mouseenter', function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(this).addClass('hover');
-            jQuery(tableSelector).find(colSelector).filter('col').addClass('highlight');
-            jQuery(tableSelector).runDetached();
+            $(this).addClass('hover');
+            $(tableSelector).find(colSelector).addClass('highlight');
+            $(tableSelector).runDetached();
         });
-        jQuery(this).on('mouseleave', function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+        $(this).on('mouseleave', function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-            jQuery(this).removeClass('hover');
-            jQuery(tableSelector).find(colSelector).filter('col').removeClass('highlight');
-            jQuery(tableSelector).runDetached();
+            $(this).removeClass('hover');
+            $(tableSelector).find(colSelector).removeClass('highlight');
+            $(tableSelector).runDetached();
         });
 
         // Show/Hide columns on document ready
-        jQuery(this).each(function() {
-            var checkbox = jQuery(this).children(':checkbox');
+        $(this).each(function() {
+            var checkbox = $(this).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
+            if ( $(tableSelector).has(this).length > 0 ) {
+                $.error('Columns show/hide control targetting its own ancestor is not supported');
+            }
+
             if ( checkbox.is(':checked') ) {
                 // Show columns
-                jQuery(this).addClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'show');
+                $(this).addClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
-                jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
+                $(this).removeClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'hide');
             }
         });
     };
-})();
+})(jQuery);
 
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
