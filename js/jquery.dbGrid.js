@@ -3,8 +3,7 @@
 	options: {
 	    initialFocus: true,
 	    enabled: true,
-	    updateType: 'rowOut',
-	    statusBar: true	    
+	    updateType: 'rowOut'
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -13,12 +12,11 @@
 	    dbGrid.colgroup = this.element.children('colgroup');
 	    dbGrid.tbody = dbGrid.element.children('tbody');
 	    dbGrid.currentCell = $([]);
-	    dbGrid.statusBar = $([]);
 	    dbGrid.editorDiv = $([]);
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -26,24 +24,13 @@
 		}
 	    });
 
-	    // Create Optional Status Bar
-	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="db-grid-status">');
-		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
-		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
-		dbGrid.element.after(dbGrid.statusBar);
-		dbGrid.statusBar.dbGridDivStatus();
-	    } else {
-		dbGrid.statusBar = $([]);
-	    }
-
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
 	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);
-	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="wrapper">');
+	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="db-grid-wrapper">');
 	    
 	    // Enable the grid for editing
 	    if ( dbGrid.option('enabled') ) {
@@ -125,14 +112,13 @@
 	incrRecCount: function(i){
 	    this.recCount += i;
 	},
-	setStatusBarMsg: function(message){
-	    // Update the message displayed in the StatusBar.
-	    $('tr:first td:first', this.statusBar).html(message);
-	},
 	setNavCounter: function(rowIndex){
 	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
 	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
-	    $('tr:first td:last', this.statusBar).html(str);
+            this.element.trigger('message', [{
+                type: 'navCount',
+                html: str
+            }]);
 	},
 	getCurrentCell: function(){
 	    return this.currentCell;
@@ -216,7 +202,10 @@
 	    if ( row.dbRow('option', 'type') == 'add' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
-		    this.setStatusBarMsg('Deleted.');
+                    this.element.trigger('message', [{
+                        type: notice,
+                        html: "Deleted."
+                    }]);
 		}
 	    }
 	},
@@ -287,8 +276,8 @@
 	    // Remove all rows from the dbGrid and requery the dataURL to re-populate the grid
 	    if ( url === undefined ) {
 		url = this.option('dataURL');
-	    }      
-	    this.setStatusBarMsg('');
+	    }
+            this.element.trigger('clearMessages');
 	    if ( this.currentCell.size() ) {
 		this.currentCell.dbCell('cellOut');
 	    }
@@ -343,7 +332,10 @@
 	    }
 	},
 	_requeryReturnError: function(errorMessage) {
-	    this.setStatusBarMsg(errorMessage);
+            this.element.trigger('message', [{
+                type: 'error',
+                html: errorMessage
+            }]);
 	    alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {

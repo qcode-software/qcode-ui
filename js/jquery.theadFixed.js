@@ -57,7 +57,8 @@
 		'margin-right': table.css('margin-right'),
 		'margin-bottom': table.css('margin-bottom'),
 		'margin-left': table.css('margin-left'),
-		'height': this.options.height
+		'height': this.options.height,
+                'max-height': "100%"
 	    });
 	    table.css('margin', 0);
 

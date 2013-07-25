@@ -1,0 +1,29 @@
+.status-frame {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+.status-bar-wrapper {
+    position: relative;
+}
+.status-bar {
+    min-height: 1em;
+    display: table;
+    width: 100%;
+}
+.status-bar .message,
+.status-bar .info {
+    display: table-cell;
+    padding: 2px;
+}
+.status-bar .info {
+    text-align: right;
+}
+.status-bar .handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+    height: 10px;
+    cursor: ns-resize;
+    z-index: 10;
+}
