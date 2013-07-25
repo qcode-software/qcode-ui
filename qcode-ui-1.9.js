@@ -2487,7 +2487,7 @@ function dbGrid(oTable) {
       throw "This behavior requires a COLGROUP"
 	}
     // Parents Next Sibling should be the status Div containing a table
-      if ( jQuery(oTable).hasClass('db-grid') ) {
+      if ( ! jQuery(oTable).hasClass('flex') ) {
       oStatusTable = oTable.parentElement.nextSibling.firstChild;
     } else {
       oStatusTable = undefined;
