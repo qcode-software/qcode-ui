@@ -1,9 +1,16 @@
-(function($, window, document, undefined){
+/* dbGrid plugin
+   Turns a table into an editable database grid
+*/
+;(function($, window, document, undefined){
     $.widget('qcode.dbGrid', {
 	options: {
 	    initialFocus: true,
 	    enabled: true,
-	    updateType: 'rowOut'
+	    updateType: 'rowOut',
+            addURL: undefined,
+            updateURL: undefined,
+            deleteURL: undefined,
+            dataURL: undefined
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -113,7 +120,7 @@
 	    this.recCount += i;
 	},
 	setNavCounter: function(rowIndex){
-	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
+	    // Update the NavCounter in the status bar using 0-based rowIndex (if a status bar or equivalent exists)
 	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
             this.element.trigger('message', [{
                 type: 'navCount',
@@ -202,8 +209,9 @@
 	    if ( row.dbRow('option', 'type') == 'add' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
+                    // Notify plugins such as statusFrame
                     this.element.trigger('message', [{
-                        type: notice,
+                        type: 'notice',
                         html: "Deleted."
                     }]);
 		}
@@ -277,7 +285,11 @@
 	    if ( url === undefined ) {
 		url = this.option('dataURL');
 	    }
-            this.element.trigger('clearMessages');
+            // Clear the message on plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: 'notice',
+                html: ''
+            }]);
 	    if ( this.currentCell.size() ) {
 		this.currentCell.dbCell('cellOut');
 	    }
@@ -332,6 +344,7 @@
 	    }
 	},
 	_requeryReturnError: function(errorMessage) {
+            // Notify plugins such as statusFrame of the error
             this.element.trigger('message', [{
                 type: 'error',
                 html: errorMessage

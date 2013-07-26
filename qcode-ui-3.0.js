@@ -3064,13 +3064,19 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.dbGrid.js ==== */
-(function($, window, document, undefined){
+/* dbGrid plugin
+   Turns a table into an editable database grid
+*/
+;(function($, window, document, undefined){
     $.widget('qcode.dbGrid', {
 	options: {
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true	    
+            addURL: undefined,
+            updateURL: undefined,
+            deleteURL: undefined,
+            dataURL: undefined
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -3079,12 +3085,11 @@ function dbFormHTMLArea(oDiv) {
 	    dbGrid.colgroup = this.element.children('colgroup');
 	    dbGrid.tbody = dbGrid.element.children('tbody');
 	    dbGrid.currentCell = $([]);
-	    dbGrid.statusBar = $([]);
 	    dbGrid.editorDiv = $([]);
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -3092,24 +3097,13 @@ function dbFormHTMLArea(oDiv) {
 		}
 	    });
 
-	    // Create Optional Status Bar
-	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="db-grid-status">');
-		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
-		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
-		dbGrid.element.after(dbGrid.statusBar);
-		dbGrid.statusBar.dbGridDivStatus();
-	    } else {
-		dbGrid.statusBar = $([]);
-	    }
-
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
 	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);
-	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="wrapper">');
+	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="db-grid-wrapper">');
 	    
 	    // Enable the grid for editing
 	    if ( dbGrid.option('enabled') ) {
@@ -3191,14 +3185,13 @@ function dbFormHTMLArea(oDiv) {
 	incrRecCount: function(i){
 	    this.recCount += i;
 	},
-	setStatusBarMsg: function(message){
-	    // Update the message displayed in the StatusBar.
-	    $('tr:first td:first', this.statusBar).html(message);
-	},
 	setNavCounter: function(rowIndex){
-	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
+	    // Update the NavCounter in the status bar using 0-based rowIndex (if a status bar or equivalent exists)
 	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
-	    $('tr:first td:last', this.statusBar).html(str);
+            this.element.trigger('message', [{
+                type: 'navCount',
+                html: str
+            }]);
 	},
 	getCurrentCell: function(){
 	    return this.currentCell;
@@ -3282,7 +3275,11 @@ function dbFormHTMLArea(oDiv) {
 	    if ( row.dbRow('option', 'type') == 'add' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
-		    this.setStatusBarMsg('Deleted.');
+                    // Notify plugins such as statusFrame
+                    this.element.trigger('message', [{
+                        type: 'notice',
+                        html: "Deleted."
+                    }]);
 		}
 	    }
 	},
@@ -3353,8 +3350,12 @@ function dbFormHTMLArea(oDiv) {
 	    // Remove all rows from the dbGrid and requery the dataURL to re-populate the grid
 	    if ( url === undefined ) {
 		url = this.option('dataURL');
-	    }      
-	    this.setStatusBarMsg('');
+	    }
+            // Clear the message on plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: 'notice',
+                html: ''
+            }]);
 	    if ( this.currentCell.size() ) {
 		this.currentCell.dbCell('cellOut');
 	    }
@@ -3409,7 +3410,11 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	},
 	_requeryReturnError: function(errorMessage) {
-	    this.setStatusBarMsg(errorMessage);
+            // Notify plugins such as statusFrame of the error
+            this.element.trigger('message', [{
+                type: 'error',
+                html: errorMessage
+            }]);
 	    alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {
@@ -3530,89 +3535,6 @@ function dbFormHTMLArea(oDiv) {
 	}
     });
 })(jQuery, window, document);
-
-/* ==== jquery.dbGridDivStatus.js ==== */
-(function($){
-    // DbGridDivStatus Class Constructor - vertical resize on bottom border
-    var DbGridDivStatus = function(statusDiv) {
-        // Private Class Variables
-        var inZone = false;
-        var inResize = false;
-        var savedHeight;
-        var savedY;
-        var minHeight = 10;
-        // The div to resize
-        var resizeDiv;
-        
-        // Events
-        statusDiv.on('mousemove.dbGridDivStatus', onMouseMoveStatusDiv);
-        statusDiv.on('mousedown.dbGridDivStatus', onMouseDownStatusDiv);
-        jQuery(document).on('mouseup.dbGridDivStatus',onMouseUpWindow);
-        jQuery(document).on('mousemove.dbGridDivStatus', onMouseMoveWindow);
-        
-        // Private Class Methods
-        function onMouseMoveStatusDiv(e) {
-            if ( e.pageY >= statusDiv.height() + statusDiv.offset().top + statusDiv.scrollTop() ) {
-	        // Bottom Border
-	        statusDiv.css('cursor','S-resize');
-	        inZone = true;	  
-            } else if ( ! inResize ) {
-	        statusDiv.css('cursor','auto');
-	        inZone = false;
-            } 
-        }  
-        function onMouseDownStatusDiv(e) {
-            if ( inZone && e.which == 1) {
-                resizeDiv = statusDiv.prev();
-	        inResize = true;
-	        savedY = e.screenY;
-	        savedHeight = resizeDiv.height();
-	        return false;
-            } 
-        }
-        function onMouseMoveWindow(e) {
-            if ( inResize ) {
-	        // Drag
-	        var deltaY = e.screenY - savedY;
-	        var height = savedHeight + deltaY;
-	        if ( height < minHeight ) {
-	            height = minHeight;
-	        }
-	        // Resize
-	        resizeDiv.height(height);
-	        resizeDiv.trigger('resize');
-            }
-        }
-        function onMouseUpWindow(e) {
-            if ( inResize ) {
-	        inResize = false;
-            }
-        }
-    };
-
-    // Make DbGridDivStatus Class available as a jquery plugin
-    $.fn.dbGridDivStatus = function() {
-        var divs = this
-
-        if ( divs.not('div').size() ) {
-            throw new Error('jQuery.dbGridDivStatus requires that only div elements are contained in the jQuery object');
-        }
-
-        // Initialise DbGridDivStatus objects for each div unless this has already been done
-        for ( var i=0; i< divs.size(); i++ ) {
-            var div = divs.eq(i);
-            var dbGridDivStatus = div.data('dbGridDivStatus');
-
-            if ( ! dbGridDivStatus ) {
-	        dbGridDivStatus = new DbGridDivStatus(div);
-	        div.data('dbGridDivStatus',dbGridDivStatus);
-            }
-        }
-        
-        return divs;
-    };
-
-}) (jQuery);
 
 /* ==== jquery.dbRecord.js ==== */
 // dbRecord plugin
@@ -3903,9 +3825,6 @@ function dbFormHTMLArea(oDiv) {
 	getCurrentCell: function() {
 	    return this.getGrid().dbGrid('getCurrentCell');
 	},
-	setStatusBarMsg: function(message) {
-	    this.getGrid().dbGrid('setStatusBarMsg',message);
-	},
 	getState: function(){
 	    return this.state;
 	},
@@ -3925,6 +3844,7 @@ function dbFormHTMLArea(oDiv) {
 	    var grid = this.getGrid();
 	    var oldState = this.state;
 	    var message;
+            var messageType = 'notice';
 	    
 	    switch (newState) {
 	    case 'dirty':
@@ -3945,6 +3865,7 @@ function dbFormHTMLArea(oDiv) {
 		break;
 	    case 'error': 
 		message = this.error;
+                messageType = 'error';
 		break;
 	    default:
 		$.error('Invalid state');
@@ -3953,7 +3874,11 @@ function dbFormHTMLArea(oDiv) {
 
 	    this.element.removeClass("current dirty updating error");
 	    this.element.addClass(newState);
-	    this.setStatusBarMsg(message);
+            // Notify plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: messageType,
+                html: message
+            }]);
 	    this.state = newState;
 	    this.getCurrentCell().dbCell('editor', 'repaint');
 	    this.element.trigger('dbRowStateChange');
@@ -3967,7 +3892,10 @@ function dbFormHTMLArea(oDiv) {
 	    row.trigger('dbRowIn');
 
 	    if ( this.error ) {
-		grid.dbGrid('setStatusBarMsg', this.error);
+                this.element.trigger('message', [{
+                    type: 'error',
+                    html: this.error
+                }]);
 	    }
 	    grid.dbGrid('setNavCounter', row.index());
 	},
@@ -4042,7 +3970,10 @@ function dbFormHTMLArea(oDiv) {
 		// When a record is deleted, remove it from the DOM.	
 		grid.dbGrid('removeRow',this.element)
 		grid.dbGrid('incrRecCount', -1);
-		grid.dbGrid('setStatusBarMsg','Deleted.');
+                this.element.trigger('message', [{
+                    type: 'notice',
+                    html: "Deleted."
+                }]);
 		this.destroy();
 	    }
 	},
@@ -4093,7 +4024,10 @@ function dbFormHTMLArea(oDiv) {
 	    // Display info message in statusBar
 	    var xmlNode = $('records > info', xmlDoc);
 	    if ( xmlNode.size() ) {
-		this.setStatusBarMsg(xmlNode.text());
+                this.element.trigger('message', [{
+                    type: 'info',
+                    html: xmlNode.text()
+                }]);
 	    }
 
 	    // Alert
@@ -4816,6 +4750,108 @@ function dbFormHTMLArea(oDiv) {
 	}
     });
 })(jQuery, window, document);
+
+/* ==== jquery.statusFrame.js ==== */
+/* statusFrame plugin
+   Wraps the target in a resizable div with a status bar at the bottom
+   Listens for "message" events, and displays messages
+
+   Options: {
+   resizable: boolean, default true, is the frame resizable
+   minHeight: int, default 10, if the frame is resizable, the minimum height.
+   }
+
+   Methods:
+   setNavCounter: takes an html string and sets the navCount
+   setMessage: takes an html string and sets the current message
+
+   message event handlers take 1 addition argument, which is an object as follows:
+   {
+   type: string 'error', 'notice', or 'navCount' - the type of message.
+   html: string - the message to be displayed, in html format.
+   }
+*/
+;(function($, window, undefined) {
+    $.widget('qcode.statusFrame', {
+        options: {
+            resizable: true,
+            minHeight: 10
+        },
+        _create: function() {
+            this.element.wrap('<div>');
+            this.statusFrame = this.element.parent()
+                .addClass('status-frame');
+            this.statusBar = $('<div>')
+                .addClass('status-bar')
+                .insertAfter(this.statusFrame);
+            this.messageBox = $('<span>')
+                .addClass('message')
+                .appendTo(this.statusBar);
+            this.navCounter = $('<span>')
+                .addClass('info')
+                .appendTo(this.statusBar);
+            this.handle = $('<div>')
+                .addClass('handle')
+                .prependTo(this.statusBar);
+
+            if ( this.options.resizable ) {
+                var initialHeight;
+                this._on(this.handle, {
+                    'mousedown': this._dragStart,
+                    'dragStart': function(event, data) {
+                        initialHeight = this.statusFrame.height();
+                    },
+                    'drag': function(event, data) {
+                        this.statusFrame.height(Math.max(initialHeight + data.offset, this.options.minHeight));
+                        this.statusFrame.trigger('resize');
+                    }
+                });
+            }
+            this._on({
+                'message': function(event, data) {
+                    this.messageBox.removeClass('error');
+                    switch(data.type) {
+                    case "navCount":
+                        this.setNavCounter(data.html);
+                        break;
+
+                    case "error":
+                        this.messageBox.addClass('error');
+                    case "notice":
+                    default:
+                        this.setMessage(data.html);
+                        break;
+                    }
+                }
+            });
+        },
+        setNavCounter: function(message) {
+            this.navCounter.html(message);
+        },
+        setMessage: function(message) {
+            this.messageBox.html(message);
+        },
+	_dragStart: function(event){
+	    var target = $(event.target);
+	    event.preventDefault();
+	    this._on($(window), {
+		'mousemove': this._drag.bind(this, target, event.pageY),
+		'mouseup': this._dragEnd.bind(this, target, event.pageY)
+	    });
+	    target.trigger('dragStart');
+	},
+	_drag: function(target, initialY, event){
+	    event.preventDefault();
+	    target.trigger('drag', [{
+		'offset': event.pageY - initialY
+	    }]);
+	},
+	_dragEnd: function(target, initialY, event){
+	    this._off($(window), 'mousemove mouseup');
+	    target.trigger('dragEnd');
+	}
+    });
+})(jQuery, window);
 
 /* ==== jquery.tableFilterMin.js ==== */
 // tableFilterMin - client-side table row filter based on user-defined minimum values
@@ -6277,7 +6313,8 @@ function dbFormHTMLArea(oDiv) {
 		'margin-right': table.css('margin-right'),
 		'margin-bottom': table.css('margin-bottom'),
 		'margin-left': table.css('margin-left'),
-		'height': this.options.height
+		'height': this.options.height,
+                'max-height': "100%"
 	    });
 	    table.css('margin', 0);
 
@@ -6605,7 +6642,7 @@ function parseBoolean(value) {
 function tableRowHighlight(oTable) {
     jQuery(oTable).find("tr").click(function(event) {
 	var target_td = jQuery(event.target).closest("td")[0];
-	if ( jQuery(oTable).is(".db-grid") && oTable.isCellEditable(target_td) ) {
+	if ( jQuery(oTable).hasClass("db-grid") && jQuery(target_td).dbCell('isEditable') ) {
 	    return; 
 	}
 	jQuery(this).toggleClass('highlight');

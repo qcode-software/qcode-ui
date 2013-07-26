@@ -1,22 +1,26 @@
+/* css for statusFrame plugin */
 .status-frame {
     overflow-x: hidden;
     overflow-y: auto;
 }
-.status-bar-wrapper {
-    position: relative;
-}
 .status-bar {
+    position: relative;
     min-height: 1em;
-    display: table;
-    width: 100%;
 }
-.status-bar .message,
-.status-bar .info {
-    display: table-cell;
-    padding: 2px;
+.status-bar:after {
+    /* clearfix - contents are floating */
+    display: block;
+    clear: both;
+    content: "";
+}
+.status-bar .message {
+    padding: 3px;
+    float: left;
 }
 .status-bar .info {
+    padding: 3px;
     text-align: right;
+    float:right;
 }
 .status-bar .handle {
     position: absolute;

@@ -1,3 +1,22 @@
+/* statusFrame plugin
+   Wraps the target in a resizable div with a status bar at the bottom
+   Listens for "message" events, and displays messages
+
+   Options: {
+   resizable: boolean, default true, is the frame resizable
+   minHeight: int, default 10, if the frame is resizable, the minimum height.
+   }
+
+   Methods:
+   setNavCounter: takes an html string and sets the navCount
+   setMessage: takes an html string and sets the current message
+
+   message event handlers take 1 addition argument, which is an object as follows:
+   {
+   type: string 'error', 'notice', or 'navCount' - the type of message.
+   html: string - the message to be displayed, in html format.
+   }
+*/
 ;(function($, window, undefined) {
     $.widget('qcode.statusFrame', {
         options: {
@@ -10,10 +29,7 @@
                 .addClass('status-frame');
             this.statusBar = $('<div>')
                 .addClass('status-bar')
-                .insertAfter(this.statusFrame)
-                .wrap('<div>');
-            this.statusBarWrapper = this.statusBar.parent()
-                .addClass('status-bar-wrapper');
+                .insertAfter(this.statusFrame);
             this.messageBox = $('<span>')
                 .addClass('message')
                 .appendTo(this.statusBar);
@@ -41,19 +57,17 @@
                 'message': function(event, data) {
                     this.messageBox.removeClass('error');
                     switch(data.type) {
-                    case "error":
-                        this.messageBox.addClass('error');
-                    case "notice":
-                        this.setMessage(data.html);
-                        break;
                     case "navCount":
                         this.setNavCounter(data.html);
                         break;
+
+                    case "error":
+                        this.messageBox.addClass('error');
+                    case "notice":
+                    default:
+                        this.setMessage(data.html);
+                        break;
                     }
-                },
-                'clearMessages': function() {
-                    this.messageBox.removeClass('error');
-                    this.setMessage('');
                 }
             });
         },

@@ -65,6 +65,7 @@
 
 	    this.element.removeClass("current dirty updating error");
 	    this.element.addClass(newState);
+            // Notify plugins such as statusFrame
             this.element.trigger('message', [{
                 type: messageType,
                 html: message
