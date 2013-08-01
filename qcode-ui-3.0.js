@@ -4759,6 +4759,7 @@ function dbFormHTMLArea(oDiv) {
    Options: {
    resizable: boolean, default true, is the frame resizable
    minHeight: int, default 10, if the frame is resizable, the minimum height.
+   height: css height, default "auto", the (initial) height of the frame
    }
 
    Methods:
@@ -4775,12 +4776,14 @@ function dbFormHTMLArea(oDiv) {
     $.widget('qcode.statusFrame', {
         options: {
             resizable: true,
-            minHeight: 10
+            minHeight: 10,
+            height: "auto"
         },
         _create: function() {
             this.element.wrap('<div>');
             this.statusFrame = this.element.parent()
-                .addClass('status-frame');
+                .addClass('status-frame')
+                .css('height', this.options.height);
             this.statusBar = $('<div>')
                 .addClass('status-bar')
                 .insertAfter(this.statusFrame);
