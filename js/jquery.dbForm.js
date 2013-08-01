@@ -57,8 +57,7 @@
 	    }
 
             // Event listeners
-	    this.form.on('change.DbForm', 'select', this.setDirty.bind(this));
-	    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
+	    this.form.on('change.DbForm', 'select, input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
 	    if ( this.settings.checkOnExit && this.settings.formType === "update" ) {
 		$(window).on('beforeunload.DbForm', onBeforeUnload.bind(this));
 	    }
@@ -75,7 +74,7 @@
                 switch ( this.settings.updateType ) {
                 case "focus":
                     this.form.on('focusin.DbForm', saveHandler);
-                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
+                    this.form.on('change.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 case "blur":
                     this.form.on('focusout.DbForm', saveHandler);
@@ -87,7 +86,7 @@
                             dbForm.keyUpTimer = window.setTimeout(dbForm.save.bind(dbForm),750);
                         }
                     });
-                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
+                    this.form.on('change.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 }
             }
