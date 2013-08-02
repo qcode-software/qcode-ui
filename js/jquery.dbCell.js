@@ -158,13 +158,13 @@
 		// cancel any delayed save and save immediately
 		this._cancelDelayedSave();
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 		break;	    
 	    case 'onCellOut': 
 		// save immediately
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 	    }
 	},
