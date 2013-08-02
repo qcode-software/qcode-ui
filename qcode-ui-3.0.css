@@ -131,7 +131,7 @@
 /* ==== statusFrame.css ==== */
 /* css for statusFrame plugin */
 .status-frame {
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
 }
 .status-bar {
