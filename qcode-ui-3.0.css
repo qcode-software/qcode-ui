@@ -73,11 +73,11 @@
 
 
 /* ==== dbEditorCombo.css ==== */
-.db-editor.combo options-container {
+.options-container {
     height:150px;
 }
 
-.db-editor.combo options-container div.selected {
+.options-container div.selected {
     background-color:lightgrey;
 }
 
