@@ -68,11 +68,11 @@
 }
 
 /* ==== dbEditorCombo.css ==== */
-.combo .options-container {
+.options-container {
     height:150px;
 }
 
-.combo .options-container div.selected {
+.options-container div.selected {
     background-color:lightgrey;
 }
 
