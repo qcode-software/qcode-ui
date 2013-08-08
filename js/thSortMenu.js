@@ -61,16 +61,19 @@ function thSortMenu(oSpan) {
  
       var ascLink;
       var descLink;
-      if (colType=='NUMERIC') {
-	ascLink = 'Sort&nbsp;Low&nbsp;to&nbsp;High';
-	descLink = 'Sort&nbsp;High&nbsp;to&nbsp;Low';
-      } else if (colType=='DATE') {
-	ascLink = 'Sort&nbsp;Old&nbsp;to&nbsp;New';
-	descLink = 'Sort&nbsp;New&nbsp;to&nbsp;Old';
-      } else {
-	ascLink = 'Sort&nbsp;A-Z';
-	descLink = 'Sort&nbsp;Z-A';
-      }
+        if (colType=='RANKING') {
+            ascLink = 'Sort&nbsp;Top&nbsp;to&nbsp;Bottom';
+            descLink = 'Sort&nbsp;Bottom&nbsp;to&nbsp;Top';
+        } else if (colType=='NUMERIC') {
+	    ascLink = 'Sort&nbsp;Low&nbsp;to&nbsp;High';
+	    descLink = 'Sort&nbsp;High&nbsp;to&nbsp;Low';
+        } else if (colType=='DATE') {
+	    ascLink = 'Sort&nbsp;Old&nbsp;to&nbsp;New';
+	    descLink = 'Sort&nbsp;New&nbsp;to&nbsp;Old';
+        } else {
+	    ascLink = 'Sort&nbsp;A-Z';
+	    descLink = 'Sort&nbsp;Z-A';
+        }
       if ( primarySortCol ) {
 	if ( sortType == 'ASC' ) {
 	  oMenu.innerHTML = '<a href="' + descURL + '" onclick="location.replace(this.href);return false;">' + descLink + '</a>';
@@ -123,13 +126,15 @@ function thSortMenu(oSpan) {
  function getColType(oColGroup,index) {
    if ( oColGroup && oColGroup.childNodes[index].className) {
      var className=oColGroup.childNodes[index].className;
-     if ( className == 'number' ||  className == 'money') {
-       return 'NUMERIC';
-     } else if ( className=='date' ) {
-       return 'DATE';
-     } else {
-       return 'ALPHA';
-     }
+       if ( className == 'rank' ) {
+           return 'RANKING';
+       } else if ( className == 'number' ||  className == 'money') {
+           return 'NUMERIC';
+       } else if ( className=='date' ) {
+           return 'DATE';
+       } else {
+           return 'ALPHA';
+       }
    } else {
      return 'ALPHA';
    }
