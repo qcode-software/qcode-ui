@@ -197,13 +197,13 @@
 	    }
 	    row.dbRow('save',async);
 	},
-	delete: function(row){
+	delete: function(row) {
 	    if ( row === undefined || ! row.size() ) {
 		var row = this.currentCell.closest('tr');
 	    }
-	    if ( row.dbRow('option', 'type') === 'update' ) {
+	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
 		if ( window.confirm("Delete the current record?") ) {
-		    row.dbRow('delete', false)
+		    row.dbRow('delete', false);
 		}
 	    }
 	    if ( row.dbRow('option', 'type') == 'add' ) {
