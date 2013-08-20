@@ -3970,7 +3970,7 @@ function dbFormHTMLArea(oDiv) {
 		// When a record is deleted, remove it from the DOM.	
 		grid.dbGrid('removeRow',this.element)
 		grid.dbGrid('incrRecCount', -1);
-                this.element.trigger('message', [{
+                grid.trigger('message', [{
                     type: 'notice',
                     html: "Deleted."
                 }]);
