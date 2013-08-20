@@ -229,7 +229,9 @@ function parseBoolean(value) {
 
         function handleMessage(event) {
             if (event.source == window && event.data == messageName) {
-                event.stopPropagation();
+                if ( event.stopPropagation ) {
+                    event.stopPropagation();
+                }
                 if (timeouts.length > 0) {
                     var fn = timeouts.shift();
                     for (index in ids) {
@@ -240,10 +242,17 @@ function parseBoolean(value) {
                     }
                     fn();
                 }
+                return false;
             }
         }
 
-        window.addEventListener("message", handleMessage, true);
+        if ( window.addEventListener ) {
+            window.addEventListener("message", handleMessage, true);
+        } else if ( window.attachEvent ) {
+            window.attachEvent("onmessage", handleMessage);
+        } else {
+            window.onmessage = handleMessage;
+        }
 
         window.setZeroTimeout = setZeroTimeout;
         window.clearZeroTimeout = clearZeroTimeout;
