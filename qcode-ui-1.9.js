@@ -8548,6 +8548,71 @@ function coalesce() {
     }
 })(jQuery);
 
+// setZeroTimeout / clearZeroTimeout
+// equivalent to setTimeout(function, 0) but uses window.postMessage to bypass browser minimum timeouts
+// In other words, schedule a function to be executed after all the other event handlers are finished
+// Does not take additional arguments (to pass additional arguments to the callback, use closures instead)
+(function(window, undefined) {
+    if ( window.postMessage ) {
+        var timeouts = []; // Array of functions
+        var ids = {}; // Hash of keys, used by clearZeroTimeout, referencing indices of timeouts
+        var messageName = "zero-timeout-message";
+        var nextID = 0;
+
+        function setZeroTimeout(fn) {
+            nextID++;
+            timeouts.push(fn);
+            ids[nextID] = timeouts.length - 1;
+            window.postMessage(messageName, "*");
+            return nextID;
+        }
+
+        function clearZeroTimeout(index) {
+            if ( ids[index] !== undefined ) {
+                timeouts.splice(ids[index], 1);
+                delete ids[nextID];
+            }
+        }
+
+        function handleMessage(event) {
+            if (event.source == window && event.data == messageName) {
+                if ( event.stopPropagation ) {
+                    event.stopPropagation();
+                }
+                if (timeouts.length > 0) {
+                    var fn = timeouts.shift();
+                    for (index in ids) {
+                        if ( ids[index] === timeouts.length ) {
+                            delete ids[index];
+                            break;
+                        }
+                    }
+                    fn();
+                }
+                return false;
+            }
+        }
+
+        if ( window.addEventListener ) {
+            window.addEventListener("message", handleMessage, true);
+        } else if ( window.attachEvent ) {
+            window.attachEvent("onmessage", handleMessage);
+        } else {
+            window.onmessage = handleMessage;
+        }
+
+        window.setZeroTimeout = setZeroTimeout;
+        window.clearZeroTimeout = clearZeroTimeout;
+    } else {
+        window.setZeroTimeout = function(fn) {
+            return window.setTimeout(fn, 0);
+        }
+        window.clearZeroTimeout = function(timeout) {
+            window.clearTimeout(timeout);
+        }
+    }
+})(window);
+
 /* ==== resizeHeight.js ==== */
 function resizeHeight(oObject) {
 
