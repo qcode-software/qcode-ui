@@ -59,7 +59,7 @@
 }
 .columns-show-hide-control input {
     float: right;
-    vertical-align: center;
+    vertical-align: middle;
  }
 .columns-show-hide-control.checked {
     background: #ece9d8;
