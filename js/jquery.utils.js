@@ -204,11 +204,11 @@ function parseBoolean(value) {
 // setZeroTimeout / clearZeroTimeout
 // equivalent to setTimeout(function, 0) but uses window.postMessage to bypass browser minimum timeouts
 // In other words, schedule a function to be executed after all the other event handlers are finished
-// Does not take additional arguments (use closures instead)
+// Does not take additional arguments (to pass additional arguments to the callback, use closures instead)
 (function(window, undefined) {
     if ( window.postMessage ) {
         var timeouts = []; // Array of functions
-        var ids = {}; // Hash of keys, used by clearZeroTimeout, refernecing indices of timeouts
+        var ids = {}; // Hash of keys, used by clearZeroTimeout, referencing indices of timeouts
         var messageName = "zero-timeout-message";
         var nextID = 0;
 
