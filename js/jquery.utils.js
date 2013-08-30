@@ -200,3 +200,10 @@ function parseBoolean(value) {
         }
     }
 })(jQuery);
+
+function preloadImages() {
+    // Preload the images given as arguments
+    for(var i = 0; i < arguments.length; i++) {
+        (new Image()).src = arguments[i];
+    }
+}
