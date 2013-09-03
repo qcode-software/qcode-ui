@@ -41,13 +41,14 @@
             // Class variables
 	    this.state = 'current';
 
-	    this.divStatus = this.form.find('div.clsDbFormDivStatus').last();
-
+	    this.divStatus = this.form.find('.db-form-status').last();
 	    this.elements = this.elements
                 .add('input', this.form)
                 .add('select', this.form)
                 .add('textarea', this.form)
-                .add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
+                .add('.db-form-html-area, radio-group', this.form);
+
+	    this.error = undefined;
 
 	    if ( typeof this.settings.dataURL != "undefined" ) {
 		this.formAction('requery', this.settings.dataURL);
@@ -116,7 +117,7 @@
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
-		this.elements.filter('div.clsDbFormHTMLArea').each(function(i, div){
+		this.elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
 			$('<input type="hidden">')
 			    .attr('name', $(div).attr('name'))
@@ -192,7 +193,7 @@
 	setState: function(newState) {
 	    switch(newState) {
 	    case "dirty":
-		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		var message = $('<span>').text('Editing ... To ').append(span).append(', type Ctrl+S');
 		this.setStatus(message);
 		this.form.find('[name="nav_new"]').prop('disabled', ( ! this.settings.addURL) );
@@ -342,13 +343,13 @@
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
 	// Event onFormActionReturn
-	this.form.trigger('formActionReturn.dbForm', [type])
+	this.form.trigger('formActionReturn', [type])
     }
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
 	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
-	this.form.trigger('formActionError.dbForm', [errorMessage]);
+	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {
 	var data = {};
@@ -356,7 +357,7 @@
 	    .filter(function(){ return $(this).prop('name') != ""; })
 	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
-	    .filter(function(){ return ! $(this).is('div.clsRadioGroup'); })
+	    .not('div.radio-group')
 	    .each(function(){
 		var name = $(this).attr('name');
 		var value = "";

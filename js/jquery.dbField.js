@@ -2,7 +2,7 @@
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
-    $.widget( "qcode.dbField", {
+    $.widget("qcode.dbField", {
 	_create: function() {
 	    // saveType
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
@@ -21,7 +21,7 @@
             //this.editor('destroy');
         },
 	getRecordSet: function() {
-	    return this.element.closest('.recordSet');
+	    return this.element.closest('.record-set');
 	},
 	getRecord: function(){
 	    return this.element.closest('.record');

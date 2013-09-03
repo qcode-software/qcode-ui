@@ -1,19 +1,19 @@
-.hoverScrollerContainer {
+.hover-scroller-container {
     position: relative;
 }
-.hoverScrollerContainer .scroller {
+.hover-scroller-container .scroller {
     position: absolute;
     left: 0;
     right: 0;
     height: 25px;
     z-index: 200;
 }
-.hoverScrollerContainer .down.scroller {
+.hover-scroller-container .down.scroller {
     bottom: 0;
     opacity: 0.1;
     background: url("../images/down.png") no-repeat center black;
 }
-.hoverScrollerContainer .up.scroller {
+.hover-scroller-container .up.scroller {
     top: 0;
     display: none;
     background: url("../images/up.png") no-repeat top center black;

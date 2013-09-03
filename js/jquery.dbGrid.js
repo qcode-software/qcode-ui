@@ -1,11 +1,17 @@
-(function($, window, document, undefined){
+/* dbGrid plugin
+   Turns a table into an editable database grid
+*/
+;(function($, window, document, undefined){
     $.widget('qcode.dbGrid', {
 	options: {
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true,
-            deleteKey: 'delete'
+            deleteKey: 'delete',
+            addURL: undefined,
+            updateURL: undefined,
+            deleteURL: undefined,
+            dataURL: undefined
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -14,12 +20,11 @@
 	    dbGrid.colgroup = this.element.children('colgroup');
 	    dbGrid.tbody = dbGrid.element.children('tbody');
 	    dbGrid.currentCell = $([]);
-	    dbGrid.statusBar = $([]);
 	    dbGrid.editorDiv = $([]);
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar', 'deleteKey'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','deleteKey'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -27,24 +32,13 @@
 		}
 	    });
 
-	    // Create Optional Status Bar
-	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="clsDbGridDivStatus">');
-		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
-		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
-		dbGrid.element.after(dbGrid.statusBar);
-		dbGrid.statusBar.dbGridDivStatus();
-	    } else {
-		dbGrid.statusBar = $([]);
-	    }
-
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
-	    dbGrid.editorDiv.addClass('clsDbGridDivEditor');
+	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);
-	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="wrapper">');
+	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="db-grid-wrapper">');
 	    
 	    // Enable the grid for editing
 	    if ( dbGrid.option('enabled') ) {
@@ -129,14 +123,13 @@
 	incrRecCount: function(i){
 	    this.recCount += i;
 	},
-	setStatusBarMsg: function(message){
-	    // Update the message displayed in the StatusBar.
-	    $('tr:first td:first', this.statusBar).html(message);
-	},
 	setNavCounter: function(rowIndex){
-	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
+	    // Update the NavCounter in the status bar using 0-based rowIndex (if a status bar or equivalent exists)
 	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
-	    $('tr:first td:last', this.statusBar).html(str);
+            this.element.trigger('message', [{
+                type: 'navCount',
+                html: str
+            }]);
 	},
 	getCurrentCell: function(){
 	    return this.currentCell;
@@ -209,19 +202,23 @@
 	    }
 	    row.dbRow('save',async);
 	},
-	delete: function(row){
+	delete: function(row) {
 	    if ( row === undefined || ! row.size() ) {
 		var row = this.currentCell.closest('tr');
 	    }
-	    if ( row.dbRow('option', 'type') === 'update' ) {
+	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
 		if ( window.confirm("Delete the current record?") ) {
-		    row.dbRow('delete', false)
+		    row.dbRow('delete', false);
 		}
 	    }
 	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') == 'dirty' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
-		    this.setStatusBarMsg('Deleted.');
+                    // Notify plugins such as statusFrame
+                    this.element.trigger('message', [{
+                        type: 'notice',
+                        html: "Deleted."
+                    }]);
 		}
 	    }
 	},
@@ -292,8 +289,12 @@
 	    // Remove all rows from the dbGrid and requery the dataURL to re-populate the grid
 	    if ( url === undefined ) {
 		url = this.option('dataURL');
-	    }      
-	    this.setStatusBarMsg('');
+	    }
+            // Clear the message on plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: 'notice',
+                html: ''
+            }]);
 	    if ( this.currentCell.size() ) {
 		this.currentCell.dbCell('cellOut');
 	    }
@@ -348,7 +349,11 @@
 	    }
 	},
 	_requeryReturnError: function(errorMessage) {
-	    this.setStatusBarMsg(errorMessage);
+            // Notify plugins such as statusFrame of the error
+            this.element.trigger('message', [{
+                type: 'error',
+                html: errorMessage
+            }]);
 	    alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {

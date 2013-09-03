@@ -59,9 +59,11 @@
 	},
 	getColType: function(col) {
 	    // Get the sort type of the given column
-	    if ( col.hasClass('clsNumber') || col.hasClass('clsMoney') ) {
+	    if ( col.hasClass('rank') ) {
+                return 'ranking';
+            } else if ( col.hasClass('number') || col.hasClass('money') ) {
 		return 'numeric';
-	    } else if ( col.hasClass('clsDate') ) {
+	    } else if ( col.hasClass('date') ) {
 		return 'date';
 	    } else {
 		return 'alpha';
@@ -78,14 +80,21 @@
 	    var ascText;
 	    var descText;
 	    switch(this.options.type) {
+            case 'ranking':
+                ascText = "Sort Top to Bottom";
+                descText = "Sort Bottom to Top";
+                break;
+
 	    case 'numeric':
 		ascText = "Sort Low to High";
 		descText = "Sort High to Low";
 		break;
+
 	    case 'date':
 		ascText = "Sort Old to New";
 		descText = "Sort New to Old";
 		break;
+
 	    default:
 		ascText = "Sort A-Z";
 		descText = "Sort Z-A";
@@ -103,7 +112,7 @@
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('thSortMenu')
+		.addClass('th-sort-menu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",

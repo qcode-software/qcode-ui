@@ -41,7 +41,7 @@
             // Add a wrapper to cope with change in image size
             this.image.wrap('<div>');
             this.imageWrapper = this.image.parent();
-            this.imageWrapper.addClass('imageWrapper');
+            this.imageWrapper.addClass('image-wrapper');
         },
         loadImage: function() {
             // Attempt to load a new image based on the chosen filename

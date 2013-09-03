@@ -100,9 +100,9 @@
 })(jQuery);
 
 /* ==== 0.jquery-ui-hacks.js ==== */
-(function($) {
+;(function($) {
     if ( $.isFunction($.widget) ) {
-	var slice = Array.prototype.slice
+	var slice = Array.prototype.slice;
 
 	$.widget.bridge = function( name, object ) {
 	    var fullName = object.prototype.widgetFullName || name;
@@ -189,7 +189,7 @@ if (!Object.create) {
         var object = new F();
         if (arguments.length > 1) {
             console.warn('Object.create implementation incomplete');
-            jQuery.extent(object, o);
+            jQuery.extend(object, o);
         }
         return object;
     };
@@ -986,10 +986,10 @@ function dynamicResize(oContainer) {
 
 /* ==== jquery.columnsShowHide.js ==== */
 // Show and/or hide selected columns of tables
-// showHide is optional, if undefined selected columns will toggle visibility
-;(function(undefined) {
-    jQuery.fn.columnsShowHide = function(column_selector, showHide) {
-        jQuery(this).each(function() {
+// showHide is an optional string "show" or "hide", if undefined selected columns will toggle visibility
+;(function($, undefined) {
+    $.fn.columnsShowHide = function(column_selector, showHide) {
+        $(this).each(function() {
 	    var table = jQuery(this);
             var cellsToShow = $([]);
             var colsToShow = $([]);
@@ -1010,46 +1010,36 @@ function dynamicResize(oContainer) {
                 }
             });
 
-
-	    // Dettach table from DOM for performance gain.
-	    var table_parent = table.parent();
-	    var table_next_sibling = table.next();
-	    table.detach();
-
-	    toHide.css('display', "none");
-            colsToShow.css('display', "table-column");
-            cellsToShow.css('display', "table-cell");
-
-	    // Reattach table to it's original position in the DOM.
-	    if (table_next_sibling.length) {
-	        table.insertBefore(table_next_sibling);
-	    } else {		    
-	        table.appendTo(table_parent);
-	    }
+	    // Detach table from DOM for performance gain.
+	    table.runDetached(function() {
+	        toHide.css('display', "none");
+                colsToShow.css('display', "table-column");
+                cellsToShow.css('display', "table-cell");
+            });
 
             table.trigger('resize');
         });
     };
-})();
+})(jQuery);
 
 /* ==== jquery.columnsShowHideControl.js ==== */
 // Initialise column show/hide control
-;(function(undefined) {
-    jQuery.fn.columnsShowHideControl = function() {
+;(function($, undefined) {
+    $.fn.columnsShowHideControl = function() {
         // ----------------------------------------
         // Show/hide columns when the user toggles the buttons
         // ----------------------------------------
-        jQuery(this).on('click',function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
-            if ( !jQuery(e.target).is(checkbox) ) {
+        $(this).on('click',function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
+            if ( ! ($(e.target).is(checkbox) || $(e.target).is('label')) ) {
                 // checkbox was not the event target, toggle checkbox state
                 e.preventDefault();           
                 checkbox.prop('checked', !checkbox.prop('checked'));
                 checkbox.change();
-            }            
+            }
         });
-        jQuery(this).on('change',':checkbox',function(e) {           
-            var checkbox = jQuery(this);
+        $(this).on('change',':checkbox',function(e) {           
+            var checkbox = $(this);
             var sticky = checkbox.attr('sticky');
             var stickyURL = checkbox.attr('sticky_url');
             var colSelector = checkbox.attr('col_selector');
@@ -1057,12 +1047,12 @@ function dynamicResize(oContainer) {
 
             if ( checkbox.is(':checked') ) {
                 // Show columns
-                jQuery(this).parent().addClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'show');
+                $(this).parent().addClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
-                jQuery(this).parent().removeClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
+                $(this).parent().removeClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'hide');
             }
 
             if ( parseBoolean(sticky) ) {
@@ -1074,46 +1064,52 @@ function dynamicResize(oContainer) {
                 }
                 $.post('sticky_save.html', data);
             }
-        });        
+        });
                 
         // ----------------------------------------
         // Highlight columns when the user hovers over a button
         // ----------------------------------------
-        jQuery(this).on('mouseenter', function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+        $(this).on('mouseenter', function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).addClass('hover');
-          jQuery(tableSelector).find(colSelector).addClass('colHighlight');
+            $(this).addClass('hover');
+            $(tableSelector).find(colSelector).addClass('highlight');
+            $(tableSelector).runDetached();
         });
-        jQuery(this).on('mouseleave', function(e) {
-            var checkbox = jQuery(e.delegateTarget).children(':checkbox');
+        $(this).on('mouseleave', function(e) {
+            var checkbox = $(e.delegateTarget).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
 
-          jQuery(this).removeClass('hover');
-          jQuery(tableSelector).find(colSelector).removeClass('colHighlight');
-        });   
+            $(this).removeClass('hover');
+            $(tableSelector).find(colSelector).removeClass('highlight');
+            $(tableSelector).runDetached();
+        });
 
         // Show/Hide columns on document ready
-        jQuery(this).each(function() {
-            var checkbox = jQuery(this).children(':checkbox');
+        $(this).each(function() {
+            var checkbox = $(this).children(':checkbox');
             var colSelector = checkbox.attr('col_selector');
             var tableSelector = checkbox.attr('table_selector');
+
+            if ( $(tableSelector).has(this).length > 0 ) {
+                $.error('Columns show/hide control targetting its own ancestor is not supported');
+            }
 
             if ( checkbox.is(':checked') ) {
                 // Show columns
-                jQuery(this).addClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'show');
+                $(this).addClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'show');
             } else {
                 // Hide columns
-                jQuery(this).removeClass('checked');
-                jQuery(tableSelector).columnsShowHide(colSelector,'hide');
+                $(this).removeClass('checked');
+                $(tableSelector).columnsShowHide(colSelector,'hide');
             }
         });
     };
-})();
+})(jQuery);
 
 /* ==== jquery.compass.js ==== */
 ;(function($, window, document, undefined) {
@@ -1293,7 +1289,10 @@ function dynamicResize(oContainer) {
 })(jQuery);
 
 /* ==== jquery.dbCell.js ==== */
-(function($, window, document, undefined){
+// ============================================================
+// dbCell plugin - a single table gell in a database grid
+// ============================================================
+;(function($, window, document, undefined){
     $.widget("qcode.dbCell", {
         options: {
             deleteKey: 'delete'
@@ -1355,9 +1354,9 @@ function dynamicResize(oContainer) {
 
             } else if ( cellType === "bool" ) {
 		if ( parseBoolean(value) ) {
-		    this.element.html("<span class='clsTrue'>Yes</span>");
+		    this.element.html("<span class='true'>Yes</span>");
 		} else {
-		    this.element.html("<span class='clsFalse'>No</span>");
+		    this.element.html("<span class='false'>No</span>");
 		}
 
 	    } else if ( this.element.is(':input') ) {
@@ -1378,8 +1377,8 @@ function dynamicResize(oContainer) {
 	    if ( row.dbRow('getState') === 'updating' ) {
 		return false;
 	    } 
-	    // Is the column visible
-	    if ( col.hasClass('clsHidden') ) {
+	    // Is the cell visible/hidden
+	    if ( ! this.element.is(':visible') ) {
 		return false;
 	    }
 	    // No name defined
@@ -1460,13 +1459,13 @@ function dynamicResize(oContainer) {
 		// cancel any delayed save and save immediately
 		this._cancelDelayedSave();
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 		break;	    
 	    case 'onCellOut': 
 		// save immediately
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 	    }
 	},
@@ -1627,7 +1626,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
-		.addClass('dbEditorBool')
+		.addClass('db-editor boolean')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute"
@@ -1704,11 +1703,11 @@ function dynamicResize(oContainer) {
 	    this.editor.remove();
 	},
 	setTrue: function() {
-	    this.editor.html('<span class=clsTrue>Yes</span>');
+	    this.editor.html('<span class=true>Yes</span>');
             this.currentElement.trigger('editorValueChange');
 	},
 	setFalse: function() {
-	    this.editor.html('<span class=clsFalse>No</span>');
+	    this.editor.html('<span class=false>No</span>');
             this.currentElement.trigger('editorValueChange');
 	},
 	_onResize: function(event) {
@@ -1858,7 +1857,7 @@ function dynamicResize(oContainer) {
 	    });
 
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorCombo')
+		.addClass('db-editor combo')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute",
@@ -1880,7 +1879,7 @@ function dynamicResize(oContainer) {
 	    });
 
 	    this.comboOptions = $('<div>')
-		.addClass('dbEditorComboOptions')
+		.addClass('options-container')
 		.appendTo(this.element)
 		.css({
 		    'position':'absolute',
@@ -2225,7 +2224,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
-		.addClass('dbEditorHTMLArea')
+		.addClass('db-editor html-area')
 		.appendTo(this.element)
 		.css({
 		    'overflow': "auto",
@@ -2450,7 +2449,7 @@ function dynamicResize(oContainer) {
 		'resize': this.repaint
 	    });
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorText')
+		.addClass('db-editor text')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute", 
@@ -2648,7 +2647,7 @@ function dynamicResize(oContainer) {
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
-		.addClass('dbEditorTextArea')
+		.addClass('db-editor text-area')
 		.css({
 		    'position': "absolute", 
 		    'resize': "none", 
@@ -2836,7 +2835,7 @@ function dynamicResize(oContainer) {
 ;(function($, undefined){
 
     // Use the jQuery UI widget factory
-    $.widget( "qcode.dbField", {
+    $.widget("qcode.dbField", {
 	_create: function() {
 	    // saveType
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
@@ -2855,7 +2854,7 @@ function dynamicResize(oContainer) {
             //this.editor('destroy');
         },
 	getRecordSet: function() {
-	    return this.element.closest('.recordSet');
+	    return this.element.closest('.record-set');
 	},
 	getRecord: function(){
 	    return this.element.closest('.record');
@@ -3067,13 +3066,14 @@ function dynamicResize(oContainer) {
             // Class variables
 	    this.state = 'current';
 
-	    this.divStatus = this.form.find('div.clsDbFormDivStatus').last();
-
+	    this.divStatus = this.form.find('.db-form-status').last();
 	    this.elements = this.elements
                 .add('input', this.form)
                 .add('select', this.form)
                 .add('textarea', this.form)
-                .add('div.clsDbFormHTMLArea, div.clsRadioGroup', this.form);
+                .add('.db-form-html-area, radio-group', this.form);
+
+	    this.error = undefined;
 
 	    if ( typeof this.settings.dataURL != "undefined" ) {
 		this.formAction('requery', this.settings.dataURL);
@@ -3083,8 +3083,7 @@ function dynamicResize(oContainer) {
 	    }
 
             // Event listeners
-	    this.form.on('change.DbForm', 'select', this.setDirty.bind(this));
-	    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
+	    this.form.on('change.DbForm', 'select, input[type="checkbox"], input[type="radio"]', this.setDirty.bind(this));
 	    if ( this.settings.checkOnExit && this.settings.formType === "update" ) {
 		$(window).on('beforeunload.DbForm', onBeforeUnload.bind(this));
 	    }
@@ -3101,7 +3100,7 @@ function dynamicResize(oContainer) {
                 switch ( this.settings.updateType ) {
                 case "focus":
                     this.form.on('focusin.DbForm', saveHandler);
-                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
+                    this.form.on('change.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 case "blur":
                     this.form.on('focusout.DbForm', saveHandler);
@@ -3113,7 +3112,7 @@ function dynamicResize(oContainer) {
                             dbForm.keyUpTimer = window.setTimeout(dbForm.save.bind(dbForm),750);
                         }
                     });
-                    this.form.on('click.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
+                    this.form.on('change.DbForm', 'input[type="checkbox"], input[type="radio"]', saveHandler);
                     break;
                 }
             }
@@ -3143,7 +3142,7 @@ function dynamicResize(oContainer) {
 		break;
 	    case "submit":
 		this.form.attr('action', this.settings.submitURL);
-		this.elements.filter('div.clsDbFormHTMLArea').each(function(i, div){
+		this.elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
 			$('<input type="hidden">')
 			    .attr('name', $(div).attr('name'))
@@ -3219,7 +3218,7 @@ function dynamicResize(oContainer) {
 	setState: function(newState) {
 	    switch(newState) {
 	    case "dirty":
-		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		var message = $('<span>').text('Editing ... To ').append(span).append(', type Ctrl+S');
 		this.setStatus(message);
 		this.form.find('[name="nav_new"]').prop('disabled', ( ! this.settings.addURL) );
@@ -3369,13 +3368,13 @@ function dynamicResize(oContainer) {
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
 	// Event onFormActionReturn
-	this.form.trigger('formActionReturn.dbForm', [type])
+	this.form.trigger('formActionReturn', [type])
     }
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
 	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
-	this.form.trigger('formActionError.dbForm', [errorMessage]);
+	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {
 	var data = {};
@@ -3383,7 +3382,7 @@ function dynamicResize(oContainer) {
 	    .filter(function(){ return $(this).prop('name') != ""; })
 	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
-	    .filter(function(){ return ! $(this).is('div.clsRadioGroup'); })
+	    .not('div.radio-group')
 	    .each(function(){
 		var name = $(this).attr('name');
 		var value = "";
@@ -3485,6 +3484,7 @@ function dynamicResize(oContainer) {
     };
     // End of dbForm plugin
 })(jQuery, window);
+
 
 /* ==== jquery.dbFormCombo.js ==== */
 ;(function($, undefined) {
@@ -3709,7 +3709,7 @@ function dbFormHTMLArea(oDiv) {
             // Add a wrapper to cope with change in image size
             this.image.wrap('<div>');
             this.imageWrapper = this.image.parent();
-            this.imageWrapper.addClass('imageWrapper');
+            this.imageWrapper.addClass('image-wrapper');
         },
         loadImage: function() {
             // Attempt to load a new image based on the chosen filename
@@ -3749,14 +3749,20 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery);
 
 /* ==== jquery.dbGrid.js ==== */
-(function($, window, document, undefined){
+/* dbGrid plugin
+   Turns a table into an editable database grid
+*/
+;(function($, window, document, undefined){
     $.widget('qcode.dbGrid', {
 	options: {
 	    initialFocus: true,
 	    enabled: true,
 	    updateType: 'rowOut',
-	    statusBar: true,
-            deleteKey: 'delete'
+            deleteKey: 'delete',
+            addURL: undefined,
+            updateURL: undefined,
+            deleteURL: undefined,
+            dataURL: undefined
 	},
 	_create: function(){
 	    var dbGrid = this;
@@ -3765,12 +3771,11 @@ function dbFormHTMLArea(oDiv) {
 	    dbGrid.colgroup = this.element.children('colgroup');
 	    dbGrid.tbody = dbGrid.element.children('tbody');
 	    dbGrid.currentCell = $([]);
-	    dbGrid.statusBar = $([]);
 	    dbGrid.editorDiv = $([]);
 	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
 	  	    
 	    // Update options with those set via table attributes
-	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','statusBar', 'deleteKey'];
+	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','deleteKey'];
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
@@ -3778,24 +3783,13 @@ function dbFormHTMLArea(oDiv) {
 		}
 	    });
 
-	    // Create Optional Status Bar
-	    if ( parseBoolean(dbGrid.option('statusBar')) === true ) {
-		dbGrid.statusBar = $('<div class="clsDbGridDivStatus">');
-		dbGrid.statusBar.attr('forTable', dbGrid.element.attr('id'));
-		dbGrid.statusBar.append('<table width="100%"><tr><td></td><td align="right"></td></tr></table>');
-		dbGrid.element.after(dbGrid.statusBar);
-		dbGrid.statusBar.dbGridDivStatus();
-	    } else {
-		dbGrid.statusBar = $([]);
-	    }
-
 	    // Create a container to attach editors 
 	    dbGrid.editorDiv = $('<div>');
-	    dbGrid.editorDiv.addClass('clsDbGridDivEditor');
+	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
 	    dbGrid.editorDiv.attr('forTable', dbGrid.element.attr('id'));
 	    dbGrid.element.before(dbGrid.editorDiv);
-	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="wrapper">');
+	    dbGrid.element.add(dbGrid.editorDiv).wrapAll('<div class="db-grid-wrapper">');
 	    
 	    // Enable the grid for editing
 	    if ( dbGrid.option('enabled') ) {
@@ -3880,14 +3874,13 @@ function dbFormHTMLArea(oDiv) {
 	incrRecCount: function(i){
 	    this.recCount += i;
 	},
-	setStatusBarMsg: function(message){
-	    // Update the message displayed in the StatusBar.
-	    $('tr:first td:first', this.statusBar).html(message);
-	},
 	setNavCounter: function(rowIndex){
-	    // Update the NavCounter in the StatusBar using 0-based rowIndex.
+	    // Update the NavCounter in the status bar using 0-based rowIndex (if a status bar or equivalent exists)
 	    var str = 'Record ' + (rowIndex + 1) + ' of ' + this.recCount;
-	    $('tr:first td:last', this.statusBar).html(str);
+            this.element.trigger('message', [{
+                type: 'navCount',
+                html: str
+            }]);
 	},
 	getCurrentCell: function(){
 	    return this.currentCell;
@@ -3960,19 +3953,23 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	    row.dbRow('save',async);
 	},
-	delete: function(row){
+	delete: function(row) {
 	    if ( row === undefined || ! row.size() ) {
 		var row = this.currentCell.closest('tr');
 	    }
-	    if ( row.dbRow('option', 'type') === 'update' ) {
+	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
 		if ( window.confirm("Delete the current record?") ) {
-		    row.dbRow('delete', false)
+		    row.dbRow('delete', false);
 		}
 	    }
 	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') == 'dirty' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
-		    this.setStatusBarMsg('Deleted.');
+                    // Notify plugins such as statusFrame
+                    this.element.trigger('message', [{
+                        type: 'notice',
+                        html: "Deleted."
+                    }]);
 		}
 	    }
 	},
@@ -4043,8 +4040,12 @@ function dbFormHTMLArea(oDiv) {
 	    // Remove all rows from the dbGrid and requery the dataURL to re-populate the grid
 	    if ( url === undefined ) {
 		url = this.option('dataURL');
-	    }      
-	    this.setStatusBarMsg('');
+	    }
+            // Clear the message on plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: 'notice',
+                html: ''
+            }]);
 	    if ( this.currentCell.size() ) {
 		this.currentCell.dbCell('cellOut');
 	    }
@@ -4099,7 +4100,11 @@ function dbFormHTMLArea(oDiv) {
 	    }
 	},
 	_requeryReturnError: function(errorMessage) {
-	    this.setStatusBarMsg(errorMessage);
+            // Notify plugins such as statusFrame of the error
+            this.element.trigger('message', [{
+                type: 'error',
+                html: errorMessage
+            }]);
 	    alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {
@@ -4221,89 +4226,6 @@ function dbFormHTMLArea(oDiv) {
     });
 })(jQuery, window, document);
 
-/* ==== jquery.dbGridDivStatus.js ==== */
-(function($){
-    // DbGridDivStatus Class Constructor - vertical resize on bottom border
-    var DbGridDivStatus = function(statusDiv) {
-        // Private Class Variables
-        var inZone = false;
-        var inResize = false;
-        var savedHeight;
-        var savedY;
-        var minHeight = 10;
-        // The div to resize
-        var resizeDiv;
-        
-        // Events
-        statusDiv.on('mousemove.dbGridDivStatus', onMouseMoveStatusDiv);
-        statusDiv.on('mousedown.dbGridDivStatus', onMouseDownStatusDiv);
-        jQuery(document).on('mouseup.dbGridDivStatus',onMouseUpWindow);
-        jQuery(document).on('mousemove.dbGridDivStatus', onMouseMoveWindow);
-        
-        // Private Class Methods
-        function onMouseMoveStatusDiv(e) {
-            if ( e.pageY >= statusDiv.height() + statusDiv.offset().top + statusDiv.scrollTop() ) {
-	        // Bottom Border
-	        statusDiv.css('cursor','S-resize');
-	        inZone = true;	  
-            } else if ( ! inResize ) {
-	        statusDiv.css('cursor','auto');
-	        inZone = false;
-            } 
-        }  
-        function onMouseDownStatusDiv(e) {
-            if ( inZone && e.which == 1) {
-                resizeDiv = statusDiv.prev();
-	        inResize = true;
-	        savedY = e.screenY;
-	        savedHeight = resizeDiv.height();
-	        return false;
-            } 
-        }
-        function onMouseMoveWindow(e) {
-            if ( inResize ) {
-	        // Drag
-	        var deltaY = e.screenY - savedY;
-	        var height = savedHeight + deltaY;
-	        if ( height < minHeight ) {
-	            height = minHeight;
-	        }
-	        // Resize
-	        resizeDiv.height(height);
-	        resizeDiv.trigger('resize');
-            }
-        }
-        function onMouseUpWindow(e) {
-            if ( inResize ) {
-	        inResize = false;
-            }
-        }
-    };
-
-    // Make DbGridDivStatus Class available as a jquery plugin
-    $.fn.dbGridDivStatus = function() {
-        var divs = this
-
-        if ( divs.not('div').size() ) {
-            throw new Error('jQuery.dbGridDivStatus requires that only div elements are contained in the jQuery object');
-        }
-
-        // Initialise DbGridDivStatus objects for each div unless this has already been done
-        for ( var i=0; i< divs.size(); i++ ) {
-            var div = divs.eq(i);
-            var dbGridDivStatus = div.data('dbGridDivStatus');
-
-            if ( ! dbGridDivStatus ) {
-	        dbGridDivStatus = new DbGridDivStatus(div);
-	        div.data('dbGridDivStatus',dbGridDivStatus);
-            }
-        }
-        
-        return divs;
-    };
-
-}) (jQuery);
-
 /* ==== jquery.dbRecord.js ==== */
 // dbRecord plugin
 // Part of a dbRecordSet. 
@@ -4335,7 +4257,7 @@ function dbFormHTMLArea(oDiv) {
             this.element.find('.editable').dbField('destroy');
         },
 	getRecordSet: function() {
-	    return this.element.closest('.recordSet');
+	    return this.element.closest('.record-set');
 	}, 
 	getState: function() {
 	    return this.state;
@@ -4494,7 +4416,7 @@ function dbFormHTMLArea(oDiv) {
 	    // check saveType attr
 	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
 	    // Ensure recordSet class is set
-	    this.element.addClass('recordSet');
+	    this.element.addClass('record-set');
 
 	    // Elements with class "editable" are editable fields.
 	    this._on({
@@ -4593,9 +4515,6 @@ function dbFormHTMLArea(oDiv) {
 	getCurrentCell: function() {
 	    return this.getGrid().dbGrid('getCurrentCell');
 	},
-	setStatusBarMsg: function(message) {
-	    this.getGrid().dbGrid('setStatusBarMsg',message);
-	},
 	getState: function(){
 	    return this.state;
 	},
@@ -4615,6 +4534,7 @@ function dbFormHTMLArea(oDiv) {
 	    var grid = this.getGrid();
 	    var oldState = this.state;
 	    var message;
+            var messageType = 'notice';
 	    
 	    switch (newState) {
 	    case 'dirty':
@@ -4623,7 +4543,7 @@ function dbFormHTMLArea(oDiv) {
 		    grid.dbGrid('createNewRow');
 		}
 		if ( oldState === 'current' || oldState === 'error' ) {
-		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		    var message = $('<span>').text('Editing ... to ').append(span).append(', type Ctrl+S');
 		}
 		break;
@@ -4635,6 +4555,7 @@ function dbFormHTMLArea(oDiv) {
 		break;
 	    case 'error': 
 		message = this.error;
+                messageType = 'error';
 		break;
 	    default:
 		$.error('Invalid state');
@@ -4643,7 +4564,11 @@ function dbFormHTMLArea(oDiv) {
 
 	    this.element.removeClass("current dirty updating error");
 	    this.element.addClass(newState);
-	    this.setStatusBarMsg(message);
+            // Notify plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: messageType,
+                html: message
+            }]);
 	    this.state = newState;
 	    this.getCurrentCell().dbCell('editor', 'repaint');
 	    this.element.trigger('dbRowStateChange');
@@ -4657,7 +4582,10 @@ function dbFormHTMLArea(oDiv) {
 	    row.trigger('dbRowIn');
 
 	    if ( this.error ) {
-		grid.dbGrid('setStatusBarMsg', this.error);
+                this.element.trigger('message', [{
+                    type: 'error',
+                    html: this.error
+                }]);
 	    }
 	    grid.dbGrid('setNavCounter', row.index());
 	},
@@ -4732,7 +4660,10 @@ function dbFormHTMLArea(oDiv) {
 		// When a record is deleted, remove it from the DOM.	
 		grid.dbGrid('removeRow',this.element)
 		grid.dbGrid('incrRecCount', -1);
-		grid.dbGrid('setStatusBarMsg','Deleted.');
+                grid.trigger('message', [{
+                    type: 'notice',
+                    html: "Deleted."
+                }]);
 		this.destroy();
 	    }
 	},
@@ -4783,7 +4714,10 @@ function dbFormHTMLArea(oDiv) {
 	    // Display info message in statusBar
 	    var xmlNode = $('records > info', xmlDoc);
 	    if ( xmlNode.size() ) {
-		this.setStatusBarMsg(xmlNode.text());
+                this.element.trigger('message', [{
+                    type: 'info',
+                    html: xmlNode.text()
+                }]);
 	    }
 
 	    // Alert
@@ -4981,12 +4915,12 @@ function dbFormHTMLArea(oDiv) {
             this.drawTimeout = undefined;
 
             // Wrap the whole thing in a div
-            this.table.wrap('<div class="ganttChart wrapper">');
+            this.table.wrap('<div class="gantt-chart wrapper">');
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
             // Create a scrolling window for the calendar
-            this.calendarFrame = $('<div class="calendarFrame">')
+            this.calendarFrame = $('<div class="calendar-frame">')
                 .css({
                     left: this.table.outerWidth(),
                     right: 0,
@@ -5293,7 +5227,7 @@ function dbFormHTMLArea(oDiv) {
     // ============================================================
     // class Task
     // extends jQuery.qcode.calendar.Bar
-    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependancies
+    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependencies
     // Takes dependencies and dependents as arrays of objects with properties "date" and "verticalPosition"
     // ============================================================
     // Wait for first instantiation to initialise the class, to ensure the superclass is initialised first
@@ -5438,8 +5372,8 @@ function dbFormHTMLArea(oDiv) {
 	    scrollSpeed: 0.3,
 	    snapTime: 100
 	}, options);
-	var scrollBox = settings.scrollBox.addClass('hoverScroller');
-	var container = settings.container.addClass('hoverScrollerContainer');
+	var scrollBox = settings.scrollBox.addClass('hover-scroller');
+	var container = settings.container.addClass('hover-scroller-container');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
 
@@ -5777,10 +5711,10 @@ function dbFormHTMLArea(oDiv) {
     };
 })(jQuery);
 
-/* ==== jquery.resizeableHeight.js ==== */
+/* ==== jquery.resizableHeight.js ==== */
 (function($){
-  // ResizeableHeight Class Constructor - vertical resize on bottom border
-  var ResizeableHeight = function(resizeElmt) {
+  // ResizableHeight Class Constructor - vertical resize on bottom border
+  var ResizableHeight = function(resizeElmt) {
     // Private Class Variables
     var inZone = false;
     var inResize = false;
@@ -5791,10 +5725,10 @@ function dbFormHTMLArea(oDiv) {
     var resizeElmnt = resizeElmt;
     
     // Events
-    resizeElmnt.on('mousemove.resizeableHeight', onMouseMoveResizeElmt);
-    resizeElmnt.on('mousedown.resizeableHeight', onMouseDownResizeElmt);
-    jQuery(document).on('mouseup.resizeableHeight',onMouseUpWindow);
-    jQuery(document).on('mousemove.resizeableHeight', onMouseMoveWindow);
+    resizeElmnt.on('mousemove.resizableHeight', onMouseMoveResizeElmt);
+    resizeElmnt.on('mousedown.resizableHeight', onMouseDownResizeElmt);
+    jQuery(document).on('mouseup.resizableHeight',onMouseUpWindow);
+    jQuery(document).on('mousemove.resizableHeight', onMouseMoveWindow);
     
     // Private Class Methods
     function onMouseMoveResizeElmt(e) {
@@ -5834,18 +5768,18 @@ function dbFormHTMLArea(oDiv) {
     }
   };
 
-  // Make ResizeableHeight Class available as a jquery plugin
-  $.fn.resizeableHeight = function() {
+  // Make ResizableHeight Class available as a jquery plugin
+  $.fn.resizableHeight = function() {
     var elmts = this
 
-    // Initialise ResizeableHeight objects for each elmt unless this has already been done
+    // Initialise ResizableHeight objects for each elmt unless this has already been done
     for ( var i=0; i< elmts.size(); i++ ) {
       var elmt = elmts.eq(i);
-      var resizeableHeight = elmt.data('resizeableHeight');
+      var resizableHeight = elmt.data('resizableHeight');
 
-      if ( ! resizeableHeight ) {
-	resizeableHeight = new ResizeableHeight(elmt);
-	elmt.data('resizeableHeight',resizeableHeight);
+      if ( ! resizableHeight ) {
+	resizableHeight = new ResizableHeight(elmt);
+	elmt.data('resizableHeight',resizableHeight);
       }
     }
     
@@ -5856,24 +5790,41 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.runDetached.js ==== */
 // runDetached jQuery plugin.
-// Detach this element, call a function (optional), then re-attach.
-// function is called in scope of element,
-// Only supports detaching a single element at a time
+// Detach selected elements, call a function (optional), then re-attach.
+// function is called in scope of the jQuery object
+// If the function returns a value, return that. Otherwise return the jQuery object for chaining.
 ;(function(jQuery) {
     jQuery.fn.runDetached = function(toDo) {
-        var $prev = this.prev();
-        if ( $prev.length == 0 ) {
-            var $parent = this.parent();
-        }
+        var returnValue;
+
+        // For each element, store a re-insertion point. This will either be the previous sibling, or the parent.
+        var previousSibling = {};
+        var parent = {};
+        this.each(function(index) {
+            previousSibling[index] = $(this).prev();
+            if ( previousSibling[index].length === 0 ) {
+                parent[index] = $(this).parent();
+            }
+        });
+
+        // Detach the elements
         this.detach();
+
+        // Run the function
         if ( typeof toDo == "function" ) {
-            toDo.call(this);
+            returnValue = toDo.call(this);
         }
-        if ( $prev.length == 0 ) {
-            this.appendTo($parent);
-        } else {
-            this.insertAfter($prev);
-        }
+
+        // Re-attach the elements
+        this.each(function(index) {
+            if ( previousSibling[index].length === 0 ) {
+                $(this).prependTo(parent[index]);
+            } else {
+                $(this).insertAfter(previousSibling[index]);
+            }
+        });
+
+        return coalesce(returnValue, this);
     }
 })(jQuery);
 
@@ -5973,6 +5924,111 @@ function dbFormHTMLArea(oDiv) {
     });
 })(jQuery, window, document);
 
+/* ==== jquery.statusFrame.js ==== */
+/* statusFrame plugin
+   Wraps the target in a resizable div with a status bar at the bottom
+   Listens for "message" events, and displays messages
+
+   Options: {
+   resizable: boolean, default true, is the frame resizable
+   minHeight: int, default 10, if the frame is resizable, the minimum height.
+   height: css height, default "auto", the (initial) height of the frame
+   }
+
+   Methods:
+   setNavCounter: takes an html string and sets the navCount
+   setMessage: takes an html string and sets the current message
+
+   message event handlers take 1 addition argument, which is an object as follows:
+   {
+   type: string 'error', 'notice', or 'navCount' - the type of message.
+   html: string - the message to be displayed, in html format.
+   }
+*/
+;(function($, window, undefined) {
+    $.widget('qcode.statusFrame', {
+        options: {
+            resizable: true,
+            minHeight: 10,
+            height: "auto"
+        },
+        _create: function() {
+            this.element.wrap('<div>');
+            this.statusFrame = this.element.parent()
+                .addClass('status-frame')
+                .css('height', this.options.height);
+            this.statusBar = $('<div>')
+                .addClass('status-bar')
+                .insertAfter(this.statusFrame);
+            this.messageBox = $('<span>')
+                .addClass('message')
+                .appendTo(this.statusBar);
+            this.navCounter = $('<span>')
+                .addClass('info')
+                .appendTo(this.statusBar);
+            this.handle = $('<div>')
+                .addClass('handle')
+                .prependTo(this.statusBar);
+
+            if ( this.options.resizable ) {
+                var initialHeight;
+                this._on(this.handle, {
+                    'mousedown': this._dragStart,
+                    'dragStart': function(event, data) {
+                        initialHeight = this.statusFrame.height();
+                    },
+                    'drag': function(event, data) {
+                        this.statusFrame.height(Math.max(initialHeight + data.offset, this.options.minHeight));
+                        this.statusFrame.trigger('resize');
+                    }
+                });
+            }
+            this._on({
+                'message': function(event, data) {
+                    this.messageBox.removeClass('error');
+                    switch(data.type) {
+                    case "navCount":
+                        this.setNavCounter(data.html);
+                        break;
+
+                    case "error":
+                        this.messageBox.addClass('error');
+                    case "notice":
+                    default:
+                        this.setMessage(data.html);
+                        break;
+                    }
+                }
+            });
+        },
+        setNavCounter: function(message) {
+            this.navCounter.html(message);
+        },
+        setMessage: function(message) {
+            this.messageBox.html(message);
+        },
+	_dragStart: function(event){
+	    var target = $(event.target);
+	    event.preventDefault();
+	    this._on($(window), {
+		'mousemove': this._drag.bind(this, target, event.pageY),
+		'mouseup': this._dragEnd.bind(this, target, event.pageY)
+	    });
+	    target.trigger('dragStart');
+	},
+	_drag: function(target, initialY, event){
+	    event.preventDefault();
+	    target.trigger('drag', [{
+		'offset': event.pageY - initialY
+	    }]);
+	},
+	_dragEnd: function(target, initialY, event){
+	    this._off($(window), 'mousemove mouseup');
+	    target.trigger('dragEnd');
+	}
+    });
+})(jQuery, window);
+
 /* ==== jquery.tableFilterMin.js ==== */
 // tableFilterMin - client-side table row filter based on user-defined minimum values
 ;(function(jQuery, window, undefined) {
@@ -6046,18 +6102,18 @@ function dbFormHTMLArea(oDiv) {
         buttons.each(function() {
             var button = $(this);
             var table = button.closest('table');
-            if ( table.find('.clsHighlight').length > 0 ) {
+            if ( table.find('.highlight').length > 0 ) {
                 button.removeClass('disabled');
             } else {
                 button.addClass('disabled');
             }
             button.on('click', function() {
                 if ( ! button.hasClass('disabled') ) {
-                    var rows = table.find('.clsHighlight')
+                    var rows = table.find('.highlight')
 		    if ( window.confirm("Delete these " + rows.length + " records?") ) {
                         rows.each(function(i, row) {
                             if ( $(row).dbRow('option', 'type') == 'add' && $(row).dbRow('getState') != 'dirty') {
-                                $(row).removeClass('clsHighlight');
+                                $(row).removeClass('highlight');
                                 return;
                             }
                             $(row).dbRow('delete', true);
@@ -6066,7 +6122,7 @@ function dbFormHTMLArea(oDiv) {
                 }
             });
             table.on('toggleHighlight', function(event) {
-                if ( table.find('.clsHighlight').length > 0 ) {
+                if ( table.find('.highlight').length > 0 ) {
                     button.removeClass('disabled');
                 } else {
                     button.addClass('disabled');
@@ -7123,7 +7179,7 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.textrange.js ==== */
 /* ==== jquery.textrange.js ==== */
-(function($) {
+(function($, undefined) {
     var textrange = {
         get: function(property) {
             var selectionText="";
@@ -7133,7 +7189,7 @@ function dbFormHTMLArea(oDiv) {
             var selectionEnd
             var text = this.is(':input') ?  this.val() :  this.text();
 
-            if (this.is(':input') && this[0].selectionStart != undefined) {
+            if (this.is(':input') && this[0].selectionStart !== undefined) {
                 // Standards compliant input elements
                 selectionStart = this[0].selectionStart;
                 selectionEnd = this[0].selectionEnd;
@@ -7343,9 +7399,11 @@ function dbFormHTMLArea(oDiv) {
 	},
 	getColType: function(col) {
 	    // Get the sort type of the given column
-	    if ( col.hasClass('clsNumber') || col.hasClass('clsMoney') ) {
+	    if ( col.hasClass('rank') ) {
+                return 'ranking';
+            } else if ( col.hasClass('number') || col.hasClass('money') ) {
 		return 'numeric';
-	    } else if ( col.hasClass('clsDate') ) {
+	    } else if ( col.hasClass('date') ) {
 		return 'date';
 	    } else {
 		return 'alpha';
@@ -7362,14 +7420,21 @@ function dbFormHTMLArea(oDiv) {
 	    var ascText;
 	    var descText;
 	    switch(this.options.type) {
+            case 'ranking':
+                ascText = "Sort Top to Bottom";
+                descText = "Sort Bottom to Top";
+                break;
+
 	    case 'numeric':
 		ascText = "Sort Low to High";
 		descText = "Sort High to Low";
 		break;
+
 	    case 'date':
 		ascText = "Sort Old to New";
 		descText = "Sort New to Old";
 		break;
+
 	    default:
 		ascText = "Sort A-Z";
 		descText = "Sort Z-A";
@@ -7387,7 +7452,7 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Create the menu element
 	    this.menu = $('<div>')
-		.addClass('thSortMenu')
+		.addClass('th-sort-menu')
 		.appendTo($('body'))
 		.css({
 		    'position': "absolute",
@@ -7423,9 +7488,9 @@ function dbFormHTMLArea(oDiv) {
 
     $.widget('qcode.theadFixed', {
 	options: {
-	    'wrapperClass': "theadFixed-wrapper",
-	    'scrollWrapperClass': "theadFixed-scrollWrapper",
-	    'scrollBoxClass': "theadFixed-scrollBox",
+	    'wrapperClass': "thead-fixed-wrapper",
+	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
+	    'scrollBoxClass': "thead-fixed-scroll-box",
 	    'height': "500px"
 	},
 	_create: function() {
@@ -7477,7 +7542,8 @@ function dbFormHTMLArea(oDiv) {
 		'margin-right': table.css('margin-right'),
 		'margin-bottom': table.css('margin-bottom'),
 		'margin-left': table.css('margin-left'),
-		'height': this.options.height
+		'height': this.options.height,
+                'max-height': "100%"
 	    });
 	    table.css('margin', 0);
 
@@ -7502,24 +7568,17 @@ function dbFormHTMLArea(oDiv) {
 		table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	    }
 
-	    thead.find('tr').filter(':first-child').find('th, td').css({
+            thead.css({
 		'border-top-style': table.css('border-top-style'),
 		'border-top-width': table.css('border-top-width'),
-		'border-top-color': table.css('border-top-color')
-	    });
-	    thead.find('tr').each(function(i, row){
-		var cells = $(row).find('th, td').filter(':visible');
-		cells.eq(0).css({
-		    'border-left-style': table.css('border-left-style'),
-		    'border-left-width': table.css('border-left-width'),
-		    'border-left-color': table.css('border-left-color')
-		});
-		cells.eq(-1).css({
-		    'border-right-style': table.css('border-right-style'),
-		    'border-right-width': table.css('border-right-width'),
-		    'border-right-color': table.css('border-right-color')
-		});
-	    });
+		'border-top-color': table.css('border-top-color'),
+		'border-left-style': table.css('border-left-style'),
+		'border-left-width': table.css('border-left-width'),
+		'border-left-color': table.css('border-left-color'),
+		'border-right-style': table.css('border-right-style'),
+		'border-right-width': table.css('border-right-width'),
+		'border-right-color': table.css('border-right-color')
+            });
 	    table.css('border-top-width', 0);
 
             this._on($(window), {resize: this.repaint});
@@ -7762,7 +7821,7 @@ $.fn.setObjectValue = function(value) {
 	var element = $(this);
 	if ( element.is('select, input, textarea') ) {
 	    element.val(value);
-	} else if ( element.is('.clsRadioGroup') ) {
+	} else if ( element.is('.radio-group') ) {
 		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
 	} else {
 	    element.html(value);
@@ -7808,14 +7867,21 @@ function parseBoolean(value) {
     }
 })(jQuery);
 
+function preloadImages() {
+    // Preload the images given as arguments
+    for(var i = 0; i < arguments.length; i++) {
+        (new Image()).src = arguments[i];
+    }
+}
+
 // setZeroTimeout / clearZeroTimeout
 // equivalent to setTimeout(function, 0) but uses window.postMessage to bypass browser minimum timeouts
 // In other words, schedule a function to be executed after all the other event handlers are finished
-// Does not take additional arguments (use closures instead)
+// Does not take additional arguments (to pass additional arguments to the callback, use closures instead)
 (function(window, undefined) {
     if ( window.postMessage ) {
         var timeouts = []; // Array of functions
-        var ids = {}; // Hash of keys, used by clearZeroTimeout, refernecing indices of timeouts
+        var ids = {}; // Hash of keys, used by clearZeroTimeout, referencing indices of timeouts
         var messageName = "zero-timeout-message";
         var nextID = 0;
 
@@ -7836,7 +7902,9 @@ function parseBoolean(value) {
 
         function handleMessage(event) {
             if (event.source == window && event.data == messageName) {
-                event.stopPropagation();
+                if ( event.stopPropagation ) {
+                    event.stopPropagation();
+                }
                 if (timeouts.length > 0) {
                     var fn = timeouts.shift();
                     for (index in ids) {
@@ -7847,10 +7915,17 @@ function parseBoolean(value) {
                     }
                     fn();
                 }
+                return false;
             }
         }
 
-        window.addEventListener("message", handleMessage, true);
+        if ( window.addEventListener ) {
+            window.addEventListener("message", handleMessage, true);
+        } else if ( window.attachEvent ) {
+            window.attachEvent("onmessage", handleMessage);
+        } else {
+            window.onmessage = handleMessage;
+        }
 
         window.setZeroTimeout = setZeroTimeout;
         window.clearZeroTimeout = clearZeroTimeout;
@@ -7868,10 +7943,10 @@ function parseBoolean(value) {
 function tableRowHighlight(oTable) {
     jQuery(oTable).on('click', 'tr', function(event) {
 	var target_td = jQuery(event.target).closest("td");
-	if ( jQuery(oTable).is(".clsDbGrid, .clsDbFlexGrid") && target_td.dbCell('isEditable') ) {
+	if ( jQuery(oTable).hasClass("db-grid") && target_td.dbCell('isEditable') ) {
 	    return; 
 	}
-	jQuery(this).toggleClass('clsHighlight');
+	jQuery(this).toggleClass('highlight');
         $(event.target).trigger('toggleHighlight');
     });
 }

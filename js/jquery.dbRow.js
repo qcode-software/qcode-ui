@@ -16,9 +16,6 @@
 	getCurrentCell: function() {
 	    return this.getGrid().dbGrid('getCurrentCell');
 	},
-	setStatusBarMsg: function(message) {
-	    this.getGrid().dbGrid('setStatusBarMsg',message);
-	},
 	getState: function(){
 	    return this.state;
 	},
@@ -38,6 +35,7 @@
 	    var grid = this.getGrid();
 	    var oldState = this.state;
 	    var message;
+            var messageType = 'notice';
 	    
 	    switch (newState) {
 	    case 'dirty':
@@ -46,7 +44,7 @@
 		    grid.dbGrid('createNewRow');
 		}
 		if ( oldState === 'current' || oldState === 'error' ) {
-		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('clickToSave');
+		    var span = $('<span>').text('save').click(this.save.bind(this)).addClass('action save');
 		    var message = $('<span>').text('Editing ... to ').append(span).append(', type Ctrl+S');
 		}
 		break;
@@ -58,6 +56,7 @@
 		break;
 	    case 'error': 
 		message = this.error;
+                messageType = 'error';
 		break;
 	    default:
 		$.error('Invalid state');
@@ -66,7 +65,11 @@
 
 	    this.element.removeClass("current dirty updating error");
 	    this.element.addClass(newState);
-	    this.setStatusBarMsg(message);
+            // Notify plugins such as statusFrame
+            this.element.trigger('message', [{
+                type: messageType,
+                html: message
+            }]);
 	    this.state = newState;
 	    this.getCurrentCell().dbCell('editor', 'repaint');
 	    this.element.trigger('dbRowStateChange');
@@ -80,7 +83,10 @@
 	    row.trigger('dbRowIn');
 
 	    if ( this.error ) {
-		grid.dbGrid('setStatusBarMsg', this.error);
+                this.element.trigger('message', [{
+                    type: 'error',
+                    html: this.error
+                }]);
 	    }
 	    grid.dbGrid('setNavCounter', row.index());
 	},
@@ -155,7 +161,10 @@
 		// When a record is deleted, remove it from the DOM.	
 		grid.dbGrid('removeRow',this.element)
 		grid.dbGrid('incrRecCount', -1);
-		grid.dbGrid('setStatusBarMsg','Deleted.');
+                grid.trigger('message', [{
+                    type: 'notice',
+                    html: "Deleted."
+                }]);
 		this.destroy();
 	    }
 	},
@@ -206,7 +215,10 @@
 	    // Display info message in statusBar
 	    var xmlNode = $('records > info', xmlDoc);
 	    if ( xmlNode.size() ) {
-		this.setStatusBarMsg(xmlNode.text());
+                this.element.trigger('message', [{
+                    type: 'info',
+                    html: xmlNode.text()
+                }]);
 	    }
 
 	    // Alert

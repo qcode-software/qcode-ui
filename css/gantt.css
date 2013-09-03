@@ -1,8 +1,8 @@
-.ganttChart.wrapper {
+.gantt-chart.wrapper {
     position: relative;
-    padding: 0.1px;
+    padding: 0.1px; /*padding hack to prevent collapsing margins*/
 }
-.ganttChart .calendarFrame {
+.gantt-chart .calendarFrame {
     position: absolute;
     overflow-x: scroll;
     overflow-y: auto;

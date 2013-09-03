@@ -1,5 +1,5 @@
 /* ==== jquery.textrange.js ==== */
-(function($) {
+(function($, undefined) {
     var textrange = {
         get: function(property) {
             var selectionText="";
@@ -9,7 +9,7 @@
             var selectionEnd
             var text = this.is(':input') ?  this.val() :  this.text();
 
-            if (this.is(':input') && this[0].selectionStart != undefined) {
+            if (this.is(':input') && this[0].selectionStart !== undefined) {
                 // Standards compliant input elements
                 selectionStart = this[0].selectionStart;
                 selectionEnd = this[0].selectionEnd;

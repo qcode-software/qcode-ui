@@ -1,0 +1,33 @@
+/* css for statusFrame plugin */
+.status-frame {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+.status-bar {
+    position: relative;
+    min-height: 1em;
+}
+.status-bar:after {
+    /* clearfix - contents are floating */
+    display: block;
+    clear: both;
+    content: "";
+}
+.status-bar .message {
+    padding: 3px;
+    float: left;
+}
+.status-bar .info {
+    padding: 3px;
+    text-align: right;
+    float:right;
+}
+.status-bar .handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+    height: 10px;
+    cursor: ns-resize;
+    z-index: 10;
+}

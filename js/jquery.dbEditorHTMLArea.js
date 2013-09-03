@@ -21,7 +21,7 @@
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
-		.addClass('dbEditorHTMLArea')
+		.addClass('db-editor html-area')
 		.appendTo(this.element)
 		.css({
 		    'overflow': "auto",

@@ -3,9 +3,9 @@
 
     $.widget('qcode.theadFixed', {
 	options: {
-	    'wrapperClass': "theadFixed-wrapper",
-	    'scrollWrapperClass': "theadFixed-scrollWrapper",
-	    'scrollBoxClass': "theadFixed-scrollBox",
+	    'wrapperClass': "thead-fixed-wrapper",
+	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
+	    'scrollBoxClass': "thead-fixed-scroll-box",
 	    'height': "500px"
 	},
 	_create: function() {
@@ -57,7 +57,8 @@
 		'margin-right': table.css('margin-right'),
 		'margin-bottom': table.css('margin-bottom'),
 		'margin-left': table.css('margin-left'),
-		'height': this.options.height
+		'height': this.options.height,
+                'max-height': "100%"
 	    });
 	    table.css('margin', 0);
 
@@ -82,24 +83,17 @@
 		table.children('tr:first-child').children('th, td').css('border-top-width', 0);
 	    }
 
-	    thead.find('tr').filter(':first-child').find('th, td').css({
+            thead.css({
 		'border-top-style': table.css('border-top-style'),
 		'border-top-width': table.css('border-top-width'),
-		'border-top-color': table.css('border-top-color')
-	    });
-	    thead.find('tr').each(function(i, row){
-		var cells = $(row).find('th, td').filter(':visible');
-		cells.eq(0).css({
-		    'border-left-style': table.css('border-left-style'),
-		    'border-left-width': table.css('border-left-width'),
-		    'border-left-color': table.css('border-left-color')
-		});
-		cells.eq(-1).css({
-		    'border-right-style': table.css('border-right-style'),
-		    'border-right-width': table.css('border-right-width'),
-		    'border-right-color': table.css('border-right-color')
-		});
-	    });
+		'border-top-color': table.css('border-top-color'),
+		'border-left-style': table.css('border-left-style'),
+		'border-left-width': table.css('border-left-width'),
+		'border-left-color': table.css('border-left-color'),
+		'border-right-style': table.css('border-right-style'),
+		'border-right-width': table.css('border-right-width'),
+		'border-right-color': table.css('border-right-color')
+            });
 	    table.css('border-top-width', 0);
 
             this._on($(window), {resize: this.repaint});

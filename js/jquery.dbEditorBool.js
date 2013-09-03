@@ -21,7 +21,7 @@
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
-		.addClass('dbEditorBool')
+		.addClass('db-editor boolean')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute"
@@ -98,11 +98,11 @@
 	    this.editor.remove();
 	},
 	setTrue: function() {
-	    this.editor.html('<span class=clsTrue>Yes</span>');
+	    this.editor.html('<span class=true>Yes</span>');
             this.currentElement.trigger('editorValueChange');
 	},
 	setFalse: function() {
-	    this.editor.html('<span class=clsFalse>No</span>');
+	    this.editor.html('<span class=false>No</span>');
             this.currentElement.trigger('editorValueChange');
 	},
 	_onResize: function(event) {

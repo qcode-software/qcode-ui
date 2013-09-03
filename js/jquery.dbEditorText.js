@@ -20,7 +20,7 @@
 		'resize': this.repaint
 	    });
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorText')
+		.addClass('db-editor text')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute", 

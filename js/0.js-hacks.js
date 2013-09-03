@@ -33,7 +33,7 @@ if (!Object.create) {
         var object = new F();
         if (arguments.length > 1) {
             console.warn('Object.create implementation incomplete');
-            jQuery.extent(object, o);
+            jQuery.extend(object, o);
         }
         return object;
     };

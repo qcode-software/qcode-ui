@@ -21,7 +21,7 @@
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
-		.addClass('dbEditorTextArea')
+		.addClass('db-editor text-area')
 		.css({
 		    'position': "absolute", 
 		    'resize': "none", 

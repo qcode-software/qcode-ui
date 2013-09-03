@@ -155,7 +155,7 @@ $.fn.setObjectValue = function(value) {
 	var element = $(this);
 	if ( element.is('select, input, textarea') ) {
 	    element.val(value);
-	} else if ( element.is('.clsRadioGroup') ) {
+	} else if ( element.is('.radio-group') ) {
 		element.find('[name="'+element.prop('name')+'"][value="'+value+'"]').val(true);
 	} else {
 	    element.html(value);
@@ -201,6 +201,13 @@ function parseBoolean(value) {
     }
 })(jQuery);
 
+function preloadImages() {
+    // Preload the images given as arguments
+    for(var i = 0; i < arguments.length; i++) {
+        (new Image()).src = arguments[i];
+    }
+}
+
 // setZeroTimeout / clearZeroTimeout
 // equivalent to setTimeout(function, 0) but uses window.postMessage to bypass browser minimum timeouts
 // In other words, schedule a function to be executed after all the other event handlers are finished
@@ -229,7 +236,9 @@ function parseBoolean(value) {
 
         function handleMessage(event) {
             if (event.source == window && event.data == messageName) {
-                event.stopPropagation();
+                if ( event.stopPropagation ) {
+                    event.stopPropagation();
+                }
                 if (timeouts.length > 0) {
                     var fn = timeouts.shift();
                     for (index in ids) {
@@ -240,10 +249,17 @@ function parseBoolean(value) {
                     }
                     fn();
                 }
+                return false;
             }
         }
 
-        window.addEventListener("message", handleMessage, true);
+        if ( window.addEventListener ) {
+            window.addEventListener("message", handleMessage, true);
+        } else if ( window.attachEvent ) {
+            window.attachEvent("onmessage", handleMessage);
+        } else {
+            window.onmessage = handleMessage;
+        }
 
         window.setZeroTimeout = setZeroTimeout;
         window.clearZeroTimeout = clearZeroTimeout;

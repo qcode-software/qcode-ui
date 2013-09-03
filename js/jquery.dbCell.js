@@ -1,4 +1,7 @@
-(function($, window, document, undefined){
+// ============================================================
+// dbCell plugin - a single table gell in a database grid
+// ============================================================
+;(function($, window, document, undefined){
     $.widget("qcode.dbCell", {
         options: {
             deleteKey: 'delete'
@@ -60,9 +63,9 @@
 
             } else if ( cellType === "bool" ) {
 		if ( parseBoolean(value) ) {
-		    this.element.html("<span class='clsTrue'>Yes</span>");
+		    this.element.html("<span class='true'>Yes</span>");
 		} else {
-		    this.element.html("<span class='clsFalse'>No</span>");
+		    this.element.html("<span class='false'>No</span>");
 		}
 
 	    } else if ( this.element.is(':input') ) {
@@ -83,8 +86,8 @@
 	    if ( row.dbRow('getState') === 'updating' ) {
 		return false;
 	    } 
-	    // Is the column visible
-	    if ( col.hasClass('clsHidden') ) {
+	    // Is the cell visible/hidden
+	    if ( ! this.element.is(':visible') ) {
 		return false;
 	    }
 	    // No name defined
@@ -165,13 +168,13 @@
 		// cancel any delayed save and save immediately
 		this._cancelDelayedSave();
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 		break;	    
 	    case 'onCellOut': 
 		// save immediately
 		if (row.dbRow('getState') === 'dirty') {
-		    row.dbRow('save',false);
+		    row.dbRow('save');
 		}
 	    }
 	},

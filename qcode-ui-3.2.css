@@ -24,14 +24,14 @@
 */
 
 /* ==== columnsShowHideControl.css ==== */
-.columnsShowHideToolbar .title {
+.columns-show-hide-toolbar .title {
     font-size:120%;
     font-weight:bold;
     margin-bottom: 10px;
     line-height: 1.5em;
     white-space:nowrap;
 }
-.columnsShowHideControl {
+.columns-show-hide-control {
     display:inline-block;
     float:left;
     width:100px;
@@ -43,7 +43,7 @@
     line-height: 1.5em;
     margin-bottom: 8px;
 }
-.columnsShowHideControlDivider {
+.columns-show-hide-control-divider {
     display:inline-block;
     float:left;
     width:2px;
@@ -53,40 +53,40 @@
     margin-right:8px;
     margin-bottom: 8px;
 }
-.columnsShowHideControl label {
+.columns-show-hide-control label {
     float: left;
     color: blue;
 }
-.columnsShowHideControl input {
+.columns-show-hide-control input {
     float: right;
-    vertical-align: center;
+    vertical-align: middle;
  }
-.columnsShowHideControl.checked {
+.columns-show-hide-control.checked {
     background: #ece9d8;
 }
-.columnsShowHideControl.hover, .colHighlight {
+.columns-show-hide-control.hover, col.highlight {
     background: #ffffdd;
 }
-.columnsShowHideControl.checked.hover {
+.columns-show-hide-control.checked.hover {
     background: #ffffcd;
 }
 
 
 /* ==== dbEditorCombo.css ==== */
-.dbEditorComboOptions {
+.options-container {
     height:150px;
 }
 
-.dbEditorComboOptions div.selected {
+.options-container div.selected {
     background-color:lightgrey;
 }
 
 /* ==== gantt.css ==== */
-.ganttChart.wrapper {
+.gantt-chart.wrapper {
     position: relative;
-    padding: 0.1px;
+    padding: 0.1px; /*padding hack to prevent collapsing margins*/
 }
-.ganttChart .calendarFrame {
+.gantt-chart .calendarFrame {
     position: absolute;
     overflow-x: scroll;
     overflow-y: auto;
@@ -97,29 +97,29 @@
 }
 
 /* ==== hoverScroller.css ==== */
-.hoverScrollerContainer {
+.hover-scroller-container {
     position: relative;
 }
-.hoverScrollerContainer .scroller {
+.hover-scroller-container .scroller {
     position: absolute;
     left: 0;
     right: 0;
     height: 25px;
     z-index: 200;
 }
-.hoverScrollerContainer .down.scroller {
+.hover-scroller-container .down.scroller {
     bottom: 0;
     opacity: 0.1;
     background: url("../images/down.png") no-repeat center black;
 }
-.hoverScrollerContainer .up.scroller {
+.hover-scroller-container .up.scroller {
     top: 0;
     display: none;
     background: url("../images/up.png") no-repeat top center black;
 }
 
 /* ==== imageCombo.css ==== */
-.imageWrapper {
+.image-wrapper {
     display: table-cell;
 }
 
@@ -148,12 +148,47 @@
     z-index: 10;
 }
 
+/* ==== statusFrame.css ==== */
+/* css for statusFrame plugin */
+.status-frame {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+.status-bar {
+    position: relative;
+    min-height: 1em;
+}
+.status-bar:after {
+    /* clearfix - contents are floating */
+    display: block;
+    clear: both;
+    content: "";
+}
+.status-bar .message {
+    padding: 3px;
+    float: left;
+}
+.status-bar .info {
+    padding: 3px;
+    text-align: right;
+    float:right;
+}
+.status-bar .handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+    height: 10px;
+    cursor: ns-resize;
+    z-index: 10;
+}
+
 /* ==== thSortMenu.css ==== */
-span.clsSort {
+span.sort {
     color: blue;
     cursor: pointer;
 }
-.thSortMenu {
+.th-sort-menu {
     background: white;
     border: solid 1px #aca899;
     padding-top: 2px;
@@ -161,10 +196,10 @@ span.clsSort {
     padding-left: 15px;
     padding-right: 15px;
 }
-.thSortMenu a {
+.th-sort-menu a {
     display: block;
 }
-.thSortMenu a + a {
+.th-sort-menu a + a {
     margin-top: 4px;
 }
 

@@ -37,12 +37,12 @@
             this.drawTimeout = undefined;
 
             // Wrap the whole thing in a div
-            this.table.wrap('<div class="ganttChart wrapper">');
+            this.table.wrap('<div class="gantt-chart wrapper">');
             this.wrapper = this.table.parent();
             this.wrapper.css('width', this.options.width);
 
             // Create a scrolling window for the calendar
-            this.calendarFrame = $('<div class="calendarFrame">')
+            this.calendarFrame = $('<div class="calendar-frame">')
                 .css({
                     left: this.table.outerWidth(),
                     right: 0,
@@ -349,7 +349,7 @@
     // ============================================================
     // class Task
     // extends jQuery.qcode.calendar.Bar
-    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependancies
+    // A horizontal bar representing a single task, provides row highlighting and draws lines to dependencies
     // Takes dependencies and dependents as arrays of objects with properties "date" and "verticalPosition"
     // ============================================================
     // Wait for first instantiation to initialise the class, to ensure the superclass is initialised first

@@ -28,7 +28,7 @@
 	    });
 
 	    this.editor = $('<input type="text">')
-		.addClass('dbEditorCombo')
+		.addClass('db-editor combo')
 		.appendTo(this.element)
 		.css({
 		    'position': "absolute",
@@ -50,7 +50,7 @@
 	    });
 
 	    this.comboOptions = $('<div>')
-		.addClass('dbEditorComboOptions')
+		.addClass('options-container')
 		.appendTo(this.element)
 		.css({
 		    'position':'absolute',

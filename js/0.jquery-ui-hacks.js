@@ -1,6 +1,6 @@
-(function($) {
+;(function($) {
     if ( $.isFunction($.widget) ) {
-	var slice = Array.prototype.slice
+	var slice = Array.prototype.slice;
 
 	$.widget.bridge = function( name, object ) {
 	    var fullName = object.prototype.widgetFullName || name;
