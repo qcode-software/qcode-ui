@@ -5,7 +5,7 @@
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	options: {
-	    saveType: "recordOut"
+	    saveType: "recordOut" /*recordOut or fieldOut*/
 	},
 	_create: function(){
 	    // check saveType attr

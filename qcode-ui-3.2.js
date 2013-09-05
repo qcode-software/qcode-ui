@@ -433,8 +433,9 @@ function dynamicResize(oContainer) {
 	    var link = $(this);
 	    if ( ( ! link.is('.disabled')) && link.attr('href') ) {
 	        var url = link.attr('href');
+                var text = 'Are you sure you want to ' + coalesce(link.attr('title'), link.text()) + '?';
 	        $('<div>')
-		    .text('Are you sure you want to ' + link.text() + '?')
+		    .text(text)
 		    .dialog({
 		        title: link.text(),
 		        buttons: {
@@ -4410,7 +4411,7 @@ function dbFormHTMLArea(oDiv) {
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	options: {
-	    saveType: "recordOut"
+	    saveType: "recordOut" /*recordOut or fieldOut*/
 	},
 	_create: function(){
 	    // check saveType attr

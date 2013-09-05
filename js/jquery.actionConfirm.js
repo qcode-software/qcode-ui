@@ -6,8 +6,9 @@
 	    var link = $(this);
 	    if ( ( ! link.is('.disabled')) && link.attr('href') ) {
 	        var url = link.attr('href');
+                var text = 'Are you sure you want to ' + coalesce(link.attr('title'), link.text()) + '?';
 	        $('<div>')
-		    .text('Are you sure you want to ' + link.text() + '?')
+		    .text(text)
 		    .dialog({
 		        title: link.text(),
 		        buttons: {

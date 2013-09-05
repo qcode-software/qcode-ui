@@ -39,11 +39,11 @@
             this.navCounter = $('<span>')
                 .addClass('info')
                 .appendTo(this.statusBar);
-            this.handle = $('<div>')
-                .addClass('handle')
-                .prependTo(this.statusBar);
 
             if ( this.options.resizable ) {
+                this.handle = $('<div>')
+                    .addClass('handle')
+                    .prependTo(this.statusBar);
                 var initialHeight;
                 this._on(this.handle, {
                     'mousedown': this._dragStart,
