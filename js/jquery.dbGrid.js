@@ -258,6 +258,7 @@
 	    row.dbRow({'type': 'update'});
 
 	    this.tbody.append(row);
+            row.trigger('resize');
 	    return row;
 	},
 	createNewRow: function(){
@@ -283,6 +284,7 @@
 	    row.dbRow({'type': 'add'});
 
 	    this.tbody.append(row);
+            row.trigger('resize');
 	    return row;
 	},
 	requery: function(data, url){

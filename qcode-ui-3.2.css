@@ -86,7 +86,7 @@
     position: relative;
     padding: 0.1px; /*padding hack to prevent collapsing margins*/
 }
-.gantt-chart .calendarFrame {
+.gantt-chart .calendar-frame {
     position: absolute;
     overflow-x: scroll;
     overflow-y: auto;
@@ -203,4 +203,40 @@ span.sort {
     margin-top: 4px;
 }
 
+
+/* ==== theadFixed.css ==== */
+.thead-fixed-wrapper {
+    position: relative;
+    max-height: 100%;
+}
+.thead-fixed-wrapper .scroll-wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.thead-fixed-wrapper .scroll-box {
+    position: static;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+}
+
+.thead-fixed-wrapper:not(.repainting) table {
+    display: inline-block;
+}
+
+.thead-fixed-wrapper:not(.repainting) thead,
+.thead-fixed-wrapper:not(.repainting) tbody,
+.thead-fixed-wrapper:not(.repainting) tfoot {
+    display: table;
+    table-layout: fixed;
+    width: 0px;
+}
+
+.thead-fixed-wrapper:not(.repainting) thead {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+}
 

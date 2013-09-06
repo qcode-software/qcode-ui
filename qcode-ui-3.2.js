@@ -913,12 +913,16 @@ function dynamicResize(oContainer) {
             var th = $(this);
             var index = th.index();
             var table = th.closest('table');
+            var tableCSS = table.scopedCSS();
+            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
+            hashValueSet(tableCSS, colSelector, 'width', col.width() + "px");
+            col.css('width', '');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                th.add(cells).add(col).css('white-space', "nowrap");
+                hashValueSet(tableCSS, colSelector, 'white-space', "nowrap");
             case 'shrink':
                 th.add(cells).add(col).each(function() {
                     $(this).data('original-font-size', parseInt($(this).css('font-size')));
@@ -935,33 +939,39 @@ function dynamicResize(oContainer) {
             th.resizable({
                 handles: "e",
                 resize: onResize
-            });                
+            });
+            table.scopedCSS(tableCSS);
         });
 
         function onResize(e, ui) {
             var th = $(this);
+            th.css('width', '');
             var index = th.index();
             var table = th.closest('table');
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
+            var tableCSS = table.scopedCSS();
 
             switch ( options.overflow ) {
             case 'break-word':
-                th.add(cells).add(col).css('word-break', 'normal');
-                th.add(col).add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'word-break', 'normal');
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    th.add(cells).add(col).css('word-break', 'break-all');
+                    hashValueSet(tableCSS, colSelector, 'word-break', 'break-all');
                 }
+                table.scopedCSS(tableCSS);
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                th.add(col).add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
                 th.add(cells).add(col).each(function() {
                     $(this).css('font-size', $(this).data('original-font-size'));
                 });
                 
                 var tooSmall = false;
+                table.scopedCSS(tableCSS);
                 while ( th.width() > ui.size.width && ! tooSmall ) {
                     th.add(cells).add(col).each(function() {
                         var fontSize = parseInt($(this).css('font-size')) - 1;
@@ -975,7 +985,8 @@ function dynamicResize(oContainer) {
                 break;
 
             default:
-                col.add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
+                table.scopedCSS(tableCSS);
                 break;
             }
             event.stopPropagation;
@@ -4010,6 +4021,7 @@ function dbFormHTMLArea(oDiv) {
 	    row.dbRow({'type': 'update'});
 
 	    this.tbody.append(row);
+            row.trigger('resize');
 	    return row;
 	},
 	createNewRow: function(){
@@ -4035,6 +4047,7 @@ function dbFormHTMLArea(oDiv) {
 	    row.dbRow({'type': 'add'});
 
 	    this.tbody.append(row);
+            row.trigger('resize');
 	    return row;
 	},
 	requery: function(data, url){
@@ -5829,6 +5842,77 @@ function dbFormHTMLArea(oDiv) {
     }
 })(jQuery);
 
+/* ==== jquery.scopedCSS.js ==== */
+/*
+scopedCSS plugin
+
+Append css rules to the page, scoped to affect descendants of the target element(s)
+Subsequent calls to scopedCSS on the same element will erase previously set styles;
+Call with no arguments to retrieve previosly set styles
+Uses an id selector to control scope, provides an id if none exists.
+
+Example:
+$('table').scopedCSS({
+    'td:nth-child(3)': {
+        'color': 'black',
+        'font-weight': 'bold'
+    }
+    'td:nth-child(2)': {
+        'color': 'red'
+    }
+});
+*/
+
+// Plugin start
+;(function($, undefined) {
+    var nextID = 0;
+
+    $.fn.scopedCSS = function(rules) {
+        // Called with no arguments - return the rules object
+        if ( rules === undefined ) {
+            var styleBlock = this.first().data('scopedCSSstyleBlock');
+            if ( styleBlock !== undefined ) {
+                return styleBlock.data('scopedCSSrules');
+            } else {
+                return {};
+            }
+        }
+
+        // Called with a rules object, iterate over target elements.
+        this.each(function() {
+            var element = $(this);
+
+            // Assign a unique ID if none exists
+            if ( element.attr('id') === undefined ) {
+                element.attr('id', 'scopedCSS_ID_' + (nextID++));
+            }
+            var id = $(element).attr('id');
+
+            // Create a style element and append to head (once only per element)
+            if ( element.data('scopedCSSstyleBlock') === undefined ) {
+                element.data('scopedCSSstyleBlock', $('<style>').appendTo('head'));
+            }
+            var styleBlock = element.data('scopedCSSstyleBlock');
+
+            // Store a copy of the rules object for retrieval later
+            styleBlock.data('scopedCSSrules', $.extend({}, rules));
+
+            // Set the innerHTML of the style element
+            var css = "";
+            $.each(rules, function(selector, declarations) {
+                var declarationString = "";
+                $.each(declarations, function(attribute, value) {
+                    declarationString = declarationString + attribute + ': ' + value + ';\n';
+                });
+                css = css + '#' + id + ' ' + selector + ' { ' + declarationString + ' }\n';
+            });
+            styleBlock.html(css);
+        });
+
+        return this;
+    }
+})(jQuery);
+
 /* ==== jquery.sidebar.js ==== */
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
 ;(function($, window, document, undefined){
@@ -5967,11 +6051,11 @@ function dbFormHTMLArea(oDiv) {
             this.navCounter = $('<span>')
                 .addClass('info')
                 .appendTo(this.statusBar);
-            this.handle = $('<div>')
-                .addClass('handle')
-                .prependTo(this.statusBar);
 
             if ( this.options.resizable ) {
+                this.handle = $('<div>')
+                    .addClass('handle')
+                    .prependTo(this.statusBar);
                 var initialHeight;
                 this._on(this.handle, {
                     'mousedown': this._dragStart,
@@ -7484,10 +7568,76 @@ function dbFormHTMLArea(oDiv) {
 })(jQuery, window);
 
 /* ==== jquery.theadFixed.js ==== */
+;(function($, undefined) {
+    $.widget('qcode.theadFixed', {
+	options: {
+	    'height': "500px"
+	},
+	_create: function() {
+            this.table = this.element;
+            this.thead = this.element.children('thead');
+            this.headerCells = this.thead.children('tr').first().children('th');
+
+            this.table.wrap('<div>');
+
+            this.scrollBox = this.table.parent()
+                .addClass('scroll-box')
+                .wrap('<div>');
+
+            this.scrollWrapper = this.scrollBox.parent()
+                .addClass('scroll-wrapper')
+                .wrap('<div>')
+                .css({
+                    top: this.thead.outerHeight() + "px"
+                });
+
+            this.wrapper = this.scrollWrapper.parent()
+                .addClass('thead-fixed-wrapper')
+                .css({
+                    height: this.options.height
+                });
+
+            this.repaint();
+            this.table.find('col, th, td').css('width', '');
+	},
+	repaint: function() {
+            this.wrapper.addClass('repainting');
+
+            var scopedCSS = this.table.scopedCSS();
+            hashValueSet(scopedCSS, 'th, td', 'box-sizing', 'border-box');
+
+            this.headerCells.each(function(i, th) {
+                var width = $(th).outerWidth();
+                hashValueSet(scopedCSS, 'th:nth-child('+(i+1)+')', 'width', width + "px");
+                hashValueSet(scopedCSS, 'td:nth-child('+(i+1)+')', 'width', width + "px");
+            });
+
+            this.wrapper.css('min-width', (this.thead.outerWidth() + 20) + "px");
+
+            this.table.scopedCSS(scopedCSS);
+
+            this.wrapper.removeClass('repainting');
+	},
+	getWrapper: function() {
+	    return this.wrapper;
+	},
+	getScrollWrapper: function() {
+	    return this.scrollWrapper;
+	},
+	getScrollBox: function() {
+	    return this.scrollBox;
+	},
+	getTable: function() {
+	    return this.table;
+	}
+    });
+})(jQuery);
+
+/* ==== jquery.theadFixed_old.js ==== */
 (function($, undefined) {
     var scrollBarWidth = 18;
 
-    $.widget('qcode.theadFixed', {
+    $.widget('qcode.theadFixedOld', {
 	options: {
 	    'wrapperClass': "thead-fixed-wrapper",
 	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
@@ -7939,6 +8089,25 @@ function preloadImages() {
         }
     }
 })(window);
+
+function hashValueSet() {
+    if ( arguments.length < 3 ) {
+        $.error("Invalid usage of hashValueSet: requires at least 3 arguments");
+    }
+    var object = arguments[0];
+    var key = arguments[1];
+    if ( arguments.length == 3 ) {
+        object[key] = arguments[2];
+    } else {
+        if ( typeof object[key] == "undefined" ) {
+            object[key] = {};
+        }
+        var args = Array.prototype.slice.call(arguments, 2);
+        args.unshift(object[key]);
+        hashValueSet.apply(this, args);
+    }
+    return object;
+}
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {

@@ -16,12 +16,16 @@
             var th = $(this);
             var index = th.index();
             var table = th.closest('table');
+            var tableCSS = table.scopedCSS();
+            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
+            hashValueSet(tableCSS, colSelector, 'width', col.width() + "px");
+            col.css('width', '');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                th.add(cells).add(col).css('white-space', "nowrap");
+                hashValueSet(tableCSS, colSelector, 'white-space', "nowrap");
             case 'shrink':
                 th.add(cells).add(col).each(function() {
                     $(this).data('original-font-size', parseInt($(this).css('font-size')));
@@ -38,33 +42,39 @@
             th.resizable({
                 handles: "e",
                 resize: onResize
-            });                
+            });
+            table.scopedCSS(tableCSS);
         });
 
         function onResize(e, ui) {
             var th = $(this);
+            th.css('width', '');
             var index = th.index();
             var table = th.closest('table');
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
+            var tableCSS = table.scopedCSS();
 
             switch ( options.overflow ) {
             case 'break-word':
-                th.add(cells).add(col).css('word-break', 'normal');
-                th.add(col).add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'word-break', 'normal');
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    th.add(cells).add(col).css('word-break', 'break-all');
+                    hashValueSet(tableCSS, colSelector, 'word-break', 'break-all');
                 }
+                table.scopedCSS(tableCSS);
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                th.add(col).add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
                 th.add(cells).add(col).each(function() {
                     $(this).css('font-size', $(this).data('original-font-size'));
                 });
                 
                 var tooSmall = false;
+                table.scopedCSS(tableCSS);
                 while ( th.width() > ui.size.width && ! tooSmall ) {
                     th.add(cells).add(col).each(function() {
                         var fontSize = parseInt($(this).css('font-size')) - 1;
@@ -78,7 +88,8 @@
                 break;
 
             default:
-                col.add(cells).width(ui.size.width);
+                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
+                table.scopedCSS(tableCSS);
                 break;
             }
             event.stopPropagation;

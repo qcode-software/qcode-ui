@@ -272,3 +272,22 @@ function preloadImages() {
         }
     }
 })(window);
+
+function hashValueSet() {
+    if ( arguments.length < 3 ) {
+        $.error("Invalid usage of hashValueSet: requires at least 3 arguments");
+    }
+    var object = arguments[0];
+    var key = arguments[1];
+    if ( arguments.length == 3 ) {
+        object[key] = arguments[2];
+    } else {
+        if ( typeof object[key] == "undefined" ) {
+            object[key] = {};
+        }
+        var args = Array.prototype.slice.call(arguments, 2);
+        args.unshift(object[key]);
+        hashValueSet.apply(this, args);
+    }
+    return object;
+}
