@@ -35,7 +35,13 @@
 	    var grid = this.getGrid();
 	    var editorDiv = grid.dbGrid('getEditorDiv');
 	    var editorPluginName = this.getEditorPluginName();
-	    return $.fn[editorPluginName].apply(editorDiv, arguments);
+
+            if ( editorDiv.data(editorPluginName) === undefined && this.getType() === "htmlarea") {
+                // Initialise htmlarea editor with desired tab on return behaviour
+                // TODO: Make this customizable for each column of a dbGrid
+                $.fn[editorPluginName].apply(editorDiv, ['option', 'tab_on_return', true]);
+            }
+            return $.fn[editorPluginName].apply(editorDiv, arguments);
 	},
 	getValue: function(){
 	    var cellType = this.getType();
