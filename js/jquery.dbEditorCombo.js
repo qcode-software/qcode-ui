@@ -10,7 +10,7 @@
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // css attributes to copy from the editor to the options div when it is shown
     var copyOptionsAttributes = ['backgroundColor',
@@ -34,9 +34,6 @@
 		    'position': "absolute",
 		    'background': "white",
 		    'overflow': "visible",
-		    '-moz-box-sizing': "content-box",
-		    '-ms-box-sizing': "content-box",
-		    'box-sizing': "content-box",
 		    'z-index': 1
 		})
 		.hide();

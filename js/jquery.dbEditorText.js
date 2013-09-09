@@ -10,7 +10,7 @@
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorText', {
@@ -25,10 +25,7 @@
 		.css({
 		    'position': "absolute", 
 		    'background': "white", 
-		    'overflow': "visible", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
+		    'overflow': "visible",
 		    'z-index': 1
 		})
 		.hide();

@@ -899,7 +899,7 @@ function dynamicResize(oContainer) {
 // Uses jQuery UI resizable, but resizes the entire column
 // If the content does not fit the column, use behaviour defined by overflow options:
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
-// - shrink: reduce the font size (down to min-font-size) until the content fits.
+// - shrink: reduce the font size (down to min-font-size) until the content fits. Supports only a single font size for the column.
 // - shrink-one-line (default): as shrink, but force no wrapping
 // - break-word: force word break to try and make the content fit.
 ;(function($, undefined) {
@@ -913,20 +913,17 @@ function dynamicResize(oContainer) {
             var th = $(this);
             var index = th.index();
             var table = th.closest('table');
-            var tableCSS = table.scopedCSS();
-            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
-            var col = table.find('col').filter(':nth-child('+(index+1)+')');
-            hashValueSet(tableCSS, colSelector, 'width', col.width() + "px");
-            col.css('width', '');
-            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
+            var nth = ':nth-child('+(index+1)+')';
+
+            var colSelector = 'col' + nth + ', td' + nth + ', th' + nth;
+
+            table.scopedCSS('col' + nth, 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                hashValueSet(tableCSS, colSelector, 'white-space', "nowrap");
+                table.scopedCSS(colSelector, 'white-space', "nowrap");
             case 'shrink':
-                th.add(cells).add(col).each(function() {
-                    $(this).data('original-font-size', parseInt($(this).css('font-size')));
-                });
+                th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
             case 'normal':
             case 'break-word':
@@ -940,56 +937,57 @@ function dynamicResize(oContainer) {
                 handles: "e",
                 resize: onResize
             });
-            table.scopedCSS(tableCSS);
         });
 
         function onResize(e, ui) {
             var th = $(this);
             th.css('width', '');
+
             var index = th.index();
             var table = th.closest('table');
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
             var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
-            var tableCSS = table.scopedCSS();
 
             switch ( options.overflow ) {
             case 'break-word':
-                hashValueSet(tableCSS, colSelector, 'word-break', 'normal');
-                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
+                table.scopedCSS(colSelector, {
+                    'word-break': "normal",
+                    'width': ui.size.width + "px"
+                });
                 if ( th.width() > ui.size.width ) {
-                    hashValueSet(tableCSS, colSelector, 'word-break', 'break-all');
+                    table.scopedCSS(colSelector, 'word-break', 'break-all');
                 }
-                table.scopedCSS(tableCSS);
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
-                th.add(cells).add(col).each(function() {
-                    $(this).css('font-size', $(this).data('original-font-size'));
-                });
-                
-                var tooSmall = false;
-                table.scopedCSS(tableCSS);
-                while ( th.width() > ui.size.width && ! tooSmall ) {
-                    th.add(cells).add(col).each(function() {
-                        var fontSize = parseInt($(this).css('font-size')) - 1;
-                        if (fontSize < options['min-font-size']) {
-                            tooSmall = true;
-                        } else {
-                            $(this).css('font-size', fontSize);
-                        }
-                    });
+                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+
+                var fontSize = th.data('original-font-size');
+                table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+
+                var width = th.width();
+                var lastChangeFontSize = fontSize;
+                while ( width > ui.size.width ) {
+                    fontSize--;
+                    if (fontSize < options['min-font-size']) {
+                        break;
+                    }
+                    table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+                    if ( th.width() < width ) {
+                        lastChangeFontSize = fontSize;
+                    }
+                    width = th.width();
                 }
+                table.scopedCSS(colSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
 
             default:
-                hashValueSet(tableCSS, colSelector, 'width', ui.size.width + "px");
-                table.scopedCSS(tableCSS);
+                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
                 break;
             }
-            event.stopPropagation;
+            event.stopPropagation();
             table.trigger('resize');
         }
         return this;
@@ -1627,7 +1625,7 @@ function dynamicResize(oContainer) {
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorBool', {
@@ -1851,7 +1849,7 @@ function dynamicResize(oContainer) {
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // css attributes to copy from the editor to the options div when it is shown
     var copyOptionsAttributes = ['backgroundColor',
@@ -1875,9 +1873,6 @@ function dynamicResize(oContainer) {
 		    'position': "absolute",
 		    'background': "white",
 		    'overflow': "visible",
-		    '-moz-box-sizing': "content-box",
-		    '-ms-box-sizing': "content-box",
-		    'box-sizing': "content-box",
 		    'z-index': 1
 		})
 		.hide();
@@ -2225,7 +2220,7 @@ function dynamicResize(oContainer) {
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width'];
+			  'width', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorHTMLArea', {
@@ -2451,7 +2446,7 @@ function dynamicResize(oContainer) {
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorText', {
@@ -2466,10 +2461,7 @@ function dynamicResize(oContainer) {
 		.css({
 		    'position': "absolute", 
 		    'background': "white", 
-		    'overflow': "visible", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
+		    'overflow': "visible",
 		    'z-index': 1
 		})
 		.hide();
@@ -2648,7 +2640,7 @@ function dynamicResize(oContainer) {
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget( 'qcode.dbEditorTextArea', {
@@ -2662,10 +2654,7 @@ function dynamicResize(oContainer) {
 		.addClass('db-editor text-area')
 		.css({
 		    'position': "absolute", 
-		    'resize': "none", 
-		    '-moz-box-sizing': "content-box", 
-		    '-ms-box-sizing': "content-box", 
-		    'box-sizing': "content-box", 
+		    'resize': "none",
 		    'overflow': "auto"
 		})
 		.hide();
@@ -5847,11 +5836,27 @@ function dbFormHTMLArea(oDiv) {
 scopedCSS plugin
 
 Append css rules to the page, scoped to affect descendants of the target element(s)
-Subsequent calls to scopedCSS on the same element will erase previously set styles;
-Call with no arguments to retrieve previosly set styles
+
+Accepts a single object mapping selectors to objects mapping css properties to values,
+or a string selector followed by an object mapping css properties to values,
+or a selector, followed by a css property name, followed by a value,
+or call with no arguments to retrieve previously set styles,
+or with an empty string to remove all scoped css set for this element.
+
+New values will overwite old values, use an empty string to remove.
 Uses an id selector to control scope, provides an id if none exists.
 
-Example:
+Examples:
+# Set 1 style
+$('table').scopedCSS('th', 'font-weight', 'bold');
+
+# Set multiple styles with 1 selector:
+$('table').scopedCSS('tfoot', {
+    background: 'grey',
+    color: 'white'
+});
+
+# Set styles with multiple selectors
 $('table').scopedCSS({
     'td:nth-child(3)': {
         'color': 'black',
@@ -5861,21 +5866,52 @@ $('table').scopedCSS({
         'color': 'red'
     }
 });
+
+# Remove a declaration
+$('table').scopedCSS({'td:nth-child(3)': {'color': ""}});
+
+# Remove a rule
+$('table').scopedCSS({'td:nth-child(2)': ""});
+
+# Remove all rules
+$('table').scopedCSS("");
+
+# Retrieve a map of all rules 
+var rules = $('table').scopedCSS
 */
 
 // Plugin start
 ;(function($, undefined) {
     var nextID = 0;
 
-    $.fn.scopedCSS = function(rules) {
+    $.fn.scopedCSS = function() {
         // Called with no arguments - return the rules object
-        if ( rules === undefined ) {
+        if ( arguments.length === 0 ) {
             var styleBlock = this.first().data('scopedCSSstyleBlock');
             if ( styleBlock !== undefined ) {
-                return styleBlock.data('scopedCSSrules');
+                // Return values, not a reference to the internal object
+                return $.extend({}, styleBlock.data('scopedCSSrules'));
             } else {
                 return {};
             }
+        }
+
+        // Called with 3 arguments, create a rules object
+        if ( arguments.length === 3 ) {
+            var rules = {};
+            rules[arguments[0]] = {};
+            rules[arguments[0]][arguments[1]] = arguments[2];
+        }
+
+        // Called with 2 arguments, create a rules object
+        if ( arguments.length === 2 ) {
+            var rules = {};
+            rules[arguments[0]] = arguments[1];
+        }
+
+        // Called with 1 argument, a rules object or empty string
+        if ( arguments.length === 1 ) {
+            var rules = arguments[0];
         }
 
         // Called with a rules object, iterate over target elements.
@@ -5888,27 +5924,58 @@ $('table').scopedCSS({
             }
             var id = $(element).attr('id');
 
-            // Create a style element and append to head (once only per element)
+            // Create a style element and append to head
             if ( element.data('scopedCSSstyleBlock') === undefined ) {
                 element.data('scopedCSSstyleBlock', $('<style>').appendTo('head'));
             }
             var styleBlock = element.data('scopedCSSstyleBlock');
 
-            // Store a copy of the rules object for retrieval later
-            styleBlock.data('scopedCSSrules', $.extend({}, rules));
+            // Get any existing scoped css rules for this element
+            var oldRules = styleBlock.data('scopedCSSrules');
 
-            // Set the innerHTML of the style element
+            // For an empty string, erase existing rules
+            if ( rules === "" ) {
+                newRules == {}
+            } else {
+                // Otherwise, extend existing rules (recursively)
+                newRules = jQuery.extend(true, oldRules, rules);
+            }
+
+            // Create the innerHTML for the style block
             var css = "";
-            $.each(rules, function(selector, declarations) {
-                var declarationString = "";
-                $.each(declarations, function(attribute, value) {
-                    declarationString = declarationString + attribute + ': ' + value + ';\n';
-                });
-                css = css + '#' + id + ' ' + selector + ' { ' + declarationString + ' }\n';
+            $.each(newRules, function(selectorGroup, declarations) {
+                // Use an empty string to remove all css from a selector.
+                if ( declarations === "" ) {
+                    delete newRules[selector];
+
+                } else {
+                    // Create the declaration block string
+                    var declarationBlock = "";
+                    $.each(declarations, function(attribute, value) {
+                        if ( value === "" ) {
+                            delete newRules[selectorGroup][attribute];
+                        } else {
+                            declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
+                        }
+                    });
+
+                    // A selector group may consist of one or more selectors in a comma-separated list
+                    // Prepend the id selector to each one.
+                    var selectorArray = [];
+                    $.each(selectorGroup.split(','), function(i, selector) {
+                        selectorArray.push('#' + id + ' ' + selector.trim());
+                    });
+
+                    // Add the rule set to the css string
+                    css = css + selectorArray.join(',\n') + ' {\n ' + declarationBlock + ' }\n';
+                }
             });
+
+            styleBlock.data('scopedCSSrules', newRules);
             styleBlock.html(css);
         });
 
+        // Enable jQuery plugin chaining
         return this;
     }
 })(jQuery);
@@ -7568,6 +7635,15 @@ $('table').scopedCSS({
 })(jQuery, window);
 
 /* ==== jquery.theadFixed.js ==== */
+/*
+theadFixed plugin
+
+Makes the body + foot of a table scrollable, while making the head "fixed"
+Creates 3 levels of wrapping - from the outermost first these are assigned
+the classes "thead-fixed-wrapper", "scroll-wrapper", and "scroll-box".
+
+Much of the functionality is down to the css - see theadFixed.css
+*/
 ;(function($, undefined) {
     $.widget('qcode.theadFixed', {
 	options: {
@@ -7575,46 +7651,68 @@ $('table').scopedCSS({
 	},
 	_create: function() {
             this.table = this.element;
+            var tableLayout = this.table.css('table-layout');
             this.thead = this.element.children('thead');
+            this.tbody = this.element.children('tbody');
             this.headerCells = this.thead.children('tr').first().children('th');
 
+            // Create the wrappers
             this.table.wrap('<div>');
-
             this.scrollBox = this.table.parent()
                 .addClass('scroll-box')
                 .wrap('<div>');
-
             this.scrollWrapper = this.scrollBox.parent()
                 .addClass('scroll-wrapper')
-                .wrap('<div>')
-                .css({
-                    top: this.thead.outerHeight() + "px"
-                });
-
+                .wrap('<div>');
             this.wrapper = this.scrollWrapper.parent()
                 .addClass('thead-fixed-wrapper')
                 .css({
                     height: this.options.height
                 });
 
-            this.repaint();
-            this.table.find('col, th, td').css('width', '');
+            this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
+
+            this._repaintNow();
+            var windowWidth = $(window).width();
+            this._on($(window), {
+                'resize': function() {
+                    if ( this.table.is(event.target)
+                         || this.table.find(event.target)
+                         || windowWidth != window.width() ) {
+                        this.repaint();
+                    }
+                    windowWidth = $(window).width();
+                }
+            });
 	},
-	repaint: function() {
+	repaint: function(async) {
+            var async = coalesce(async, true);
+            var theadFixed = this;
+            if ( async ) {
+                if ( this.repaintTimeout === undefined ) {
+                    this.repaintTimeout = window.setZeroTimeout(function() {
+                        theadFixed._repaintNow();
+                        theadFixed.repaintTimeout = undefined;
+                    });
+                }
+            } else {
+                this._repaintNow();
+                window.clearZeroTimeout(this.repaintTimeout);
+                this.repaintTimeout = undefined;
+            }
+        },
+        _repaintNow: function() {
             this.wrapper.addClass('repainting');
 
-            var scopedCSS = this.table.scopedCSS();
-            hashValueSet(scopedCSS, 'th, td', 'box-sizing', 'border-box');
-
+            var table = this.table;
             this.headerCells.each(function(i, th) {
+                // Using comments in the selectors keeps these rules separate from those declared by other plugins
+                table.scopedCSS('/*theadFixed*/ th:nth-child('+(i+1)+')', 'width', "");
+                table.scopedCSS('/*theadFixed*/ td:nth-child('+(i+1)+')', 'width', "");
                 var width = $(th).outerWidth();
-                hashValueSet(scopedCSS, 'th:nth-child('+(i+1)+')', 'width', width + "px");
-                hashValueSet(scopedCSS, 'td:nth-child('+(i+1)+')', 'width', width + "px");
+                table.scopedCSS('/*theadFixed*/ th:nth-child('+(i+1)+')', 'width', width + "px");
+                table.scopedCSS('/*theadFixed*/ td:nth-child('+(i+1)+')', 'width', width + "px");
             });
-
-            this.wrapper.css('min-width', (this.thead.outerWidth() + 20) + "px");
-
-            this.table.scopedCSS(scopedCSS);
 
             this.wrapper.removeClass('repainting');
 	},
@@ -7629,187 +7727,6 @@ $('table').scopedCSS({
 	},
 	getTable: function() {
 	    return this.table;
-	}
-    });
-})(jQuery);
-
-/* ==== jquery.theadFixed_old.js ==== */
-(function($, undefined) {
-    var scrollBarWidth = 18;
-
-    $.widget('qcode.theadFixedOld', {
-	options: {
-	    'wrapperClass': "thead-fixed-wrapper",
-	    'scrollWrapperClass': "thead-fixed-scroll-wrapper",
-	    'scrollBoxClass': "thead-fixed-scroll-box",
-	    'height': "500px"
-	},
-	_create: function() {
-	    // TheadFixed Class Constructor
-	    var widget = this;
-
-	    // Attempt to handle existing wrappers sensibly.
-	    if ( ! $(this.element).is('table') ) {
-		this.table = $(this.element).find('table');
-		if ( this.table.length !== 1 ) {
-		    $.error("Each target element must be, or contain, a single table");
-		}
-	    } else {
-		this.table = this.element;
-	    }
-	    var table = this.table;
-	    var thead = table.children('thead');
-
-	    // Create wrappers and apply classes
-	    this.element
-		.wrap('<div>');
-	    this.scrollBox = this.element.parent();
-	    this.scrollBox
-		.addClass(this.options.scrollBoxClass)
-		.wrap('<div>');
-	    this.scrollWrapper = this.scrollBox.parent();
-	    this.scrollWrapper
-		.addClass(this.options.scrollWrapperClass)
-		.wrap('<div>');
-	    this.wrapper = this.scrollWrapper.parent();
-	    this.wrapper
-		.addClass(this.options.wrapperClass);
-
-	    // Store any inline widths that were present before the plugin was called
-	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
-		var th = $(element);
-		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
-		th.data('theadFixedCellWidth', widget._getCellInlineWidth(th));
-		td.data('theadFixedCellWidth', widget._getCellInlineWidth(td));
-	    });
-
-	    // Calculate and apply widths so that the headers match the body
-	    this._setWidths();
-
-	    // Apply css
-	    this.wrapper.css({
-		'position': "relative",
-		'margin-top': table.css('margin-top'),
-		'margin-right': table.css('margin-right'),
-		'margin-bottom': table.css('margin-bottom'),
-		'margin-left': table.css('margin-left'),
-		'height': this.options.height,
-                'max-height': "100%"
-	    });
-	    table.css('margin', 0);
-
-	    this.scrollWrapper.css({
-		'position': "absolute",
-		'top': thead.outerHeight() + parseInt(table.css('border-top-width')),
-		'bottom': 0
-	    });
-	    this.scrollBox.css({
-		'overflow-y': "auto",
-		'overflow-x': 'hidden',
-		'height': "100%"
-	    });
-
-	    thead.css({
-		'position': "absolute",
-		'bottom': "100%",
-		'left': 0
-	    });
-
-	    if ( table.css('border-collapse') == 'collapse' ) {
-		table.children('tr:first-child').children('th, td').css('border-top-width', 0);
-	    }
-
-            thead.css({
-		'border-top-style': table.css('border-top-style'),
-		'border-top-width': table.css('border-top-width'),
-		'border-top-color': table.css('border-top-color'),
-		'border-left-style': table.css('border-left-style'),
-		'border-left-width': table.css('border-left-width'),
-		'border-left-color': table.css('border-left-color'),
-		'border-right-style': table.css('border-right-style'),
-		'border-right-width': table.css('border-right-width'),
-		'border-right-color': table.css('border-right-color')
-            });
-	    table.css('border-top-width', 0);
-
-            this._on($(window), {resize: this.repaint});
-	},
-	repaint: function() {
-	    // Recalculate widths, heights, etc.
-	    var table = this.table;
-	    var thead = table.children('thead');
-	    thead.css({
-		'position': "static"
-	    });
-	    this._setWidths();
-	    thead.css({
-		'position': "absolute"
-	    });
-	    this.scrollWrapper.css('top', thead.outerHeight());
-	},
-	_setWidths: function() {
-	    // Calculate the width of each column and apply it to first-row cells in the header and body
-	    var table = this.table;
-	    var thead = table.children('thead');
-
-	    // Temporarily give the table a lot of space to make sure that the column width calculations come out right
-	    this.scrollBox.css('min-width', 10000);
-
-	    // If any cells besides header cells and first-row cells have a specified width, remove it.
-	    table.children('tbody, tfoot').children('tr').not(':first-child').children('th, td').css('width', '');
-
-	    // Calculate and apply column widths
-	    thead.children('tr:first-child').children('th, td').each(function(index, element) {
-		var th = $(element);
-		var td = table.children('tbody').children('tr:first-child').children('th, td').filter(':nth-child(' + ( index + 1 )+ ')');
-
-		th.css('width', coalesce(th.data('theadFixedCellWidth'), ''));
-		td.css('width', coalesce(td.data('theadFixedCellWidth'), ''));
-
-		var width = Math.max( Math.ceil(th.innerWidth()), Math.ceil(td.innerWidth() ));
-
-		// Ensures that default padding will be preserved when the thead is removed
-		th.css({
-		    'padding-top': th.css('padding-top'),
-		    'padding-right': th.css('padding-right'),
-		    'padding-bottom': th.css('padding-bottom'),
-		    'padding-left': th.css('padding-left')
-		});
-		th.css('width', width - parseInt(th.css('padding-left')) - parseInt(th.css('padding-right')));
-		td.css('width', width - parseInt(td.css('padding-left')) - parseInt(td.css('padding-right')));
-	    });
-
-	    this.scrollBox.css('min-width', table.outerWidth() + scrollBarWidth);
-	},
-	getWrapper: function() {
-	    return this.wrapper;
-	},
-	getScrollWrapper: function() {
-	    return this.scrollWrapper;
-	},
-	getScrollBox: function() {
-	    return this.scrollBox;
-	},
-	getTable: function() {
-	    return this.table;
-	},
-	_getCellInlineWidth: function(cell) {
-	    // Gets the width from a cell's inline style attribute
-	    var width,
-	    style = cell.attr('style');
-	    if ( style !== undefined ) {
-		var pairs = style.split(';');
-		$.each(pairs, function(i, pair) {
-		    var bits = pair.split(':'),
-		    name = $.trim(bits[0]),
-		    value = $.trim(bits[1]);
-		    if ( name === "width" ) {
-			width = value;
-			return false;
-		    }
-		});
-		return width;
-	    }
 	}
     });
 })(jQuery);
@@ -8089,25 +8006,6 @@ function preloadImages() {
         }
     }
 })(window);
-
-function hashValueSet() {
-    if ( arguments.length < 3 ) {
-        $.error("Invalid usage of hashValueSet: requires at least 3 arguments");
-    }
-    var object = arguments[0];
-    var key = arguments[1];
-    if ( arguments.length == 3 ) {
-        object[key] = arguments[2];
-    } else {
-        if ( typeof object[key] == "undefined" ) {
-            object[key] = {};
-        }
-        var args = Array.prototype.slice.call(arguments, 2);
-        args.unshift(object[key]);
-        hashValueSet.apply(this, args);
-    }
-    return object;
-}
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {

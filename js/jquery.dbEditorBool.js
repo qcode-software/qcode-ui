@@ -10,7 +10,7 @@
 			  'marginTop', 'marginRight', 'marginBottom', 'marginLeft', 
 			  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 
 			  'textAlign', 'verticalAlign', 'fontSize', 'fontFamily', 'fontWeight', 
-			  'width', 'height'];
+			  'width', 'height', 'box-sizing'];
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorBool', {
