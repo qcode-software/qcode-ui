@@ -54,10 +54,8 @@
 
             switch ( options.overflow ) {
             case 'break-word':
-                table.scopedCSS(colSelector, {
-                    'word-break': "normal",
-                    'width': ui.size.width + "px"
-                });
+                table.scopedCSS(colSelector, 'word-break', "normal");
+                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
                     table.scopedCSS(colSelector, 'word-break', 'break-all');
                 }
