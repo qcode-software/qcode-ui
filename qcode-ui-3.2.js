@@ -1301,7 +1301,13 @@ function dynamicResize(oContainer) {
 	    var grid = this.getGrid();
 	    var editorDiv = grid.dbGrid('getEditorDiv');
 	    var editorPluginName = this.getEditorPluginName();
-	    return $.fn[editorPluginName].apply(editorDiv, arguments);
+
+            if ( editorDiv.data(editorPluginName) === undefined && this.getType() === "htmlarea") {
+                // Initialise htmlarea editor with desired tab on return behaviour
+                // TODO: Make this customizable for each column of a dbGrid
+                $.fn[editorPluginName].apply(editorDiv, ['option', 'tab_on_return', true]);
+            }
+            return $.fn[editorPluginName].apply(editorDiv, arguments);
 	},
 	getValue: function(){
 	    var cellType = this.getType();
@@ -2186,6 +2192,9 @@ function dynamicResize(oContainer) {
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorHTMLArea', {
+        options: {
+	    tab_on_return: false
+	},
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
@@ -2300,7 +2309,7 @@ function dynamicResize(oContainer) {
                 if (e.shiftKey) {
 	            return true;
                 }
-		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
+		if ( this.option('tab_on_return') || (selection.selectionAtStart && selection.selectionAtEnd) ) {
 		    break;
 		}
                 // Normalize the effect of the enter key to make browsers behave consistently

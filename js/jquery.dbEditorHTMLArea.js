@@ -14,6 +14,9 @@
 
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorHTMLArea', {
+        options: {
+	    tab_on_return: false
+	},
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
@@ -128,7 +131,7 @@
                 if (e.shiftKey) {
 	            return true;
                 }
-		if ( selection.selectionAtStart && selection.selectionAtEnd ) {
+		if ( this.option('tab_on_return') || (selection.selectionAtStart && selection.selectionAtEnd) ) {
 		    break;
 		}
                 // Normalize the effect of the enter key to make browsers behave consistently
