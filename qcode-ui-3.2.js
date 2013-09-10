@@ -7589,9 +7589,6 @@ Much of the functionality is down to the css - see theadFixed.css
             this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper repainting">');
             this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
 
-            // Create space for the thead
-            this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
-
             // Calculate and apply column widths
             var css = {};
             this.headerCells.each(function(i, th) {
@@ -7604,6 +7601,9 @@ Much of the functionality is down to the css - see theadFixed.css
                 widget.table.scopedCSS(css);
                 widget.wrapper.removeClass('repainting');
             });
+
+            // Create space for the thead
+            this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
 
 
             // Add the resize event listeners
@@ -7666,11 +7666,9 @@ Much of the functionality is down to the css - see theadFixed.css
             widget.headerCells.each(function(i, th) {
                 css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: ""};
             });
-            this.wrapper.runDetached(function() {
-                // Run detached so that the table only has to be re-flowed once
-                widget.table.scopedCSS(css);
-                widget.wrapper.addClass('repainting');
-            });
+            widget.table.scopedCSS(css);
+            var theadHeight = widget.thead.outerHeight();
+            widget.wrapper.addClass('repainting');
 
             // Calculate and apply new column widths
             var css = {};
@@ -7678,7 +7676,6 @@ Much of the functionality is down to the css - see theadFixed.css
                 var width = $(th).outerWidth();
                 css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
-            var theadHeight = widget.thead.outerHeight();
             this.wrapper.runDetached(function() {
                 // Run detached so that the table only has to be re-flowed once
                 widget.table.scopedCSS(css);
