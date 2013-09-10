@@ -32,7 +32,7 @@ positioned so that the thead can be anchored outside it. */
     height: 100%;
 }
 .thead-fixed-wrapper .scroll-box {
-    display: inline-block;
+    float: left;
 }
 
 /* The table element becomes an inline-block so that it will only take up as much

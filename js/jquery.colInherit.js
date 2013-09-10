@@ -24,41 +24,15 @@
 
 		// apply col styles to td and th elements
 		if (col.attr('style')) {
-		    var colStyle = col.attr('style').replace(/(^ +)|( *; *$)/, '');
-
-		    tds.each(function() {
-			var td = $(this);
-                        // Build an array of css attributes which already exist on the current cell (which will not be overwritten);
-			attributes = [];
-			style = '';
-			if (td.attr('style')) {
-			    style = td.attr('style').replace(/(^ +)|( *; *$)/, '');
-			    style.split(';').forEach(function(pair) {
-				attributes.push(jQuery.trim(pair.split(':')[0]));
-			    });
-			}
-
-                        // Loop over column css attributes
-			colStyle.split(';').forEach(function(pair) {
-                            var name = jQuery.trim(pair.split(':')[0]);
-                            var value = jQuery.trim(pair.split(':')[1]);
-			    if (jQuery.inArray(name, attributes) == -1) {
-                                if (name === "display" && value === "table-column") {
-                                    value = "table-cell";
-                                    pair = name + ": " + value
-                                }
-				if (style == '') {
-				    style += pair;
-				} else {
-				    style += ';' + pair;
-				}
-			    }
-			});
-
-			style += ';';
-
-			td.attr('style', style);
-		    });
+                    var style = col.attr('style');
+                    style.split(';').forEach(function(declaration) {
+                        var property = jQuery.trim(declaration.split(':')[0]);
+                        var value = jQuery.trim(declaration.split(':')[1]);
+                        if ( ! (property === "display" && value === "table-column") ) {
+                            table.scopedCSS('> tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                            table.scopedCSS('> * > tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                        }
+                    });
 		}
 		
                 // apply custom attributes from cols to td and th elements

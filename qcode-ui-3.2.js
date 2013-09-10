@@ -840,41 +840,15 @@ function dynamicResize(oContainer) {
 
 		// apply col styles to td and th elements
 		if (col.attr('style')) {
-		    var colStyle = col.attr('style').replace(/(^ +)|( *; *$)/, '');
-
-		    tds.each(function() {
-			var td = $(this);
-                        // Build an array of css attributes which already exist on the current cell (which will not be overwritten);
-			attributes = [];
-			style = '';
-			if (td.attr('style')) {
-			    style = td.attr('style').replace(/(^ +)|( *; *$)/, '');
-			    style.split(';').forEach(function(pair) {
-				attributes.push(jQuery.trim(pair.split(':')[0]));
-			    });
-			}
-
-                        // Loop over column css attributes
-			colStyle.split(';').forEach(function(pair) {
-                            var name = jQuery.trim(pair.split(':')[0]);
-                            var value = jQuery.trim(pair.split(':')[1]);
-			    if (jQuery.inArray(name, attributes) == -1) {
-                                if (name === "display" && value === "table-column") {
-                                    value = "table-cell";
-                                    pair = name + ": " + value
-                                }
-				if (style == '') {
-				    style += pair;
-				} else {
-				    style += ';' + pair;
-				}
-			    }
-			});
-
-			style += ';';
-
-			td.attr('style', style);
-		    });
+                    var style = col.attr('style');
+                    style.split(';').forEach(function(declaration) {
+                        var property = jQuery.trim(declaration.split(':')[0]);
+                        var value = jQuery.trim(declaration.split(':')[1]);
+                        if ( ! (property === "display" && value === "table-column") ) {
+                            table.scopedCSS('> tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                            table.scopedCSS('> * > tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                        }
+                    });
 		}
 		
                 // apply custom attributes from cols to td and th elements
@@ -951,10 +925,8 @@ function dynamicResize(oContainer) {
 
             switch ( options.overflow ) {
             case 'break-word':
-                table.scopedCSS(colSelector, {
-                    'word-break': "normal",
-                    'width': ui.size.width + "px"
-                });
+                table.scopedCSS(colSelector, 'word-break', "normal");
+                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
                     table.scopedCSS(colSelector, 'word-break', 'break-all');
                 }
@@ -1001,32 +973,22 @@ function dynamicResize(oContainer) {
     $.fn.columnsShowHide = function(column_selector, showHide) {
         $(this).each(function() {
 	    var table = jQuery(this);
-            var cellsToShow = $([]);
-            var colsToShow = $([]);
-            var toHide = $([]);
+            var css = {}
 
-	    table.find(column_selector).each(function() {
+            table.find(column_selector).each(function() {
                 var column = jQuery(this);
                 var index = column.index();
-                var firstCell = table.find('tbody>tr:first-child>td').eq(index);
-                var cells = table.find('thead>tr>th:nth-child(' + (index + 1) + '), tbody>tr>td:nth-child(' + (index + 1) + '), tfoot>tr>td:nth-child(' + (index + 1) + ')');
-
-                if ( (showHide === "hide") || (showHide === undefined && firstCell.is(':visible')) ) {
-                    toHide = toHide.add(cells);
-                    toHide = toHide.add(column);
-                } else if (showHide === undefined || showHide === "show") {
-                    cellsToShow = cellsToShow.add(cells);
-                    colsToShow = colsToShow.add(column);
+                var nth = ':nth-child(' + (index+1) + ')';
+                if ( (showHide === "hide") || (showHide === undefined && column.css('display') === "table-column") ) {
+                    css['col' + nth] = {display: "none"};
+                    css['tr>*' + nth] = {display: "none"};
+                } else {
+                    css['col' + nth] = {display: "table-column"};
+                    css['tr>*' + nth] = {display: "table-cell"};
                 }
             });
 
-	    // Detach table from DOM for performance gain.
-	    table.runDetached(function() {
-	        toHide.css('display', "none");
-                colsToShow.css('display', "table-column");
-                cellsToShow.css('display', "table-cell");
-            });
-
+            table.scopedCSS(css);
             table.trigger('resize');
         });
     };
@@ -4001,10 +3963,6 @@ function dbFormHTMLArea(oDiv) {
 		if ( colClass ) {
 		    cell.attr('class', colClass);
 		}
-		var colStyle = cols.eq(i).attr('style');
-		if ( colStyle ) {
-		    cell.attr('style', colStyle);
-		}
 		row.append(cell);
 	    }
 	    row.dbRow({'type': 'update'});
@@ -4026,10 +3984,6 @@ function dbFormHTMLArea(oDiv) {
 		var colClass = cols.eq(i).attr('class');
 		if ( colClass ) {
 		    cell.attr('class', colClass);
-		}
-		var colStyle = cols.eq(i).attr('style');
-		if ( colStyle ) {
-		    cell.attr('style', colStyle);
 		}
 		row.append(cell);
 	    }
@@ -5510,7 +5464,7 @@ function dbFormHTMLArea(oDiv) {
 
 /* ==== jquery.maximiseHeight.js ==== */
 // Maximise the height of an element so that the content of a page spans the entire height of the window.  
-;(function($, window,undefined){
+;(function($, window, undefined){
     // Uses the jQuery UI widget factory.
     $.widget('qcode.maximizeHeight', {
 	options: {
@@ -5836,25 +5790,16 @@ function dbFormHTMLArea(oDiv) {
 scopedCSS plugin
 
 Append css rules to the page, scoped to affect descendants of the target element(s)
+Uses an id selector to control scope, provides an id if none exists.
 
 Accepts a single object mapping selectors to objects mapping css properties to values,
-or a string selector followed by an object mapping css properties to values,
-or a selector, followed by a css property name, followed by a value,
-or call with no arguments to retrieve previously set styles,
-or with an empty string to remove all scoped css set for this element.
+or a selector, followed by a css property name, followed by a value.
 
 New values will overwite old values, use an empty string to remove.
-Uses an id selector to control scope, provides an id if none exists.
 
 Examples:
 # Set 1 style
 $('table').scopedCSS('th', 'font-weight', 'bold');
-
-# Set multiple styles with 1 selector:
-$('table').scopedCSS('tfoot', {
-    background: 'grey',
-    color: 'white'
-});
 
 # Set styles with multiple selectors
 $('table').scopedCSS({
@@ -5873,45 +5818,21 @@ $('table').scopedCSS({'td:nth-child(3)': {'color': ""}});
 # Remove a rule
 $('table').scopedCSS({'td:nth-child(2)': ""});
 
-# Remove all rules
-$('table').scopedCSS("");
-
-# Retrieve a map of all rules 
-var rules = $('table').scopedCSS
 */
 
 // Plugin start
 ;(function($, undefined) {
     var nextID = 0;
 
-    $.fn.scopedCSS = function() {
-        // Called with no arguments - return the rules object
-        if ( arguments.length === 0 ) {
-            var styleBlock = this.first().data('scopedCSSstyleBlock');
-            if ( styleBlock !== undefined ) {
-                // Return values, not a reference to the internal object
-                return $.extend({}, styleBlock.data('scopedCSSrules'));
-            } else {
-                return {};
-            }
-        }
-
+    $.fn.scopedCSS = function(rules) {
         // Called with 3 arguments, create a rules object
         if ( arguments.length === 3 ) {
+            var selector = arguments[0];
+            var property = arguments[1];
+            var value = arguments[2];
             var rules = {};
-            rules[arguments[0]] = {};
-            rules[arguments[0]][arguments[1]] = arguments[2];
-        }
-
-        // Called with 2 arguments, create a rules object
-        if ( arguments.length === 2 ) {
-            var rules = {};
-            rules[arguments[0]] = arguments[1];
-        }
-
-        // Called with 1 argument, a rules object or empty string
-        if ( arguments.length === 1 ) {
-            var rules = arguments[0];
+            rules[selector] = {};
+            rules[selector][property] = value;
         }
 
         // Called with a rules object, iterate over target elements.
@@ -5933,13 +5854,8 @@ var rules = $('table').scopedCSS
             // Get any existing scoped css rules for this element
             var oldRules = styleBlock.data('scopedCSSrules');
 
-            // For an empty string, erase existing rules
-            if ( rules === "" ) {
-                newRules == {}
-            } else {
-                // Otherwise, extend existing rules (recursively)
-                newRules = jQuery.extend(true, oldRules, rules);
-            }
+            // Extend existing rules (recursively)
+            newRules = jQuery.extend(true, oldRules, rules);
 
             // Create the innerHTML for the style block
             var css = "";
@@ -7639,7 +7555,7 @@ var rules = $('table').scopedCSS
 theadFixed plugin
 
 Makes the body + foot of a table scrollable, while making the head "fixed"
-Creates 3 levels of wrapping - from the outermost first these are assigned
+Creates 3 levels of wrapping - from the outermost first these wrappers are assigned
 the classes "thead-fixed-wrapper", "scroll-wrapper", and "scroll-box".
 
 Much of the functionality is down to the css - see theadFixed.css
@@ -7650,42 +7566,71 @@ Much of the functionality is down to the css - see theadFixed.css
 	    'height': "500px"
 	},
 	_create: function() {
+            // Some handy references
             this.table = this.element;
-            var tableLayout = this.table.css('table-layout');
             this.thead = this.element.children('thead');
             this.tbody = this.element.children('tbody');
             this.headerCells = this.thead.children('tr').first().children('th');
 
-            // Create the wrappers
-            this.table.wrap('<div>');
-            this.scrollBox = this.table.parent()
-                .addClass('scroll-box')
-                .wrap('<div>');
-            this.scrollWrapper = this.scrollBox.parent()
-                .addClass('scroll-wrapper')
-                .wrap('<div>');
-            this.wrapper = this.scrollWrapper.parent()
-                .addClass('thead-fixed-wrapper')
-                .css({
-                    height: this.options.height
-                });
 
+            // Create the wrappers
+            // Use class "repainting" until column widths have been calculated
+            this.table.wrap('<div class="scroll-box">');
+            this.scrollBox = this.table.parent().wrap('<div class="scroll-wrapper">');
+            this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper repainting">');
+            this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
+
+            // Create space for the thead
             this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
 
-            this._repaintNow();
+            // Calculate and apply column widths
+            var css = {};
+            this.headerCells.each(function(i, th) {
+                var width = $(th).outerWidth();
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+            });
+
+            var widget = this;
+            this.wrapper.runDetached(function() {
+                widget.table.scopedCSS(css);
+                widget.wrapper.removeClass('repainting');
+            });
+
+
+            // Add the resize event listeners
+            this._on({
+                resize: function(event) {
+                    // If part of the table (or the table itself) is resized,
+                    // flag the event as it bubbles
+                    event.isTableResize = true;
+                }
+            });
             var windowWidth = $(window).width();
+            var widget = this;
             this._on($(window), {
-                'resize': function() {
-                    if ( this.table.is(event.target)
-                         || this.table.find(event.target)
-                         || windowWidth != window.width() ) {
+                'resize': function(event) {
+                    // Repaint if the table was resized, or if the window width
+                    // has changed.
+                    if ( event.isTableResize ) {
                         this.repaint();
+
+                    } else {
+                        // Right now, this is a hack to ensure that the maximizeHeight
+                        // plugin has had a chance to get rid of the window's vertical
+                        // scrollbar before we test to see if the window width has changed.
+                        window.setZeroTimeout(function() {
+                            if ( windowWidth != $(window).width() ) {
+                                widget.repaint();
+                                windowWidth = $(window).width();
+                            }
+                        });
                     }
-                    windowWidth = $(window).width();
                 }
             });
 	},
 	repaint: function(async) {
+            // If asychronous, schedule the table to be repainted when the current event handlers are finished
+            // Otherwise, repaint immediately and clear any scheduled repaint
             var async = coalesce(async, true);
             var theadFixed = this;
             if ( async ) {
@@ -7702,19 +7647,35 @@ Much of the functionality is down to the css - see theadFixed.css
             }
         },
         _repaintNow: function() {
-            this.wrapper.addClass('repainting');
+            // Re-calculate and re-apply column widths
+            var widget = this;
 
-            var table = this.table;
-            this.headerCells.each(function(i, th) {
-                // Using comments in the selectors keeps these rules separate from those declared by other plugins
-                table.scopedCSS('/*theadFixed*/ th:nth-child('+(i+1)+')', 'width', "");
-                table.scopedCSS('/*theadFixed*/ td:nth-child('+(i+1)+')', 'width', "");
-                var width = $(th).outerWidth();
-                table.scopedCSS('/*theadFixed*/ th:nth-child('+(i+1)+')', 'width', width + "px");
-                table.scopedCSS('/*theadFixed*/ td:nth-child('+(i+1)+')', 'width', width + "px");
+            // Remove existing column width css defined by this plugin
+            // Using comments in the selectors keeps these rules separate from those declared by other plugins
+            // To Do: Investigate a better design for scopedCSS plugin so that this comments trick isn't needed
+            var css = {};
+            widget.headerCells.each(function(i, th) {
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: ""};
+            });
+            this.wrapper.runDetached(function() {
+                // Run detached so that the table only has to be re-flowed once
+                widget.table.scopedCSS(css);
+                widget.wrapper.addClass('repainting');
             });
 
-            this.wrapper.removeClass('repainting');
+            // Calculate and apply new column widths
+            var css = {};
+            this.headerCells.each(function(i, th) {
+                var width = $(th).outerWidth();
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+            });
+            var theadHeight = widget.thead.outerHeight();
+            this.wrapper.runDetached(function() {
+                // Run detached so that the table only has to be re-flowed once
+                widget.table.scopedCSS(css);
+                widget.wrapper.removeClass('repainting');
+                widget.scrollWrapper.css('top', theadHeight + "px");
+            });
 	},
 	getWrapper: function() {
 	    return this.wrapper;

@@ -249,10 +249,6 @@
 		if ( colClass ) {
 		    cell.attr('class', colClass);
 		}
-		var colStyle = cols.eq(i).attr('style');
-		if ( colStyle ) {
-		    cell.attr('style', colStyle);
-		}
 		row.append(cell);
 	    }
 	    row.dbRow({'type': 'update'});
@@ -274,10 +270,6 @@
 		var colClass = cols.eq(i).attr('class');
 		if ( colClass ) {
 		    cell.attr('class', colClass);
-		}
-		var colStyle = cols.eq(i).attr('style');
-		if ( colStyle ) {
-		    cell.attr('style', colStyle);
 		}
 		row.append(cell);
 	    }

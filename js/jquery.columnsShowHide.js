@@ -4,32 +4,22 @@
     $.fn.columnsShowHide = function(column_selector, showHide) {
         $(this).each(function() {
 	    var table = jQuery(this);
-            var cellsToShow = $([]);
-            var colsToShow = $([]);
-            var toHide = $([]);
+            var css = {}
 
-	    table.find(column_selector).each(function() {
+            table.find(column_selector).each(function() {
                 var column = jQuery(this);
                 var index = column.index();
-                var firstCell = table.find('tbody>tr:first-child>td').eq(index);
-                var cells = table.find('thead>tr>th:nth-child(' + (index + 1) + '), tbody>tr>td:nth-child(' + (index + 1) + '), tfoot>tr>td:nth-child(' + (index + 1) + ')');
-
-                if ( (showHide === "hide") || (showHide === undefined && firstCell.is(':visible')) ) {
-                    toHide = toHide.add(cells);
-                    toHide = toHide.add(column);
-                } else if (showHide === undefined || showHide === "show") {
-                    cellsToShow = cellsToShow.add(cells);
-                    colsToShow = colsToShow.add(column);
+                var nth = ':nth-child(' + (index+1) + ')';
+                if ( (showHide === "hide") || (showHide === undefined && column.css('display') === "table-column") ) {
+                    css['col' + nth] = {display: "none"};
+                    css['tr>*' + nth] = {display: "none"};
+                } else {
+                    css['col' + nth] = {display: "table-column"};
+                    css['tr>*' + nth] = {display: "table-cell"};
                 }
             });
 
-	    // Detach table from DOM for performance gain.
-	    table.runDetached(function() {
-	        toHide.css('display', "none");
-                colsToShow.css('display', "table-column");
-                cellsToShow.css('display', "table-cell");
-            });
-
+            table.scopedCSS(css);
             table.trigger('resize');
         });
     };

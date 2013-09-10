@@ -39,9 +39,12 @@ $('table').scopedCSS({'td:nth-child(2)': ""});
     $.fn.scopedCSS = function(rules) {
         // Called with 3 arguments, create a rules object
         if ( arguments.length === 3 ) {
+            var selector = arguments[0];
+            var property = arguments[1];
+            var value = arguments[2];
             var rules = {};
-            rules[arguments[0]] = {};
-            rules[arguments[0]][arguments[1]] = arguments[2];
+            rules[selector] = {};
+            rules[selector][property] = value;
         }
 
         // Called with a rules object, iterate over target elements.
