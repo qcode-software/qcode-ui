@@ -27,18 +27,20 @@ and controls the size of the scrollable area */
 positioned so that the thead can be anchored outside it. */
 .thead-fixed-wrapper:not(.repainting) .scroll-box {
     position: static;
-    overflow-y: scroll;
-    overflow-x: hidden;
     height: 100%;
 }
 .thead-fixed-wrapper .scroll-box {
     float: left;
+    min-width: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 /* The table element becomes an inline-block so that it will only take up as much
 width as required by the tbody, with the tbody and thead becoming independant tables */
 .thead-fixed-wrapper:not(.repainting) table {
-    display: inline-block;
+    display: table;
+    table-layout: auto;
 }
 
 /* thead, tbody, and tfoot become separate tables. Their width is determined by their

@@ -10,7 +10,8 @@ Much of the functionality is down to the css - see theadFixed.css
 ;(function($, undefined) {
     $.widget('qcode.theadFixed', {
 	options: {
-	    'height': "500px"
+	    'height': "500px",
+            'fixedWidth': false
 	},
 	_create: function() {
             // Some handy references
@@ -44,7 +45,8 @@ Much of the functionality is down to the css - see theadFixed.css
             this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
 
 
-            // Add the resize event listeners
+            // Add the resize event listeners - only repaint when the table is resized
+            // or the window width changes.
             this._on({
                 resize: function(event) {
                     // If part of the table (or the table itself) is resized,
@@ -54,23 +56,24 @@ Much of the functionality is down to the css - see theadFixed.css
             });
             var windowWidth = $(window).width();
             var widget = this;
+            // On window resize, or when a resize bubbles to the window.
             this._on($(window), {
                 'resize': function(event) {
-                    // Repaint if the table was resized, or if the window width
-                    // has changed.
                     if ( event.isTableResize ) {
                         this.repaint();
 
                     } else {
-                        // Right now, this is a hack to ensure that the maximizeHeight
+                        // Right now, setZeroTimeout is used as a hack to ensure that the maximizeHeight
                         // plugin has had a chance to get rid of the window's vertical
                         // scrollbar before we test to see if the window width has changed.
-                        window.setZeroTimeout(function() {
-                            if ( windowWidth != $(window).width() ) {
-                                widget.repaint();
-                                windowWidth = $(window).width();
-                            }
-                        });
+                        if ( ! this.options.fixedWidth ) {
+                            window.setZeroTimeout(function() {
+                                if ( windowWidth != $(window).width() ) {
+                                    widget.repaint();
+                                    windowWidth = $(window).width();
+                                }
+                            });
+                        }
                     }
                 }
             });
@@ -104,20 +107,31 @@ Much of the functionality is down to the css - see theadFixed.css
             widget.headerCells.each(function(i, th) {
                 css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: ""};
             });
-            widget.table.scopedCSS(css);
-            var theadHeight = widget.thead.outerHeight();
-            widget.wrapper.addClass('repainting');
+            // run detached to improve performance
+            this.wrapper.runDetached(function() {
+                widget.table.scopedCSS(css);
+                widget.wrapper.addClass('repainting');
+            });
 
-            // Calculate and apply new column widths
+            // Calculate new column width css
             var css = {};
             this.headerCells.each(function(i, th) {
                 var width = $(th).outerWidth();
                 css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
+
+            // Apply the new css
+            // run detached to improve performance
             this.wrapper.runDetached(function() {
-                // Run detached so that the table only has to be re-flowed once
                 widget.table.scopedCSS(css);
                 widget.wrapper.removeClass('repainting');
+            });
+
+            // Get the new thead height
+            var theadHeight = widget.thead.outerHeight();
+
+            // Apply the new thead height - run detached to fix google chrome bug.
+            this.wrapper.runDetached(function() {
                 widget.scrollWrapper.css('top', theadHeight + "px");
             });
 	},

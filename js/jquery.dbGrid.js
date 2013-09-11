@@ -32,7 +32,7 @@
 		}
 	    });
 
-	    // Create a container to attach editors 
+	    // Create a container to attach editors
 	    dbGrid.editorDiv = $('<div>');
 	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
