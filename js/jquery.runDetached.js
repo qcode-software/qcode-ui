@@ -2,7 +2,7 @@
 // Detach selected elements, call a function (optional), then re-attach.
 // function is called in scope of the jQuery object
 // If the function returns a value, return that. Otherwise return the jQuery object for chaining.
-;(function(jQuery) {
+;(function(jQuery, undefined) {
     jQuery.fn.runDetached = function(toDo) {
         var returnValue;
 
@@ -15,6 +15,13 @@
                 parent[index] = $(this).parent();
             }
         });
+
+        // If the target elements contain the currently focussed element, record the text range
+        if ( $(document.activeElement).closest(this).length > 0 ) {
+            var toFocus = $(document.activeElement);
+            var textRange = toFocus.textRange('get');
+            toFocus.trigger('blur.runDetached');
+        }
 
         // Detach the elements
         this.detach();
@@ -32,6 +39,12 @@
                 $(this).insertAfter(previousSibling[index]);
             }
         });
+
+        // Restore focus, use an event namespace to prevent event listeners from firing.
+        if ( toFocus !== undefined ) {
+            toFocus.trigger('focus.runDetached');
+            toFocus.textRange('set', textRange.selectionStart, textRange.selectionEnd);
+        }
 
         return coalesce(returnValue, this);
     }

@@ -22,6 +22,10 @@ and controls the size of the scrollable area */
     right: 0;
     /* top: set to thead outerHeight by plugin */
 }
+.thead-fixed-wrapper.repainting .scroll-wrapper {
+    max-height: 100%;
+    overflow: hidden;
+}
 
 /* The inner div provides the scrollable area. It must be statically
 positioned so that the thead can be anchored outside it. */
@@ -34,6 +38,7 @@ positioned so that the thead can be anchored outside it. */
     min-width: 100%;
     overflow-y: scroll;
     overflow-x: hidden;
+    max-height: 100%;
 }
 
 /* The table element becomes an inline-block so that it will only take up as much

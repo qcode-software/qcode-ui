@@ -3755,7 +3755,7 @@ function dbFormHTMLArea(oDiv) {
 		}
 	    });
 
-	    // Create a container to attach editors 
+	    // Create a container to attach editors
 	    dbGrid.editorDiv = $('<div>');
 	    dbGrid.editorDiv.addClass('db-grid-editor-container');
 	    dbGrid.editorDiv.css('position','relative');
@@ -5759,7 +5759,7 @@ function dbFormHTMLArea(oDiv) {
 // Detach selected elements, call a function (optional), then re-attach.
 // function is called in scope of the jQuery object
 // If the function returns a value, return that. Otherwise return the jQuery object for chaining.
-;(function(jQuery) {
+;(function(jQuery, undefined) {
     jQuery.fn.runDetached = function(toDo) {
         var returnValue;
 
@@ -5772,6 +5772,11 @@ function dbFormHTMLArea(oDiv) {
                 parent[index] = $(this).parent();
             }
         });
+
+        if ( $(document.activeElement).closest(this).length > 0 ) {
+            var toFocus = $(document.activeElement);
+            var textRange = toFocus.textRange('get');
+        }
 
         // Detach the elements
         this.detach();
@@ -5789,6 +5794,14 @@ function dbFormHTMLArea(oDiv) {
                 $(this).insertAfter(previousSibling[index]);
             }
         });
+
+        if ( toFocus !== undefined ) {
+            toFocus.one('focus', function(event) {
+                event.stopImmediatePropagation();
+            });
+            toFocus.focus();
+            toFocus.textRange('set', textRange.selectionStart, textRange.selectionEnd);
+        }
 
         return coalesce(returnValue, this);
     }
