@@ -5773,9 +5773,11 @@ function dbFormHTMLArea(oDiv) {
             }
         });
 
+        // If the target elements contain the currently focussed element, record the text range
         if ( $(document.activeElement).closest(this).length > 0 ) {
             var toFocus = $(document.activeElement);
-            var textRange = toFocus.textRange('get');
+            var textRange = toFocus.textrange('get');
+            toFocus.trigger('blur.runDetached');
         }
 
         // Detach the elements
@@ -5795,12 +5797,10 @@ function dbFormHTMLArea(oDiv) {
             }
         });
 
+        // Restore focus.
         if ( toFocus !== undefined ) {
-            toFocus.one('focus', function(event) {
-                event.stopImmediatePropagation();
-            });
-            toFocus.focus();
-            toFocus.textRange('set', textRange.selectionStart, textRange.selectionEnd);
+            toFocus.trigger('focus.runDetached');
+            toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
         }
 
         return coalesce(returnValue, this);

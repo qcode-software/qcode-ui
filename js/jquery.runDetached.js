@@ -19,7 +19,7 @@
         // If the target elements contain the currently focussed element, record the text range
         if ( $(document.activeElement).closest(this).length > 0 ) {
             var toFocus = $(document.activeElement);
-            var textRange = toFocus.textRange('get');
+            var textRange = toFocus.textrange('get');
             toFocus.trigger('blur.runDetached');
         }
 
@@ -40,10 +40,10 @@
             }
         });
 
-        // Restore focus, use an event namespace to prevent event listeners from firing.
+        // Restore focus.
         if ( toFocus !== undefined ) {
             toFocus.trigger('focus.runDetached');
-            toFocus.textRange('set', textRange.selectionStart, textRange.selectionEnd);
+            toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
         }
 
         return coalesce(returnValue, this);
