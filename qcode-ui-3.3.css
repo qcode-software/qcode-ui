@@ -248,21 +248,17 @@ positioned so that the thead can be anchored outside it. */
     max-height: 100%;
 }
 
-/* The table element becomes an inline-block so that it will only take up as much
-width as required by the tbody, with the tbody and thead becoming independant tables */
-.thead-fixed-wrapper:not(.repainting) table {
-    display: table;
-    table-layout: auto;
+.thead-fixed-wrapper:not(.repainting) table.fixed.fixed-width,
+.thead-fixed-wrapper:not(.repainting) table.flex {
+    width: 0px;
 }
 
 /* thead, tbody, and tfoot become separate tables. Their width is determined by their
 column widths, but to use fixed layout a width must be specified, so we use 0px */
-.thead-fixed-wrapper:not(.repainting) thead,
-.thead-fixed-wrapper:not(.repainting) tbody,
-.thead-fixed-wrapper:not(.repainting) tfoot {
+.thead-fixed-wrapper:not(.repainting) table,
+.thead-fixed-wrapper:not(.repainting) thead {
     display: table;
     table-layout: fixed;
-    width: 0px;
 }
 
 /* Absolutely position the thead with the bottom of the thead anchored to the top of the
@@ -271,6 +267,7 @@ middle wrapping div */
     position: absolute;
     bottom: 100%;
     left: 0;
+    width: 0px;
 }
 
 /* Use border-box sizing so that we can set the widths without worrying about padding. */

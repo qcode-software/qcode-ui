@@ -120,7 +120,21 @@
 		    'borderBottomWidth': borderWidth,
 		    'borderLeftWidth': borderWidth
 		});
-		    
+
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
 
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'

@@ -66,7 +66,6 @@
 		$.each(copyAttributes, function(i, name){
 		    editor.css(name, element.css(name));
 		});
-
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		    editor.css('backgroundColor', "white");
@@ -74,10 +73,29 @@
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
 
-		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        )
+                    });
+                    if ( typeof element.data('editorHeight') == "undefined" ) {
+                        editor.css({
+                            height: "+=" + (
+                                ( parseInt(element.css('border-top-width'))
+                                  + parseInt(element.css('border-bottom-width'))
+                                ) / 2
+                            ),
+                        });
+                    }
+                }
+
 	    }
 	},
 	selectText: function(option) {

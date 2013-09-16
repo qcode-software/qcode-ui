@@ -65,6 +65,21 @@
 		    editor.css(name, element.css(name));
 		});
 
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
+
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		    editor.css('backgroundColor', "white");
@@ -74,10 +89,10 @@
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
-		    .css({
+		    /*.css({
 			'height': "+=1", 
 			'padding-bottom': "-=1"
-		    })
+		    })*/
 		    .css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	},

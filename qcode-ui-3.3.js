@@ -1651,6 +1651,21 @@ function dynamicResize(oContainer) {
 		    editor.css(name, element.css(name));
 		});
 
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
+
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
 		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
@@ -1927,7 +1942,21 @@ function dynamicResize(oContainer) {
 		    'borderBottomWidth': borderWidth,
 		    'borderLeftWidth': borderWidth
 		});
-		    
+
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
 
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
@@ -2244,7 +2273,6 @@ function dynamicResize(oContainer) {
 		$.each(copyAttributes, function(i, name){
 		    editor.css(name, element.css(name));
 		});
-
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		    editor.css('backgroundColor', "white");
@@ -2252,10 +2280,29 @@ function dynamicResize(oContainer) {
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
 
-		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
 		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        )
+                    });
+                    if ( typeof element.data('editorHeight') == "undefined" ) {
+                        editor.css({
+                            height: "+=" + (
+                                ( parseInt(element.css('border-top-width'))
+                                  + parseInt(element.css('border-bottom-width'))
+                                ) / 2
+                            ),
+                        });
+                    }
+                }
+
 	    }
 	},
 	selectText: function(option) {
@@ -2474,6 +2521,21 @@ function dynamicResize(oContainer) {
 		    editor.css(name, element.css(name));
 		});
 
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
+
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent'
 		     || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
@@ -2666,6 +2728,21 @@ function dynamicResize(oContainer) {
 		    editor.css(name, element.css(name));
 		});
 
+                if ( element.css('border-collapse') === "collapse" ) {
+                    editor.css({
+                        width: "+=" + (
+                            ( parseInt(element.css('border-left-width'))
+                              + parseInt(element.css('border-right-width'))
+                            ) / 2
+                        ),
+                        height: "+=" + (
+                            ( parseInt(element.css('border-top-width'))
+                              + parseInt(element.css('border-bottom-width'))
+                            ) / 2
+                        ),
+                    });
+                }
+
 		// Different browsers return different css for transparent elements
 		if ( element.css('backgroundColor') == 'transparent' || element.css('backgroundColor') == "rgba(0, 0, 0, 0)" ) {
 		    editor.css('backgroundColor', "white");
@@ -2675,10 +2752,10 @@ function dynamicResize(oContainer) {
 
 		// (Note: I haven't yet figured out why the +1 height is needed to stop scrollbars from appearing)
 		editor
-		    .css({
+		    /*.css({
 			'height': "+=1", 
 			'padding-bottom': "-=1"
-		    })
+		    })*/
 		    .css(element.positionRelativeTo(this.editor.offsetParent()));
 	    }
 	},
@@ -7607,7 +7684,7 @@ Much of the functionality is down to the css - see theadFixed.css
             var css = {};
             this.headerCells.each(function(i, th) {
                 var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
 
             var widget = this;
@@ -7680,7 +7757,7 @@ Much of the functionality is down to the css - see theadFixed.css
             // To Do: Investigate a better design for scopedCSS plugin so that this comments trick isn't needed
             var css = {};
             widget.headerCells.each(function(i, th) {
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: ""};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: ""};
             });
             // run detached to improve performance
             this.wrapper.runDetached(function() {
@@ -7692,7 +7769,7 @@ Much of the functionality is down to the css - see theadFixed.css
             var css = {};
             this.headerCells.each(function(i, th) {
                 var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
 
             // Apply the new css

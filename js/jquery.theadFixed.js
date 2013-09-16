@@ -32,7 +32,7 @@ Much of the functionality is down to the css - see theadFixed.css
             var css = {};
             this.headerCells.each(function(i, th) {
                 var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
 
             var widget = this;
@@ -105,7 +105,7 @@ Much of the functionality is down to the css - see theadFixed.css
             // To Do: Investigate a better design for scopedCSS plugin so that this comments trick isn't needed
             var css = {};
             widget.headerCells.each(function(i, th) {
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: ""};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: ""};
             });
             // run detached to improve performance
             this.wrapper.runDetached(function() {
@@ -117,7 +117,7 @@ Much of the functionality is down to the css - see theadFixed.css
             var css = {};
             this.headerCells.each(function(i, th) {
                 var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+')'] = {width: width + "px"};
+                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
             });
 
             // Apply the new css
