@@ -41,8 +41,8 @@ positioned so that the thead can be anchored outside it. */
     max-height: 100%;
 }
 
-/* The table element becomes an inline-block so that it will only take up as much
-width as required by the tbody, with the tbody and thead becoming independant tables */
+/* The table element needs to wrap tight around the tbody and tfoot (to provide borders), and expand
+as needed if the tbody is wider than the page.*/
 .thead-fixed-wrapper:not(.repainting) table {
     display: table;
     table-layout: auto;
