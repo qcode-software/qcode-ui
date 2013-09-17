@@ -22,16 +22,16 @@ Much of the functionality is down to the css - see theadFixed.css
             var colSelectors = {};
             var id = this.table.getID();
             this.headerCells.each(function(i, th) {
-                colSelectors[i] = '.thead-fixed-wrapper:not(.repainting) #'+id+' tr>*:nth-child('+(i+1)+'), .thead-fixed-wrapper:not(.repainting) #'+id+' col:nth-child('+(i+1)+')';
+                colSelectors[i] = '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' tr>*:nth-child('+(i+1)+'), .thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' col:nth-child('+(i+1)+')';
             });
             this.colSelectors = colSelectors;
 
 
             // Create the wrappers
-            // Use class "repainting" until column widths have been calculated
+            // Use class "thead-fixed-repainting" until column widths have been calculated
             this.table.wrap('<div class="scroll-box">');
             this.scrollBox = this.table.parent().wrap('<div class="scroll-wrapper">');
-            this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper repainting">');
+            this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper thead-fixed-repainting">');
             this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
 
 
@@ -40,7 +40,7 @@ Much of the functionality is down to the css - see theadFixed.css
             this.headerCells.each(function(i, th) {
                 qcode.style(colSelectors[i], 'width', $(th).outerWidth() + "px");
             });
-            this.wrapper.removeClass('repainting');
+            this.wrapper.removeClass('thead-fixed-repainting');
 
 
             // Create space for the thead
@@ -101,8 +101,8 @@ Much of the functionality is down to the css - see theadFixed.css
         _repaintNow: function() {
             // Re-calculate and re-apply column widths
 
-            // Apply class "repainting"
-            this.wrapper.addClass('repainting');
+            // Apply class "thead-fixed-repainting"
+            this.wrapper.addClass('thead-fixed-repainting');
 
             // Calculate new column width css
             var colSelectors = this.colSelectors;
@@ -111,7 +111,7 @@ Much of the functionality is down to the css - see theadFixed.css
             });
 
             // Apply the new css
-            this.wrapper.removeClass('repainting');
+            this.wrapper.removeClass('thead-fixed-repainting');
 
             // Get the new thead height
             var theadHeight = this.thead.outerHeight();
