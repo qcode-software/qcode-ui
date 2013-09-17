@@ -15,22 +15,22 @@
         this.find('th').each(function() {
             var th = $(this);
             var index = th.index();
-            var table = th.closest('table');
-            var nth = ':nth-child('+(index+1)+')';
+            var id = th.closest('table').getID();
 
-            var colSelector = 'col' + nth + ', td' + nth + ', th' + nth;
-
-            table.scopedCSS('col' + nth, 'width', th.innerWidth() + "px");
+            qcode.style('#'+id+' col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                table.scopedCSS(colSelector, 'white-space', "nowrap");
+                qcode.style('#'+id+' tr>*nth-child('+(index+1)+')', 'white-space', "nowrap");
+
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
+
             case 'normal':
             case 'break-word':
                 break;
+
             default:
                 $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
@@ -48,25 +48,26 @@
 
             var index = th.index();
             var table = th.closest('table');
+            var id = table.getID();
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
-            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
+            var colSelector = '#'+id+' col:nth-child('+(index+1)+'), #'+id+' tr>*:nth-child('+(index+1)+')';
 
             switch ( options.overflow ) {
             case 'break-word':
-                table.scopedCSS(colSelector, 'word-break', "normal");
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'word-break', "normal");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    table.scopedCSS(colSelector, 'word-break', 'break-all');
+                    qcode.style(colSelector, 'word-break', 'break-all');
                 }
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
 
                 var fontSize = th.data('original-font-size');
-                table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+                qcode.style(colSelector, 'font-size', fontSize + 'px');
 
                 var width = th.width();
                 var lastChangeFontSize = fontSize;
@@ -75,17 +76,17 @@
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
-                    table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+                    qcode.style(colSelector, 'font-size', fontSize + 'px');
                     if ( th.width() < width ) {
                         lastChangeFontSize = fontSize;
                     }
                     width = th.width();
                 }
-                table.scopedCSS(colSelector, 'font-size', lastChangeFontSize + 'px');
+                qcode.style(colSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
 
             default:
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
                 break;
             }
             event.stopPropagation();

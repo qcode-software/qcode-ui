@@ -824,8 +824,10 @@ function dynamicResize(oContainer) {
 	    customAttributes: []
 	}, options);
 
+        var css = {};
 	$(this).filter('table').each(function(){
 	    var table = $(this);
+            var id = table.getID();
 
 	    table.children('colgroup').andSelf().children('col').each(function() {
 		var col = $(this);
@@ -841,12 +843,15 @@ function dynamicResize(oContainer) {
 		// apply col styles to td and th elements
 		if (col.attr('style')) {
                     var style = col.attr('style');
+                    var selector = '#'+id+'>tr>*:nth-child('+(colIndex+1)+'),' +
+                        '#'+id+'>*>tr>*:nth-child('+(colIndex+1)+')';
+                    css[selector] = {};
+
                     style.split(';').forEach(function(declaration) {
                         var property = jQuery.trim(declaration.split(':')[0]);
                         var value = jQuery.trim(declaration.split(':')[1]);
                         if ( ! (property === "display" && value === "table-column") ) {
-                            table.scopedCSS('> tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
-                            table.scopedCSS('> * > tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                            css[selector][property] = value;
                         }
                     });
 		}
@@ -864,6 +869,7 @@ function dynamicResize(oContainer) {
 		});
 	    });
 	});
+        qcode.style(css);
 	return this;
     }
 })(jQuery);
@@ -886,22 +892,22 @@ function dynamicResize(oContainer) {
         this.find('th').each(function() {
             var th = $(this);
             var index = th.index();
-            var table = th.closest('table');
-            var nth = ':nth-child('+(index+1)+')';
+            var id = th.closest('table').getID();
 
-            var colSelector = 'col' + nth + ', td' + nth + ', th' + nth;
-
-            table.scopedCSS('col' + nth, 'width', th.innerWidth() + "px");
+            qcode.style('#'+id+' col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                table.scopedCSS(colSelector, 'white-space', "nowrap");
+                qcode.style('#'+id+' tr>*nth-child('+(index+1)+')', 'white-space', "nowrap");
+
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
+
             case 'normal':
             case 'break-word':
                 break;
+
             default:
                 $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
@@ -919,25 +925,26 @@ function dynamicResize(oContainer) {
 
             var index = th.index();
             var table = th.closest('table');
+            var id = table.getID();
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
-            var colSelector = 'col:nth-child('+(index+1)+'), td:nth-child('+(index+1)+'), th:nth-child('+(index+1)+')';
+            var colSelector = '#'+id+' col:nth-child('+(index+1)+'), #'+id+' tr>*:nth-child('+(index+1)+')';
 
             switch ( options.overflow ) {
             case 'break-word':
-                table.scopedCSS(colSelector, 'word-break', "normal");
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'word-break', "normal");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    table.scopedCSS(colSelector, 'word-break', 'break-all');
+                    qcode.style(colSelector, 'word-break', 'break-all');
                 }
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
 
                 var fontSize = th.data('original-font-size');
-                table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+                qcode.style(colSelector, 'font-size', fontSize + 'px');
 
                 var width = th.width();
                 var lastChangeFontSize = fontSize;
@@ -946,17 +953,17 @@ function dynamicResize(oContainer) {
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
-                    table.scopedCSS(colSelector, 'font-size', fontSize + 'px');
+                    qcode.style(colSelector, 'font-size', fontSize + 'px');
                     if ( th.width() < width ) {
                         lastChangeFontSize = fontSize;
                     }
                     width = th.width();
                 }
-                table.scopedCSS(colSelector, 'font-size', lastChangeFontSize + 'px');
+                qcode.style(colSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
 
             default:
-                table.scopedCSS(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', ui.size.width + "px");
                 break;
             }
             event.stopPropagation();
@@ -973,6 +980,7 @@ function dynamicResize(oContainer) {
     $.fn.columnsShowHide = function(column_selector, showHide) {
         $(this).each(function() {
 	    var table = jQuery(this);
+            var id = table.getID();
             var css = {}
 
             table.find(column_selector).each(function() {
@@ -980,15 +988,15 @@ function dynamicResize(oContainer) {
                 var index = column.index();
                 var nth = ':nth-child(' + (index+1) + ')';
                 if ( (showHide === "hide") || (showHide === undefined && column.css('display') === "table-column") ) {
-                    css['col' + nth] = {display: "none"};
-                    css['tr>*' + nth] = {display: "none"};
+                    css['#'+id+' col' + nth] = {display: "none"};
+                    css['#'+id+' tr>*' + nth] = {display: "none"};
                 } else {
-                    css['col' + nth] = {display: "table-column"};
-                    css['tr>*' + nth] = {display: "table-cell"};
+                    css['#'+id+' col' + nth] = {display: "table-column"};
+                    css['#'+id+' tr>*' + nth] = {display: "table-cell"};
                 }
             });
 
-            table.scopedCSS(css);
+            qcode.style(css);
             table.trigger('resize');
         });
     };
@@ -5401,6 +5409,26 @@ function dbFormHTMLArea(oDiv) {
     // ============================================================
 })(jQuery);
 
+/* ==== jquery.getID.js ==== */
+;/*
+getID -
+Returns a unique id for the first matched element
+uses the existing id if it has one
+ */
+(function($, undefined) {
+    var nextID = 0;
+    $.fn.getID = function() {
+        var element = this.first();
+
+        // Assign a unique ID if none exists
+        if ( element.attr('id') === undefined ) {
+            element.attr('id', 'qcode_jquery_id_' + (nextID++));
+        }
+
+        return element.attr('id');
+    }
+})(jQuery);
+
 /* ==== jquery.hoverScroller.js ==== */
 // Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover. Clicking the controls will quickly scroll to the end.
 ;(function($, undefined){
@@ -5881,117 +5909,6 @@ function dbFormHTMLArea(oDiv) {
         }
 
         return coalesce(returnValue, this);
-    }
-})(jQuery);
-
-/* ==== jquery.scopedCSS.js ==== */
-/*
-scopedCSS plugin
-
-Append css rules to the page, scoped to affect descendants of the target element(s)
-Uses an id selector to control scope, provides an id if none exists.
-
-Accepts a single object mapping selectors to objects mapping css properties to values,
-or a selector, followed by a css property name, followed by a value.
-
-New values will overwite old values, use an empty string to remove.
-
-Examples:
-# Set 1 style
-$('table').scopedCSS('th', 'font-weight', 'bold');
-
-# Set styles with multiple selectors
-$('table').scopedCSS({
-    'td:nth-child(3)': {
-        'color': 'black',
-        'font-weight': 'bold'
-    }
-    'td:nth-child(2)': {
-        'color': 'red'
-    }
-});
-
-# Remove a declaration
-$('table').scopedCSS({'td:nth-child(3)': {'color': ""}});
-
-# Remove a rule
-$('table').scopedCSS({'td:nth-child(2)': ""});
-
-*/
-
-// Plugin start
-;(function($, undefined) {
-    var nextID = 0;
-
-    $.fn.scopedCSS = function(rules) {
-        // Called with 3 arguments, create a rules object
-        if ( arguments.length === 3 ) {
-            var selector = arguments[0];
-            var property = arguments[1];
-            var value = arguments[2];
-            var rules = {};
-            rules[selector] = {};
-            rules[selector][property] = value;
-        }
-
-        // Called with a rules object, iterate over target elements.
-        this.each(function() {
-            var element = $(this);
-
-            // Assign a unique ID if none exists
-            if ( element.attr('id') === undefined ) {
-                element.attr('id', 'scopedCSS_ID_' + (nextID++));
-            }
-            var id = $(element).attr('id');
-
-            // Create a style element and append to head
-            if ( element.data('scopedCSSstyleBlock') === undefined ) {
-                element.data('scopedCSSstyleBlock', $('<style>').appendTo('head'));
-            }
-            var styleBlock = element.data('scopedCSSstyleBlock');
-
-            // Get any existing scoped css rules for this element
-            var oldRules = styleBlock.data('scopedCSSrules');
-
-            // Extend existing rules (recursively)
-            newRules = jQuery.extend(true, oldRules, rules);
-
-            // Create the innerHTML for the style block
-            var css = "";
-            $.each(newRules, function(selectorGroup, declarations) {
-                // Use an empty string to remove all css from a selector.
-                if ( declarations === "" ) {
-                    delete newRules[selector];
-
-                } else {
-                    // Create the declaration block string
-                    var declarationBlock = "";
-                    $.each(declarations, function(attribute, value) {
-                        if ( value === "" ) {
-                            delete newRules[selectorGroup][attribute];
-                        } else {
-                            declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
-                        }
-                    });
-
-                    // A selector group may consist of one or more selectors in a comma-separated list
-                    // Prepend the id selector to each one.
-                    var selectorArray = [];
-                    $.each(selectorGroup.split(','), function(i, selector) {
-                        selectorArray.push('#' + id + ' ' + selector.trim());
-                    });
-
-                    // Add the rule set to the css string
-                    css = css + selectorArray.join(',\n') + ' {\n ' + declarationBlock + ' }\n';
-                }
-            });
-
-            styleBlock.data('scopedCSSrules', newRules);
-            styleBlock.html(css);
-        });
-
-        // Enable jQuery plugin chaining
-        return this;
     }
 })(jQuery);
 
@@ -7671,6 +7588,12 @@ Much of the functionality is down to the css - see theadFixed.css
             this.thead = this.element.children('thead');
             this.tbody = this.element.children('tbody');
             this.headerCells = this.thead.children('tr').first().children('th');
+            var colSelectors = {};
+            var id = this.table.getID();
+            this.headerCells.each(function(i, th) {
+                colSelectors[i] = '.thead-fixed-wrapper:not(.repainting) #'+id+' tr>*:nth-child('+(i+1)+'), .thead-fixed-wrapper:not(.repainting) #'+id+' col:nth-child('+(i+1)+')';
+            });
+            this.colSelectors = colSelectors;
 
 
             // Create the wrappers
@@ -7680,18 +7603,14 @@ Much of the functionality is down to the css - see theadFixed.css
             this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper repainting">');
             this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
 
+
             // Calculate and apply column widths
             var css = {};
             this.headerCells.each(function(i, th) {
-                var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
+                qcode.style(colSelectors[i], 'width', $(th).outerWidth() + "px");
             });
+            this.wrapper.removeClass('repainting');
 
-            var widget = this;
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.removeClass('repainting');
-            });
 
             // Create space for the thead
             this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
@@ -7750,39 +7669,24 @@ Much of the functionality is down to the css - see theadFixed.css
         },
         _repaintNow: function() {
             // Re-calculate and re-apply column widths
-            var widget = this;
 
-            // Remove existing column width css defined by this plugin
-            // Using comments in the selectors keeps these rules separate from those declared by other plugins
-            // To Do: Investigate a better design for scopedCSS plugin so that this comments trick isn't needed
-            var css = {};
-            widget.headerCells.each(function(i, th) {
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: ""};
-            });
-            // run detached to improve performance
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.addClass('repainting');
-            });
+            // Apply class "repainting"
+            this.wrapper.addClass('repainting');
 
             // Calculate new column width css
-            var css = {};
+            var colSelectors = this.colSelectors;
             this.headerCells.each(function(i, th) {
-                var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
+                qcode.style(colSelectors[i], 'width', $(th).outerWidth()+"px");
             });
 
             // Apply the new css
-            // run detached to improve performance
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.removeClass('repainting');
-            });
+            this.wrapper.removeClass('repainting');
 
             // Get the new thead height
-            var theadHeight = widget.thead.outerHeight();
+            var theadHeight = this.thead.outerHeight();
 
             // Apply the new thead height - run detached to fix google chrome bug.
+            var widget = this;
             this.wrapper.runDetached(function() {
                 widget.scrollWrapper.css('top', theadHeight + "px");
             });
@@ -8077,6 +7981,96 @@ function preloadImages() {
         }
     }
 })(window);
+
+/* ==== qcode.style.js ==== */
+;/*
+   qcode.style
+   
+   Append css rules to the page
+
+   Accepts a single object mapping selectors to objects mapping css properties to values,
+   or a selector, followed by a css property name, followed by a value.
+
+   New values will overwite old values, use an empty string to remove.
+
+   Examples:
+   # Set 1 style
+   qcode.style('#mytable th', 'font-weight', 'bold');
+
+   # Set styles with multiple selectors
+    qcode.style({
+        '#mytable td:nth-child(3)': {
+            'color': 'black',
+            'font-weight': 'bold'
+        }
+        '#mytable td:nth-child(2)': {
+            'color': 'red'
+        }
+    });
+
+    # Remove a declaration
+    qcode.style('body', 'background', "");
+
+    # Remove a rule
+    qcode.style('table', "");
+*/
+
+// Ensure qcode namespace object exists
+if ( typeof qcode === "undefined" ) {
+    var qcode = {};
+}
+
+(function($, undefined) {
+    var styleBlock;
+    qcode.style = function(rules) {
+        // Called with 3 arguments, create a rules object
+        if ( arguments.length === 3 ) {
+            var selector = arguments[0];
+            var property = arguments[1];
+            var value = arguments[2];
+            var rules = {};
+            rules[selector] = {};
+            rules[selector][property] = value;
+        }
+
+        // Append a <style> element to the head the first time this plugin is called
+        if ( styleBlock === undefined ) {
+            styleBlock = $('<style>').appendTo('head');
+        }
+
+        // Get any existing scoped css rules for this element
+        var oldRules = styleBlock.data('scopedCSSrules');
+
+        // Extend existing rules (recursively)
+        newRules = jQuery.extend(true, oldRules, rules);
+
+        // Create the innerHTML for the style block
+        var css = "";
+        $.each(newRules, function(selector, declarations) {
+            // Use an empty string to remove all css from a selector.
+            if ( declarations === "" ) {
+                delete newRules[selector];
+
+            } else {
+                // Create the declaration block string
+                var declarationBlock = "";
+                $.each(declarations, function(attribute, value) {
+                    if ( value === "" ) {
+                        delete newRules[selector][attribute];
+                    } else {
+                        declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
+                    }
+                });
+
+                // Add the rule set to the css string
+                css = css + selector + ' {\n ' + declarationBlock + ' }\n';
+            }
+        });
+
+        styleBlock.data('scopedCSSrules', newRules);
+        styleBlock.html(css);
+    }
+})(jQuery);
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {

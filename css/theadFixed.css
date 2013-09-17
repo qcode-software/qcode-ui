@@ -52,6 +52,7 @@ column widths, but to use fixed layout a width must be specified, so we use 0px 
 .thead-fixed-wrapper:not(.repainting) thead {
     display: table;
     table-layout: fixed;
+    width: 0;
 }
 
 /* Absolutely position the thead with the bottom of the thead anchored to the top of the

@@ -19,6 +19,12 @@ Much of the functionality is down to the css - see theadFixed.css
             this.thead = this.element.children('thead');
             this.tbody = this.element.children('tbody');
             this.headerCells = this.thead.children('tr').first().children('th');
+            var colSelectors = {};
+            var id = this.table.getID();
+            this.headerCells.each(function(i, th) {
+                colSelectors[i] = '.thead-fixed-wrapper:not(.repainting) #'+id+' tr>*:nth-child('+(i+1)+'), .thead-fixed-wrapper:not(.repainting) #'+id+' col:nth-child('+(i+1)+')';
+            });
+            this.colSelectors = colSelectors;
 
 
             // Create the wrappers
@@ -28,18 +34,14 @@ Much of the functionality is down to the css - see theadFixed.css
             this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper repainting">');
             this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
 
+
             // Calculate and apply column widths
             var css = {};
             this.headerCells.each(function(i, th) {
-                var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
+                qcode.style(colSelectors[i], 'width', $(th).outerWidth() + "px");
             });
+            this.wrapper.removeClass('repainting');
 
-            var widget = this;
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.removeClass('repainting');
-            });
 
             // Create space for the thead
             this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
@@ -98,39 +100,24 @@ Much of the functionality is down to the css - see theadFixed.css
         },
         _repaintNow: function() {
             // Re-calculate and re-apply column widths
-            var widget = this;
 
-            // Remove existing column width css defined by this plugin
-            // Using comments in the selectors keeps these rules separate from those declared by other plugins
-            // To Do: Investigate a better design for scopedCSS plugin so that this comments trick isn't needed
-            var css = {};
-            widget.headerCells.each(function(i, th) {
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: ""};
-            });
-            // run detached to improve performance
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.addClass('repainting');
-            });
+            // Apply class "repainting"
+            this.wrapper.addClass('repainting');
 
             // Calculate new column width css
-            var css = {};
+            var colSelectors = this.colSelectors;
             this.headerCells.each(function(i, th) {
-                var width = $(th).outerWidth();
-                css['/*theadFixed*/ tr>*:nth-child('+(i+1)+'), col:nth-child('+(i+1)+')'] = {width: width + "px"};
+                qcode.style(colSelectors[i], 'width', $(th).outerWidth()+"px");
             });
 
             // Apply the new css
-            // run detached to improve performance
-            this.wrapper.runDetached(function() {
-                widget.table.scopedCSS(css);
-                widget.wrapper.removeClass('repainting');
-            });
+            this.wrapper.removeClass('repainting');
 
             // Get the new thead height
-            var theadHeight = widget.thead.outerHeight();
+            var theadHeight = this.thead.outerHeight();
 
             // Apply the new thead height - run detached to fix google chrome bug.
+            var widget = this;
             this.wrapper.runDetached(function() {
                 widget.scrollWrapper.css('top', theadHeight + "px");
             });

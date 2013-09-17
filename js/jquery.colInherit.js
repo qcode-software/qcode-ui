@@ -8,8 +8,10 @@
 	    customAttributes: []
 	}, options);
 
+        var css = {};
 	$(this).filter('table').each(function(){
 	    var table = $(this);
+            var id = table.getID();
 
 	    table.children('colgroup').andSelf().children('col').each(function() {
 		var col = $(this);
@@ -25,12 +27,15 @@
 		// apply col styles to td and th elements
 		if (col.attr('style')) {
                     var style = col.attr('style');
+                    var selector = '#'+id+'>tr>*:nth-child('+(colIndex+1)+'),' +
+                        '#'+id+'>*>tr>*:nth-child('+(colIndex+1)+')';
+                    css[selector] = {};
+
                     style.split(';').forEach(function(declaration) {
                         var property = jQuery.trim(declaration.split(':')[0]);
                         var value = jQuery.trim(declaration.split(':')[1]);
                         if ( ! (property === "display" && value === "table-column") ) {
-                            table.scopedCSS('> tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
-                            table.scopedCSS('> * > tr > *:nth-child(' + (colIndex + 1) + ')', property, value);
+                            css[selector][property] = value;
                         }
                     });
 		}
@@ -48,6 +53,7 @@
 		});
 	    });
 	});
+        qcode.style(css);
 	return this;
     }
 })(jQuery);
