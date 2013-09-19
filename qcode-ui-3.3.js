@@ -7604,18 +7604,6 @@ Much of the functionality is down to the css - see theadFixed.css
             this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
 
 
-            // Calculate and apply column widths
-            var css = {};
-            this.headerCells.each(function(i, th) {
-                qcode.style(colSelectors[i], 'width', $(th).outerWidth() + "px");
-            });
-            this.wrapper.removeClass('thead-fixed-repainting');
-
-
-            // Create space for the thead
-            this.scrollWrapper.css('top', this.thead.outerHeight() + "px");
-
-
             // Add the resize event listeners - only repaint when the table is resized
             // or the window width changes.
             this._on({
@@ -7648,6 +7636,8 @@ Much of the functionality is down to the css - see theadFixed.css
                     }
                 }
             });
+
+            this.repaint(false);
 	},
 	repaint: function(async) {
             // If asychronous, schedule the table to be repainted when the current event handlers are finished
