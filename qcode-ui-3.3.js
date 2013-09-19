@@ -1275,10 +1275,16 @@ function dynamicResize(oContainer) {
 ;(function($, window, document, undefined){
     $.widget("qcode.dbCell", {
         options: {
-            deleteKey: 'delete'
+            deleteKey: 'delete',
+            type: "text",
+            tab_on_return: true
         },
 	_create: function(){
-	    this.keyUpTimer
+	    this.keyUpTimer;
+            this.options.type = coalesce(this.getCol().attr('type'), this.options.type);
+            if ( this.getCol().attr('tab_on_return') === "false" ) {
+                this.options.tab_on_return = false;
+            }
 	},
 	getRow: function(){
 	    return this.element.closest('tr');
@@ -1290,8 +1296,7 @@ function dynamicResize(oContainer) {
 	    return this.getGrid().children('colgroup').children().eq(this.element.index());
 	},
 	getType: function(){
-	    // default type == 'text'
-	    return coalesce(this.getCol().attr('type'), 'text');
+	    return this.options.type;
 	},
 	getEditorPluginName: function(){
 	    switch ( this.getType() ) {
@@ -1309,12 +1314,6 @@ function dynamicResize(oContainer) {
 	    var grid = this.getGrid();
 	    var editorDiv = grid.dbGrid('getEditorDiv');
 	    var editorPluginName = this.getEditorPluginName();
-
-            if ( editorDiv.data(editorPluginName) === undefined && this.getType() === "htmlarea") {
-                // Initialise htmlarea editor with desired tab on return behaviour
-                // TODO: Make this customizable for each column of a dbGrid
-                $.fn[editorPluginName].apply(editorDiv, ['option', 'tab_on_return', true]);
-            }
             return $.fn[editorPluginName].apply(editorDiv, arguments);
 	},
 	getValue: function(){
@@ -1403,6 +1402,7 @@ function dynamicResize(oContainer) {
             cell.trigger('dbCellIn');
 
 	    this.hide();
+            this.editor('option', 'tab_on_return', this.options.tab_on_return);
 	    if ( this.getType() === 'combo' ) {
                 var data = this.getRow().dbRow('getRowData');
                 var searchURL = this.getCol().attr('searchURL');
