@@ -75,10 +75,18 @@
             });
         },
         setNavCounter: function(message) {
+            var oldHeight = this.statusBar.height();
             this.navCounter.html(message);
+            if ( this.statusBar.height() !== oldHeight ) {
+                this.statusBar.trigger('resize');
+            }
         },
         setMessage: function(message) {
+            var oldHeight = this.statusBar.height();
             this.messageBox.html(message);
+            if ( this.statusBar.height() !== oldHeight ) {
+                this.statusBar.trigger('resize');
+            }
         },
 	_dragStart: function(event){
 	    var target = $(event.target);

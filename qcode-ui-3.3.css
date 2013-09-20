@@ -275,5 +275,6 @@ so that column widths can be recalculated
     .thead-fixed-wrapper:not(.thead-fixed-repainting) td {
         box-sizing: border-box;
     }
+
 }
 

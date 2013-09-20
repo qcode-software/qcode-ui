@@ -6086,10 +6086,18 @@ uses the existing id if it has one
             });
         },
         setNavCounter: function(message) {
+            var oldHeight = this.statusBar.height();
             this.navCounter.html(message);
+            if ( this.statusBar.height() !== oldHeight ) {
+                this.statusBar.trigger('resize');
+            }
         },
         setMessage: function(message) {
+            var oldHeight = this.statusBar.height();
             this.messageBox.html(message);
+            if ( this.statusBar.height() !== oldHeight ) {
+                this.statusBar.trigger('resize');
+            }
         },
 	_dragStart: function(event){
 	    var target = $(event.target);
@@ -7638,12 +7646,27 @@ Much of the functionality is down to the css - see theadFixed.css
             });
 
             this.repaint(false);
+
+            /* Where supported, MutationObserver allows us to listen for changes to the DOM */
+            var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+            if ( MutationObserver ) {
+                this.observer = new MutationObserver(this.repaint.bind(this));
+                this.observer.observe(
+                    this.element[0],
+                    {
+                        childList: true,
+                        characterData: true,
+                        subtree: true
+                    }
+                );
+            }
 	},
 	repaint: function(async) {
             // If asychronous, schedule the table to be repainted when the current event handlers are finished
             // Otherwise, repaint immediately and clear any scheduled repaint
             var async = coalesce(async, true);
             var theadFixed = this;
+
             if ( async ) {
                 if ( this.repaintTimeout === undefined ) {
                     this.repaintTimeout = window.setZeroTimeout(function() {
