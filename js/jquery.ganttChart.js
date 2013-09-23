@@ -56,7 +56,7 @@
             this.oldMarginTop = this.table.css('margin-top');
             this.oldMarginBottom = this.table.css('margin-bottom');
             this.table.css({
-                'margin-top': this.options.headerHeight - this.table.find('thead').outerHeight(),
+                'margin-top': this.options.headerHeight - parseInt(this.table.css('border-top-width')) - this.table.find('thead').outerHeight(),
                 'margin-bottom': scrollBarWidth
             });
 
@@ -141,7 +141,7 @@
                 ganttChart.getDependentRows(rowIndex).each(function(i, row) {
                     var row = $(row);
                     var cell = row.children().first();
-                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
                     var date = ganttChart._getRowStartDate(row.index());
                     dependents.push({
                         date: date,
@@ -152,7 +152,7 @@
                 ganttChart.getDependencyRows(rowIndex).each(function(i, row) {
                     var row = $(row);
                     var cell = row.children().first();
-                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                    var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (row.height() / 2);
                     var date = ganttChart._getRowFinishDate(row.index());
                     dependencies.push({
                         date: date,
@@ -162,7 +162,12 @@
 
                 var row = this.rows.eq(rowIndex);
                 var cell = row.children().first();
-                var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + ((row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))) / 2);
+                var rowHeight = row.height();
+                if ( row.css('border-collapse') === "collapse" ) {
+                    rowHeight += (parseInt(cell.css('border-top-width')) + parseInt(cell.css('border-bottom-width'))) / 2;
+                }
+
+                var verticalPosition = row.positionRelativeTo(ganttChart.wrapper).top + (rowHeight / 2);
 
                 return {
                     startDate: startDate,
@@ -171,8 +176,8 @@
                     color: ganttChart._getCellValue('barColor', rowIndex),
                     dependencies: dependencies,
                     dependents: dependents,
-                    rowHeight: (row.height() - parseInt(cell.css('border-top-width')) - parseInt(cell.css('border-bottom-width'))),
-                    row: $(row)
+                    rowHeight: rowHeight,
+                    row: row
                 }
             } else {
                 return false
@@ -394,18 +399,22 @@
                 if ( (layer === undefined || layer === 2) && (this.hover || this.options.row.data('highlighted')) ) {
                     // Draw the highlight/hover bar
                     var ctx = this.context;
+
+                    // Draw the left and right borders 1px beyond the edge of the canvas
                     var highlight = {
-                        left: 0,
-                        width: this.calendarCanvas.calendar('option','width'),
+                        left: -1,
+                        width: this.calendarCanvas.calendar('option','width') + 2,
                         top: this.options.verticalPosition - (this.options.rowHeight / 2),
                         height: this.options.rowHeight
                     }
+                    // Draw a 1px border inside the specified boundaries
                     if ( this.options.row.data('highlighted') ) {
                         ctx.strokeStyle = this.options.highlightEdge;
-                        ctx.strokeRect(highlight.left - 0.5, highlight.top - 0.5, highlight.width + 1, highlight.height + 1);
+                        ctx.strokeRect(highlight.left + 0.5, highlight.top + 0.5, highlight.width - 1, highlight.height - 1);
                     }
+                    // Fill the region inside the border
                     ctx.fillStyle = this.options.highlightColor;
-                    ctx.fillRect(highlight.left, highlight.top, highlight.width, highlight.height);
+                    ctx.fillRect(highlight.left + 1, highlight.top + 1, highlight.width - 2, highlight.height - 2);
 
                 } else if ( (layer === undefined || layer === 3) && (this.hover || this.options.row.data('highlighted')) ) {
                     // Draw the dependency lines
