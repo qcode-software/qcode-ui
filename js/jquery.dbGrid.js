@@ -28,7 +28,13 @@
 	    $.each(attributes, function(i, name) {
 		var value = dbGrid.element.attr(name);
 		if ( value !== undefined ) {
-		    dbGrid.option(name,value);
+                    if ( value === "true" ) {
+                        dbGrid.option(name,true);
+                    } else if ( value === "false" ) {
+                        dbGrid.option(name,false);
+                    } else {
+		        dbGrid.option(name,value);
+                    }
 		}
 	    });
 
