@@ -17,7 +17,7 @@
                                  'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
                                  'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
                                  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-                                 'fontSize', 'fontFamily', 'fontWeight', 'width'];
+                                 'fontSize', 'fontFamily', 'fontWeight', 'width', 'box-sizing'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -26,6 +26,10 @@
 	    this._on(window, {
 		'resize': this.repaint
 	    });
+
+            this._on(this.element.parentsUntil('html'), {
+                'scroll': this.repaint
+            });
 
 	    this.editor = $('<input type="text">')
 		.addClass('db-editor combo')
@@ -48,7 +52,7 @@
 
 	    this.comboOptions = $('<div>')
 		.addClass('options-container')
-		.appendTo(this.element)
+		.appendTo('body')
 		.css({
 		    'position':'absolute',
 		    'overflow':'auto',
@@ -73,7 +77,7 @@
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show();
+	    this.editor.show().focus();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
@@ -149,12 +153,14 @@
 		// position
 		var position = element.positionRelativeTo(this.editor.offsetParent());
 		editor.css({
-			'left': position.left,
-			'top': position.top
+		    'left': position.left,
+		    'top': position.top
 		});
+
+                var pagePosition = editor.positionRelativeTo('body');
 		comboOptions.css({
-		    'left': position.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
-		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
+		    'left': pagePosition.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
+		    'top': pagePosition.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
 		});
 	    }
 	}, 

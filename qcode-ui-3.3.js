@@ -1414,7 +1414,7 @@ function dynamicResize(oContainer) {
 		this.editor('show', cell, this.getValue())
 	    }
 	    select = coalesce(select, this.getCol().attr('cellInSelect'), 'all');
-	    this.editor('selectText', select); 
+	    this.editor('selectText', select);
 	    grid.dbGrid('setCurrentCell', cell);
 	},
 	cellOut: function(){
@@ -1847,7 +1847,7 @@ function dynamicResize(oContainer) {
                                  'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
                                  'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
                                  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-                                 'fontSize', 'fontFamily', 'fontWeight', 'width'];
+                                 'fontSize', 'fontFamily', 'fontWeight', 'width', 'box-sizing'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -1856,6 +1856,10 @@ function dynamicResize(oContainer) {
 	    this._on(window, {
 		'resize': this.repaint
 	    });
+
+            this._on(this.element.parentsUntil('html'), {
+                'scroll': this.repaint
+            });
 
 	    this.editor = $('<input type="text">')
 		.addClass('db-editor combo')
@@ -1878,7 +1882,7 @@ function dynamicResize(oContainer) {
 
 	    this.comboOptions = $('<div>')
 		.addClass('options-container')
-		.appendTo(this.element)
+		.appendTo('body')
 		.css({
 		    'position':'absolute',
 		    'overflow':'auto',
@@ -1903,7 +1907,7 @@ function dynamicResize(oContainer) {
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show();
+	    this.editor.show().focus();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
@@ -1979,12 +1983,14 @@ function dynamicResize(oContainer) {
 		// position
 		var position = element.positionRelativeTo(this.editor.offsetParent());
 		editor.css({
-			'left': position.left,
-			'top': position.top
+		    'left': position.left,
+		    'top': position.top
 		});
+
+                var pagePosition = editor.positionRelativeTo('body');
 		comboOptions.css({
-		    'left': position.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
-		    'top': position.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
+		    'left': pagePosition.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
+		    'top': pagePosition.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
 		});
 	    }
 	}, 
