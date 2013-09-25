@@ -1847,7 +1847,8 @@ function dynamicResize(oContainer) {
                                  'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
                                  'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
                                  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-                                 'fontSize', 'fontFamily', 'fontWeight', 'width', 'box-sizing'];
+                                 'fontSize', 'fontFamily', 'fontWeight',
+                                 'width', 'box-sizing'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -1907,7 +1908,7 @@ function dynamicResize(oContainer) {
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().focus();
+	    this.editor.show();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
@@ -7603,6 +7604,9 @@ Makes the body + foot of a table scrollable, while making the head "fixed"
 Creates 3 levels of wrapping - from the outermost first these wrappers are assigned
 the classes "thead-fixed-wrapper", "scroll-wrapper", and "scroll-box".
 
+Measures the widths of the columns then uses table-layout:fixed to enforce those
+widths after the head and body have been separated
+
 Much of the functionality is down to the css - see theadFixed.css
 */
 ;(function($, undefined) {
@@ -7617,6 +7621,8 @@ Much of the functionality is down to the css - see theadFixed.css
             this.thead = this.element.children('thead');
             this.tbody = this.element.children('tbody');
             this.headerCells = this.thead.children('tr').first().children('th');
+
+            // css selectors for each column, applied only when not repainting
             var colSelectors = {};
             var id = this.table.getID();
             this.headerCells.each(function(i, th) {
@@ -7626,7 +7632,7 @@ Much of the functionality is down to the css - see theadFixed.css
 
 
             // Create the wrappers
-            // Use class "thead-fixed-repainting" until column widths have been calculated
+            // Use class "thead-fixed-repainting" until column widths have been measured
             this.table.wrap('<div class="scroll-box">');
             this.scrollBox = this.table.parent().wrap('<div class="scroll-wrapper">');
             this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper thead-fixed-repainting">');
@@ -7652,8 +7658,8 @@ Much of the functionality is down to the css - see theadFixed.css
 
                     } else {
                         // Right now, setZeroTimeout is used as a hack to ensure that the maximizeHeight
-                        // plugin has had a chance to get rid of the window's vertical
-                        // scrollbar before we test to see if the window width has changed.
+                        // plugin has had a chance to get rid of the window's vertical scrollbar,
+                        // before we test to see if the window width has changed.
                         if ( ! this.options.fixedWidth ) {
                             window.setZeroTimeout(function() {
                                 if ( windowWidth != $(window).width() ) {
@@ -7704,16 +7710,17 @@ Much of the functionality is down to the css - see theadFixed.css
         _repaintNow: function() {
             // Re-calculate and re-apply column widths
 
-            // Apply class "thead-fixed-repainting"
+            // Apply class "thead-fixed-repainting" - this disabled most of the theadFixed css, including any widths
+            // specified by a previous repaint.
             this.wrapper.addClass('thead-fixed-repainting');
 
-            // Calculate new column width css
+            // Measure the new column widths and write this to the page css
             var colSelectors = this.colSelectors;
             this.headerCells.each(function(i, th) {
                 qcode.style(colSelectors[i], 'width', $(th).outerWidth()+"px");
             });
 
-            // Apply the new css
+            // Remove the repainting class, applying the new widths and re-applying the theadFixed css
             this.wrapper.removeClass('thead-fixed-repainting');
 
             // Get the new thead height

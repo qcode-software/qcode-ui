@@ -17,7 +17,8 @@
                                  'borderTopStyle', 'borderBottomStyle', 'borderLeftStyle', 'borderRightStyle',
                                  'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
                                  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-                                 'fontSize', 'fontFamily', 'fontWeight', 'width', 'box-sizing'];
+                                 'fontSize', 'fontFamily', 'fontWeight',
+                                 'width', 'box-sizing'];
         
     // Uses the jQuery UI widget factory
     $.widget('qcode.dbEditorCombo', {
@@ -77,7 +78,7 @@
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
-	    this.editor.show().focus();
+	    this.editor.show();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
 	    this.repaint();
@@ -311,7 +312,7 @@
             }
 	},
         _inputOnFocus: function(e) {
-	    this.search();
+	    //this.search();
         },
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
