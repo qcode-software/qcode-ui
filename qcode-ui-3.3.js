@@ -2142,7 +2142,7 @@ function dynamicResize(oContainer) {
             }
 	},
         _inputOnFocus: function(e) {
-	    this.search();
+	    //this.search();
         },
 	_inputOnKeyUp: function(e) {
 	    if ( this.getValue() !== this.lastValue ) {
@@ -4032,7 +4032,7 @@ function dbFormHTMLArea(oDiv) {
 		    row.dbRow('delete', false);
 		}
 	    }
-	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') == 'dirty' ) {
+	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') !== 'current' ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
                     // Notify plugins such as statusFrame
