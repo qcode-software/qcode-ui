@@ -7626,7 +7626,8 @@ Much of the functionality is down to the css - see theadFixed.css
             var colSelectors = {};
             var id = this.table.getID();
             this.headerCells.each(function(i, th) {
-                colSelectors[i] = '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' tr>*:nth-child('+(i+1)+'), .thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' col:nth-child('+(i+1)+')';
+                colSelectors[i] = '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' th:nth-child('+(i+1)+'), '+
+                    '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' col:nth-child('+(i+1)+')';
             });
             this.colSelectors = colSelectors;
 
@@ -7641,19 +7642,12 @@ Much of the functionality is down to the css - see theadFixed.css
 
             // Add the resize event listeners - only repaint when the table is resized
             // or the window width changes.
-            this._on({
-                resize: function(event) {
-                    // If part of the table (or the table itself) is resized,
-                    // flag the event as it bubbles
-                    event.isTableResize = true;
-                }
-            });
             var windowWidth = $(window).width();
             var widget = this;
             // On window resize, or when a resize bubbles to the window.
             this._on($(window), {
                 'resize': function(event) {
-                    if ( event.isTableResize ) {
+                    if ( $(event.target).closest(this.element).length > 0 ) {
                         this.repaint();
 
                     } else {

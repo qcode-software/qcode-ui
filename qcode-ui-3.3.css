@@ -229,7 +229,7 @@ so that column widths can be recalculated
         bottom: 0;
         left: 0;
         right: 0;
-    /* top: set to thead outerHeight by plugin */
+        /* top: set to thead outerHeight by plugin */
     }
     .thead-fixed-wrapper.thead-fixed-repainting .scroll-wrapper {
         max-height: 100%;
