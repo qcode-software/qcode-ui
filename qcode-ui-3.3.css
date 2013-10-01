@@ -209,72 +209,28 @@ span.sort {
 theadFixed plugin css
 
 Used to create a scrollable table with a fixed thead.
-The class "thead-fixed-repainting" is used to temporarily remove this behavior
-so that column widths can be recalculated
 */
 
 @media screen {
-
-    /* The outermost div allows the entire table to be treated as a block-level element,
-       which is handy for resizing and achieving desired page flow with sensible-looking css */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) {
+    /* Outermost wrapper, providing an anchor for the head clone */
+    .thead-fixed-wrapper {
         position: relative;
         max-height: 100%;
     }
 
-    /* The middle div provides an anchor for the absolutely positioned thead,
-       and controls the size of the scrollable area */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) .scroll-wrapper {
+    /* Fix the header clone to the top of the wrapper */
+    .thead-fixed-wrapper .thead-fixed-clone {
         position: absolute;
-        bottom: 0;
+        top: 0;
         left: 0;
-        right: 0;
-        /* top: set to thead outerHeight by plugin */
-    }
-    .thead-fixed-wrapper.thead-fixed-repainting .scroll-wrapper {
-        max-height: 100%;
-        overflow: hidden;
     }
 
-    /* The inner div provides the scrollable area. It must be statically positioned so
-       that the thead can be anchored outside it. It floats so that it will expand as needed
-       to contain the table, even if this exceeds the page width. */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) .scroll-box {
-        position: static;
-        height: 100%;
-    }
+    /* provide a scrollbox, use float to stretch if the table overflows horizontally */
     .thead-fixed-wrapper .scroll-box {
         float: left;
+        height: 100%;
         min-width: 100%;
         overflow-y: scroll;
-        overflow-x: hidden;
-        max-height: 100%;
     }
-
-    /* thead becomes a separate table. Once column widths have been calculated, we use
-       a fixed layout, which requires a table width to be specified, even though columns widths
-       will override it. */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) table,
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) thead {
-        display: table;
-        table-layout: fixed;
-        width: 0;
-    }
-
-    /* Absolutely position the thead with the bottom of the thead anchored to the top of the
-       middle wrapping div */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) thead {
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        width: 0;
-    }
-
-    /* Use border-box sizing so that we can set the widths without worrying about padding. */
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) th,
-    .thead-fixed-wrapper:not(.thead-fixed-repainting) td {
-        box-sizing: border-box;
-    }
-
 }
 

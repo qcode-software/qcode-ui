@@ -6216,6 +6216,7 @@ uses the existing id if it has one
         buttons.each(function() {
             var button = $(this);
             var table = button.closest('table');
+            table.find('tr>*:nth-child(' + (button.closest('th').index() + 1) + ')').addClass('row-select');
             if ( table.find('.highlight').length > 0 ) {
                 button.removeClass('disabled');
             } else {
@@ -6232,6 +6233,11 @@ uses the existing id if it has one
                             }
                             $(row).dbRow('delete', true);
                         });
+                        if ( table.find('.highlight').length > 0 ) {
+                            button.removeClass('disabled');
+                        } else {
+                            button.addClass('disabled');
+                        }
                     }
                 }
             });
@@ -6247,6 +6253,13 @@ uses the existing id if it has one
                 button.one('mouseup mouseleave', function() {
                     button.removeClass('clicking');
                 });
+            });
+            table.on('dbRowActionReturn', function() {
+                if ( table.find('.highlight').length > 0 ) {
+                    button.removeClass('disabled');
+                } else {
+                    button.addClass('disabled');
+                }
             });
         });
         return buttons;
@@ -7600,44 +7613,92 @@ uses the existing id if it has one
 /*
 theadFixed plugin
 
-Makes the body + foot of a table scrollable, while making the head "fixed"
-Creates 3 levels of wrapping - from the outermost first these wrappers are assigned
-the classes "thead-fixed-wrapper", "scroll-wrapper", and "scroll-box".
-
-Measures the widths of the columns then uses table-layout:fixed to enforce those
-widths after the head and body have been separated
-
-Much of the functionality is down to the css - see theadFixed.css
+Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 */
 ;(function($, undefined) {
+    /* css to copy from original th elements */
+    var copy_th_css = [
+        'display', 'color', 'background-color',
+        'font-family', 'font-weight', 'font-size', 'font-style', 'text-align',
+        'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+        'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+        'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+        'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'
+    ];
+    /* css to copy from the original table */
+    var copy_table_css = [
+        'border-spacing', 'border-collapse',
+        'border-top-width', 'border-right-width', 'border-left-width',
+        'border-top-style', 'border-right-style', 'border-left-style',
+        'border-top-color', 'border-right-color', 'border-left-color'
+    ];
+
+    // Find the element whose DOM location relative to otherRoot is the same as element's postion relative to root.
+    // eg. If element is the 3rd child of the 5th child of root, find the 3rd child of the 5th child of otherRoot
+    function treeMap(element, root, otherRoot) {
+        if ( element.length == 0 ) {
+            return $();
+        } else if ( element.is(root) ) {
+            return otherRoot;
+        } else {
+            var mappedParent = treeMap(element.parent(), root, otherRoot);
+            return mappedParent.children().eq(element.index());
+        }
+    }
+
     $.widget('qcode.theadFixed', {
 	options: {
 	    'height': "500px",
             'fixedWidth': false
 	},
 	_create: function() {
-            // Some handy references
             this.table = this.element;
-            this.thead = this.element.children('thead');
-            this.tbody = this.element.children('tbody');
-            this.headerCells = this.thead.children('tr').first().children('th');
+            this.theadCells = this.table.children('thead').children('tr').first().children('th');
 
-            // css selectors for each column, applied only when not repainting
-            var colSelectors = {};
-            var id = this.table.getID();
-            this.headerCells.each(function(i, th) {
-                colSelectors[i] = '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' th:nth-child('+(i+1)+'), '+
-                    '.thead-fixed-wrapper:not(.thead-fixed-repainting) #'+id+' col:nth-child('+(i+1)+')';
+            // Create the new thead as a separate table
+            this.head = $('<table>')
+                .append(this.table.children('colgroup').clone())
+                .append(this.table.children('thead').clone())
+                .addClass('thead-fixed-clone');
+            this.head.children('tbody, tfoot').remove();
+
+            // Copy the table styles
+            var id = this.head.getID();
+            var widget = this;
+            var styles = {};
+            selector = '#' + id;
+            styles[selector] = {
+                'table-layout': "fixed",
+                'width': this.table.outerWidth() + "px"
+            };
+            $.each(copy_table_css, function(i, name) {
+                styles[selector][name] = widget.table.css(name);
             });
+            qcode.style(styles);
+
+            // Copy the th styles and widths
+            var colSelectors = {};
+            var styles = {};
+            this.theadCells.each(function(i, th) {
+                colSelectors[i] = '#'+id+' col:nth-child('+(i+1)+')';
+                styles[colSelectors[i]] = {
+                    'width': $(th).outerWidth() + "px"
+                };
+                var thSelector = '#'+id+' th:nth-child('+(i+1)+')';
+                styles[thSelector] = {};
+                $.each(copy_th_css, function(j, name) {
+                    styles[thSelector][name] = $(th).css(name);
+                });
+            });
+            qcode.style(styles);
             this.colSelectors = colSelectors;
 
 
             // Create the wrappers
-            // Use class "thead-fixed-repainting" until column widths have been measured
             this.table.wrap('<div class="scroll-box">');
-            this.scrollBox = this.table.parent().wrap('<div class="scroll-wrapper">');
-            this.scrollWrapper = this.scrollBox.parent().wrap('<div class="thead-fixed-wrapper thead-fixed-repainting">');
-            this.wrapper = this.scrollWrapper.parent().css({height: this.options.height});
+            this.scrollBox = this.table.parent().wrap('<div class="thead-fixed-wrapper">');
+            this.wrapper = this.scrollBox.parent().css({height: this.options.height});
+            this.wrapper.prepend(this.head);
 
 
             // Add the resize event listeners - only repaint when the table is resized
@@ -7647,7 +7708,7 @@ Much of the functionality is down to the css - see theadFixed.css
             // On window resize, or when a resize bubbles to the window.
             this._on($(window), {
                 'resize': function(event) {
-                    if ( $(event.target).closest(this.element).length > 0 ) {
+                    if ( $(event.target).closest(this.element.add(this.clone)).length > 0 ) {
                         this.repaint();
 
                     } else {
@@ -7666,17 +7727,49 @@ Much of the functionality is down to the css - see theadFixed.css
                 }
             });
 
-            this.repaint(false);
+            
+            // Copy click events back to the matching element in the original thead
+            this._on(this.head, {
+                'click': function(event) {
+                    var target = $(event.target);
+                    var eventCopy = jQuery.Event('click');
+                    $.each(['pageX', 'pageY', 'which'], function(i, property) {
+                        eventCopy[property] = event[property];
+                    });
+                    treeMap(target, this.head, this.table).trigger(eventCopy);
+                }
+            });
+
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
             if ( MutationObserver ) {
+                // When the contents or structure of the table change, repaint.
                 this.observer = new MutationObserver(this.repaint.bind(this));
                 this.observer.observe(
-                    this.element[0],
+                    this.wrapper[0],
                     {
                         childList: true,
                         characterData: true,
+                        subtree: true
+                    }
+                );
+
+                // When the class or style of any element in the original thead change,
+                // replicate this change to the thead copy.
+                this.headObserver = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        var target = $(mutation.target);
+                        treeMap(target, widget.table, widget.head)
+                            .attr('class', target.attr('class'))
+                            .attr('style', target.attr('style'));
+                    });
+                });
+                this.headObserver.observe(
+                    this.table.children('thead')[0],
+                    {
+                        attributes: true,
+                        attributeFilter: ['class', 'style'],
                         subtree: true
                     }
                 );
@@ -7702,35 +7795,21 @@ Much of the functionality is down to the css - see theadFixed.css
             }
         },
         _repaintNow: function() {
-            // Re-calculate and re-apply column widths
+            // Measure and apply table and column widths
+            var id = this.head.getID();
+            qcode.style('#' + id, 'width', this.table.outerWidth() + "px");
 
-            // Apply class "thead-fixed-repainting" - this disabled most of the theadFixed css, including any widths
-            // specified by a previous repaint.
-            this.wrapper.addClass('thead-fixed-repainting');
-
-            // Measure the new column widths and write this to the page css
             var colSelectors = this.colSelectors;
-            this.headerCells.each(function(i, th) {
-                qcode.style(colSelectors[i], 'width', $(th).outerWidth()+"px");
+            var styles = {};
+            this.theadCells.each(function(i, th) {
+                styles[colSelectors[i]] = {
+                    'width': $(th).outerWidth() + "px"
+                };
             });
-
-            // Remove the repainting class, applying the new widths and re-applying the theadFixed css
-            this.wrapper.removeClass('thead-fixed-repainting');
-
-            // Get the new thead height
-            var theadHeight = this.thead.outerHeight();
-
-            // Apply the new thead height - run detached to fix google chrome bug.
-            var widget = this;
-            this.wrapper.runDetached(function() {
-                widget.scrollWrapper.css('top', theadHeight + "px");
-            });
+            qcode.style(styles);
 	},
 	getWrapper: function() {
 	    return this.wrapper;
-	},
-	getScrollWrapper: function() {
-	    return this.scrollWrapper;
 	},
 	getScrollBox: function() {
 	    return this.scrollBox;
