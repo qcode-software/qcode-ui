@@ -7502,12 +7502,15 @@ uses the existing id if it has one
 	},
 	menuShow: function(target) {
 	    // Show the menu. Target is the event or element to position against.
+            console.time('menuShow');
 	    if ( this.menu === undefined ) {
 		this._menuCreate();
 	    }
+            console.time('set background color');
 	    this.element.parent().css({
 		'background-color': "#ffffe9"
 	    });
+            console.timeEnd('set background color');
 	    // Use jQuery UI position method
 	    this.menu
 		.show()
@@ -7516,6 +7519,7 @@ uses the existing id if it has one
 		    'of': target,
 		    'collision': "fit"
 		});
+            console.timeEnd('menuShow');
 	},
 	menuHide: function() {
 	    // Hide the menu
@@ -7537,6 +7541,7 @@ uses the existing id if it has one
 	    }
 	},
 	_menuCreate: function() {
+            console.time('menuCreate');
 	    // Create the menu
 	    var colName = this.options.column.attr('name');
 
@@ -7605,6 +7610,7 @@ uses the existing id if it has one
 		    outTime: 400,
 		    hoverOut: this.menuHide.bind(this)
 		});
+            console.timeEnd('menuCreate');
 	}
     });
 })(jQuery, window);
@@ -7619,7 +7625,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     /* css to copy from original th elements */
     var copy_th_css = [
         'display', 'color', 'background-color',
-        'font-family', 'font-weight', 'font-size', 'font-style', 'text-align',
+        'font-family', 'font-weight', 'font-size', 'font-style', 'text-align', 'vertical-align',
         'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
         'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
         'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
@@ -7662,36 +7668,17 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 .addClass('thead-fixed-clone');
             this.head.children('tbody, tfoot').remove();
 
-            // Copy the table styles
-            var id = this.head.getID();
-            var widget = this;
-            var styles = {};
-            selector = '#' + id;
-            styles[selector] = {
-                'table-layout': "fixed",
-                'width': this.table.outerWidth() + "px"
-            };
-            $.each(copy_table_css, function(i, name) {
-                styles[selector][name] = widget.table.css(name);
-            });
-            qcode.style(styles);
 
-            // Copy the th styles and widths
+            // Generate and store column selectors
+            var id = this.head.getID();
             var colSelectors = {};
-            var styles = {};
             this.theadCells.each(function(i, th) {
                 colSelectors[i] = '#'+id+' col:nth-child('+(i+1)+')';
-                styles[colSelectors[i]] = {
-                    'width': $(th).outerWidth() + "px"
-                };
-                var thSelector = '#'+id+' th:nth-child('+(i+1)+')';
-                styles[thSelector] = {};
-                $.each(copy_th_css, function(j, name) {
-                    styles[thSelector][name] = $(th).css(name);
-                });
             });
-            qcode.style(styles);
             this.colSelectors = colSelectors;
+
+            
+            qcode.style('#'+id, 'table-layout', "fixed");
 
 
             // Create the wrappers
@@ -7709,43 +7696,48 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             this._on($(window), {
                 'resize': function(event) {
                     if ( $(event.target).closest(this.element.add(this.clone)).length > 0 ) {
-                        this.repaint();
+                        this.repaintWidths();
 
-                    } else {
-                        // Right now, setZeroTimeout is used as a hack to ensure that the maximizeHeight
-                        // plugin has had a chance to get rid of the window's vertical scrollbar,
-                        // before we test to see if the window width has changed.
-                        if ( ! this.options.fixedWidth ) {
-                            window.setZeroTimeout(function() {
-                                if ( windowWidth != $(window).width() ) {
-                                    widget.repaint();
-                                    windowWidth = $(window).width();
-                                }
-                            });
-                        }
+                    } else if (( ! this.options.fixedWidth )
+                               && windowWidth != $(window).width() ) {
+                        this.repaintWidths();
+                        windowWidth = $(window).width();
                     }
                 }
             });
 
             
             // Copy click events back to the matching element in the original thead
-            this._on(this.head, {
-                'click': function(event) {
-                    var target = $(event.target);
-                    var eventCopy = jQuery.Event('click');
-                    $.each(['pageX', 'pageY', 'which'], function(i, property) {
+            var handlers = {};
+            var copy = function(event) {
+                var target = $(event.target);
+                var eventCopy = jQuery.Event(event.type);
+                $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
+                    eventCopy[property] = event[property];
+                });
+                $.each(['target', 'relatedTarget'], function(i, property) {
+                    if ( $(event[property]).closest(this.table).length > 0 ) {
+                        eventCopy[property] = treeMap(event[property], this.head, this.table);
+                    } else {
                         eventCopy[property] = event[property];
-                    });
-                    treeMap(target, this.head, this.table).trigger(eventCopy);
-                }
+                    }
+                });
+                console.time('re-triggering event');
+                treeMap(target, this.head, this.table).trigger(eventCopy);
+                console.timeEnd('re-triggering event');
+                return event.result;
+            }
+            $.each(['click'], function(i, name) {
+                handlers[name] = copy;
             });
+            this._on(this.head, handlers);
 
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
             if ( MutationObserver ) {
                 // When the contents or structure of the table change, repaint.
-                this.observer = new MutationObserver(this.repaint.bind(this));
+                this.observer = new MutationObserver(this.repaintWidths.bind(this));
                 this.observer.observe(
                     this.wrapper[0],
                     {
@@ -7758,12 +7750,15 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 // When the class or style of any element in the original thead change,
                 // replicate this change to the thead copy.
                 this.headObserver = new MutationObserver(function(mutations) {
+                    console.time('mutation');
                     mutations.forEach(function(mutation) {
                         var target = $(mutation.target);
+                        var attribute = mutation.attributeName;
                         treeMap(target, widget.table, widget.head)
-                            .attr('class', target.attr('class'))
-                            .attr('style', target.attr('style'));
+                            .attr(attribute, target.attr(attribute));
                     });
+                    widget.repaintStyles();
+                    console.timeEnd('mutation');
                 });
                 this.headObserver.observe(
                     this.table.children('thead')[0],
@@ -7774,49 +7769,50 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     }
                 );
             }
+            
+            this.repaint();
 	},
-	repaint: function(async) {
-            // If asychronous, schedule the table to be repainted when the current event handlers are finished
-            // Otherwise, repaint immediately and clear any scheduled repaint
-            var async = coalesce(async, true);
-            var theadFixed = this;
-
-            if ( async ) {
-                if ( this.repaintTimeout === undefined ) {
-                    this.repaintTimeout = window.setZeroTimeout(function() {
-                        theadFixed._repaintNow();
-                        theadFixed.repaintTimeout = undefined;
-                    });
-                }
-            } else {
-                this._repaintNow();
-                window.clearZeroTimeout(this.repaintTimeout);
-                this.repaintTimeout = undefined;
-            }
+	repaint: function() {
+            this.repaintStyles();
+            this.repaintWidths();
         },
-        _repaintNow: function() {
+        repaintWidths: function() {
             // Measure and apply table and column widths
             var id = this.head.getID();
-            qcode.style('#' + id, 'width', this.table.outerWidth() + "px");
-
             var colSelectors = this.colSelectors;
+
             var styles = {};
+            styles['#' + id] = {
+                'width': this.table.outerWidth() + "px"
+            }
             this.theadCells.each(function(i, th) {
                 styles[colSelectors[i]] = {
                     'width': $(th).outerWidth() + "px"
                 };
             });
             qcode.style(styles);
-	},
-	getWrapper: function() {
-	    return this.wrapper;
-	},
-	getScrollBox: function() {
-	    return this.scrollBox;
-	},
-	getTable: function() {
-	    return this.table;
-	}
+        },
+        repaintStyles: function() {
+            var id = this.head.getID();
+            var widget = this;
+            var styles = {};
+            selector = '#' + id;
+            styles[selector] = {};
+            $.each(copy_table_css, function(i, name) {
+                styles[selector][name] = widget.table.css(name);
+            });
+            this.theadCells.each(function(i, th) {
+                var thSelector = '#'+id+' th:nth-child('+(i+1)+')';
+                styles[thSelector] = {};
+                $.each(copy_th_css, function(j, name) {
+                    styles[thSelector][name] = $(th).css(name);
+                });
+            });
+            qcode.style(styles);
+        },
+        getWrapper: function() {
+            return this.wrapper;
+        }
     });
 })(jQuery);
 
@@ -8130,13 +8126,14 @@ function preloadImages() {
 */
 
 // Ensure qcode namespace object exists
-if ( typeof qcode === "undefined" ) {
+/*if ( typeof qcode === "undefined" ) {
     var qcode = {};
 }
 
 (function($, undefined) {
     var styleBlock;
     qcode.style = function(rules) {
+        console.time('calculate styles');
         // Called with 3 arguments, create a rules object
         if ( arguments.length === 3 ) {
             var selector = arguments[0];
@@ -8182,13 +8179,143 @@ if ( typeof qcode === "undefined" ) {
         });
 
         styleBlock.data('scopedCSSrules', newRules);
+        console.timeEnd('calculate styles');
+        console.time('apply styles');
+        console.log(css);
         styleBlock.html(css);
+        console.timeEnd('apply styles');
+    }
+})(jQuery);*/
+
+;/*
+   qcode.style
+   
+   Append css rules to the page
+
+   Accepts a single object mapping selectors to objects mapping css properties to values,
+   or a selector, followed by a css property name, followed by a value.
+
+   New values will overwite old values, use an empty string to remove.
+
+   Examples:
+   # Set 1 style
+   qcode.style('#mytable th', 'font-weight', 'bold');
+
+   # Set styles with multiple selectors
+    qcode.style({
+        '#mytable td:nth-child(3)': {
+            'color': 'black',
+            'font-weight': 'bold'
+        }
+        '#mytable td:nth-child(2)': {
+            'color': 'red'
+        }
+    });
+
+    # Remove a declaration
+    qcode.style('body', 'background', "");
+
+    # Remove a rule
+    qcode.style('table', "");
+*/
+
+// Ensure qcode namespace object exists
+if ( typeof qcode === "undefined" ) {
+    var qcode = {};
+}
+
+(function($, undefined) {
+    var styleBlock;
+    qcode.style = function(rules) {
+        // Called with 3 arguments, create a rules object
+        if ( arguments.length === 3 ) {
+            var selector = arguments[0];
+            var property = arguments[1];
+            var value = arguments[2];
+            var rules = {};
+            rules[selector] = {};
+            rules[selector][property] = value;
+        }
+
+        // Append a <style> element to the head the first time this plugin is called
+        if ( styleBlock === undefined ) {
+            styleBlock = $('<style>').appendTo('head');
+        }
+
+        // Get any existing scoped css rules for this element
+        var oldRules = styleBlock.data('scopedCSSrules');
+
+        // Extend existing rules (recursively)
+        newRules = jQuery.extend(true, {}, oldRules, rules);
+
+        var toRemove = [];
+        var toAdd = [];
+
+        $.each(newRules, function(selector, declarations) {
+            if ( declarations === "" ) {
+                // Delete the rule, if it exists
+                if ( oldRules[selector] !== undefined ) {
+                    toRemove.push(selector);
+                }
+                delete newRules[selector];
+
+            } else {
+                // Add or update the rule
+                var changed = false;
+
+                if ( oldRules[selector] === undefined ) {
+                    // Add the rule
+                    changed = true;
+                }
+
+                var declarationBlock = "";
+                $.each(declarations, function(attribute, value) {
+                    if (( ! changed) && oldRules[selector][attribute] !== value) {
+                        // Update the rule
+                        changed = true;
+                        toRemove.push(selector);
+                    }
+
+                    if ( value === "" ) {
+                        delete newRules[selector][attribute];
+                    } else {
+                        declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
+                    }
+                });
+
+                if ( declarationBlock === "" ) {
+                    if ( oldRules[selector] !== undefined ) {
+                        toRemove.push(selector);
+                    }
+                    delete newRules[selector];
+
+                } else if ( changed ) {
+                    toAdd.push(selector + ' {\n ' + declarationBlock + ' }\n');
+                }
+            }
+        });
+
+        styleBlock.data('scopedCSSrules', newRules);
+
+        var sheet = styleBlock[0].sheet;
+        var ruleIndices = {};
+        $.each(sheet.cssRules, function(index, cssRule) {
+            ruleIndices[cssRule.selectorText] = index;
+        });
+
+        $.each(toRemove, function(i, selector) {
+            sheet.deleteRule(ruleIndices[selector]);
+        });
+
+        $.each(toAdd, function(i, rule) {
+            sheet.insertRule(rule, sheet.cssRules.length);
+        });
     }
 })(jQuery);
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {
-    jQuery(oTable).on('click', 'tr', function(event) {
+    jQuery(oTable).children('tbody').on('click', 'tr', function(event) {
 	var target_td = jQuery(event.target).closest("td");
 	if ( jQuery(oTable).hasClass("db-grid") && target_td.dbCell('isEditable') ) {
 	    return; 

@@ -35,12 +35,15 @@
 	},
 	menuShow: function(target) {
 	    // Show the menu. Target is the event or element to position against.
+            console.time('menuShow');
 	    if ( this.menu === undefined ) {
 		this._menuCreate();
 	    }
+            console.time('set background color');
 	    this.element.parent().css({
 		'background-color': "#ffffe9"
 	    });
+            console.timeEnd('set background color');
 	    // Use jQuery UI position method
 	    this.menu
 		.show()
@@ -49,6 +52,7 @@
 		    'of': target,
 		    'collision': "fit"
 		});
+            console.timeEnd('menuShow');
 	},
 	menuHide: function() {
 	    // Hide the menu
@@ -70,6 +74,7 @@
 	    }
 	},
 	_menuCreate: function() {
+            console.time('menuCreate');
 	    // Create the menu
 	    var colName = this.options.column.attr('name');
 
@@ -138,6 +143,7 @@
 		    outTime: 400,
 		    hoverOut: this.menuHide.bind(this)
 		});
+            console.timeEnd('menuCreate');
 	}
     });
 })(jQuery, window);
