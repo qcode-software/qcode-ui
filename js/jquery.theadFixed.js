@@ -176,7 +176,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             selector = '#' + id;
             styles[selector] = {};
             $.each(copy_table_css, function(i, name) {
-                if ( widget.head.css() !== widget.table.css(name) ) {
+                if ( widget.head.css(name) !== widget.table.css(name) ) {
                     styles[selector][name] = widget.table.css(name);
                 }
             });
