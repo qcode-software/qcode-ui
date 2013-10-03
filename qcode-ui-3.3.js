@@ -202,6 +202,10 @@ if (typeof console == "undefined") {
         info: function() {}
     }
 }
+if (typeof console.time == "undefined" ) {
+    console.time = function() {};
+    console.timeEnd = function() {};
+}
 
 /* ==== date.js ==== */
 // Extensions for the javascript Date function
@@ -7502,24 +7506,20 @@ uses the existing id if it has one
 	},
 	menuShow: function(target) {
 	    // Show the menu. Target is the event or element to position against.
-            console.time('menuShow');
 	    if ( this.menu === undefined ) {
 		this._menuCreate();
 	    }
-            console.time('set background color');
 	    this.element.parent().css({
 		'background-color': "#ffffe9"
 	    });
-            console.timeEnd('set background color');
 	    // Use jQuery UI position method
 	    this.menu
-		.show()
-		.position({
+                .show()
+                .position({
 		    'my': "left top",
 		    'of': target,
 		    'collision': "fit"
-		});
-            console.timeEnd('menuShow');
+	        });
 	},
 	menuHide: function() {
 	    // Hide the menu
@@ -7541,7 +7541,6 @@ uses the existing id if it has one
 	    }
 	},
 	_menuCreate: function() {
-            console.time('menuCreate');
 	    // Create the menu
 	    var colName = this.options.column.attr('name');
 
@@ -7610,7 +7609,6 @@ uses the existing id if it has one
 		    outTime: 400,
 		    hoverOut: this.menuHide.bind(this)
 		});
-            console.timeEnd('menuCreate');
 	}
     });
 })(jQuery, window);
@@ -7667,18 +7665,16 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 .append(this.table.children('thead').clone())
                 .addClass('thead-fixed-clone');
             this.head.children('tbody, tfoot').remove();
+            var id = this.head.getID();
+            qcode.style('#'+id, 'table-layout', "fixed");
 
 
             // Generate and store column selectors
-            var id = this.head.getID();
             var colSelectors = {};
             this.theadCells.each(function(i, th) {
                 colSelectors[i] = '#'+id+' col:nth-child('+(i+1)+')';
             });
             this.colSelectors = colSelectors;
-
-            
-            qcode.style('#'+id, 'table-layout', "fixed");
 
 
             // Create the wrappers
@@ -7708,29 +7704,24 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             
             // Copy click events back to the matching element in the original thead
-            var handlers = {};
-            var copy = function(event) {
-                var target = $(event.target);
-                var eventCopy = jQuery.Event(event.type);
-                $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
-                    eventCopy[property] = event[property];
-                });
-                $.each(['target', 'relatedTarget'], function(i, property) {
-                    if ( $(event[property]).closest(this.table).length > 0 ) {
-                        eventCopy[property] = treeMap(event[property], this.head, this.table);
-                    } else {
+            this._on(this.head, {
+                click: function(event) {
+                    var target = $(event.target);
+                    var eventCopy = jQuery.Event(event.type);
+                    $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
                         eventCopy[property] = event[property];
-                    }
-                });
-                console.time('re-triggering event');
-                treeMap(target, this.head, this.table).trigger(eventCopy);
-                console.timeEnd('re-triggering event');
-                return event.result;
-            }
-            $.each(['click'], function(i, name) {
-                handlers[name] = copy;
+                    });
+                    $.each(['target', 'relatedTarget'], function(i, property) {
+                        if ( $(event[property]).closest(this.table).length > 0 ) {
+                            eventCopy[property] = treeMap(event[property], this.head, this.table);
+                        } else {
+                            eventCopy[property] = event[property];
+                        }
+                    });
+                    treeMap(target, this.head, this.table).trigger(eventCopy);
+                    return event.result;
+                }
             });
-            this._on(this.head, handlers);
 
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
@@ -7750,7 +7741,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 // When the class or style of any element in the original thead change,
                 // replicate this change to the thead copy.
                 this.headObserver = new MutationObserver(function(mutations) {
-                    console.time('mutation');
                     mutations.forEach(function(mutation) {
                         var target = $(mutation.target);
                         var attribute = mutation.attributeName;
@@ -7758,7 +7748,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                             .attr(attribute, target.attr(attribute));
                     });
                     widget.repaintStyles();
-                    console.timeEnd('mutation');
                 });
                 this.headObserver.observe(
                     this.table.children('thead')[0],
@@ -7770,7 +7759,9 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 );
             }
             
+            // Call repaint once to set the widths and styles
             this.repaint();
+            // end of _create;
 	},
 	repaint: function() {
             this.repaintStyles();
@@ -7793,19 +7784,26 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             qcode.style(styles);
         },
         repaintStyles: function() {
+            // Copy styles from the original table to the copied table,
+            // and from the original th elements to the copied ones.
             var id = this.head.getID();
             var widget = this;
             var styles = {};
             selector = '#' + id;
             styles[selector] = {};
             $.each(copy_table_css, function(i, name) {
-                styles[selector][name] = widget.table.css(name);
+                if ( widget.head.css() !== widget.table.css(name) ) {
+                    styles[selector][name] = widget.table.css(name);
+                }
             });
             this.theadCells.each(function(i, th) {
-                var thSelector = '#'+id+' th:nth-child('+(i+1)+')';
+                var thSelector = '#'+id+'>thead>tr>th:nth-child('+(i+1)+')';
                 styles[thSelector] = {};
                 $.each(copy_th_css, function(j, name) {
-                    styles[thSelector][name] = $(th).css(name);
+                    var copy_th = widget.head.find('th:nth-child('+(i+1)+')');
+                    if ( copy_th.css(name) !== $(th).css(name) ) {
+                        styles[thSelector][name] = $(th).css(name);
+                    }
                 });
             });
             qcode.style(styles);
@@ -8122,101 +8120,9 @@ function preloadImages() {
     qcode.style('body', 'background', "");
 
     # Remove a rule
-    qcode.style('table', "");
-*/
-
-// Ensure qcode namespace object exists
-/*if ( typeof qcode === "undefined" ) {
-    var qcode = {};
-}
-
-(function($, undefined) {
-    var styleBlock;
-    qcode.style = function(rules) {
-        console.time('calculate styles');
-        // Called with 3 arguments, create a rules object
-        if ( arguments.length === 3 ) {
-            var selector = arguments[0];
-            var property = arguments[1];
-            var value = arguments[2];
-            var rules = {};
-            rules[selector] = {};
-            rules[selector][property] = value;
-        }
-
-        // Append a <style> element to the head the first time this plugin is called
-        if ( styleBlock === undefined ) {
-            styleBlock = $('<style>').appendTo('head');
-        }
-
-        // Get any existing scoped css rules for this element
-        var oldRules = styleBlock.data('scopedCSSrules');
-
-        // Extend existing rules (recursively)
-        newRules = jQuery.extend(true, oldRules, rules);
-
-        // Create the innerHTML for the style block
-        var css = "";
-        $.each(newRules, function(selector, declarations) {
-            // Use an empty string to remove all css from a selector.
-            if ( declarations === "" ) {
-                delete newRules[selector];
-
-            } else {
-                // Create the declaration block string
-                var declarationBlock = "";
-                $.each(declarations, function(attribute, value) {
-                    if ( value === "" ) {
-                        delete newRules[selector][attribute];
-                    } else {
-                        declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
-                    }
-                });
-
-                // Add the rule set to the css string
-                css = css + selector + ' {\n ' + declarationBlock + ' }\n';
-            }
-        });
-
-        styleBlock.data('scopedCSSrules', newRules);
-        console.timeEnd('calculate styles');
-        console.time('apply styles');
-        console.log(css);
-        styleBlock.html(css);
-        console.timeEnd('apply styles');
-    }
-})(jQuery);*/
-
-;/*
-   qcode.style
-   
-   Append css rules to the page
-
-   Accepts a single object mapping selectors to objects mapping css properties to values,
-   or a selector, followed by a css property name, followed by a value.
-
-   New values will overwite old values, use an empty string to remove.
-
-   Examples:
-   # Set 1 style
-   qcode.style('#mytable th', 'font-weight', 'bold');
-
-   # Set styles with multiple selectors
     qcode.style({
-        '#mytable td:nth-child(3)': {
-            'color': 'black',
-            'font-weight': 'bold'
-        }
-        '#mytable td:nth-child(2)': {
-            'color': 'red'
-        }
+        '#mytable': ""
     });
-
-    # Remove a declaration
-    qcode.style('body', 'background', "");
-
-    # Remove a rule
-    qcode.style('table', "");
 */
 
 // Ensure qcode namespace object exists
@@ -8226,15 +8132,15 @@ if ( typeof qcode === "undefined" ) {
 
 (function($, undefined) {
     var styleBlock;
-    qcode.style = function(rules) {
+    qcode.style = function(ruleChanges) {
         // Called with 3 arguments, create a rules object
         if ( arguments.length === 3 ) {
             var selector = arguments[0];
             var property = arguments[1];
             var value = arguments[2];
-            var rules = {};
-            rules[selector] = {};
-            rules[selector][property] = value;
+            var ruleChanges = {};
+            ruleChanges[selector] = {};
+            ruleChanges[selector][property] = value;
         }
 
         // Append a <style> element to the head the first time this plugin is called
@@ -8246,36 +8152,44 @@ if ( typeof qcode === "undefined" ) {
         var oldRules = styleBlock.data('scopedCSSrules');
 
         // Extend existing rules (recursively)
-        newRules = jQuery.extend(true, {}, oldRules, rules);
+        newRules = jQuery.extend(true, {}, oldRules, ruleChanges);
 
+        // Array of selectors for rules to remove
         var toRemove = [];
+
+        // Array of rules to add
         var toAdd = [];
 
+        // For each rule in the new rules object
         $.each(newRules, function(selector, declarations) {
             if ( declarations === "" ) {
-                // Delete the rule, if it exists
+                // An empty declaration string means to delete the rule, if it exists
                 if ( oldRules[selector] !== undefined ) {
                     toRemove.push(selector);
                 }
                 delete newRules[selector];
 
             } else {
-                // Add or update the rule
-                var changed = false;
+                // Add or update the rule, if it has changed
+                // An update consists of a delete and an insert
+                var needsInsert = false;
 
                 if ( oldRules[selector] === undefined ) {
-                    // Add the rule
-                    changed = true;
+                    // The old rule did not exist, so this is a change
+                    needsInsert = true;
                 }
 
+                // Construct a css declaration block string from the declarations object
                 var declarationBlock = "";
                 $.each(declarations, function(attribute, value) {
-                    if (( ! changed) && oldRules[selector][attribute] !== value) {
-                        // Update the rule
-                        changed = true;
+
+                    // If the rule has changed, delete the old rule and insert the new rule
+                    if (( ! needsInsert) && oldRules[selector][attribute] !== value) {
+                        needsInsert = true;
                         toRemove.push(selector);
                     }
 
+                    // Remove empty values from the rules
                     if ( value === "" ) {
                         delete newRules[selector][attribute];
                     } else {
@@ -8283,30 +8197,42 @@ if ( typeof qcode === "undefined" ) {
                     }
                 });
 
+                // If all the declarations have been removed, remove the entire rule
                 if ( declarationBlock === "" ) {
                     if ( oldRules[selector] !== undefined ) {
                         toRemove.push(selector);
                     }
                     delete newRules[selector];
 
-                } else if ( changed ) {
+                } else if ( needsInsert ) {
                     toAdd.push(selector + ' {\n ' + declarationBlock + ' }\n');
                 }
             }
         });
 
+        // Store the new rules object for later reference
         styleBlock.data('scopedCSSrules', newRules);
 
+        // Map each selector in the current rules to the index of that rule.
         var sheet = styleBlock[0].sheet;
         var ruleIndices = {};
         $.each(sheet.cssRules, function(index, cssRule) {
             ruleIndices[cssRule.selectorText] = index;
         });
 
+        // Remove the existing rules
         $.each(toRemove, function(i, selector) {
-            sheet.deleteRule(ruleIndices[selector]);
+            if ( ruleIndices[selector] !== undefined
+                 && ruleIndices[selector] >= 0
+                 && ruleIndices[selector] < sheet.cssRules.length ) {
+                sheet.deleteRule(ruleIndices[selector]);
+            } else {
+                // Not sure why this is occuring, but it doesn't appear to be a problem. TO DO - look at this.
+                console.warn('attempted to delete a non-existant rule for ' + selector);
+            }
         });
 
+        // Add the new rules
         $.each(toAdd, function(i, rule) {
             sheet.insertRule(rule, sheet.cssRules.length);
         });

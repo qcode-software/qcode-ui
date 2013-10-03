@@ -46,3 +46,7 @@ if (typeof console == "undefined") {
         info: function() {}
     }
 }
+if (typeof console.time == "undefined" ) {
+    console.time = function() {};
+    console.timeEnd = function() {};
+}
