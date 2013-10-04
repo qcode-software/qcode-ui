@@ -53,16 +53,65 @@ if ( typeof qcode === "undefined" ) {
             sheet = $('<style>').appendTo('head')[0].sheet;
         }
 
-        var newStyles = jQuery.extend({}, styles);
+        var newStyles = copy(styles);
         jQuery.each(styleChanges, function(selectorString, declarationChanges) {
             var selector = cleanCSSSelector(selectorString);
             newStyles[selector] = jQuery.extend(newStyles[selector], declarationChanges);
         });
 
+        deleteEmptyStrings(newStyles, true);
+
+        deleteEmptyObjects(newStyles);
+
+        var additions = {};
+        var removals = [];
         jQuery.each(newStyles, function(selector, declarations) {
+            if ( style[selector] === undefined ) {
+                additions[selector] = declarations;
+
+            } else {
+                
+            }
+        });
+        jQuery.each(styles, function(selector, declarations) {
+            if ( newStyles[selector] === undefined ) {
+                removals.push(selector);
+            }
         });
     }
+
     function declarations2cssBlock(declarations) {
+    }
+
+    function differencesOnLeft(leftObject, rightObject) {
+        var diff = {};
+        jQuery.each(leftObject, function(key, leftValue) {
+            var rightValue = rightObject[key];
+            if ( leftValue !== rightValue ) {
+                diff[key] = leftValue;
+            }
+        });
+        return diff;
+    }
+
+    function deleteEmptyStrings(object, recursive) {
+        jQuery.each(object, function(key, value) {
+            if ( value === "" ) {
+                delete object[key];
+            } else if ( recursive && jQuery.isPlainObject(object[key]) ) {
+                deleteEmptyStrings(object[key], true);
+            }
+        });
+    }
+
+    function deleteEmptyObjects(object, recursive) {
+        jQuery.each(object, function(key, value) {
+            if ( jQuery.isPlainObject(value) && jQuery.isEmptyObject(value) ) {
+                delete object[key];
+            } else if ( recursive && jQuery.isPlainObject(object[key]) ) {
+                deleteEmptyObjects(object[key], true);
+            }
+        });
     }
 
     function cleanCSSSelector(selector) {
@@ -70,5 +119,13 @@ if ( typeof qcode === "undefined" ) {
         selector = selector.replace(/\s+/, ' ');
         selector = selector.trim();
         return selector.toLowerCase();
+    }
+
+    function copy(target) {
+        if ( jQuery.isPlainObject(target) ) {
+            return jQuery.extend(true, {}, target);
+        } else {
+            return target;
+        }
     }
 })(jQuery);
