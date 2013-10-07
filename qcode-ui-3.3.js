@@ -2121,6 +2121,7 @@ function dynamicResize(oContainer) {
 		    if ( option.index() !== -1 ) {
                         this.setValue(option.text());
 			this.comboOptions.hide();
+	                e.preventDefault();
                         return true;
 		    }
 		}
@@ -4036,7 +4037,9 @@ function dbFormHTMLArea(oDiv) {
 		    row.dbRow('delete', false);
 		}
 	    }
-	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') !== 'current' ) {
+	    if ( row.dbRow('option', 'type') == 'add'
+                 && ( row.dbRow('getState') === 'dirty' || row.dbRow('getState') === 'error' )
+               ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
                     // Notify plugins such as statusFrame
@@ -8314,11 +8317,20 @@ if ( typeof qcode === "undefined" ) {
 function tableRowHighlight(oTable) {
     jQuery(oTable).children('tbody').on('click', 'tr', function(event) {
 	var target_td = jQuery(event.target).closest("td");
-	if ( jQuery(oTable).hasClass("db-grid") && target_td.dbCell('isEditable') ) {
-	    return; 
+	if ( jQuery(oTable).hasClass("db-grid") ) {
+            if ( target_td.dbCell('isEditable') ) {
+	        return;
+            }
+            if ( jQuery(this).dbRow('getState') === 'updating' ) {
+                return;
+            }
 	}
 	jQuery(this).toggleClass('highlight');
         $(event.target).trigger('toggleHighlight');
+    }).on('dbRowStateChange', 'tr', function(event) {
+        if ( jQuery(this).dbRow('getState') === 'updating' ) {
+            jQuery(this).removeClass('highlight');
+        }
     });
 }
 

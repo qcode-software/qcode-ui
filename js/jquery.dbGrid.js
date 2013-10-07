@@ -217,7 +217,9 @@
 		    row.dbRow('delete', false);
 		}
 	    }
-	    if ( row.dbRow('option', 'type') == 'add' && row.dbRow('getState') !== 'current' ) {
+	    if ( row.dbRow('option', 'type') == 'add'
+                 && ( row.dbRow('getState') === 'dirty' || row.dbRow('getState') === 'error' )
+               ) {
 		if ( window.confirm("Delete the current row?") ) {
 		    this.removeRow(row);
                     // Notify plugins such as statusFrame

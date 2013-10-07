@@ -287,6 +287,7 @@
 		    if ( option.index() !== -1 ) {
                         this.setValue(option.text());
 			this.comboOptions.hide();
+	                e.preventDefault();
                         return true;
 		    }
 		}
