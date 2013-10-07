@@ -8092,20 +8092,20 @@ function preloadImages() {
 
 /* ==== qcode.style.js ==== */
 ;/*
-   qcode.style
+    qcode.style
    
-   Append css rules to the page
+    Append css rules to the page
 
-   Accepts a single object mapping selectors to objects mapping css properties to values,
-   or a selector, followed by a css property name, followed by a value.
+    Accepts a single argument - an object mapping selectors to objects mapping css properties to values -
+    or 3 arguments - a selector, followed by a css property name, followed by a value.
 
-   New values will overwite old values, use an empty string to remove.
+    New values will overwite old values, empty strings will delete.
 
-   Examples:
-   # Set 1 style
-   qcode.style('#mytable th', 'font-weight', 'bold');
+    Examples:
+    # Set 1 style
+    qcode.style('#mytable th', 'font-weight', 'bold');
 
-   # Set styles with multiple selectors
+    # Set styles with multiple selectors
     qcode.style({
         '#mytable td:nth-child(3)': {
             'color': 'black',
@@ -8130,112 +8130,183 @@ if ( typeof qcode === "undefined" ) {
     var qcode = {};
 }
 
-(function($, undefined) {
-    var styleBlock;
-    qcode.style = function(ruleChanges) {
-        // Called with 3 arguments, create a rules object
+// Use a closure to hide helper functions and local variables
+(function(jQuery, undefined) {
+    // Hold a reference to the stylesheet between function calls
+    var sheet;
+
+    qcode.style = function(styleChanges) {
+        // --------------------------------------------------------------------------------
+        // 1. Parse the arguments, read the existing styles, and product 2 objects - oldStyles and newStyles
+
+        // If called with 3 arguments, translate into a single object
         if ( arguments.length === 3 ) {
-            var selector = arguments[0];
+            var selectorString = arguments[0];
             var property = arguments[1];
             var value = arguments[2];
-            var ruleChanges = {};
-            ruleChanges[selector] = {};
-            ruleChanges[selector][property] = value;
+            var styleChanges = {};
+            styleChanges[selectorString] = {};
+            styleChanges[selectorString][property] = value;
+
+        } else if ( arguments.length !== 1 ) {
+            jQuery.error('Invalid usage of qcode.style - requires 1 or 3 arguments');
         }
 
-        // Append a <style> element to the head the first time this plugin is called
-        if ( styleBlock === undefined ) {
-            styleBlock = $('<style>').appendTo('head');
+        // On first call, attach <style> element to head.
+        if ( sheet === undefined ) {
+            sheet = $('<style>').appendTo('head')[0].sheet;
         }
 
-        // Get any existing scoped css rules for this element
-        var oldRules = styleBlock.data('scopedCSSrules');
+        // Read existing styles from the styleSheet
+        var oldStyles = {};
+        jQuery.each(sheet.cssRules, function(i, cssRule) {
+            var selector = cleanCSSSelector(cssRule.selectorText);
+            if ( oldStyles[selector] === undefined ) {
+                oldStyles[selector] = {};
+            }
+            for ( var i = 0 ; i < cssRule.style.length ; i++ ) {
+                var attribute = cssRule.style.item(i);
+                var value = cssRule.style.getPropertyValue(attribute);
+                oldStyles[selector][attribute] = value;
+            }
+        });
 
-        // Extend existing rules (recursively)
-        newRules = jQuery.extend(true, {}, oldRules, ruleChanges);
+        // Copy the styles object
+        var newStyles = jQuery.extend(true, {}, oldStyles);
 
-        // Array of selectors for rules to remove
-        var toRemove = [];
+        // Clean selectors and extend new styles object.
+        jQuery.each(styleChanges, function(selectorString, declarationChanges) {
+            var selector = cleanCSSSelector(selectorString);
+            newStyles[selector] = jQuery.extend(newStyles[selector], declarationChanges);
+        });
+        deleteEmptyStrings(newStyles, true);
+        deleteEmptyObjects(newStyles);
 
-        // Array of rules to add
-        var toAdd = [];
 
-        // For each rule in the new rules object
-        $.each(newRules, function(selector, declarations) {
-            if ( declarations === "" ) {
-                // An empty declaration string means to delete the rule, if it exists
-                if ( oldRules[selector] !== undefined ) {
-                    toRemove.push(selector);
-                }
-                delete newRules[selector];
+        // --------------------------------------------------------------------------------
+        // 2. Compare oldStyles with newStyles and determine which rules and declarations need to be added/updated/removed
+
+        var ruleAdditions = {};
+        var ruleRemovals = [];
+        var declarationUpdates = {};
+        var declarationRemovals = {};
+
+        jQuery.each(oldStyles, function(selector, declarations) {
+            if ( newStyles[selector] === undefined ) {
+                // DELETE RULE
+                ruleRemovals.push(selector);
+            }
+        });
+
+        jQuery.each(newStyles, function(selector, declarations) {
+            if ( oldStyles[selector] === undefined ) {
+                // ADD RULE
+                ruleAdditions[selector] = declarations;
 
             } else {
-                // Add or update the rule, if it has changed
-                // An update consists of a delete and an insert
-                var needsInsert = false;
+                // UPDATE RULE (if changed)
+                var newDeclarations = newStyles[selector];
+                var oldDeclarations = oldStyles[selector];
 
-                if ( oldRules[selector] === undefined ) {
-                    // The old rule did not exist, so this is a change
-                    needsInsert = true;
-                }
-
-                // Construct a css declaration block string from the declarations object
-                var declarationBlock = "";
-                $.each(declarations, function(attribute, value) {
-
-                    // If the rule has changed, delete the old rule and insert the new rule
-                    if (( ! needsInsert) && oldRules[selector][attribute] !== value) {
-                        needsInsert = true;
-                        toRemove.push(selector);
-                    }
-
-                    // Remove empty values from the rules
-                    if ( value === "" ) {
-                        delete newRules[selector][attribute];
-                    } else {
-                        declarationBlock = declarationBlock + '\t' + attribute + ': ' + value + ';\n';
+                declarationRemovals[selector] = [];
+                jQuery.each(oldDeclarations, function(attribute, value) {
+                    if ( newDeclarations[attribute] === undefined ) {
+                        // REMOVE DECLARATION
+                        declarationRemovals[selector].push(attribute);
                     }
                 });
 
-                // If all the declarations have been removed, remove the entire rule
-                if ( declarationBlock === "" ) {
-                    if ( oldRules[selector] !== undefined ) {
-                        toRemove.push(selector);
+                declarationUpdates[selector] = {};
+                jQuery.each(newDeclarations, function(attribute, value) {
+                    if ( oldDeclarations[attribute] === undefined || oldDeclarations[attribute] !== value ) {
+                        // ADD/UPDATE DECLARATION
+                        declarationUpdates[selector][attribute] = value;
                     }
-                    delete newRules[selector];
+                });
+                
+            }
+        });
 
-                } else if ( needsInsert ) {
-                    toAdd.push(selector + ' {\n ' + declarationBlock + ' }\n');
+
+        // --------------------------------------------------------------------------------
+        // 3. Apply the required changes
+
+        // Remove old rules
+        jQuery.each(ruleRemovals, function(j, toRemove) {
+            for ( var i = sheet.cssRules.length - 1 ; i >= 0 ; i-- ) {
+                var cssRule = sheet.cssRules[i];
+                var selector = cleanCSSSelector(cssRule.selectorText);
+                if ( selector === toRemove ) {
+                    sheet.deleteRule(i);
+                };
+            };
+        });
+
+        // Update existing rules
+        for ( var i = sheet.cssRules.length - 1 ; i >= 0 ; i-- ) {
+            var cssRule = sheet.cssRules[i];
+            var selector = cleanCSSSelector(cssRule.selectorText);
+            var declarationBlock = cssRule.style;
+            jQuery.each(declarationUpdates[selector], function(attribute, value) {
+                declarationBlock.setProperty(attribute, value);
+            });
+            jQuery.each(declarationRemovals[selector], function(i, attribute) {
+                declarationBlock.removeProperty(attribute);
+            });
+        }
+
+        // Add new rules
+        jQuery.each(ruleAdditions, function(selector, declarations) {
+            var declarationBlock = declarations2cssBlock(declarations);
+            sheet.insertRule(selector + ' { ' + declarationBlock + ' } ', sheet.cssRules.length);
+        });
+
+        // --------------------------------------------------------------------------------
+
+
+        // ================================================================================
+        // Helper functions:
+
+        function declarations2cssBlock(declarations) {
+            // Takes a declaration object mapping attributes to values,
+            // outputs a string css declaration block.
+            var declarationBlock = "";
+            jQuery.each(declarations, function(attribute, value) {
+                declarationBlock += attribute + ': ' + value + '; ';
+            });
+            return declarationBlock;
+        }
+
+        function deleteEmptyStrings(object, recursive) {
+            // Delete empty strings from an object
+            jQuery.each(object, function(key, value) {
+                if ( value === "" ) {
+                    delete object[key];
+                } else if ( recursive && jQuery.isPlainObject(object[key]) ) {
+                    deleteEmptyStrings(object[key], true);
                 }
-            }
-        });
+            });
+        }
 
-        // Store the new rules object for later reference
-        styleBlock.data('scopedCSSrules', newRules);
+        function deleteEmptyObjects(object, recursive) {
+            // Delete empty nested objects from an object
+            jQuery.each(object, function(key, value) {
+                if ( jQuery.isPlainObject(value) && jQuery.isEmptyObject(value) ) {
+                    delete object[key];
+                } else if ( recursive && jQuery.isPlainObject(object[key]) ) {
+                    deleteEmptyObjects(object[key], true);
+                }
+            });
+        }
 
-        // Map each selector in the current rules to the index of that rule.
-        var sheet = styleBlock[0].sheet;
-        var ruleIndices = {};
-        $.each(sheet.cssRules, function(index, cssRule) {
-            ruleIndices[cssRule.selectorText] = index;
-        });
-
-        // Remove the existing rules
-        $.each(toRemove, function(i, selector) {
-            if ( ruleIndices[selector] !== undefined
-                 && ruleIndices[selector] >= 0
-                 && ruleIndices[selector] < sheet.cssRules.length ) {
-                sheet.deleteRule(ruleIndices[selector]);
-            } else {
-                // Not sure why this is occuring, but it doesn't appear to be a problem. TO DO - look at this.
-                console.warn('attempted to delete a non-existant rule for ' + selector);
-            }
-        });
-
-        // Add the new rules
-        $.each(toAdd, function(i, rule) {
-            sheet.insertRule(rule, sheet.cssRules.length);
-        });
+        function cleanCSSSelector(selector) {
+            // "Clean up" a css selector, in an attempt to make string representations consistent.
+            selector = selector.replace(/\s*([>+~])\s*/g, " $1 ");
+            selector = selector.replace(/\s+/g, ' ');
+            selector = selector.trim();
+            return selector.toLowerCase();
+        }
+        // ================================================================================
     }
 })(jQuery);
 
