@@ -21,7 +21,7 @@
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                qcode.style('#'+id+' tr>*nth-child('+(index+1)+')', 'white-space', "nowrap");
+                qcode.style('#'+id+' tr>*:nth-child('+(index+1)+')', 'white-space', "nowrap");
 
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
