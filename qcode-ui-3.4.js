@@ -5061,7 +5061,9 @@ function dbFormHTMLArea(oDiv) {
         rowUpdate: function(rowIndex) {
             // Update a single row
             var ganttChart = this;
-            this.bars[rowIndex].remove();
+            if ( this.bars[rowIndex] !== undefined ) {
+                this.bars[rowIndex].remove();
+            }
             this.bars[rowIndex] = undefined;
             var rowData = ganttChart._getRowData(rowIndex);
             var Task = ganttChart.constructor.Task;

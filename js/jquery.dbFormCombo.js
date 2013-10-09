@@ -99,12 +99,12 @@
 		    this.highlight(index + 1);
 	        }
 	        break;
-	    case 13:
+	    case 13: //return
 	        this.select(index);
 	        event.preventDefault();
 	        event.stopPropagation();
 	        break;
-	    case 9:
+	    case 9: //tab
 	        this.select(index);
 	        break;
 	    }
