@@ -5,8 +5,10 @@
             repaint = function(button) {
                 if ( button.closest('table').children('tbody').children('tr.selected:not(.updating)').length > 0 ) {
                     button.removeClass('disabled');
+                    button.removeAttr('disabled');
                 } else {
                     button.addClass('disabled');
+                    button.attr('disabled', true);
                 }
             }
         }
@@ -15,10 +17,10 @@
             var button = $(this);
             var tbody = button.closest('table').children('tbody');
 
-            tbody.children('tr').children(':nth-child(' + (button.closest('th').index() + 1) + ')').addClass('row-select');
+            tbody.children('tr').children(':nth-child(' + (button.closest('th').index() + 1) + ')').addClass('row-selector');
 
-            tbody.on('click.tableRowDeleteButton', 'td.row-select', function(event) {
-                $(event.currentTarget).toggleClass('selected');
+            tbody.on('click.tableRowDeleteButton', 'td.row-selector', function(event) {
+                $(event.currentTarget).parent().toggleClass('selected');
                 repaint(button);
             });
 

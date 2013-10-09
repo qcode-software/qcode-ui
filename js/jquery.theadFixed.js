@@ -88,24 +88,27 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             
             // Copy click events back to the matching element in the original thead
-            this._on(this.head, {
-                click: function(event) {
-                    var target = $(event.target);
-                    var eventCopy = jQuery.Event(event.type);
-                    $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
+            var handlers = {};
+            var copy = function(event) {
+                var target = $(event.target);
+                var eventCopy = jQuery.Event(event.type);
+                $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
+                    eventCopy[property] = event[property];
+                });
+                $.each(['target', 'relatedTarget'], function(i, property) {
+                    if ( $(event[property]).closest(this.table).length > 0 ) {
+                        eventCopy[property] = treeMap(event[property], this.head, this.table);
+                    } else {
                         eventCopy[property] = event[property];
-                    });
-                    $.each(['target', 'relatedTarget'], function(i, property) {
-                        if ( $(event[property]).closest(this.table).length > 0 ) {
-                            eventCopy[property] = treeMap(event[property], this.head, this.table);
-                        } else {
-                            eventCopy[property] = event[property];
-                        }
-                    });
-                    treeMap(target, this.head, this.table).trigger(eventCopy);
-                    return event.result;
-                }
+                    }
+                });
+                treeMap(target, this.head, this.table).trigger(eventCopy);
+                return event.result;
+            };
+            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout'], function(i, eventName) {
+                handlers[eventName] = copy;
             });
+            this._on(this.head, handlers);
 
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
@@ -128,8 +131,13 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     mutations.forEach(function(mutation) {
                         var target = $(mutation.target);
                         var attribute = mutation.attributeName;
-                        treeMap(target, widget.table, widget.head)
-                            .attr(attribute, target.attr(attribute));
+                        if ( target.attr(attribute) === undefined ) {
+                            treeMap(target, widget.table, widget.head)
+                                .removeAttr(attribute);
+                        } else {
+                            treeMap(target, widget.table, widget.head)
+                                .attr(attribute, target.attr(attribute));
+                        }
                     });
                     widget.repaintStyles();
                 });
@@ -137,7 +145,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     this.table.children('thead')[0],
                     {
                         attributes: true,
-                        attributeFilter: ['class', 'style'],
+                        attributeFilter: ['class', 'style', 'disabled'],
                         subtree: true
                     }
                 );
