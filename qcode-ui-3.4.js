@@ -5497,6 +5497,9 @@ uses the existing id if it has one
 
         var threshold = 10;
         scrollBox.on('mousedown', function(event) {
+            if ( $(event.target).is(':input') ) {
+                return true;
+            }
             var dragMouseFrom = event.pageY;
             var scrollFrom = scrollBox.scrollTop();
             var dragging = false;
