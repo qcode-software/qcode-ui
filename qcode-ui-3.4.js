@@ -2994,7 +2994,7 @@ function dynamicResize(oContainer) {
 	isEditable: function(){
 	    return (this.element.is('.editable') && this.getRecord().dbRecord('getState') != "updating");
 	}, 
-	onMouseDown: function(event){
+	onClick: function(event){
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
@@ -3657,12 +3657,12 @@ function dynamicResize(oContainer) {
 		    this.highlight(index + 1);
 	        }
 	        break;
-	    case 13:
+	    case 13: //return
 	        this.select(index);
 	        event.preventDefault();
 	        event.stopPropagation();
 	        break;
-	    case 9:
+	    case 9: //tab
 	        this.select(index);
 	        break;
 	    }
@@ -4491,8 +4491,8 @@ function dbFormHTMLArea(oDiv) {
 
 	    // Elements with class "editable" are editable fields.
 	    this._on({
-		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown', event);
+		'click .editable': function(event) {
+		    $(event.currentTarget).dbField('onClick', event);
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
@@ -5461,7 +5461,8 @@ uses the existing id if it has one
 })(jQuery);
 
 /* ==== jquery.hoverScroller.js ==== */
-// Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover. Clicking the controls will quickly scroll to the end.
+// Hover Scroller plugin - Create controls at the top and bottom of a scrollable box that scroll the box on mouse hover.
+// Clicking the controls will quickly scroll to the end.
 ;(function($, undefined){
     $.fn.hoverScroller = function(options){
 	// scrollbox is the box to scroll,
@@ -5478,6 +5479,44 @@ uses the existing id if it has one
 	var container = settings.container.addClass('hover-scroller-container');
 	var scrollSpeed = settings.scrollSpeed;
 	var snapTime = settings.snapTime;
+        var scrollTarget = scrollBox.scrollTop();
+        var destination = 0;
+        var scrollDuration = 1000;
+
+        scrollBox.on('mousewheel', function(event) {
+            if ( event.originalEvent.wheelDeltaY < 0 ) {
+                destination = Math.max(destination, scrollBox.scrollTop());
+                scrollTo(destination + 100);
+            } else {
+                destination = Math.min(destination, scrollBox.scrollTop());
+                scrollTo(destination - 100);
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        });
+
+        var threshold = 10;
+        scrollBox.on('mousedown', function(event) {
+            var dragMouseFrom = event.pageY;
+            var scrollFrom = scrollBox.scrollTop();
+            var dragging = false;
+            scrollBox.on('mousemove.dragListener', function(event) {
+                if ( dragging || Math.abs(event.pageY - dragMouseFrom) > threshold ) {
+                    dragging = true;
+                    destination = scrollFrom - (event.pageY - dragMouseFrom);
+                    scrollBox.scrollTop(destination);
+                }
+            });
+            scrollBox.one('mouseup mouseleave', function() {
+                scrollBox.off('mousemove.dragListener');
+            });
+            $(event.target).one('click', function(event) {
+                if ( dragging ) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            });
+        });
 
 	// A div which appears at the bottom of the container, which scrolls the scrollBox down when you hover the mouse over it
 	var downScroller = $('<div>')
@@ -5486,42 +5525,15 @@ uses the existing id if it has one
 	    .on('mouseenter', function() {
 		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
 		downScroller.stop().fadeTo(0, 0.5);
-		upScroller.stop().fadeTo(0, 0.1);
-		var scrollTo = scrollBox.prop('scrollHeight') - scrollBox.height();
-		var duration = (scrollTo - scrollBox.scrollTop()) / scrollSpeed;
-		scrollBox.addClass('scrolling')
-		    .animate(
-			{ 'scrollTop': scrollTo },
-			duration,
-			function() {
-			    // When scrolling is finished (reaches the bottom), hide the downwards scroller
-			    downScroller.stop().fadeOut();
-			    scrollBox.removeClass('scrolling');
-			}
-		    );
+		upScroller.stop().fadeTo(0, 0.2);
+                startScrollingDown();
 	    })
 	    .on('mouseleave', function() {
-		if ( scrollBox.is('.scrolling') ) {
-		    // If the mouse leaves the downwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
-		    downScroller.stop().fadeTo(0, 0.1);
-		    scrollBox.stop();
-		}
+		downScroller.stop().fadeTo(0, 0.2);
+		stopScrolling();
 	    })
 	    .on('click', function() {
-		if ( scrollBox.is('.scrolling') ) {
-		    var scrollTo = scrollBox.prop('scrollHeight') - scrollBox.height();
-		    scrollBox.
-			stop()
-			.animate(
-			    { 'scrollTop': scrollTo },
-			    snapTime,
-			    function() {
-				// When scrolling is finished (reaches the bottom), hide the downwards scroller
-				downScroller.stop().fadeOut();
-				scrollBox.removeClass('scrolling');
-			    }
-			);
-		}
+                snapTo(scrollBox.prop('scrollHeight') - scrollBox.height());
 	    });
 
 	// A div which appears at the top of the container, which scrolls the scrollBox up when you hover the mouse over it
@@ -5531,79 +5543,105 @@ uses the existing id if it has one
 	    .on('mouseenter', function(){
 		// When the mouse enter the scroller, make the scroller more opaque then start scrolling
 		upScroller.stop().fadeTo(0, 0.5);
-		downScroller.stop().fadeTo(0, 0.1);
-		var duration = scrollBox.scrollTop() / scrollSpeed;
-		scrollBox.addClass('scrolling')
-		    .animate(
-			{ 'scrollTop': 0 },
-			duration,
-			function(){
-			    // When scrolling is finished (reaches the top), hide the upwards scroller
-			    upScroller.stop().fadeOut();
-			    scrollBox.removeClass('scrolling');
-			}
-		    );
+		downScroller.stop().fadeTo(0, 0.2);
+		startScrollingUp();
 	    })
 	    .on('mouseleave', function(){
 		if ( scrollBox.is('.scrolling') ) {
 		    // If the mouse leaves the upwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
-		    upScroller.stop().fadeTo(0, 0.1);
-		    scrollBox.stop();
+		    upScroller.stop().fadeTo(0, 0.2);
+		    stopScrolling();
 		}
 	    })
 	    .on('click', function() {
-		if ( scrollBox.is('.scrolling') ) {
-		    scrollBox.
-			stop()
-			.animate(
-			    { 'scrollTop': 0 },
-			    snapTime,
-			    function() {
-				// When scrolling is finished (reaches the bottom), hide the downwards scroller
-				upScroller.stop().fadeOut();
-				scrollBox.removeClass('scrolling');
-			    }
-			);
-		}
+                snapTo(0);
 	    });
 
 
-	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
-	function updateControls() {
-	    if ( ! scrollBox.is('.scrolling') ) {
-		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
-		    upScroller.add(downScroller).stop().fadeOut(0);
-		} else {
-		    if ( scrollBox.scrollTop() > 0 ) {
-			upScroller.fadeTo(0, 0.1);
-		    } else {
-			upScroller.fadeOut();
-		    }
-		    if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
-			downScroller.fadeTo(0, 0.1);
-		    } else {
-			downScroller.fadeOut();
-		    }
-		}
-	    }
-	}
 	scrollBox.on('scroll', function() {
 	    updateControls();
 	});
 	$(window).on('resize.hoverScroller', updateControls);
 	updateControls();
 
-	// Hide scrollbars.
-	// TO DO: extend this to work for other layouts, use a wrapper if needed
-	if ( scrollBox.css('left') !== "auto"
-	     && scrollBox.css('right') === "0px"
-	     && settings.container.css('overflow-x') === "hidden" ) {
-	    var scrollBarWidth = scrollBox.width() - scrollBox[0].scrollWidth;
-	    scrollBox.css('right', 0 - scrollBarWidth);
-	}
-
 	// End of hover scroller plugin; return original target for jQuery chainability
 	return this;
+
+	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
+	function updateControls() {
+	    if ( ! scrollBox.is('.scrolling') ) {
+		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
+		    upScroller.add(downScroller)
+                        .stop()
+                        .fadeOut(0);
+		} else {
+		    if ( scrollBox.scrollTop() > 0 ) {
+			upScroller.fadeTo(0, 0.2);
+		    } else {
+			upScroller.fadeOut();
+		    }
+		    if ( scrollBox.scrollTop() + scrollBox.height() < scrollBox.prop('scrollHeight') ) {
+			downScroller.fadeTo(0, 0.2);
+		    } else {
+			downScroller.fadeOut();
+		    }
+		}
+	    }
+	}
+
+        function scrollTo(newDestination) {
+            destination = newDestination;
+            scrollBox
+                .stop()
+                .addClass('scrolling')
+                .animate(
+                    {'scrollTop': destination},
+                    scrollDuration,
+                    stopScrolling
+                );
+        }
+        function snapTo(newDestination) {
+            destination = newDestination;
+            scrollBox
+                .stop()
+                .addClass('scrolling')
+                .animate(
+                    {'scrollTop': destination},
+                    snapTime,
+                    stopScrolling
+                );
+        }
+        function startScrollingUp() {
+            destination = 0;
+            var duration = scrollBox.scrollTop() / scrollSpeed;
+            scrollBox
+                .stop()
+                .addClass('scrolling')
+                .animate(
+                    {'scrollTop': 0},
+                    duration,
+                    stopScrolling
+                );
+        }
+        function startScrollingDown() {
+            destination = scrollBox.prop('scrollHeight') - scrollBox.height();
+            var duration = (destination - scrollBox.scrollTop()) / scrollSpeed;
+            scrollBox
+                .stop()
+                .addClass('scrolling')
+                .animate(
+                    {'scrollTop': destination},
+                    duration,
+                    stopScrolling
+                );
+        }
+        function stopScrolling() {
+            destination = scrollBox.scrollTop();
+            scrollBox
+                .stop()
+                .removeClass('scrolling');
+            updateControls();
+        }
     }
 })(jQuery);
 
@@ -5947,9 +5985,12 @@ uses the existing id if it has one
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
 ;(function($, window, document, undefined){
     $.widget('qcode.sidebar', {
+        options: {
+            collapsedWidth: 25
+        },
 	_create: function(){
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
-	    $('body').css('margin-right', "+=35px");
+	    $('body').css('margin-right', "+="+(10+this.options.collapsedWidth)+"px");
 
 	    var sidebar = this.element.addClass('sidebar'),
 	    toolbar = this.toolbar = sidebar.find('.toolbar'),
@@ -5963,7 +6004,13 @@ uses the existing id if it has one
 	    this._on(handle, {
 		'mousedown': this._dragStart,
 		'dragStart': function(event, data) {
-		    initialWidth = sidebar.width();
+		    initialWidth = sidebar.width() + parseInt(sidebar.css('right'));
+                    sidebar.animate({
+                        'right': 0,
+                        'width': initialWidth
+                    }, 100);
+	            this.restoreButton.hide();
+	            this.collapseButton.show();
 		},
 		'drag': function(event, data) {
 		    sidebar.width(initialWidth - data.offset);
@@ -5976,7 +6023,7 @@ uses the existing id if it has one
 
 	    // Button to collapse the sidebar
 	    this.collapseButton = $('<button>')
-		.text('\u21e5')
+		.text('\u00bb')
 		.addClass('collapse')
 		.prependTo(toolbar);
 
@@ -5986,7 +6033,7 @@ uses the existing id if it has one
 
 	    // Button to restore a collapsed sidebar
 	    this.restoreButton = $('<button>')
-		.text('\u21e4')
+		.text('\u00ab')
 		.addClass('restore')
 		.prependTo(toolbar)
 		.hide();
@@ -5997,20 +6044,14 @@ uses the existing id if it has one
 	},
 	collapse: function() {
 	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
-	    this._off(this.handle, '.resizer');
-	    this.handle.css('cursor', 'auto');
 	    this.collapseButton.hide();
 	    this.restoreButton.show();
 	    this.element.stop().animate({
-		'right': 25 - this.element.width()
+		'right': this.options.collapsedWidth - this.element.width()
 	    });
 	},
 	restore: function() {
 	    // Restore a collapsed sidebar
-	    this._on(this.handle, {
-		'mousedown': this._dragStart
-	    });
-	    this.handle.css('cursor', "w-resize");
 	    this.restoreButton.hide();
 	    this.collapseButton.show();
 	    this.element.stop().animate({
@@ -6219,9 +6260,21 @@ uses the existing id if it has one
 })(jQuery, window);
 
 /* ==== jquery.tableRowDeleteButton.js ==== */
+/*
+  tableRowDeleteButton
+
+  call on a button inside a th, provide a UI for deleting rows
+  depends on dbGrid for delete functionality
+
+  each tbody cell in the column containing the button gains class "row-selector", and becomes clickable.
+  selected row gain the "selected" class, and are deleted if the user clicks the button, then confirms.
+*/
 ;(function($, undefined) {
     var repaint;
+
     $.fn.tableRowDeleteButton = function() {
+
+        // Initialise the repaint function
         if ( repaint === undefined ) {
             repaint = function(button) {
                 if ( button.closest('table').children('tbody').children('tr.selected:not(.updating)').length > 0 ) {
@@ -6229,22 +6282,27 @@ uses the existing id if it has one
                     button.removeAttr('disabled');
                 } else {
                     button.addClass('disabled');
-                    button.attr('disabled', true);
+                    button.attr('disabled', true); // Possibly should use $().prop(), but that breaks theadFixed
                 }
             }
         }
+
         var buttons = this;
         buttons.each(function() {
             var button = $(this);
             var tbody = button.closest('table').children('tbody');
 
-            tbody.children('tr').children(':nth-child(' + (button.closest('th').index() + 1) + ')').addClass('row-selector');
+            // Add row selector class to all tbody cells in this column
+            tbody.children('tr').children(':nth-child(' + (button.closest('th').index() + 1) + ')')
+                .addClass('row-selector');
 
+            // Delegated event listener for selecting a row
             tbody.on('click.tableRowDeleteButton', 'td.row-selector', function(event) {
                 $(event.currentTarget).parent().toggleClass('selected');
                 repaint(button);
             });
 
+            // Event listener for clicking the delete button
             button.on('click.tableRowDeleteButton', function() {
                 if ( ! button.hasClass('disabled') ) {
                     var rows = tbody.children('.selected:not(.updating)');
@@ -6253,8 +6311,10 @@ uses the existing id if it has one
                             if ( $(row).dbRow('option', 'type') === 'add' ) {
                                 if ( $(row).dbRow('getState') === 'dirty'
                                      || $(row).dbRow('getState') === 'error' ) {
+                                    // No db interaction if row has not been "added"
                                     tbody.parent().dbGrid('removeRow', $(row));
                                 } else {
+                                    // Do not remove unmodified "add" row
                                     $(row).removeClass('selected');
                                 }
                             } else {
@@ -6266,6 +6326,7 @@ uses the existing id if it has one
                 }
             });
 
+            // Event listeners to animate the "click" action with class "clicking"
             button.on('mousedown.tableRowDeleteButton', function() {
                 button.addClass('clicking');
                 button.one('mouseup.tableRowDeleteButton mouseleave.tableRowDeleteButton', function() {
@@ -6277,6 +6338,8 @@ uses the existing id if it has one
 
             repaint(button);
         });
+
+        // Enable jQuery plugin chaining
         return buttons;
     }
 })(jQuery);

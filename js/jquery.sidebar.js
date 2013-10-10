@@ -1,9 +1,12 @@
 // Sidebar plugin - makes the target div a right sidebar, resizable (width only) and collapsible
 ;(function($, window, document, undefined){
     $.widget('qcode.sidebar', {
+        options: {
+            collapsedWidth: 25
+        },
 	_create: function(){
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
-	    $('body').css('margin-right', "+=35px");
+	    $('body').css('margin-right', "+="+(10+this.options.collapsedWidth)+"px");
 
 	    var sidebar = this.element.addClass('sidebar'),
 	    toolbar = this.toolbar = sidebar.find('.toolbar'),
@@ -17,7 +20,13 @@
 	    this._on(handle, {
 		'mousedown': this._dragStart,
 		'dragStart': function(event, data) {
-		    initialWidth = sidebar.width();
+		    initialWidth = sidebar.width() + parseInt(sidebar.css('right'));
+                    sidebar.animate({
+                        'right': 0,
+                        'width': initialWidth
+                    }, 100);
+	            this.restoreButton.hide();
+	            this.collapseButton.show();
 		},
 		'drag': function(event, data) {
 		    sidebar.width(initialWidth - data.offset);
@@ -30,7 +39,7 @@
 
 	    // Button to collapse the sidebar
 	    this.collapseButton = $('<button>')
-		.text('\u21e5')
+		.text('\u00bb')
 		.addClass('collapse')
 		.prependTo(toolbar);
 
@@ -40,7 +49,7 @@
 
 	    // Button to restore a collapsed sidebar
 	    this.restoreButton = $('<button>')
-		.text('\u21e4')
+		.text('\u00ab')
 		.addClass('restore')
 		.prependTo(toolbar)
 		.hide();
@@ -51,20 +60,14 @@
 	},
 	collapse: function() {
 	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
-	    this._off(this.handle, '.resizer');
-	    this.handle.css('cursor', 'auto');
 	    this.collapseButton.hide();
 	    this.restoreButton.show();
 	    this.element.stop().animate({
-		'right': 25 - this.element.width()
+		'right': this.options.collapsedWidth - this.element.width()
 	    });
 	},
 	restore: function() {
 	    // Restore a collapsed sidebar
-	    this._on(this.handle, {
-		'mousedown': this._dragStart
-	    });
-	    this.handle.css('cursor', "w-resize");
 	    this.restoreButton.hide();
 	    this.collapseButton.show();
 	    this.element.stop().animate({

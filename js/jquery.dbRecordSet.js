@@ -15,8 +15,8 @@
 
 	    // Elements with class "editable" are editable fields.
 	    this._on({
-		'mousedown .editable': function(event) {
-		    $(event.currentTarget).dbField('onMouseDown', event);
+		'click .editable': function(event) {
+		    $(event.currentTarget).dbField('onClick', event);
 		},
 		'editorKeyDown .editable': function(event) {
 		    $(event.currentTarget).dbField('editorKeyDown', event);
