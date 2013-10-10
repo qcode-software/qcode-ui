@@ -1,3 +1,8 @@
+/*
+  tableRowDeleteButton
+
+  call on a button inside a th, provide a UI for deleting rows
+*/
 ;(function($, undefined) {
     var repaint;
     $.fn.tableRowDeleteButton = function() {
