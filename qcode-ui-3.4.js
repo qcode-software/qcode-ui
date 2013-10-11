@@ -5481,16 +5481,9 @@ uses the existing id if it has one
 	var snapTime = settings.snapTime;
         var scrollTarget = scrollBox.scrollTop();
         var destination = 0;
-        var scrollDuration = 1000;
 
         scrollBox.on('mousewheel', function(event) {
-            if ( event.originalEvent.wheelDeltaY < 0 ) {
-                destination = Math.max(destination, scrollBox.scrollTop());
-                scrollTo(destination + 100);
-            } else {
-                destination = Math.min(destination, scrollBox.scrollTop());
-                scrollTo(destination - 100);
-            }
+            scrollTo(destination - event.originalEvent.wheelDeltaY, 0);
             event.preventDefault();
             event.stopPropagation();
         });
@@ -5506,8 +5499,8 @@ uses the existing id if it has one
             scrollBox.on('mousemove.dragListener', function(event) {
                 if ( dragging || Math.abs(event.pageY - dragMouseFrom) > threshold ) {
                     dragging = true;
-                    destination = scrollFrom - (event.pageY - dragMouseFrom);
-                    scrollBox.scrollTop(destination);
+                    var destination = scrollFrom - (event.pageY - dragMouseFrom);
+                    scrollTo(destination, 0);
                 }
             });
             scrollBox.one('mouseup mouseleave', function() {
@@ -5536,7 +5529,7 @@ uses the existing id if it has one
 		stopScrolling();
 	    })
 	    .on('click', function() {
-                snapTo(scrollBox.prop('scrollHeight') - scrollBox.height());
+                scrollTo(scrollBox.prop('scrollHeight') - scrollBox.height(), snapTime);
 	    });
 
 	// A div which appears at the top of the container, which scrolls the scrollBox up when you hover the mouse over it
@@ -5557,7 +5550,7 @@ uses the existing id if it has one
 		}
 	    })
 	    .on('click', function() {
-                snapTo(0);
+                scrollTo(0, 0);
 	    });
 
 
@@ -5592,51 +5585,26 @@ uses the existing id if it has one
 	    }
 	}
 
-        function scrollTo(newDestination) {
+        function scrollTo(newDestination, duration) {
             destination = newDestination;
             scrollBox
                 .stop()
                 .addClass('scrolling')
                 .animate(
                     {'scrollTop': destination},
-                    scrollDuration,
-                    stopScrolling
-                );
-        }
-        function snapTo(newDestination) {
-            destination = newDestination;
-            scrollBox
-                .stop()
-                .addClass('scrolling')
-                .animate(
-                    {'scrollTop': destination},
-                    snapTime,
+                    duration,
                     stopScrolling
                 );
         }
         function startScrollingUp() {
             destination = 0;
             var duration = scrollBox.scrollTop() / scrollSpeed;
-            scrollBox
-                .stop()
-                .addClass('scrolling')
-                .animate(
-                    {'scrollTop': 0},
-                    duration,
-                    stopScrolling
-                );
+            scrollTo(destination, duration);
         }
         function startScrollingDown() {
             destination = scrollBox.prop('scrollHeight') - scrollBox.height();
             var duration = (destination - scrollBox.scrollTop()) / scrollSpeed;
-            scrollBox
-                .stop()
-                .addClass('scrolling')
-                .animate(
-                    {'scrollTop': destination},
-                    duration,
-                    stopScrolling
-                );
+            scrollTo(destination, duration);
         }
         function stopScrolling() {
             destination = scrollBox.scrollTop();
@@ -6027,6 +5995,7 @@ uses the existing id if it has one
 	    // Button to collapse the sidebar
 	    this.collapseButton = $('<button>')
 		.text('\u00bb')
+                .attr('title', 'Collapse')
 		.addClass('collapse')
 		.prependTo(toolbar);
 
@@ -6037,6 +6006,7 @@ uses the existing id if it has one
 	    // Button to restore a collapsed sidebar
 	    this.restoreButton = $('<button>')
 		.text('\u00ab')
+                .attr('title', 'Restore')
 		.addClass('restore')
 		.prependTo(toolbar)
 		.hide();

@@ -40,6 +40,7 @@
 	    // Button to collapse the sidebar
 	    this.collapseButton = $('<button>')
 		.text('\u00bb')
+                .attr('title', 'Collapse')
 		.addClass('collapse')
 		.prependTo(toolbar);
 
@@ -50,6 +51,7 @@
 	    // Button to restore a collapsed sidebar
 	    this.restoreButton = $('<button>')
 		.text('\u00ab')
+                .attr('title', 'Restore')
 		.addClass('restore')
 		.prependTo(toolbar)
 		.hide();
