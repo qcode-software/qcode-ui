@@ -20,6 +20,11 @@
         var destination = 0;
 
         scrollBox.on('mousewheel', function(event) {
+            if ( $(event.target).is(':input')
+                 && parseInt($(event.target).prop('scrollHeight')) != $(event.target).innerHeight()
+               ) {
+                return true;
+            }
             scrollTo(destination - event.originalEvent.wheelDeltaY, 0);
             event.preventDefault();
             event.stopPropagation();
