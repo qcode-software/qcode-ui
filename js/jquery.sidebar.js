@@ -5,12 +5,16 @@
             collapsedWidth: 25
         },
 	_create: function(){
+            this.storageKey = "qcode.sidebar.url(" + window.location.origin + window.location.pathname + ")";
 	    // Even collapsed, the sidebar will take up some space, so add a margin to the body to prevent the collapsed sidebar from obscuring any page contents
 	    $('body').css('margin-right', "+="+(10+this.options.collapsedWidth)+"px");
 
-	    var sidebar = this.element.addClass('sidebar'),
-	    toolbar = this.toolbar = sidebar.find('.toolbar'),
-	    initialWidth = sidebar.width();
+	    var sidebar = this.element.addClass('sidebar');
+	    var toolbar = this.toolbar = sidebar.find('.toolbar');
+            if ( localStorage[this.storageKey + '.width'] ) {
+                sidebar.width(localStorage[this.storageKey + '.width']);
+            }
+	    var initialWidth = sidebar.width();
 
 	    // An invisible div sitting on the sidebar's edge, to capture click & drag events for resizing the sidebar.
 	    var handle = this.handle = $('<div>')
@@ -27,9 +31,12 @@
                     }, 100);
 	            this.restoreButton.hide();
 	            this.collapseButton.show();
+                    localStorage[this.storageKey + '.collapsed'] = "false";
 		},
 		'drag': function(event, data) {
-		    sidebar.width(initialWidth - data.offset);
+                    var newWidth = initialWidth - data.offset;
+		    sidebar.width(newWidth);
+                    localStorage[this.storageKey + '.width'] = newWidth;
 		    sidebar.trigger('resize');
 		},
 		'dragEnd': function(event, data) {
@@ -59,22 +66,38 @@
 	    this._on(this.restoreButton, {
 		'click': this.restore
 	    });
+
+            if ( localStorage[this.storageKey + '.collapsed'] == "true" ) {
+                this.collapse(false);
+            }
 	},
-	collapse: function() {
+	collapse: function(animated) {
 	    // "Collapse" the sidebar (actually just hides most of it beyond the edge of the window).
+            var animated = coalesce(animated, true);
 	    this.collapseButton.hide();
 	    this.restoreButton.show();
-	    this.element.stop().animate({
-		'right': this.options.collapsedWidth - this.element.width()
-	    });
+            if ( animated ) {
+	        this.element.stop().animate({
+		    'right': this.options.collapsedWidth - this.element.width()
+	        });
+            } else {
+                this.element.stop().css('right', this.options.collapsedWidth - this.element.width());
+            }
+            localStorage[this.storageKey + '.collapsed'] = "true";
 	},
-	restore: function() {
+	restore: function(animated) {
 	    // Restore a collapsed sidebar
+            var animated = coalesce(animated, true);
 	    this.restoreButton.hide();
 	    this.collapseButton.show();
-	    this.element.stop().animate({
-		'right': 0
-	    });
+            if ( animated ) {
+	        this.element.stop().animate({
+		    'right': 0
+	        });
+            } else {
+	        this.element.stop().css('right', 0);
+            }
+            localStorage[this.storageKey + '.collapsed'] = "false";
 	},
 	_dragStart: function(event){
 	    var target = $(event.target);
