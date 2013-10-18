@@ -32,6 +32,7 @@
 	            this.restoreButton.hide();
 	            this.collapseButton.show();
                     localStorage[this.storageKey + '.collapsed'] = "false";
+                    localStorage[this.storageKey + '.width'] = initialWidth;
 		},
 		'drag': function(event, data) {
                     var newWidth = initialWidth - data.offset;
