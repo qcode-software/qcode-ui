@@ -209,7 +209,9 @@
 		xmlNode = $(this);
 		var id = xmlNode.prop('nodeName');
 		var value = xmlNode.text();
-		$('#' + id + ',[name="' + id + '"]').setObjectValue(value);
+		behave(
+                    $('#' + id + ',[name="' + id + '"]').setObjectValue(value)
+                );
 	    });
 
 	    // Display info message in statusBar

@@ -3372,13 +3372,15 @@ function dynamicResize(oContainer) {
 	    });
 	});
 	$('records > html *', xmlDoc).each(function(i, xmlNode){
-	    $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
-		if ( $(target).is('input, textarea, select') ) {
-		    $(target).val($(xmlNode).text());
-		} else {
-		    $(target).html($(xmlNode).text());
-		}
-	    });
+	    behave(
+                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
+		    if ( $(target).is('input, textarea, select') ) {
+		        $(target).val($(xmlNode).text());
+		    } else {
+		        $(target).html($(xmlNode).text());
+		    }
+	        })
+            );
 	});
 	
 	if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
@@ -4779,7 +4781,9 @@ function dbFormHTMLArea(oDiv) {
 		xmlNode = $(this);
 		var id = xmlNode.prop('nodeName');
 		var value = xmlNode.text();
-		$('#' + id + ',[name="' + id + '"]').setObjectValue(value);
+		behave(
+                    $('#' + id + ',[name="' + id + '"]').setObjectValue(value)
+                );
 	    });
 
 	    // Display info message in statusBar
