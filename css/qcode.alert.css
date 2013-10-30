@@ -13,7 +13,7 @@
 @supports ( -webkit-background-clip: text ) {
     .ui-dialog.alert .ui-dialog-content::before {
         -webkit-background-clip: text;
-        background: linear-gradient(to bottom, rgb(250, 230, 50) 30%, rgb(250, 150, 50));
+        background-image: linear-gradient(to bottom, rgb(250, 230, 50) 30%, rgb(250, 150, 50));
         color: transparent;
         background-size: 1em 1em;
         background-position: center center;
