@@ -165,7 +165,7 @@
 	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
-		alert(message);
+		qcode.alert(message);
 	    }
 	    this.error = message;
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);

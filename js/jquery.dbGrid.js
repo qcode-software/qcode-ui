@@ -199,7 +199,7 @@
 		});
 	    }
 	    if ( ! found ) {
-		alert("Could not find " + search + ".");
+		qcode.alert("Could not find " + search + ".");
 	    }
 	},
 	save: function(row,async) {
@@ -356,7 +356,7 @@
                 type: 'error',
                 html: errorMessage
             }]);
-	    alert(errorMessage);
+	    qcode.alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {
 	    // Return the first editable cell of the same column on previous rows. 

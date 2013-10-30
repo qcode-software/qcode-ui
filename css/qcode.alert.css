@@ -1,0 +1,21 @@
+.ui-dialog.alert .ui-dialog-content::before {
+    display: table-cell;
+    content: '\e009';
+    -webkit-font-smoothing: antialiased;
+    font: normal 1.8em/0.5 'qc-font';
+    color: rgb(250, 200, 50);
+    padding: 0.25em 0.5em 0.25em 0;
+    vertical-align: middle;
+    min-height: 1.8em;
+}
+@supports ( -webkit-background-clip: text ) {
+    .ui-dialog.alert .ui-dialog-content::before {
+        background: linear-gradient(to bottom, rgb(250, 230, 50) 30%, rgb(250, 150, 50));
+        -webkit-text-fill-color: transparent;
+        -webkit-background-clip: text;
+    }
+}
+.ui-dialog.alert .ui-dialog-content {
+    display: table !important;
+    padding: 1em 1em 0.5em;
+}

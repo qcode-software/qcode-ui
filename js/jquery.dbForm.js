@@ -301,7 +301,7 @@
 	// Alert
 	var rec = $(xmlDoc).find('records > alert').first();
 	if ( rec.length == 1 ) {
-	    alert(rec.text());
+	    qcode.alert(rec.text());
 	}
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
@@ -350,7 +350,7 @@
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
-	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
+	qcode.alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
 	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {

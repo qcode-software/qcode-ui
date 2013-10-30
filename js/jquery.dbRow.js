@@ -172,7 +172,7 @@
 	    this.error = errorMessage;
 	    this.setState('error');
 	    if ( errorType != 'USER' ) {
-		alert(errorMessage);
+		qcode.alert(errorMessage);
 	    }
 	},
 	xmlSetValues: function(xmlDoc) {
@@ -226,7 +226,7 @@
 	    // Alert
 	    var xmlNode = $('records > alert', xmlDoc);
 	    if ( xmlNode.size() ) {
-		alert(xmlNode.text());
+		qcode.alert(xmlNode.text());
 	    }
 	},
 	setCellValue: function(colName, value){
