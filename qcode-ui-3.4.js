@@ -3395,7 +3395,7 @@ function dynamicResize(oContainer) {
 	// Alert
 	var rec = $(xmlDoc).find('records > alert').first();
 	if ( rec.length == 1 ) {
-	    alert(rec.text());
+	    qcode.alert(rec.text());
 	}
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
@@ -3444,7 +3444,7 @@ function dynamicResize(oContainer) {
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
-	alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
+	qcode.alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
 	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {
@@ -4021,7 +4021,7 @@ function dbFormHTMLArea(oDiv) {
 		});
 	    }
 	    if ( ! found ) {
-		alert("Could not find " + search + ".");
+		qcode.alert("Could not find " + search + ".");
 	    }
 	},
 	save: function(row,async) {
@@ -4178,7 +4178,7 @@ function dbFormHTMLArea(oDiv) {
                 type: 'error',
                 html: errorMessage
             }]);
-	    alert(errorMessage);
+	    qcode.alert(errorMessage);
 	},
 	cellAbove: function(fromCell) {
 	    // Return the first editable cell of the same column on previous rows. 
@@ -4467,7 +4467,7 @@ function dbFormHTMLArea(oDiv) {
 	    // Called when a server action returns an error
 	    this.setState('error');
 	    if ( type != 'USER' ) {
-		alert(message);
+		qcode.alert(message);
 	    }
 	    this.error = message;
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
@@ -4744,7 +4744,7 @@ function dbFormHTMLArea(oDiv) {
 	    this.error = errorMessage;
 	    this.setState('error');
 	    if ( errorType != 'USER' ) {
-		alert(errorMessage);
+		qcode.alert(errorMessage);
 	    }
 	},
 	xmlSetValues: function(xmlDoc) {
@@ -4798,7 +4798,7 @@ function dbFormHTMLArea(oDiv) {
 	    // Alert
 	    var xmlNode = $('records > alert', xmlDoc);
 	    if ( xmlNode.size() ) {
-		alert(xmlNode.text());
+		qcode.alert(xmlNode.text());
 	    }
 	},
 	setCellValue: function(colName, value){
@@ -8179,7 +8179,12 @@ function preloadImages() {
 })(window);
 
 /* ==== qcode.alert.js ==== */
-;
+;/*
+qcode.alert
+
+Display a modal dialog alert
+Accepts an htmlString message.
+*/
 
 var qcode = qcode || {};
 
@@ -8198,7 +8203,6 @@ var qcode = qcode || {};
         dialogClass: "alert"
     };
     qcode.alert = function(message) {
-        var message = message.replace(/\n/g, "<br>");
         $('<div>')
             .html(message)
             .dialog(options);

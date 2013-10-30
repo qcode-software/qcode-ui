@@ -1,4 +1,9 @@
-;
+;/*
+qcode.alert
+
+Display a modal dialog alert
+Accepts an htmlString message.
+*/
 
 var qcode = qcode || {};
 
@@ -17,7 +22,6 @@ var qcode = qcode || {};
         dialogClass: "alert"
     };
     qcode.alert = function(message) {
-        var message = message.replace(/\n/g, "<br>");
         $('<div>')
             .html(message)
             .dialog(options);
