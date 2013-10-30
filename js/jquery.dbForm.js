@@ -350,7 +350,7 @@
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
-	qcode.alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
+	qcode.alert("Your changes could not be saved.<br>" + stripHTML(errorMessage));
 	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {

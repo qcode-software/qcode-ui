@@ -3444,7 +3444,7 @@ function dynamicResize(oContainer) {
     function formActionError(errorMessage) {
 	this.setState('error');
 	this.setStatus(errorMessage);
-	qcode.alert("Your changes could not be saved.\n" + stripHTML(errorMessage));
+	qcode.alert("Your changes could not be saved.<br>" + stripHTML(errorMessage));
 	this.form.trigger('formActionError', [errorMessage]);
     }
     function formData(form) {
@@ -4021,7 +4021,7 @@ function dbFormHTMLArea(oDiv) {
 		});
 	    }
 	    if ( ! found ) {
-		qcode.alert("Could not find " + search + ".");
+		qcode.alert("Could not find " + escapeHTML(search) + ".");
 	    }
 	},
 	save: function(row,async) {

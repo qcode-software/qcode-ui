@@ -199,7 +199,7 @@
 		});
 	    }
 	    if ( ! found ) {
-		qcode.alert("Could not find " + search + ".");
+		qcode.alert("Could not find " + escapeHTML(search) + ".");
 	    }
 	},
 	save: function(row,async) {

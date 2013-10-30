@@ -127,6 +127,7 @@
 }
 
 /* ==== qcode.alert.css ==== */
+/* Add a triangular "warning" symbol to alerts */
 .ui-dialog.alert .ui-dialog-content::before {
     display: table-cell;
     content: '\e009';
