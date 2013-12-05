@@ -1,9 +1,9 @@
 ;/*
-qcode.alert
+   qcode.alert
 
-Display a modal dialog alert
-Accepts an htmlString message.
-*/
+   Display a modal dialog alert
+   Accepts an htmlString message.
+ */
 
 var qcode = qcode || {};
 
@@ -16,14 +16,25 @@ var qcode = qcode || {};
                 $(this).dialog('close');
             }
         },
-        close: function() {
-            $(this).remove();
-        },
         dialogClass: "alert"
     };
     qcode.alert = function(message) {
+
+        // Remember focus and silently blur
+        var toFocus = $(document.activeElement);
+        var textRange = toFocus.textrange('get');
+        toFocus.trigger('blur.qcodeAlert');
+        
         $('<div>')
-            .html(message)
-            .dialog(options);
+                .html(message)
+                .dialog(options, {
+                    close: function() {
+                        $(this).remove();
+                        
+                        // Silently restore focus
+                        toFocus.trigger('focus.qcodeAlert');
+                        toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                    }
+                });
     }
 })();
