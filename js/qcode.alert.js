@@ -19,7 +19,7 @@ var qcode = qcode || {};
 (function($, undefined) {
     var ding;
     var alertQueue = [];
-    var timeout;
+    var timeoutID;
     $(function() {
         if ( qcode.Sound.supported ) {
             ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
@@ -27,10 +27,10 @@ var qcode = qcode || {};
     });
 
     function showNextMessage() {
-        if ( alertQueue.length > 0 && timeout === undefined ) {
-            timeout = window.setZeroTimeout(function() {
+        if ( alertQueue.length > 0 && timeoutID === undefined ) {
+            timeoutID = window.setZeroTimeout(function() {
                 var callback = alertQueue.shift();
-                timeout = undefined;
+                timeoutID = undefined;
                 callback();
             });
         }

@@ -56,7 +56,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Generate and store column selectors
             var colSelectors = {};
             this.theadCells.each(function(i, th) {
-                colSelectors[i] = '#'+id+' col:nth-child('+(i+1)+')';
+                colSelectors[i] = '#'+id+'>colgroup>col:nth-child('+(i+1)+')';
             });
             this.colSelectors = colSelectors;
 

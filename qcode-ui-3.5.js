@@ -898,11 +898,11 @@ function dynamicResize(oContainer) {
             var index = th.index();
             var id = th.closest('table').getID();
 
-            qcode.style('#'+id+' col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
+            qcode.style('#'+id+'>colgroup>col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                qcode.style('#'+id+' tr>*:nth-child('+(index+1)+')', 'white-space', "nowrap");
+                qcode.style('#'+id+' tr>:nth-child('+(index+1)+')', 'white-space', "nowrap");
 
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
@@ -932,7 +932,7 @@ function dynamicResize(oContainer) {
             var id = table.getID();
             var col = table.find('col').filter(':nth-child('+(index+1)+')');
             var cells = table.find('td').filter(':nth-child('+(index+1)+')');
-            var colSelector = '#'+id+' col:nth-child('+(index+1)+'), #'+id+' tr>*:nth-child('+(index+1)+')';
+            var colSelector = '#'+id+'>colgroup>col:nth-child('+(index+1)+'), #'+id+' tr>:nth-child('+(index+1)+')';
 
             switch ( options.overflow ) {
             case 'break-word':
@@ -7749,7 +7749,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Generate and store column selectors
             var colSelectors = {};
             this.theadCells.each(function(i, th) {
-                colSelectors[i] = '#'+id+' col:nth-child('+(i+1)+')';
+                colSelectors[i] = '#'+id+'>colgroup>col:nth-child('+(i+1)+')';
             });
             this.colSelectors = colSelectors;
 
