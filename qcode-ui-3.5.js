@@ -8196,13 +8196,13 @@ var qcode = qcode || {};
 
 (function($, undefined) {
     var ding;
+    var alertQueue = [];
+    var timeout;
     $(function() {
         if ( qcode.Sound.supported ) {
             ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
         }
     });
-    var alertQueue = [];
-    var timeout;
 
     function showNextMessage() {
         if ( alertQueue.length > 0 && timeout === undefined ) {
@@ -8248,13 +8248,7 @@ var qcode = qcode || {};
                         }
                     });
             if ( qcode.Sound && qcode.Sound.supported ) {
-                if ( ding.loaded ) {
-                    ding.play();
-                } else {
-                    $(ding).on('load', function() {
-                        ding.play();
-                    });
-                }
+                ding.play();
             }
         });
         showNextMessage();
@@ -8292,13 +8286,7 @@ var qcode = qcode || {};
                         }
                     });
             if ( qcode.Sound && qcode.Sound.supported ) {
-                if ( ding.loaded ) {
-                    ding.play();
-                } else {
-                    $(ding).on('load', function() {
-                        ding.play();
-                    });
-                }
+                ding.play();
             }
         });
         showNextMessage();
@@ -8347,10 +8335,14 @@ var qcode = qcode || {};
         }
         jQuery.extend(qcode.Sound.prototype, {
             play: function() {
-                var source = context.createBufferSource();
-                source.buffer = this._buffer;
-                source.connect(context.destination);
-                source.start(0);
+                if ( ! this.loaded ) {
+                    $(this).on('load', this.play.bind(this));
+                } else {
+                    var source = context.createBufferSource();
+                    source.buffer = this._buffer;
+                    source.connect(context.destination);
+                    source.start(0);
+                }
             }
         });
         qcode.Sound.supported = true;
