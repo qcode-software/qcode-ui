@@ -1,40 +1,116 @@
 ;/*
+============================================================
    qcode.alert
 
-   Display a modal dialog alert
-   Accepts an htmlString message.
+   Queue a message to display to the user in a modal dialog
+   Takes an htmlString message, and an optional callback
+
+============================================================
+   qcode.confirm
+   
+   Queue a message with Yes/No options for the user,
+   Takes an htmlString message and an on-confirm callback
+
+============================================================
  */
 
 var qcode = qcode || {};
 
-(function(jQuery, undefined) {
-    var options = {
-        resizable: false,
-        modal: true,
-        buttons: {
-            OK: function() {
-                $(this).dialog('close');
-            }
-        },
-        dialogClass: "alert"
-    };
-    qcode.alert = function(message) {
+(function($, undefined) {
+    var ding;
+    var alertQueue = [];
+    var timeout;
+    $(function() {
+        if ( qcode.Sound.supported ) {
+            ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
+        }
+    });
 
-        // Remember focus and silently blur
-        var toFocus = $(document.activeElement);
-        var textRange = toFocus.textrange('get');
-        toFocus.trigger('blur.qcodeAlert');
-        
-        $('<div>')
-                .html(message)
-                .dialog(options, {
-                    close: function() {
-                        $(this).remove();
-                        
-                        // Silently restore focus
-                        toFocus.trigger('focus.qcodeAlert');
-                        toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
-                    }
-                });
+    function showNextMessage() {
+        if ( alertQueue.length > 0 && timeout === undefined ) {
+            timeout = window.setZeroTimeout(function() {
+                var callback = alertQueue.shift();
+                timeout = undefined;
+                callback();
+            });
+        }
     }
-})();
+
+    qcode.alert = function(message, callback) {
+        alertQueue.push(function() {
+            // Remember focus and blur
+            var toFocus = $(document.activeElement);
+            if ( toFocus.is(':input') ) {
+                var textRange = toFocus.textrange('get');
+            }
+            
+            $('<div>')
+                    .html(message)
+                    .dialog({
+                        resizable: false,
+                        modal: true,
+                        buttons: {
+                            OK: function() {
+                                $(this).dialog('close');
+                            }
+                        },
+                        dialogClass: "alert",
+                        close: function() {
+                            $(this).remove();
+                            
+                            // Restore focus
+                            toFocus.trigger('focus');
+                            if ( toFocus.is(':input') ) {
+                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                            }
+                            if ( typeof callback == "function" ) {
+                                callback();
+                            }
+                            showNextMessage();
+                        }
+                    });
+            if ( qcode.Sound && qcode.Sound.supported ) {
+                ding.play();
+            }
+        });
+        showNextMessage();
+    }
+
+    qcode.confirm = function(message, onConfirm) {
+        alertQueue.push(function() {
+            var toFocus = $(document.activeElement);
+            if ( toFocus.is(':input') ) {
+                var textRange = toFocus.textrange('get');
+            }
+            
+            $('<div>')
+                    .html(message)
+                    .dialog({
+                        resizable: false,
+                        modal: true,
+                        dialogClass: "confirm",
+                        buttons: {
+                            Yes: function() {
+                                $(this).dialog('close');
+                                onConfirm();
+                            },
+                            No: function() {
+                                $(this).dialog('close');
+                            }
+                        },
+                        close: function() {
+                            $(this).remove();
+                            toFocus.trigger('focus');
+                            if ( toFocus.is(':input') ) {
+                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                            }
+                            showNextMessage();
+                        }
+                    });
+            if ( qcode.Sound && qcode.Sound.supported ) {
+                ding.play();
+            }
+        });
+        showNextMessage();
+    }
+})(jQuery);

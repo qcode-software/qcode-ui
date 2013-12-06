@@ -185,10 +185,11 @@
 	    }, formActionError.bind(this), true);
 	},
 	del: function() {
-	    if ( window.confirm('Delete the current record?') ) {
-		this.setState('deleting');
-		this.formAction('delete',this.settings.deleteURL);
-	    }
+            var dbForm = this;
+	    qcode.confirm('Delete the current record?', function() {
+		dbForm.setState('deleting');
+		dbForm.formAction('delete',dbForm.settings.deleteURL);
+	    });
 	},
 	setState: function(newState) {
 	    switch(newState) {
@@ -235,14 +236,9 @@
     // ============================================================
 
     // Private methods
-    function onBeforeUnload() {
+    function onBeforeUnload(event) {
 	if ( this.state == 'dirty' ) {
-	    if (window.confirm('Do you want to save your changes?')) {
-		this.save();
-		if (this.state == 'error' ) {
-		    event.returnValue = "Your changes could not been saved.\nStay on the current page to correct.";
-		}
-	    }
+	    return "Your changes have not been saved.\nStay on the current page to correct.";
 	}
     }
     function onSubmit() {

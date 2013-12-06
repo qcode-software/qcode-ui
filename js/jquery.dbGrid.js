@@ -213,21 +213,22 @@
 		var row = this.currentCell.closest('tr');
 	    }
 	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
-		if ( window.confirm("Delete the current record?") ) {
+		qcode.confirm("Delete the current record?", function() {
 		    row.dbRow('delete', false);
-		}
+		});
 	    }
 	    if ( row.dbRow('option', 'type') == 'add'
                  && ( row.dbRow('getState') === 'dirty' || row.dbRow('getState') === 'error' )
                ) {
-		if ( window.confirm("Delete the current row?") ) {
-		    this.removeRow(row);
+                var dbGrid = this;
+		qcode.confirm("Delete the current row?", function() {
+		    dbGrid.removeRow(row);
                     // Notify plugins such as statusFrame
-                    this.element.trigger('message', [{
+                    dbGrid.element.trigger('message', [{
                         type: 'notice',
                         html: "Deleted."
                     }]);
-		}
+		});
 	    }
 	},
 	removeRow: function(row) {

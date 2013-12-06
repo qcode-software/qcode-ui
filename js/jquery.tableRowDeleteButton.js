@@ -44,7 +44,7 @@
             button.on('click.tableRowDeleteButton', function() {
                 if ( ! button.hasClass('disabled') ) {
                     var rows = tbody.children('.selected:not(.updating)');
-		    if ( window.confirm("Delete these " + rows.length + " records?") ) {
+		    qcode.confirm("Delete these " + rows.length + " records?", function() {
                         rows.each(function(i, row) {
                             if ( $(row).dbRow('option', 'type') === 'add' ) {
                                 if ( $(row).dbRow('getState') === 'dirty'
@@ -60,7 +60,7 @@
                             }
                         });
                         repaint(button);
-                    }
+                    });
                 }
             });
 

@@ -3279,10 +3279,11 @@ function dynamicResize(oContainer) {
 	    }, formActionError.bind(this), true);
 	},
 	del: function() {
-	    if ( window.confirm('Delete the current record?') ) {
-		this.setState('deleting');
-		this.formAction('delete',this.settings.deleteURL);
-	    }
+            var dbForm = this;
+	    qcode.confirm('Delete the current record?', function() {
+		dbForm.setState('deleting');
+		dbForm.formAction('delete',dbForm.settings.deleteURL);
+	    });
 	},
 	setState: function(newState) {
 	    switch(newState) {
@@ -3329,14 +3330,9 @@ function dynamicResize(oContainer) {
     // ============================================================
 
     // Private methods
-    function onBeforeUnload() {
+    function onBeforeUnload(event) {
 	if ( this.state == 'dirty' ) {
-	    if (window.confirm('Do you want to save your changes?')) {
-		this.save();
-		if (this.state == 'error' ) {
-		    event.returnValue = "Your changes could not been saved.\nStay on the current page to correct.";
-		}
-	    }
+	    return "Your changes have not been saved.\nStay on the current page to correct.";
 	}
     }
     function onSubmit() {
@@ -4035,21 +4031,22 @@ function dbFormHTMLArea(oDiv) {
 		var row = this.currentCell.closest('tr');
 	    }
 	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
-		if ( window.confirm("Delete the current record?") ) {
+		qcode.confirm("Delete the current record?", function() {
 		    row.dbRow('delete', false);
-		}
+		});
 	    }
 	    if ( row.dbRow('option', 'type') == 'add'
                  && ( row.dbRow('getState') === 'dirty' || row.dbRow('getState') === 'error' )
                ) {
-		if ( window.confirm("Delete the current row?") ) {
-		    this.removeRow(row);
+                var dbGrid = this;
+		qcode.confirm("Delete the current row?", function() {
+		    dbGrid.removeRow(row);
                     // Notify plugins such as statusFrame
-                    this.element.trigger('message', [{
+                    dbGrid.element.trigger('message', [{
                         type: 'notice',
                         html: "Deleted."
                     }]);
-		}
+		});
 	    }
 	},
 	removeRow: function(row) {
@@ -6312,7 +6309,7 @@ uses the existing id if it has one
             button.on('click.tableRowDeleteButton', function() {
                 if ( ! button.hasClass('disabled') ) {
                     var rows = tbody.children('.selected:not(.updating)');
-		    if ( window.confirm("Delete these " + rows.length + " records?") ) {
+		    qcode.confirm("Delete these " + rows.length + " records?", function() {
                         rows.each(function(i, row) {
                             if ( $(row).dbRow('option', 'type') === 'add' ) {
                                 if ( $(row).dbRow('getState') === 'dirty'
@@ -6328,7 +6325,7 @@ uses the existing id if it has one
                             }
                         });
                         repaint(button);
-                    }
+                    });
                 }
             });
 
@@ -8180,34 +8177,185 @@ function preloadImages() {
 
 /* ==== qcode.alert.js ==== */
 ;/*
-qcode.alert
+============================================================
+   qcode.alert
 
-Display a modal dialog alert
-Accepts an htmlString message.
-*/
+   Queue a message to display to the user in a modal dialog
+   Takes an htmlString message, and an optional callback
+
+============================================================
+   qcode.confirm
+   
+   Queue a message with Yes/No options for the user,
+   Takes an htmlString message and an on-confirm callback
+
+============================================================
+ */
 
 var qcode = qcode || {};
 
-(function(jQuery, undefined) {
-    var options = {
-        resizable: false,
-        modal: true,
-        buttons: {
-            OK: function() {
-                $(this).dialog('close');
-            }
-        },
-        close: function() {
-            $(this).remove();
-        },
-        dialogClass: "alert"
-    };
-    qcode.alert = function(message) {
-        $('<div>')
-            .html(message)
-            .dialog(options);
+(function($, undefined) {
+    var ding;
+    $(function() {
+        if ( qcode.Sound.supported ) {
+            ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
+        }
+    });
+    var alertQueue = [];
+    var timeout;
+
+    function showNextMessage() {
+        if ( alertQueue.length > 0 && timeout === undefined ) {
+            timeout = window.setZeroTimeout(function() {
+                var callback = alertQueue.shift();
+                timeout = undefined;
+                callback();
+            });
+        }
     }
-})();
+
+    qcode.alert = function(message, callback) {
+        alertQueue.push(function() {
+            // Remember focus and blur
+            var toFocus = $(document.activeElement);
+            if ( toFocus.is(':input') ) {
+                var textRange = toFocus.textrange('get');
+            }
+            
+            $('<div>')
+                    .html(message)
+                    .dialog({
+                        resizable: false,
+                        modal: true,
+                        buttons: {
+                            OK: function() {
+                                $(this).dialog('close');
+                            }
+                        },
+                        dialogClass: "alert",
+                        close: function() {
+                            $(this).remove();
+                            
+                            // Restore focus
+                            toFocus.trigger('focus');
+                            if ( toFocus.is(':input') ) {
+                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                            }
+                            if ( typeof callback == "function" ) {
+                                callback();
+                            }
+                            showNextMessage();
+                        }
+                    });
+            if ( qcode.Sound && qcode.Sound.supported ) {
+                if ( ding.loaded ) {
+                    ding.play();
+                } else {
+                    $(ding).on('load', function() {
+                        ding.play();
+                    });
+                }
+            }
+        });
+        showNextMessage();
+    }
+
+    qcode.confirm = function(message, onConfirm) {
+        alertQueue.push(function() {
+            var toFocus = $(document.activeElement);
+            if ( toFocus.is(':input') ) {
+                var textRange = toFocus.textrange('get');
+            }
+            
+            $('<div>')
+                    .html(message)
+                    .dialog({
+                        resizable: false,
+                        modal: true,
+                        dialogClass: "confirm",
+                        buttons: {
+                            Yes: function() {
+                                $(this).dialog('close');
+                                onConfirm();
+                            },
+                            No: function() {
+                                $(this).dialog('close');
+                            }
+                        },
+                        close: function() {
+                            $(this).remove();
+                            toFocus.trigger('focus');
+                            if ( toFocus.is(':input') ) {
+                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                            }
+                            showNextMessage();
+                        }
+                    });
+            if ( qcode.Sound && qcode.Sound.supported ) {
+                if ( ding.loaded ) {
+                    ding.play();
+                } else {
+                    $(ding).on('load', function() {
+                        ding.play();
+                    });
+                }
+            }
+        });
+        showNextMessage();
+    }
+})(jQuery);
+
+/* ==== qcode.sound.js ==== */
+;var qcode = qcode || {};
+/*
+  qcode.Sound
+  simple sound API (currently webkit only)
+
+  Create a new sound object with "new qcode.Sound(url)";
+  test if sound has loaded with property "loaded" (boolean)
+  listen for loading with jQuery "load" event
+  play with method "play()";
+
+  eg.
+  var mySound = new qcode.Sound('/Sounds/demo.wav');
+  $(mySound).on('load', function() {
+    mySound.play();
+  });
+*/
+(function(window, undefined) {
+    window.AudioContext = window.AudioContext||window.webkitAudioContext;
+    if ( window.AudioContext === undefined ) {
+        qcode.Sound = {
+            supported: false
+        }
+    } else {
+        var context = new AudioContext();
+        qcode.Sound = function(url) {
+            this.loaded = false;
+            var request = new XMLHttpRequest();
+            request.open('GET', url, true);
+            request.responseType = 'arraybuffer';
+            var sound = this;
+            request.onload = function() {
+                context.decodeAudioData(request.response, function(buffer) {
+                    sound._buffer = buffer;
+                    sound.loaded = true;
+                    jQuery(sound).trigger('load');
+                });
+            }
+            request.send();
+        }
+        jQuery.extend(qcode.Sound.prototype, {
+            play: function() {
+                var source = context.createBufferSource();
+                source.buffer = this._buffer;
+                source.connect(context.destination);
+                source.start(0);
+            }
+        });
+        qcode.Sound.supported = true;
+    }
+})(window);
 
 /* ==== qcode.style.js ==== */
 ;/*
