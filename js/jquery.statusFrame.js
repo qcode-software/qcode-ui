@@ -23,7 +23,8 @@
         options: {
             resizable: true,
             minHeight: 10,
-            height: "auto"
+            height: "auto",
+            initialScroll: "start"
         },
         _create: function() {
             this.element.wrap('<div>');
@@ -55,6 +56,10 @@
                         this.statusFrame.trigger('resize');
                     }
                 });
+            }
+            if ( this.options.initialScroll === "end" ) {
+                var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
+                this.statusFrame.scrollTop(scrollTop);
             }
             this._on({
                 'message': function(event, data) {
