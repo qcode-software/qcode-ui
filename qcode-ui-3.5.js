@@ -8267,15 +8267,33 @@ var qcode = qcode || {};
                         resizable: false,
                         modal: true,
                         dialogClass: "confirm",
-                        buttons: {
-                            Yes: function() {
-                                $(this).dialog('close');
-                                onConfirm();
+                        buttons: [
+                            {
+                                text: "Yes",
+                                click: function() {
+                                    $(this).dialog('close');
+                                    onConfirm();
+                                },
+                                keydown: function(event) {
+                                    // Arrow key events
+                                    if ( event.which >= 37 && event.which <= 40 ) {
+                                        $(this).next().focus();
+                                    }
+                                }
                             },
-                            No: function() {
-                                $(this).dialog('close');
+                            {
+                                text: "No",
+                                click: function() {
+                                    $(this).dialog('close');
+                                },
+                                keydown: function(event) {
+                                    // Arrow key events
+                                    if ( event.which >= 37 && event.which <= 40 ) {
+                                        $(this).prev().focus();
+                                    }
+                                }
                             }
-                        },
+                        ],
                         close: function() {
                             $(this).remove();
                             toFocus.trigger('focus');
