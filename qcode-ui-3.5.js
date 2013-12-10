@@ -895,14 +895,14 @@ function dynamicResize(oContainer) {
 
         this.find('th').each(function() {
             var th = $(this);
-            var index = th.index();
+            var nth = th.index() + 1;
             var id = th.closest('table').getID();
 
-            qcode.style('#'+id+'>colgroup>col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
+            qcode.style('#'+id+' > colgroup > col:nth-child('+nth+')', 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                qcode.style('#'+id+' tr>:nth-child('+(index+1)+')', 'white-space', "nowrap");
+                qcode.style('#'+id+' > * > tr > :nth-child('+nth+')', 'white-space', "nowrap");
 
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
@@ -921,25 +921,27 @@ function dynamicResize(oContainer) {
                 handles: "e",
                 resize: onResize
             });
+            qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+') > .ui-resizable-handle', "width", "9px");
         });
 
         function onResize(e, ui) {
             var th = $(this);
             th.css('width', '');
 
-            var index = th.index();
+            var nth = th.index() + 1;
             var table = th.closest('table');
             var id = table.getID();
-            var col = table.find('col').filter(':nth-child('+(index+1)+')');
-            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
-            var colSelector = '#'+id+'>colgroup>col:nth-child('+(index+1)+'), #'+id+' tr>:nth-child('+(index+1)+')';
+            var col = table.find('col').filter(':nth-child('+nth+')');
+            var cells = table.find('td').filter(':nth-child('+nth+')');
+            var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
+            var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
 
             switch ( options.overflow ) {
             case 'break-word':
-                qcode.style(colSelector, 'word-break', "normal");
+                qcode.style(cellSelector, 'word-break', "normal");
                 qcode.style(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    qcode.style(colSelector, 'word-break', 'break-all');
+                    qcode.style(cellSelector, 'word-break', 'break-all');
                 }
                 break;
 
@@ -948,7 +950,7 @@ function dynamicResize(oContainer) {
                 qcode.style(colSelector, 'width', ui.size.width + "px");
 
                 var fontSize = th.data('original-font-size');
-                qcode.style(colSelector, 'font-size', fontSize + 'px');
+                qcode.style(cellSelector, 'font-size', fontSize + 'px');
 
                 var width = th.width();
                 var lastChangeFontSize = fontSize;
@@ -957,13 +959,13 @@ function dynamicResize(oContainer) {
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
-                    qcode.style(colSelector, 'font-size', fontSize + 'px');
+                    qcode.style(cellSelector, 'font-size', fontSize + 'px');
                     if ( th.width() < width ) {
                         lastChangeFontSize = fontSize;
                     }
                     width = th.width();
                 }
-                qcode.style(colSelector, 'font-size', lastChangeFontSize + 'px');
+                qcode.style(cellSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
 
             default:
@@ -7709,6 +7711,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     var copy_th_css = [
         'display', 'color', 'background-color',
         'font-family', 'font-weight', 'font-size', 'font-style', 'text-align', 'vertical-align',
+        'white-space', 'overflow-x',
         'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
         'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
         'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
@@ -7754,7 +7757,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var id = this.head.getID();
             qcode.style('#'+id, 'table-layout', "fixed");
 
-
             // Generate and store column selectors
             var colSelectors = {};
             this.theadCells.each(function(i, th) {
@@ -7762,12 +7764,10 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             });
             this.colSelectors = colSelectors;
 
-
             // Create the wrappers
             this.table.wrap('<div class="scroll-box">');
             this.scrollBox = this.table.parent().wrap('<div class="thead-fixed-wrapper">');
             this.wrapper = this.scrollBox.parent().css({height: this.options.height});
-            this.wrapper.prepend(this.head);
 
             // Set the initial scroll position (wait for all other plugins to load)
             if ( this.options.initialScroll === "end" ) {
@@ -7796,7 +7796,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 }
             });
 
-            
             // Copy click events back to the matching element in the original thead
             var handlers = {};
             var copy = function(event) {
@@ -7819,7 +7818,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 handlers[eventName] = copy;
             });
             this._on(this.head, handlers);
-
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
@@ -7863,6 +7861,10 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             
             // Call repaint once to set the widths and styles
             this.repaint();
+
+            // Add the head to the page last, after widths and styles have been calculated
+            // (this avoids a google chrome bug)
+            this.wrapper.prepend(this.head);
             // end of _create;
 	},
 	repaint: function() {
@@ -8214,7 +8216,7 @@ var qcode = qcode || {};
 (function($, undefined) {
     var ding;
     var alertQueue = [];
-    var timeout;
+    var timeoutID;
     $(function() {
         if ( qcode.Sound.supported ) {
             ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
@@ -8222,10 +8224,10 @@ var qcode = qcode || {};
     });
 
     function showNextMessage() {
-        if ( alertQueue.length > 0 && timeout === undefined ) {
-            timeout = window.setZeroTimeout(function() {
+        if ( alertQueue.length > 0 && timeoutID === undefined ) {
+            timeoutID = window.setZeroTimeout(function() {
                 var callback = alertQueue.shift();
-                timeout = undefined;
+                timeoutID = undefined;
                 callback();
             });
         }
@@ -8595,9 +8597,10 @@ if ( typeof qcode === "undefined" ) {
 
         function cleanCSSSelector(selector) {
             // "Clean up" a css selector, in an attempt to make string representations consistent.
-            selector = selector.replace(/\s*([>+~])\s*/g, " $1 ");
-            selector = selector.replace(/\s+/g, ' ');
-            selector = selector.trim();
+            selector = selector.replace(/\s*([>+~])\s*/g, " $1 "); // Optional whitespace around > + ~
+            selector = selector.replace(/\*([[:#.])/g, "$1"); // Optional * in simple selectors
+            selector = selector.replace(/\s+/g, ' '); // Collapse whitespace
+            selector = selector.trim(); // Trim whitespace
             return selector.toLowerCase();
         }
         // ================================================================================

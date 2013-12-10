@@ -8,6 +8,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     var copy_th_css = [
         'display', 'color', 'background-color',
         'font-family', 'font-weight', 'font-size', 'font-style', 'text-align', 'vertical-align',
+        'white-space', 'overflow-x',
         'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
         'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
         'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
@@ -53,7 +54,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var id = this.head.getID();
             qcode.style('#'+id, 'table-layout', "fixed");
 
-
             // Generate and store column selectors
             var colSelectors = {};
             this.theadCells.each(function(i, th) {
@@ -61,12 +61,10 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             });
             this.colSelectors = colSelectors;
 
-
             // Create the wrappers
             this.table.wrap('<div class="scroll-box">');
             this.scrollBox = this.table.parent().wrap('<div class="thead-fixed-wrapper">');
             this.wrapper = this.scrollBox.parent().css({height: this.options.height});
-            this.wrapper.prepend(this.head);
 
             // Set the initial scroll position (wait for all other plugins to load)
             if ( this.options.initialScroll === "end" ) {
@@ -95,7 +93,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 }
             });
 
-            
             // Copy click events back to the matching element in the original thead
             var handlers = {};
             var copy = function(event) {
@@ -118,7 +115,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 handlers[eventName] = copy;
             });
             this._on(this.head, handlers);
-
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
@@ -162,6 +158,10 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             
             // Call repaint once to set the widths and styles
             this.repaint();
+
+            // Add the head to the page last, after widths and styles have been calculated
+            // (this avoids a google chrome bug)
+            this.wrapper.prepend(this.head);
             // end of _create;
 	},
 	repaint: function() {

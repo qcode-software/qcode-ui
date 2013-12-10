@@ -208,9 +208,10 @@ if ( typeof qcode === "undefined" ) {
 
         function cleanCSSSelector(selector) {
             // "Clean up" a css selector, in an attempt to make string representations consistent.
-            selector = selector.replace(/\s*([>+~])\s*/g, " $1 ");
-            selector = selector.replace(/\s+/g, ' ');
-            selector = selector.trim();
+            selector = selector.replace(/\s*([>+~])\s*/g, " $1 "); // Optional whitespace around > + ~
+            selector = selector.replace(/\*([[:#.])/g, "$1"); // Optional * in simple selectors
+            selector = selector.replace(/\s+/g, ' '); // Collapse whitespace
+            selector = selector.trim(); // Trim whitespace
             return selector.toLowerCase();
         }
         // ================================================================================

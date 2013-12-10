@@ -14,14 +14,14 @@
 
         this.find('th').each(function() {
             var th = $(this);
-            var index = th.index();
+            var nth = th.index() + 1;
             var id = th.closest('table').getID();
 
-            qcode.style('#'+id+'>colgroup>col:nth-child('+(index+1)+')', 'width', th.innerWidth() + "px");
+            qcode.style('#'+id+' > colgroup > col:nth-child('+nth+')', 'width', th.innerWidth() + "px");
 
             switch ( options.overflow ) {
             case 'shrink-one-line':
-                qcode.style('#'+id+' tr>:nth-child('+(index+1)+')', 'white-space', "nowrap");
+                qcode.style('#'+id+' > * > tr > :nth-child('+nth+')', 'white-space', "nowrap");
 
             case 'shrink':
                 th.data('original-font-size', parseInt(th.css('font-size')));
@@ -40,25 +40,27 @@
                 handles: "e",
                 resize: onResize
             });
+            qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+') > .ui-resizable-handle', "width", "9px");
         });
 
         function onResize(e, ui) {
             var th = $(this);
             th.css('width', '');
 
-            var index = th.index();
+            var nth = th.index() + 1;
             var table = th.closest('table');
             var id = table.getID();
-            var col = table.find('col').filter(':nth-child('+(index+1)+')');
-            var cells = table.find('td').filter(':nth-child('+(index+1)+')');
-            var colSelector = '#'+id+'>colgroup>col:nth-child('+(index+1)+'), #'+id+' tr>:nth-child('+(index+1)+')';
+            var col = table.find('col').filter(':nth-child('+nth+')');
+            var cells = table.find('td').filter(':nth-child('+nth+')');
+            var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
+            var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
 
             switch ( options.overflow ) {
             case 'break-word':
-                qcode.style(colSelector, 'word-break', "normal");
+                qcode.style(cellSelector, 'word-break', "normal");
                 qcode.style(colSelector, 'width', ui.size.width + "px");
                 if ( th.width() > ui.size.width ) {
-                    qcode.style(colSelector, 'word-break', 'break-all');
+                    qcode.style(cellSelector, 'word-break', 'break-all');
                 }
                 break;
 
@@ -67,7 +69,7 @@
                 qcode.style(colSelector, 'width', ui.size.width + "px");
 
                 var fontSize = th.data('original-font-size');
-                qcode.style(colSelector, 'font-size', fontSize + 'px');
+                qcode.style(cellSelector, 'font-size', fontSize + 'px');
 
                 var width = th.width();
                 var lastChangeFontSize = fontSize;
@@ -76,13 +78,13 @@
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
-                    qcode.style(colSelector, 'font-size', fontSize + 'px');
+                    qcode.style(cellSelector, 'font-size', fontSize + 'px');
                     if ( th.width() < width ) {
                         lastChangeFontSize = fontSize;
                     }
                     width = th.width();
                 }
-                qcode.style(colSelector, 'font-size', lastChangeFontSize + 'px');
+                qcode.style(cellSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
 
             default:
