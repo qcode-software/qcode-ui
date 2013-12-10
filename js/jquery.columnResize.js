@@ -3,7 +3,7 @@
 // If the content does not fit the column, use behaviour defined by overflow options:
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
 // - shrink: reduce the font size (down to min-font-size) until the content fits. Supports only a single font size for the column.
-// - shrink-one-line (default): as shrink, but force no wrapping
+// - shrink-one-line (default): as shrink, but force no wrapping to keep on one-line
 // - break-word: force word break to try and make the content fit.
 ;(function($, undefined) {
     $.fn.columnResize = function(options) {
@@ -12,6 +12,7 @@
             'min-font-size': 1
         }, options);
 
+        // Initialisation
         this.find('th').each(function() {
             var th = $(this);
             var nth = th.index() + 1;
@@ -43,6 +44,7 @@
             qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+') > .ui-resizable-handle', "width", "9px");
         });
 
+        // Resize event handler
         function onResize(e, ui) {
             var th = $(this);
             th.css('width', '');
@@ -54,11 +56,12 @@
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
+            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')));
 
             switch ( options.overflow ) {
             case 'break-word':
                 qcode.style(cellSelector, 'word-break', "normal");
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
                 if ( th.width() > ui.size.width ) {
                     qcode.style(cellSelector, 'word-break', 'break-all');
                 }
@@ -66,7 +69,7 @@
 
             case 'shrink-one-line':
             case 'shrink':
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
 
                 var fontSize = th.data('original-font-size');
                 qcode.style(cellSelector, 'font-size', fontSize + 'px');
@@ -88,7 +91,7 @@
                 break;
 
             default:
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
                 break;
             }
             event.stopPropagation();

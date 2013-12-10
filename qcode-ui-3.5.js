@@ -884,7 +884,7 @@ function dynamicResize(oContainer) {
 // If the content does not fit the column, use behaviour defined by overflow options:
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
 // - shrink: reduce the font size (down to min-font-size) until the content fits. Supports only a single font size for the column.
-// - shrink-one-line (default): as shrink, but force no wrapping
+// - shrink-one-line (default): as shrink, but force no wrapping to keep on one-line
 // - break-word: force word break to try and make the content fit.
 ;(function($, undefined) {
     $.fn.columnResize = function(options) {
@@ -893,6 +893,7 @@ function dynamicResize(oContainer) {
             'min-font-size': 1
         }, options);
 
+        // Initialisation
         this.find('th').each(function() {
             var th = $(this);
             var nth = th.index() + 1;
@@ -924,6 +925,7 @@ function dynamicResize(oContainer) {
             qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+') > .ui-resizable-handle', "width", "9px");
         });
 
+        // Resize event handler
         function onResize(e, ui) {
             var th = $(this);
             th.css('width', '');
@@ -935,11 +937,12 @@ function dynamicResize(oContainer) {
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
+            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')));
 
             switch ( options.overflow ) {
             case 'break-word':
                 qcode.style(cellSelector, 'word-break', "normal");
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
                 if ( th.width() > ui.size.width ) {
                     qcode.style(cellSelector, 'word-break', 'break-all');
                 }
@@ -947,7 +950,7 @@ function dynamicResize(oContainer) {
 
             case 'shrink-one-line':
             case 'shrink':
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
 
                 var fontSize = th.data('original-font-size');
                 qcode.style(cellSelector, 'font-size', fontSize + 'px');
@@ -969,7 +972,7 @@ function dynamicResize(oContainer) {
                 break;
 
             default:
-                qcode.style(colSelector, 'width', ui.size.width + "px");
+                qcode.style(colSelector, 'width', width + "px");
                 break;
             }
             event.stopPropagation();
@@ -6094,6 +6097,7 @@ uses the existing id if it has one
    resizable: boolean, default true, is the frame resizable
    minHeight: int, default 10, if the frame is resizable, the minimum height.
    height: css height, default "auto", the (initial) height of the frame
+   initialScroll: "start" does nothing, "end" will scroll the frame to the end.
    }
 
    Methods:
@@ -7749,12 +7753,12 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             this.theadCells = this.table.children('thead').children('tr').first().children('th');
 
             // Create the new thead as a separate table
-            this.head = $('<table>')
+            this.headClone = $('<table>')
                 .append(this.table.children('colgroup').clone())
                 .append(this.table.children('thead').clone())
                 .addClass('thead-fixed-clone');
-            this.head.children('tbody, tfoot').remove();
-            var id = this.head.getID();
+            this.headClone.children('tbody, tfoot').remove();
+            var id = this.headClone.getID();
             qcode.style('#'+id, 'table-layout', "fixed");
 
             // Generate and store column selectors
@@ -7806,18 +7810,18 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 });
                 $.each(['target', 'relatedTarget'], function(i, property) {
                     if ( $(event[property]).closest(this.table).length > 0 ) {
-                        eventCopy[property] = treeMap(event[property], this.head, this.table);
+                        eventCopy[property] = treeMap(event[property], this.headClone, this.table);
                     } else {
                         eventCopy[property] = event[property];
                     }
                 });
-                treeMap(target, this.head, this.table).trigger(eventCopy);
+                treeMap(target, this.headClone, this.table).trigger(eventCopy);
                 return event.result;
             };
             jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout'], function(i, eventName) {
                 handlers[eventName] = copy;
             });
-            this._on(this.head, handlers);
+            this._on(this.headClone, handlers);
 
             /* Where supported, MutationObserver allows us to listen for changes to the DOM */
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
@@ -7835,21 +7839,21 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
                 // When the class or style of any element in the original thead change,
                 // replicate this change to the thead copy.
-                this.headObserver = new MutationObserver(function(mutations) {
+                this.headCloneObserver = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
                         var target = $(mutation.target);
                         var attribute = mutation.attributeName;
                         if ( target.attr(attribute) === undefined ) {
-                            treeMap(target, widget.table, widget.head)
+                            treeMap(target, widget.table, widget.headClone)
                                 .removeAttr(attribute);
                         } else {
-                            treeMap(target, widget.table, widget.head)
+                            treeMap(target, widget.table, widget.headClone)
                                 .attr(attribute, target.attr(attribute));
                         }
                     });
                     widget.repaintStyles();
                 });
-                this.headObserver.observe(
+                this.headCloneObserver.observe(
                     this.table.children('thead')[0],
                     {
                         attributes: true,
@@ -7864,7 +7868,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             // Add the head to the page last, after widths and styles have been calculated
             // (this avoids a google chrome bug)
-            this.wrapper.prepend(this.head);
+            this.wrapper.prepend(this.headClone);
             // end of _create;
 	},
 	repaint: function() {
@@ -7873,7 +7877,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
         },
         repaintWidths: function() {
             // Measure and apply table and column widths
-            var id = this.head.getID();
+            var id = this.headClone.getID();
             var colSelectors = this.colSelectors;
 
             var styles = {};
@@ -7890,13 +7894,13 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
         repaintStyles: function() {
             // Copy styles from the original table to the copied table,
             // and from the original th elements to the copied ones.
-            var id = this.head.getID();
+            var id = this.headClone.getID();
             var widget = this;
             var styles = {};
             selector = '#' + id;
             styles[selector] = {};
             $.each(copy_table_css, function(i, name) {
-                if ( widget.head.css(name) !== widget.table.css(name) ) {
+                if ( widget.headClone.css(name) !== widget.table.css(name) ) {
                     styles[selector][name] = widget.table.css(name);
                 }
             });
@@ -7904,7 +7908,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 var thSelector = '#'+id+'>thead>tr>th:nth-child('+(i+1)+')';
                 styles[thSelector] = {};
                 $.each(copy_th_css, function(j, name) {
-                    var copy_th = widget.head.find('th:nth-child('+(i+1)+')');
+                    var copy_th = widget.headClone.find('th:nth-child('+(i+1)+')');
                     if ( copy_th.css(name) !== $(th).css(name) ) {
                         styles[thSelector][name] = $(th).css(name);
                     }

@@ -6,6 +6,7 @@
    resizable: boolean, default true, is the frame resizable
    minHeight: int, default 10, if the frame is resizable, the minimum height.
    height: css height, default "auto", the (initial) height of the frame
+   initialScroll: "start" does nothing, "end" will scroll the frame to the end.
    }
 
    Methods:
