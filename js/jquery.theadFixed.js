@@ -37,7 +37,8 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     $.widget('qcode.theadFixed', {
 	options: {
 	    'height': "500px",
-            'fixedWidth': false
+            'fixedWidth': false,
+            'initialScroll': "start"
 	},
 	_create: function() {
             this.table = this.element;
@@ -67,6 +68,14 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             this.wrapper = this.scrollBox.parent().css({height: this.options.height});
             this.wrapper.prepend(this.head);
 
+            // Set the initial scroll position (wait for all other plugins to load)
+            if ( this.options.initialScroll === "end" ) {
+                var scrollBox = this.scrollBox;
+                $('body').on('pluginsReady', function() {
+                    var scrollTop = scrollBox[0].scrollHeight - scrollBox.height();
+                    scrollBox.scrollTop(scrollTop);
+                });
+            }
 
             // Add the resize event listeners - only repaint when the table is resized
             // or the window width changes.

@@ -23,7 +23,8 @@
         options: {
             resizable: true,
             minHeight: 10,
-            height: "auto"
+            height: "auto",
+            initialScroll: "start"
         },
         _create: function() {
             this.element.wrap('<div>');
@@ -54,6 +55,13 @@
                         this.statusFrame.height(Math.max(initialHeight + data.offset, this.options.minHeight));
                         this.statusFrame.trigger('resize');
                     }
+                });
+            }
+            if ( this.options.initialScroll === "end" ) {
+                var statusFrame = this.statusFrame;
+                $('body').on('pluginsReady', function() {
+                    var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
+                    this.statusFrame.scrollTop(scrollTop);
                 });
             }
             this._on({

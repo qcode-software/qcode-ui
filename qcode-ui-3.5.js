@@ -6109,7 +6109,8 @@ uses the existing id if it has one
         options: {
             resizable: true,
             minHeight: 10,
-            height: "auto"
+            height: "auto",
+            initialScroll: "start"
         },
         _create: function() {
             this.element.wrap('<div>');
@@ -6140,6 +6141,13 @@ uses the existing id if it has one
                         this.statusFrame.height(Math.max(initialHeight + data.offset, this.options.minHeight));
                         this.statusFrame.trigger('resize');
                     }
+                });
+            }
+            if ( this.options.initialScroll === "end" ) {
+                var statusFrame = this.statusFrame;
+                $('body').on('pluginsReady', function() {
+                    var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
+                    this.statusFrame.scrollTop(scrollTop);
                 });
             }
             this._on({
@@ -7730,7 +7738,8 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     $.widget('qcode.theadFixed', {
 	options: {
 	    'height': "500px",
-            'fixedWidth': false
+            'fixedWidth': false,
+            'initialScroll': "start"
 	},
 	_create: function() {
             this.table = this.element;
@@ -7760,6 +7769,14 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             this.wrapper = this.scrollBox.parent().css({height: this.options.height});
             this.wrapper.prepend(this.head);
 
+            // Set the initial scroll position (wait for all other plugins to load)
+            if ( this.options.initialScroll === "end" ) {
+                var scrollBox = this.scrollBox;
+                $('body').on('pluginsReady', function() {
+                    var scrollTop = scrollBox[0].scrollHeight - scrollBox.height();
+                    scrollBox.scrollTop(scrollTop);
+                });
+            }
 
             // Add the resize event listeners - only repaint when the table is resized
             // or the window width changes.
@@ -8267,15 +8284,33 @@ var qcode = qcode || {};
                         resizable: false,
                         modal: true,
                         dialogClass: "confirm",
-                        buttons: {
-                            Yes: function() {
-                                $(this).dialog('close');
-                                onConfirm();
+                        buttons: [
+                            {
+                                text: "Yes",
+                                click: function() {
+                                    $(this).dialog('close');
+                                    onConfirm();
+                                },
+                                keydown: function(event) {
+                                    // Arrow key events
+                                    if ( event.which >= 37 && event.which <= 40 ) {
+                                        $(this).next().focus();
+                                    }
+                                }
                             },
-                            No: function() {
-                                $(this).dialog('close');
+                            {
+                                text: "No",
+                                click: function() {
+                                    $(this).dialog('close');
+                                },
+                                keydown: function(event) {
+                                    // Arrow key events
+                                    if ( event.which >= 37 && event.which <= 40 ) {
+                                        $(this).prev().focus();
+                                    }
+                                }
                             }
-                        },
+                        ],
                         close: function() {
                             $(this).remove();
                             toFocus.trigger('focus');
