@@ -6144,8 +6144,11 @@ uses the existing id if it has one
                 });
             }
             if ( this.options.initialScroll === "end" ) {
-                var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
-                this.statusFrame.scrollTop(scrollTop);
+                var statusFrame = this.statusFrame;
+                $('body').on('pluginsReady', function() {
+                    var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
+                    this.statusFrame.scrollTop(scrollTop);
+                });
             }
             this._on({
                 'message': function(event, data) {
