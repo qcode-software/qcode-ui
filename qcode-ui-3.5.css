@@ -26,10 +26,10 @@
 /* ==== columnResize.css ==== */
 .qc-column-resize th > .ui-resizable-handle {
     width: 19px;
-    right: -9px;
+    right: -10px;
 }
-.qc-column-resize column-resize-wrapper {
-    overflow-x: hidden;
+.column-resize-wrapper {
+    overflow: hidden;
 }
 
 /* ==== columnsShowHideControl.css ==== */

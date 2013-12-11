@@ -2,6 +2,6 @@
     width: 19px;
     right: -10px;
 }
-.qc-column-resize column-resize-wrapper {
-    overflow-x: hidden;
+.column-resize-wrapper {
+    overflow: hidden;
 }

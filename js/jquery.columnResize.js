@@ -62,7 +62,7 @@
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
-            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')));
+            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')) + parseInt(th.css('border-left-width')));
 
             switch ( options.overflow ) {
             case 'break-word':
