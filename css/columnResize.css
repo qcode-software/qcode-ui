@@ -1,0 +1,7 @@
+.qc-column-resize th > .ui-resizable-handle {
+    width: 19px;
+    right: -10px;
+}
+.qc-column-resize column-resize-wrapper {
+    overflow-x: hidden;
+}

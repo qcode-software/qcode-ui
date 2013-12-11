@@ -16,7 +16,7 @@
 	    // Constructor function
 	    // Apply default column and sort type
 	    if ( this.options.column === undefined ) {
-		this.options.column = this.element.parent('th').closest('table').find('col').eq( this.element.parent('th').index() );
+		this.options.column = this.element.closest('table').find('col').eq( this.element.closest('th').index() );
 	    }
 	    if ( ! this.options.column.is('col') || this.options.column.length != 1 ) {
 		$.error('Invalid column for thSortMenu');

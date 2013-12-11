@@ -13,6 +13,7 @@
         }, options);
 
         // Initialisation
+        this.addClass('qc-column-resize');
         this.find('th').each(function() {
             var th = $(this);
             var nth = th.index() + 1;
@@ -29,6 +30,12 @@
                 break;
 
             case 'normal':
+                if ( th.css('overflow-x') === "hidden" ) {
+                    th.wrapInner('<div class="column-resize-wrapper"></div>');
+                    qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', 'visible');
+                }
+                break;
+
             case 'break-word':
                 break;
 
@@ -41,7 +48,6 @@
                 handles: "e",
                 resize: onResize
             });
-            qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+') > .ui-resizable-handle', "width", "9px");
         });
 
         // Resize event handler
