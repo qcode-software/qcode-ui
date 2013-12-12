@@ -7717,6 +7717,7 @@ theadFixed plugin
 Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 */
 ;(function($, undefined) {
+    /* css to copy from original col elements */
     var copy_col_css = [
         'display'
     ];
@@ -7839,7 +7840,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Where supported, MutationObserver allows us to listen for changes to the DOM
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
             if ( MutationObserver ) {
-                // When the contents or structure of the table change, repaint.
+                // When the contents or structure of the table change, repaint the widths.
                 this.htmlObserver = new MutationObserver(this.repaintWidths.bind(this));
                 this.htmlObserver.observe(
                     this.wrapper[0],
@@ -7850,40 +7851,24 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     }
                 );
 
-                // When the class or style of any element in the original thead change,
+                // When the class or style of any element in the original thead or colgroup change,
+                // or when an element in the original thead becomes disabled,
                 // replicate this change to the thead copy.
+                // If one or more classes changed, repaint the styles.
                 this.styleObserver = new MutationObserver(function(mutations) {
+                    var summary = mutationSummary(mutations);
                     var needsRepaint = false;
-                    var elements = $();
-                    mutations.forEach(function(mutation) {
-                        var target = $(mutation.target);
-                        if ( target.is(elements) ) {
-                            var attributes = target.data('theadFixedStyleObserverData');
-                        } else {
-                            elements = elements.add(target);
-                            var attributes = {};
+                    summary.forEach(function(change) {
+                        var target = $(change.element);
+                        var name = change.attribute;
+                        if ( name === "class" ) {
+                            needsRepaint = true;
                         }
-                        if ( attributes[mutation.attributeName] === undefined ) {
-                            attributes[mutation.attributeName] = mutation.oldValue;
+                        if ( attrEqual(change.newValue, "") ) {
+                            treeMap(target, widget.table, widget.headClone).removeAttr(name);
+                        }  else {
+                            treeMap(target, widget.table, widget.headClone).attr(name, change.newValue);
                         }
-                        target.data('theadFixedStyleObserverData', attributes);
-                    });
-                    elements.each(function() {
-                        var target = $(this);
-                        var attributes = target.data('theadFixedStyleObserverData');
-                        $.each(attributes, function(name, oldValue) {
-                            if ( ! string_equal(target.attr(name), oldValue) ) {
-                                if ( name === "class" ) {
-                                    needsRepaint = true;
-                                }
-                                if ( string_equal(target.attr(name), "") ) {
-                                    treeMap(target, widget.table, widget.headClone).removeAttr(name);
-                                }  else {
-                                    treeMap(target, widget.table, widget.headClone).attr(name, target.attr(name));
-                                }
-                            }
-                        });
-                        target.removeData('theadFixedStyleObserverData');
                     });
                     if ( needsRepaint ) {
                         widget.repaintStyles();
@@ -7974,7 +7959,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 styles[colSelector] = {};
                 $.each(copy_col_css, function(j, name) {
                     var copy_col = widget.headClone.find('col:nth-child('+(i+1)+')');
-                    if ( ! string_equal(copy_col.css(name), $(col).css(name)) ) {
+                    if ( ! attrEqual(copy_col.css(name), $(col).css(name)) ) {
                         styles[colSelector][name] = $(col).css(name);
                     }
                 });
@@ -7985,7 +7970,9 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             return this.wrapper;
         }
     });
-    function string_equal(a, b) {
+    function attrEqual(a, b) {
+        // Compare two strings, treating null and undefined as ""
+        // Returns true if the strings are equal
         if ( a === undefined || a === null ) {
             var a = "";
         }
@@ -7993,6 +7980,38 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var b = "";
         }
         return a === b;
+    }
+    function mutationSummary(mutations) {
+        // Return a summary list of changes without intermediate changes.
+        var summary = [];
+        var done = [];
+        mutations.forEach(function(mutation) {
+            var target = mutation.target;
+            var name = mutation.attributeName;
+            var oldValue = mutation.oldValue;
+            var newValue = $(target).attr(name);
+            var found = done.some(function(member) {
+                if ( member.element == target && member.attribute == name ) {
+                    return true;
+                }
+                return false;
+            });
+            if ( !found ) {
+                if ( !attrEqual(newValue, oldValue) ) {
+                    summary.push({
+                        element: target,
+                        attribute: name,
+                        oldValue: oldValue,
+                        newValue: newValue
+                    });
+                }
+                done.push({
+                    element: target,
+                    attribute: name
+                });
+            }
+        });
+        return summary;
     }
 })(jQuery);
 
