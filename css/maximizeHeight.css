@@ -1,0 +1,5 @@
+@media print {
+    .maximize-height {
+        height: auto !important;
+    }
+}

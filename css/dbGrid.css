@@ -1,0 +1,8 @@
+@media print {
+    .db-editor {
+        display: none !important;
+    }
+    .db-grid td {
+        visibility: visible !important;
+    }
+}

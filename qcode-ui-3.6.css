@@ -90,6 +90,16 @@
     background-color:lightgrey;
 }
 
+/* ==== dbGrid.css ==== */
+@media print {
+    .db-editor {
+        display: none !important;
+    }
+    .db-grid td {
+        visibility: visible !important;
+    }
+}
+
 /* ==== gantt.css ==== */
 .gantt-chart.wrapper {
     position: relative;
@@ -133,6 +143,13 @@
 /* ==== imageCombo.css ==== */
 .image-wrapper {
     display: table-cell;
+}
+
+/* ==== maximizeHeight.css ==== */
+@media print {
+    .maximize-height {
+        height: auto !important;
+    }
 }
 
 /* ==== qcode.alert.css ==== */
@@ -189,37 +206,49 @@
 
 /* ==== statusFrame.css ==== */
 /* css for statusFrame plugin */
-.status-frame {
-    overflow-x: auto;
-    overflow-y: auto;
+@media screen {
+    .status-frame {
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+    .status-bar {
+        position: relative;
+        min-height: 1em;
+    }
+    .status-bar:after {
+        /* clearfix - contents are floating */
+        display: block;
+        clear: both;
+        content: "";
+    }
+    .status-bar .message {
+        padding: 3px;
+        float: left;
+    }
+    .status-bar .info {
+        padding: 3px;
+        text-align: right;
+        float:right;
+    }
+    .status-bar .handle {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -5px;
+        height: 10px;
+        cursor: ns-resize;
+        z-index: 10;
+    }
 }
-.status-bar {
-    position: relative;
-    min-height: 1em;
-}
-.status-bar:after {
-    /* clearfix - contents are floating */
-    display: block;
-    clear: both;
-    content: "";
-}
-.status-bar .message {
-    padding: 3px;
-    float: left;
-}
-.status-bar .info {
-    padding: 3px;
-    text-align: right;
-    float:right;
-}
-.status-bar .handle {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -5px;
-    height: 10px;
-    cursor: ns-resize;
-    z-index: 10;
+@media print {
+    .status-frame {
+        height: auto !important;
+        overflow: visible !important;
+        border: none !important;
+    }
+    .status-bar {
+        display: none !important;
+    }
 }
 
 /* ==== thSortMenu.css ==== */
@@ -271,6 +300,15 @@ Used to create a scrollable table with a fixed thead.
         min-width: 100%;
         overflow-y: scroll;
         overflow-x: hidden;
+    }
+}
+
+@media print {
+    .thead-fixed-wrapper {
+        height: auto !important;
+    }
+    .thead-fixed-wrapper .thead-fixed-clone {
+        display: none;
     }
 }
 

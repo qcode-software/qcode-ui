@@ -27,3 +27,12 @@ Used to create a scrollable table with a fixed thead.
         overflow-x: hidden;
     }
 }
+
+@media print {
+    .thead-fixed-wrapper {
+        height: auto !important;
+    }
+    .thead-fixed-wrapper .thead-fixed-clone {
+        display: none;
+    }
+}
