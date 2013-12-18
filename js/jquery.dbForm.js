@@ -152,7 +152,7 @@
 	    if ( typeof async == "undefined" ) {
 		async = false;
 	    }
-	    httpPost(url, formData.call(this, this.form), handler, errorHandler, async);
+	    httpPost(url, this.formData(), handler, errorHandler, async);
 	},
 	focus: function() {
 	    this.elements.each(function(){
@@ -229,7 +229,45 @@
 	    if ( typeof this.divStatus != "undefined" ) {
 		$(this.divStatus).empty().append(message);
 	    }
-	}
+	},
+        formData: function() {
+	    var data = {};
+	    this.elements
+	            .filter(function(){ return $(this).prop('name') != ""; })
+	            .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
+	            .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
+	            .not('div.radio-group')
+	            .each(function(){
+		        var name = $(this).attr('name');
+		        var value = "";
+		        if ( $(this).is('input') ) {
+		            if ( $(this).prop('type') == "checkbox" ) {
+			        if ( $(this).attr('boolean') == "true" ) {
+			            value = $(this).is(':checked');
+			        } else {
+			            value = $(this).is(':checked') ? $(this).val() : '';
+			        }
+		            } else {
+			        value = $(this).val();
+		            }
+		        } else if ( $(this).is('textarea') ) {
+		            value = $(this).val();
+		        } else if ( $(this).is('select') ) {
+		            value = $(this).val();
+		        } else {
+		            value = $(this).html();
+		        }
+		        if ( data[name] === undefined ) {
+		            data[name] = value;
+		        } else if ( typeof data[name] !== 'object' ) {
+		            data[name] = new Array(data[name], value);
+		        } else {
+		            data[name].push(value);
+		        }
+
+	            });
+	    return data;
+        }
     });
     // End of public methods
 
@@ -348,44 +386,6 @@
 	this.setStatus(errorMessage);
 	qcode.alert("Your changes could not be saved.<br>" + stripHTML(errorMessage));
 	this.form.trigger('formActionError', [errorMessage]);
-    }
-    function formData(form) {
-	var data = {};
-	this.elements
-	    .filter(function(){ return $(this).prop('name') != ""; })
-	    .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
-	    .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
-	    .not('div.radio-group')
-	    .each(function(){
-		var name = $(this).attr('name');
-		var value = "";
-		if ( $(this).is('input') ) {
-		    if ( $(this).prop('type') == "checkbox" ) {
-			if ( $(this).attr('boolean') == "true" ) {
-			    value = $(this).is(':checked');
-			} else {
-			    value = $(this).is(':checked') ? $(this).val() : '';
-			}
-		    } else {
-			value = $(this).val();
-		    }
-		} else if ( $(this).is('textarea') ) {
-		    value = $(this).val();
-		} else if ( $(this).is('select') ) {
-		    value = $(this).val();
-		} else {
-		    value = $(this).html();
-		}
-		if ( data[name] === undefined ) {
-		    data[name] = value;
-		} else if ( typeof data[name] !== 'object' ) {
-		    data[name] = new Array(data[name], value);
-		} else {
-		    data[name].push(value);
-		}
-
-	    });
-	return data;
     }
     function cancelDelayedSave() {
 	if ( this.keyUpTimer !== undefined ) {
