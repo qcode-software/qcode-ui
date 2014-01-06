@@ -19,8 +19,6 @@
             var nth = th.index() + 1;
             var id = th.closest('table').getID();
 
-            qcode.style('#'+id+' > colgroup > col:nth-child('+nth+')', 'width', th.innerWidth() + "px");
-
             switch ( options.overflow ) {
             case 'shrink-one-line':
                 qcode.style('#'+id+' > * > tr > :nth-child('+nth+')', 'white-space', "nowrap");
@@ -30,10 +28,12 @@
                 break;
 
             case 'normal':
-                if ( th.css('overflow-x') === "hidden" ) {
-                    th.wrapInner('<div class="column-resize-wrapper"></div>');
-                    qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', 'visible');
+                if ( th.css('overflow-x') !== "hidden" ) {
+                    break;
                 }
+            case 'hidden':
+                th.wrapInner('<div class="column-resize-wrapper"></div>');
+                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', 'visible');
                 break;
 
             case 'break-word':
@@ -44,16 +44,14 @@
                 break;
             }
 
-            th.resizable({
-                handles: "e",
-                resize: onResize
-            });
+            th.append('<div class="column-resize-handle"></div>');
         });
+        this.on('mousedown', '.column-resize-handle', dragStart);
+        this.on('mousedrag', 'th', onResize);
 
         // Resize event handler
         function onResize(e, ui) {
             var th = $(this);
-            th.css('width', '');
 
             var nth = th.index() + 1;
             var table = th.closest('table');
@@ -62,7 +60,7 @@
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
-            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')) + parseInt(th.css('border-left-width')));
+            var width = (ui.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')) + parseInt(th.css('border-left-width')));
 
             switch ( options.overflow ) {
             case 'break-word':
@@ -104,5 +102,26 @@
             table.trigger('resize');
         }
         return this;
+    }
+
+    function dragStart(event) {
+        console.log('dragStart');
+        var target = $(event.target);
+	event.preventDefault();
+        var width = target.closest('th').innerWidth();
+        $(window)
+                .on('mousemove.dragListener', drag.bind(this, target, event.pageX, width))
+                .on('mouseup.dragListener', dragEnd.bind(this, target, event.pageX, width));
+        target.trigger('mousedragStart');
+    }
+    function drag(target, initialX, initialWidth, event) {
+	event.preventDefault();
+	target.trigger('mousedrag', [{
+	    'width': initialWidth + event.pageX - initialX
+	}]);
+    }
+    function dragEnd(target, initialX, initalWidth, event) {
+        $(window).off('.dragListener');
+        target.trigger('mousedragEnd');
     }
 })(jQuery);

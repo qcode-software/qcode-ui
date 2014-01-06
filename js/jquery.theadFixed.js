@@ -10,7 +10,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     ];
     /* css to copy from original th elements */
     var copy_th_css = [
-        'display', 'color', 'background-color',
+        'display', 'position', 'color', 'background-color',
         'font-family', 'font-weight', 'font-size', 'font-style', 'text-align', 'vertical-align',
         'white-space', 'overflow-x',
         'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
