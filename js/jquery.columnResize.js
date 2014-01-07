@@ -2,6 +2,7 @@
 // Uses jQuery UI resizable, but resizes the entire column
 // If the content does not fit the column, use behaviour defined by overflow options:
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
+// - hidden: clip the overflow.
 // - shrink: reduce the font size (down to min-font-size) until the content fits. Supports only a single font size for the column.
 // - shrink-one-line (default): as shrink, but force no wrapping to keep on one-line
 // - break-word: force word break to try and make the content fit.
