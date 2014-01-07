@@ -78,9 +78,13 @@
 
 		// initialFocus
 		$('body').one('pluginsReady', function() {
+                    console.time('dbGrid getInitalFocusCell');
 		    var initialFocusCell = dbGrid.getInitialFocusCell();
-		    if ( initialFocusCell.size() ) {
+                    console.timeEnd('dbGrid getInitalFocusCell');
+		    if ( initialFocusCell.length > 0 ) {
+                        console.time('dbGrid cellChange');
 			dbGrid.cellChange(initialFocusCell);
+                        console.timeEnd('dbGrid cellChange');
 		    }
 		});
 
@@ -115,9 +119,9 @@
 		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
-		}
-		if ( initialFocusCell.dbCell('isEditable') ) {
-		    return initialFocusCell
+
+		} else {
+		    return initialFocusCell;
 		}
 	    }
 

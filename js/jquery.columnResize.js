@@ -105,7 +105,6 @@
     }
 
     function dragStart(event) {
-        console.log('dragStart');
         var target = $(event.target);
 	event.preventDefault();
         var width = target.closest('th').innerWidth();

@@ -60,7 +60,7 @@
             }
             if ( this.options.initialScroll === "end" ) {
                 var statusFrame = this.statusFrame;
-                $('body').on('pluginsReady', function() {
+                $('body').one('pluginsReady', function() {
                     var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
                     this.statusFrame.scrollTop(scrollTop);
                 });
