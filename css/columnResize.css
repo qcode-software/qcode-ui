@@ -1,14 +1,11 @@
-.qc-column-resize th {
+.qc-column-resize {
     position: relative;
 }
 .column-resize-handle {
     position: absolute;
-    width: 19px;
-    right: -10px;
-    height: 100%;
-    cursor: ew-resize;
     top: 0;
-}
-.column-resize-wrapper {
-    overflow: hidden;
+    bottom: 0;
+    cursor: ew-resize;
+    border: 1px dotted black;
+    z-index: 10;
 }

@@ -28,13 +28,9 @@
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
 
-            case 'normal':
-                if ( th.css('overflow-x') !== "hidden" ) {
-                    break;
-                }
             case 'hidden':
-                th.wrapInner('<div class="column-resize-wrapper"></div>');
-                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', 'visible');
+                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', "hidden");
+            case 'normal':
                 break;
 
             case 'break-word':
@@ -44,16 +40,102 @@
                 $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
             }
-
-            th.append('<div class="column-resize-handle"></div>');
         });
-        this.on('mousedown', '.column-resize-handle', dragStart);
-        this.on('mousedrag', 'th', onResize);
+        var handleWidth = 10;
+        var minWidth = 10;
+        var dragging = false;
+        this.each(function() {
+            var table = $(this);
+            var id = table.getID();
+            table.on('mousemove', 'th', function(event) {
+                if ( dragging ) {
+                    return;
+                }
+                var thHover = $(this);
+                var left = thHover.offset().left;
+                var right = left + thHover.width();
+                var resizeLeft = false;
+                var resizeRight = false;
+                if ( left + handleWidth > event.pageX ) {
+                    if ( event.pageX - left > right - event.pageX ) {
+                        resizeRight = true;
+                    } else {
+                        resizeLeft = true;
+                    }
+                } else if ( right - handleWidth < event.pageX ) {
+                    resizeRight = true;
+                }
 
-        // Resize event handler
-        function onResize(e, ui) {
-            var th = $(this);
+                if ( resizeLeft || resizeRight ) {
+                    table.children('thead').css('cursor', 'e-resize');
+                } else {
+                    table.children('thead').css('cursor', 'auto');
+                }
+            });
+        });
+        this.on('mouseout', 'th', function() {
+            $(this).closest('table').children('thead').css('cursor', 'auto');
+        });
+        this.on('mousedown', 'th', dragStart);
+        this.on('mousedragStart', 'th', function(event, data) {
+            var thHover = $(this);
+            var table = thHover.closest('table');
 
+            var left = thHover.offset().left;
+            var right = left + thHover.width();
+            var resizeLeft = false;
+            var resizeRight = false;
+            if ( left + handleWidth > data.pageX ) {
+                if ( data.pageX - left > right - data.pageX ) {
+                    resizeRight = true;
+                } else {
+                    resizeLeft = true;
+                }
+            } else if ( right - handleWidth < data.pageX ) {
+                resizeRight = true;
+            }
+
+            if ( resizeLeft || resizeRight ) {
+                dragging = true;
+                if ( resizeLeft ) {
+                    var thToResize = thHover.prev();
+                    while ( thToResize.length > 0 && ! thToResize.is(':visible') ) {
+                        thToResize = thToResize.prev();
+                    }
+                } else {
+                    var thToResize = thHover;
+                }
+
+                if ( thToResize.length == 0 ) {
+                    return;
+                }
+
+                var handle = $('<div class="column-resize-handle">');
+                var left = data.pageX - table.offset().left;
+                handle.appendTo(thHover);
+                handle.css('left', left + "px");
+
+                var width = thToResize.outerWidth();
+
+                thHover.on('mousedrag', function(event, data) {
+                    handle.css('left', (left + data.offset) + "px");
+                    width = handle.offset().left - thToResize.offset().left;
+                    if ( width < minWidth ) {
+                        handle.css('left', '+='+ (minWidth - width));
+                        width = minWidth;
+                    }
+                });
+
+                thHover.one('mousedragEnd', function(event) {
+                    dragging = false;
+                    handle.remove();
+                    resize(thToResize, width);
+                    thHover.off('mousedrag');
+                });
+            }
+        });
+
+        function resize(th, width) {
             var nth = th.index() + 1;
             var table = th.closest('table');
             var id = table.getID();
@@ -61,45 +143,37 @@
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
-            var width = (ui.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')) + parseInt(th.css('border-left-width')));
+            qcode.style(colSelector, 'width', width + "px");
 
             switch ( options.overflow ) {
             case 'break-word':
                 qcode.style(cellSelector, 'word-break', "normal");
-                qcode.style(colSelector, 'width', width + "px");
-                if ( th.width() > ui.size.width ) {
+                if ( th.width() > width ) {
                     qcode.style(cellSelector, 'word-break', 'break-all');
                 }
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                qcode.style(colSelector, 'width', width + "px");
-
                 var fontSize = th.data('original-font-size');
                 qcode.style(cellSelector, 'font-size', fontSize + 'px');
 
-                var width = th.width();
+                var measuredWidth = th.width();
                 var lastChangeFontSize = fontSize;
-                while ( width > ui.size.width ) {
+                while ( measuredWidth > width ) {
                     fontSize--;
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
                     qcode.style(cellSelector, 'font-size', fontSize + 'px');
-                    if ( th.width() < width ) {
+                    if ( th.width() < measuredWidth ) {
                         lastChangeFontSize = fontSize;
                     }
-                    width = th.width();
+                    measuredWidth = th.width();
                 }
                 qcode.style(cellSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
-
-            default:
-                qcode.style(colSelector, 'width', width + "px");
-                break;
             }
-            event.stopPropagation();
             table.trigger('resize');
         }
         return this;
@@ -108,19 +182,20 @@
     function dragStart(event) {
         var target = $(event.target);
 	event.preventDefault();
-        var width = target.closest('th').innerWidth();
         $(window)
-                .on('mousemove.dragListener', drag.bind(this, target, event.pageX, width))
-                .on('mouseup.dragListener', dragEnd.bind(this, target, event.pageX, width));
-        target.trigger('mousedragStart');
+                .on('mousemove.dragListener', drag.bind(this, target, event.pageX))
+                .on('mouseup.dragListener', dragEnd.bind(this, target, event.pageX));
+        target.trigger('mousedragStart', [{
+            'pageX': event.pageX
+        }]);
     }
-    function drag(target, initialX, initialWidth, event) {
+    function drag(target, initialX, event) {
 	event.preventDefault();
 	target.trigger('mousedrag', [{
-	    'width': initialWidth + event.pageX - initialX
+	    'offset': event.pageX - initialX
 	}]);
     }
-    function dragEnd(target, initialX, initalWidth, event) {
+    function dragEnd(target, initialX, event) {
         $(window).off('.dragListener');
         target.trigger('mousedragEnd');
     }

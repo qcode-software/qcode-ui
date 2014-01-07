@@ -120,7 +120,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 var eventCopy = jQuery.Event(event.type, eventProperties);
                 originalElement.trigger(eventCopy);
             };
-            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout'], function(i, eventName) {
+            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'], function(i, eventName) {
                 handlers[eventName] = copy;
             });
             this._on(this.headClone, handlers);
