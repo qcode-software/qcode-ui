@@ -78,13 +78,9 @@
 
 		// initialFocus
 		$('body').one('pluginsReady', function() {
-                    console.time('dbGrid getInitalFocusCell');
 		    var initialFocusCell = dbGrid.getInitialFocusCell();
-                    console.timeEnd('dbGrid getInitalFocusCell');
 		    if ( initialFocusCell.length > 0 ) {
-                        console.time('dbGrid cellChange');
 			dbGrid.cellChange(initialFocusCell);
-                        console.timeEnd('dbGrid cellChange');
 		    }
 		});
 

@@ -197,7 +197,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
         },
         repaintWidths: function() {
             // Measure and apply table and column widths
-            console.time('theadFixed repaintWidths');
             var widget = this;
             var id = this.headClone.getID();
             var colSelectors = this.colSelectors;
@@ -220,7 +219,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 }
             });
             qcode.style(styles);
-            console.timeEnd('theadFixed repaintWidths');
         },
         repaintStyles: function() {
             // Copy styles from the original table to the copied table,
@@ -231,7 +229,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             selector = '#' + id;
             styles[selector] = {};
 
-            console.time('theadFixed copy table styles');
             $.each(copy_table_css, function(i, name) {
                 var originalValue = widget.table.css(name);
                 var cloneValue = widget.headClone.css(name);
@@ -239,9 +236,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     styles[selector][name] = originalValue;
                 }
             });
-            console.timeEnd('theadFixed copy table styles');
 
-            console.time('theadFixed copy cell styles');
             this.theadCells.each(function(i, th) {
                 var thSelector = widget.thSelectors[i];
                 styles[thSelector] = {};
@@ -256,7 +251,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     styles[thSelector].display = "none";
                 }
             });
-            console.timeEnd('theadFixed copy cell styles');
 
             this.columns.each(function(i, col) {
                 var colSelector = widget.colSelectors[i];
