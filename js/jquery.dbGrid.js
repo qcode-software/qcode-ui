@@ -110,13 +110,15 @@
 		if ( initialFocusCell.dbCell('isEditable') ) {
 		    return initialFocusCell
 		}
+
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
 		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 
-		} else {
+		}
+                if ( initialFocusCell.dbCell('isEditable') ) {
 		    return initialFocusCell;
 		}
 	    }
