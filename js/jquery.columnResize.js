@@ -41,9 +41,12 @@
                 break;
             }
         });
+
         var handleWidth = 10;
         var minWidth = 10;
         var dragging = false;
+
+        // Change the cursor when the mouse moves over a hotspot
         this.each(function() {
             var table = $(this);
             var id = table.getID();
@@ -53,20 +56,11 @@
                 }
                 var thHover = $(this);
                 var left = thHover.offset().left;
-                var right = left + thHover.width();
+                var right = left + thHover.outerWidth();
                 var resizeLeft = false;
                 var resizeRight = false;
-                if ( left + handleWidth > event.pageX ) {
-                    if ( event.pageX - left > right - event.pageX ) {
-                        resizeRight = true;
-                    } else {
-                        resizeLeft = true;
-                    }
-                } else if ( right - handleWidth < event.pageX ) {
-                    resizeRight = true;
-                }
-
-                if ( resizeLeft || resizeRight ) {
+                // Over the left hotspot or right hotspot
+                if ( left + handleWidth > event.pageX || right - handleWidth < event.pageX ) {
                     table.children('thead').css('cursor', 'e-resize');
                 } else {
                     table.children('thead').css('cursor', 'auto');
@@ -76,63 +70,60 @@
         this.on('mouseout', 'th', function() {
             $(this).closest('table').children('thead').css('cursor', 'auto');
         });
-        this.on('mousedown', 'th', dragStart);
-        this.on('mousedragStart', 'th', function(event, data) {
+
+        // Listen for mouse dragging
+        this.on('mousedown', 'th', function(mouseDownEvent) {
             var thHover = $(this);
+	    mouseDownEvent.preventDefault();
+
             var table = thHover.closest('table');
 
-            var left = thHover.offset().left;
-            var right = left + thHover.width();
+            var thLeftPageX = thHover.offset().left;
+            var thRightPageX = thLeftPageX + thHover.width();
             var resizeLeft = false;
             var resizeRight = false;
-            if ( left + handleWidth > data.pageX ) {
-                if ( data.pageX - left > right - data.pageX ) {
-                    resizeRight = true;
+            if ( thLeftPageX + handleWidth > mouseDownEvent.pageX ) {
+                if ( mouseDownEvent.pageX - thLeftPageX > thRightPageX - mouseDownEvent.pageX ) {
+                    var thToResize = thHover;
                 } else {
-                    resizeLeft = true;
-                }
-            } else if ( right - handleWidth < data.pageX ) {
-                resizeRight = true;
-            }
-
-            if ( resizeLeft || resizeRight ) {
-                dragging = true;
-                if ( resizeLeft ) {
                     var thToResize = thHover.prev();
                     while ( thToResize.length > 0 && ! thToResize.is(':visible') ) {
                         thToResize = thToResize.prev();
                     }
-                } else {
-                    var thToResize = thHover;
-                }
-
-                if ( thToResize.length == 0 ) {
-                    return;
-                }
-
-                var handle = $('<div class="column-resize-handle">');
-                var left = data.pageX - table.offset().left;
-                handle.appendTo(thHover);
-                handle.css('left', left + "px");
-
-                var width = thToResize.outerWidth();
-
-                thHover.on('mousedrag', function(event, data) {
-                    handle.css('left', (left + data.offset) + "px");
-                    width = handle.offset().left - thToResize.offset().left;
-                    if ( width < minWidth ) {
-                        handle.css('left', '+='+ (minWidth - width));
-                        width = minWidth;
+                    if ( thToResize.length == 0 ) {
+                        return;
                     }
-                });
-
-                thHover.one('mousedragEnd', function(event) {
-                    dragging = false;
-                    handle.remove();
-                    resize(thToResize, width);
-                    thHover.off('mousedrag');
-                });
+                }
+            } else if ( thRightPageX - handleWidth < mouseDownEvent.pageX ) {
+                var thToResize = thHover;
+            } else {
+                return;
             }
+            dragging = true;
+
+            var handle = $('<div class="column-resize-handle">');
+            var initialHandlePositionLeft = mouseDownEvent.pageX - table.offset().left;
+            handle.appendTo(thHover);
+            handle.css('left', initialHandlePositionLeft + "px");
+
+            var width = thToResize.outerWidth();
+
+            $(window)
+                    .on('mousemove.dragListener', function(mouseMoveEvent) {
+	                mouseMoveEvent.preventDefault();
+                        handle.css('left', (mouseMoveEvent.pageX - table.offset().left) + "px");
+                        width = handle.offset().left - thToResize.offset().left;
+                        if ( width < minWidth ) {
+                            handle.css('left', '+='+ (minWidth - width));
+                            width = minWidth;
+                        }
+                    })
+                    .one('mouseup', function(mouseUpEvent) {
+                        $(window).off('.dragListener');
+                        dragging = false;
+                        handle.remove();
+                        resize(thToResize, width);
+                    });
         });
 
         function resize(th, width) {
@@ -176,27 +167,7 @@
             }
             table.trigger('resize');
         }
-        return this;
-    }
 
-    function dragStart(event) {
-        var target = $(event.target);
-	event.preventDefault();
-        $(window)
-                .on('mousemove.dragListener', drag.bind(this, target, event.pageX))
-                .on('mouseup.dragListener', dragEnd.bind(this, target, event.pageX));
-        target.trigger('mousedragStart', [{
-            'pageX': event.pageX
-        }]);
-    }
-    function drag(target, initialX, event) {
-	event.preventDefault();
-	target.trigger('mousedrag', [{
-	    'offset': event.pageX - initialX
-	}]);
-    }
-    function dragEnd(target, initialX, event) {
-        $(window).off('.dragListener');
-        target.trigger('mousedragEnd');
+        return this;
     }
 })(jQuery);

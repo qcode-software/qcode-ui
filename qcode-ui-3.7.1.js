@@ -883,6 +883,7 @@ function dynamicResize(oContainer) {
 // Uses jQuery UI resizable, but resizes the entire column
 // If the content does not fit the column, use behaviour defined by overflow options:
 // - normal: do nothing, let the underlying css/UA handle it. Usually means the column just won't shrink any further.
+// - hidden: clip the overflow.
 // - shrink: reduce the font size (down to min-font-size) until the content fits. Supports only a single font size for the column.
 // - shrink-one-line (default): as shrink, but force no wrapping to keep on one-line
 // - break-word: force word break to try and make the content fit.
@@ -900,8 +901,6 @@ function dynamicResize(oContainer) {
             var nth = th.index() + 1;
             var id = th.closest('table').getID();
 
-            qcode.style('#'+id+' > colgroup > col:nth-child('+nth+')', 'width', th.innerWidth() + "px");
-
             switch ( options.overflow ) {
             case 'shrink-one-line':
                 qcode.style('#'+id+' > * > tr > :nth-child('+nth+')', 'white-space', "nowrap");
@@ -910,11 +909,9 @@ function dynamicResize(oContainer) {
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
 
+            case 'hidden':
+                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', "hidden");
             case 'normal':
-                if ( th.css('overflow-x') === "hidden" ) {
-                    th.wrapInner('<div class="column-resize-wrapper"></div>');
-                    qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', 'visible');
-                }
                 break;
 
             case 'break-word':
@@ -924,18 +921,93 @@ function dynamicResize(oContainer) {
                 $.error('Unrecognised value for options.overflow - supported options are "shrink", "shrink-one-line", "normal", "break-word"');
                 break;
             }
-
-            th.resizable({
-                handles: "e",
-                resize: onResize
-            });
         });
 
-        // Resize event handler
-        function onResize(e, ui) {
-            var th = $(this);
-            th.css('width', '');
+        var handleWidth = 10;
+        var minWidth = 10;
+        var dragging = false;
 
+        // Change the cursor when the mouse moves over a hotspot
+        this.each(function() {
+            var table = $(this);
+            var id = table.getID();
+            table.on('mousemove', 'th', function(event) {
+                if ( dragging ) {
+                    return;
+                }
+                var thHover = $(this);
+                var left = thHover.offset().left;
+                var right = left + thHover.outerWidth();
+                var resizeLeft = false;
+                var resizeRight = false;
+                // Over the left hotspot or right hotspot
+                if ( left + handleWidth > event.pageX || right - handleWidth < event.pageX ) {
+                    table.children('thead').css('cursor', 'e-resize');
+                } else {
+                    table.children('thead').css('cursor', 'auto');
+                }
+            });
+        });
+        this.on('mouseout', 'th', function() {
+            $(this).closest('table').children('thead').css('cursor', 'auto');
+        });
+
+        // Listen for mouse dragging
+        this.on('mousedown', 'th', function(mouseDownEvent) {
+            var thHover = $(this);
+	    mouseDownEvent.preventDefault();
+
+            var table = thHover.closest('table');
+
+            var thLeftPageX = thHover.offset().left;
+            var thRightPageX = thLeftPageX + thHover.width();
+            var resizeLeft = false;
+            var resizeRight = false;
+            if ( thLeftPageX + handleWidth > mouseDownEvent.pageX ) {
+                if ( mouseDownEvent.pageX - thLeftPageX > thRightPageX - mouseDownEvent.pageX ) {
+                    var thToResize = thHover;
+                } else {
+                    var thToResize = thHover.prev();
+                    while ( thToResize.length > 0 && ! thToResize.is(':visible') ) {
+                        thToResize = thToResize.prev();
+                    }
+                    if ( thToResize.length == 0 ) {
+                        return;
+                    }
+                }
+            } else if ( thRightPageX - handleWidth < mouseDownEvent.pageX ) {
+                var thToResize = thHover;
+            } else {
+                return;
+            }
+            dragging = true;
+
+            var handle = $('<div class="column-resize-handle">');
+            var initialHandlePositionLeft = mouseDownEvent.pageX - table.offset().left;
+            handle.appendTo(thHover);
+            handle.css('left', initialHandlePositionLeft + "px");
+
+            var width = thToResize.outerWidth();
+
+            $(window)
+                    .on('mousemove.dragListener', function(mouseMoveEvent) {
+	                mouseMoveEvent.preventDefault();
+                        handle.css('left', (mouseMoveEvent.pageX - table.offset().left) + "px");
+                        width = handle.offset().left - thToResize.offset().left;
+                        if ( width < minWidth ) {
+                            handle.css('left', '+='+ (minWidth - width));
+                            width = minWidth;
+                        }
+                    })
+                    .one('mouseup', function(mouseUpEvent) {
+                        $(window).off('.dragListener');
+                        dragging = false;
+                        handle.remove();
+                        resize(thToResize, width);
+                    });
+        });
+
+        function resize(th, width) {
             var nth = th.index() + 1;
             var table = th.closest('table');
             var id = table.getID();
@@ -943,47 +1015,40 @@ function dynamicResize(oContainer) {
             var cells = table.find('td').filter(':nth-child('+nth+')');
             var colSelector = '#'+id+' > colgroup > col:nth-child('+nth+')';
             var cellSelector = '#'+id+' > * > tr > :nth-child('+nth+')';
-            var width = (ui.size.width + parseInt(th.css('padding-left')) + parseInt(th.css('padding-right')) + parseInt(th.css('border-left-width')));
+            qcode.style(colSelector, 'width', width + "px");
 
             switch ( options.overflow ) {
             case 'break-word':
                 qcode.style(cellSelector, 'word-break', "normal");
-                qcode.style(colSelector, 'width', width + "px");
-                if ( th.width() > ui.size.width ) {
+                if ( th.width() > width ) {
                     qcode.style(cellSelector, 'word-break', 'break-all');
                 }
                 break;
 
             case 'shrink-one-line':
             case 'shrink':
-                qcode.style(colSelector, 'width', width + "px");
-
                 var fontSize = th.data('original-font-size');
                 qcode.style(cellSelector, 'font-size', fontSize + 'px');
 
-                var width = th.width();
+                var measuredWidth = th.width();
                 var lastChangeFontSize = fontSize;
-                while ( width > ui.size.width ) {
+                while ( measuredWidth > width ) {
                     fontSize--;
                     if (fontSize < options['min-font-size']) {
                         break;
                     }
                     qcode.style(cellSelector, 'font-size', fontSize + 'px');
-                    if ( th.width() < width ) {
+                    if ( th.width() < measuredWidth ) {
                         lastChangeFontSize = fontSize;
                     }
-                    width = th.width();
+                    measuredWidth = th.width();
                 }
                 qcode.style(cellSelector, 'font-size', lastChangeFontSize + 'px');
                 break;
-
-            default:
-                qcode.style(colSelector, 'width', width + "px");
-                break;
             }
-            event.stopPropagation();
             table.trigger('resize');
         }
+
         return this;
     }
 })(jQuery);
@@ -3908,7 +3973,7 @@ function dbFormHTMLArea(oDiv) {
 		// initialFocus
 		$('body').one('pluginsReady', function() {
 		    var initialFocusCell = dbGrid.getInitialFocusCell();
-		    if ( initialFocusCell.size() ) {
+		    if ( initialFocusCell.length > 0 ) {
 			dbGrid.cellChange(initialFocusCell);
 		    }
 		});
@@ -3939,14 +4004,16 @@ function dbFormHTMLArea(oDiv) {
 		if ( initialFocusCell.dbCell('isEditable') ) {
 		    return initialFocusCell
 		}
+
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
 		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
+
 		}
-		if ( initialFocusCell.dbCell('isEditable') ) {
-		    return initialFocusCell
+                if ( initialFocusCell.dbCell('isEditable') ) {
+		    return initialFocusCell;
 		}
 	    }
 
@@ -6157,7 +6224,7 @@ uses the existing id if it has one
             }
             if ( this.options.initialScroll === "end" ) {
                 var statusFrame = this.statusFrame;
-                $('body').on('pluginsReady', function() {
+                $('body').one('pluginsReady', function() {
                     var scrollTop = this.statusFrame[0].scrollHeight - this.statusFrame.height();
                     this.statusFrame.scrollTop(scrollTop);
                 });
@@ -7723,7 +7790,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     ];
     /* css to copy from original th elements */
     var copy_th_css = [
-        'display', 'color', 'background-color',
+        'display', 'position', 'color', 'background-color',
         'font-family', 'font-weight', 'font-size', 'font-style', 'text-align', 'vertical-align',
         'white-space', 'overflow-x',
         'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
@@ -7733,10 +7800,10 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
     ];
     /* css to copy from the original table */
     var copy_table_css = [
-        'border-spacing', 'border-collapse',
         'border-top-width', 'border-right-width', 'border-left-width',
         'border-top-style', 'border-right-style', 'border-left-style',
-        'border-top-color', 'border-right-color', 'border-left-color'
+        'border-top-color', 'border-right-color', 'border-left-color',
+        'border-collapse', 'border-spacing'
     ];
 
     // Find the element whose DOM location relative to otherRoot is the same as element's postion relative to root.
@@ -7790,7 +7857,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Set the initial scroll position (wait for all other plugins to load)
             if ( this.options.initialScroll === "end" ) {
                 var scrollBox = this.scrollBox;
-                $('body').on('pluginsReady', function() {
+                $('body').one('pluginsReady', function() {
                     var scrollTop = scrollBox[0].scrollHeight - scrollBox.height();
                     scrollBox.scrollTop(scrollTop);
                 });
@@ -7798,7 +7865,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             // Add the resize event listeners - only repaint when the table is resized
             // or the window width changes.
-            var windowWidth = $(window).width();
+            var windowWidth = window.innerWidth;
             var widget = this;
             // On window resize, or when a resize bubbles to the window.
             this._on($(window), {
@@ -7807,35 +7874,37 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                         this.repaintWidths();
 
                     } else if (( ! this.options.fixedWidth )
-                               && windowWidth != $(window).width() ) {
+                               && windowWidth != window.innerWidth ) {
                         this.repaintWidths();
-                        windowWidth = $(window).width();
+                        windowWidth = window.innerWidth;
                     }
                 }
             });
 
             // Copy click events back to the matching element in the original thead
             var handlers = {};
-            var copy = function(event) {
+            var copy = function copyEvent(event) {
                 var target = $(event.target);
-                var eventCopy = jQuery.Event(event.type);
+                var eventProperties = {};
                 $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
-                    eventCopy[property] = event[property];
+                    eventProperties[property] = event[property];
                 });
-                $.each(['target', 'relatedTarget'], function(i, property) {
+                $.each(['relatedTarget'], function(i, property) {
                     if ( $(event[property]).closest(this.table).length > 0 ) {
-                        eventCopy[property] = treeMap(event[property], this.headClone, this.table);
+                        eventProperties[property] = treeMap(event[property], this.headClone, this.table);
                     } else {
-                        eventCopy[property] = event[property];
+                        eventProperties[property] = event[property];
                     }
                 });
-                treeMap(target, this.headClone, this.table).trigger(eventCopy);
-                return event.result;
+                var originalElement = treeMap(target, this.headClone, this.table);
+                var eventCopy = jQuery.Event(event.type, eventProperties);
+                originalElement.trigger(eventCopy);
             };
-            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout'], function(i, eventName) {
+            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'], function(i, eventName) {
                 handlers[eventName] = copy;
             });
             this._on(this.headClone, handlers);
+
 
             // Where supported, MutationObserver allows us to listen for changes to the DOM
             var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
@@ -7939,21 +8008,30 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var styles = {};
             selector = '#' + id;
             styles[selector] = {};
+
             $.each(copy_table_css, function(i, name) {
-                if ( widget.headClone.css(name) !== widget.table.css(name) ) {
-                    styles[selector][name] = widget.table.css(name);
+                var originalValue = widget.table.css(name);
+                var cloneValue = widget.headClone.css(name);
+                if ( cloneValue !== originalValue ) {
+                    styles[selector][name] = originalValue;
                 }
             });
+
             this.theadCells.each(function(i, th) {
                 var thSelector = widget.thSelectors[i];
                 styles[thSelector] = {};
-                $.each(copy_th_css, function(j, name) {
-                    var copy_th = widget.headClone.find('th:nth-child('+(i+1)+')');
-                    if ( copy_th.css(name) !== $(th).css(name) ) {
-                        styles[thSelector][name] = $(th).css(name);
-                    }
-                });
+                if ( $(th).css('display') === "table-cell" ) {
+                    $.each(copy_th_css, function(j, name) {
+                        var copy_th = widget.headClone.find('th:nth-child('+(i+1)+')');
+                        if ( copy_th.css(name) !== $(th).css(name) ) {
+                            styles[thSelector][name] = $(th).css(name);
+                        }
+                    });
+                } else {
+                    styles[thSelector].display = "none";
+                }
             });
+
             this.columns.each(function(i, col) {
                 var colSelector = widget.colSelectors[i];
                 styles[colSelector] = {};
@@ -7964,6 +8042,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     }
                 });
             });
+
             qcode.style(styles);
         },
         getWrapper: function() {

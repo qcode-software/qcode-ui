@@ -24,12 +24,16 @@
 */
 
 /* ==== columnResize.css ==== */
-.qc-column-resize th > .ui-resizable-handle {
-    width: 19px;
-    right: -10px;
+.qc-column-resize {
+    position: relative;
 }
-.column-resize-wrapper {
-    overflow: hidden;
+.column-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    cursor: ew-resize;
+    border: 1px dotted black;
+    z-index: 10;
 }
 
 /* ==== columnsShowHideControl.css ==== */
