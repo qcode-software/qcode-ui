@@ -103,6 +103,9 @@
         visibility: visible !important;
     }
 }
+.db-editor {
+    z-index: 1;
+}
 
 /* ==== gantt.css ==== */
 .gantt-chart.wrapper {

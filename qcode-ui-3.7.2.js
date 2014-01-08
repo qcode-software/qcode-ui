@@ -5874,6 +5874,10 @@ uses the existing id if it has one
 	    var positionOfCurrent = current.position();
 	    myPosition.left += positionOfCurrent.left;
 	    myPosition.top += positionOfCurrent.top;
+            if ( current != this ) {
+                myPosition.left += parseInt(current.css('border-left-width'));
+                myPosition.top += parseInt(current.css('border-top-width'));
+            }
 	    current = current.offsetParent();
 	}
 	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
@@ -5891,6 +5895,10 @@ uses the existing id if it has one
 	    var positionOfCurrent = current.position();
 	    targetPosition.left += positionOfCurrent.left;
 	    targetPosition.top += positionOfCurrent.top;
+            if ( current != target ) {
+                targetPosition.left += parseInt(current.css('border-left-width'));
+                targetPosition.top += parseInt(current.css('border-top-width'));
+            }
 	    current = current.offsetParent();
 	}
 	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
