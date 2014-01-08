@@ -6,3 +6,6 @@
         visibility: visible !important;
     }
 }
+.db-editor {
+    z-index: 1;
+}
