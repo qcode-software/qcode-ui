@@ -57,8 +57,6 @@
                 var thHover = $(this);
                 var left = thHover.offset().left;
                 var right = left + thHover.outerWidth();
-                var resizeLeft = false;
-                var resizeRight = false;
                 // Over the left hotspot or right hotspot
                 if ( left + handleWidth > event.pageX || right - handleWidth < event.pageX ) {
                     table.children('thead').css('cursor', 'e-resize');
@@ -80,8 +78,7 @@
 
             var thLeftPageX = thHover.offset().left;
             var thRightPageX = thLeftPageX + thHover.width();
-            var resizeLeft = false;
-            var resizeRight = false;
+            // Identify which th is to be resized if any.
             if ( thLeftPageX + handleWidth > mouseDownEvent.pageX ) {
                 if ( mouseDownEvent.pageX - thLeftPageX > thRightPageX - mouseDownEvent.pageX ) {
                     var thToResize = thHover;
@@ -101,6 +98,7 @@
             }
             dragging = true;
 
+            // init handle
             var handle = $('<div class="column-resize-handle">');
             var initialHandlePositionLeft = mouseDownEvent.pageX - table.offset().left;
             handle.appendTo(thHover);
@@ -108,6 +106,7 @@
 
             var width = thToResize.outerWidth();
 
+            // Mousemove and mouse up when dragging
             $(window)
                     .on('mousemove.dragListener', function(mouseMoveEvent) {
 	                mouseMoveEvent.preventDefault();
@@ -127,6 +126,7 @@
         });
 
         function resize(th, width) {
+            // Resize the column associated with this th
             var nth = th.index() + 1;
             var table = th.closest('table');
             var id = table.getID();
