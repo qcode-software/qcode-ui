@@ -168,7 +168,10 @@
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action,errorMessage, errorType){
+	actionReturnError: function(action,errorMessage, errorType) {
+            if ( errorType == 'NAVIGATION' ) {
+                return;
+            }
 	    this.error = errorMessage;
 	    this.setState('error');
 	    if ( errorType != 'USER' ) {
