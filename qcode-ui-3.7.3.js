@@ -8206,44 +8206,58 @@ function urlDataSet(data,name,value) {
     return data;
 };
 
-function httpPost(url,data,handler,errorHandler,async) {
-    jQuery.ajax ({
-	type: "POST",
-	cache: false,
-	async: async,
-	dataType: 'xml',
-	url: url,
-	data: data,
-	success: function(data, textStatus, jqXHR) {
-	    // USER ERROR
-	    var error = jQuery('error', data).first();
-	    if ( error.size() ) {
-		var errorMessage = error.text();
-		return errorHandler(errorMessage,'USER');
-	    }
-
-	    // NORMAL COMPLETION
-	    return handler(data, textStatus, jqXHR);
-	},
-	error: function(jqXHR, textStatus) {
-	    // HTTP ERROR
-	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
-		return errorHandler(errorMessage,'HTTP');
-	    }
-
-	    // XML ERROR
-	    if ( textStatus == 'parsererror' ) {
-		errorMessage = 'Error ! Unable to parse XML response';
-		return errorHandler(errorMessage,'XML');
-	    }
-	    
-	    // DEFAULT ERROR
-	    errorMessage = 'Error ! '+ textStatus;
-	    return errorHandler(errorMessage, 'UNKNOWN');
-	}
+var httpPost = (function() {
+    var unloading = false;
+    $(window).on('beforeunload', function() {
+        unloading = true;
+        window.setZeroTimeout(function() {
+            unloading = false;
+        });
     });
-};
+    return function httpPost(url,data,handler,errorHandler,async) {
+        jQuery.ajax ({
+	    type: "POST",
+	    cache: false,
+	    async: async,
+	    dataType: 'xml',
+	    url: url,
+	    data: data,
+	    success: function(data, textStatus, jqXHR) {
+	        // USER ERROR
+	        var error = jQuery('error', data).first();
+	        if ( error.size() ) {
+		    var errorMessage = error.text();
+		    return errorHandler(errorMessage,'USER');
+	        }
+
+	        // NORMAL COMPLETION
+	        return handler(data, textStatus, jqXHR);
+	    },
+	    error: function(jqXHR, textStatus) {
+	        // HTTP ERROR
+	        if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
+		    errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
+		    return errorHandler(errorMessage,'HTTP');
+	        }
+
+	        // XML ERROR
+	        if ( textStatus == 'parsererror' ) {
+		    errorMessage = 'Error ! Unable to parse XML response';
+		    return errorHandler(errorMessage,'XML');
+	        }
+
+                // Cancelled by navigation
+                if ( jqXHR.status == 0 && unloading ) {
+                    return;
+                }
+	        
+	        // DEFAULT ERROR
+	        errorMessage = 'Error ! Test: '+ textStatus;
+	        return errorHandler(errorMessage, 'UNKNOWN');
+	    }
+        });
+    };
+})();
 
 // linkNoHistory plugin - change behaviour of links so that following them does not create an entry in browser history.
 $.fn.linkNoHistory = function() {
