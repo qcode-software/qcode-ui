@@ -4815,7 +4815,10 @@ function dbFormHTMLArea(oDiv) {
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action,errorMessage, errorType){
+	actionReturnError: function(action,errorMessage, errorType) {
+            if ( errorType == 'NAVIGATION' ) {
+                return;
+            }
 	    this.error = errorMessage;
 	    this.setState('error');
 	    if ( errorType != 'USER' ) {
@@ -8207,6 +8210,14 @@ function urlDataSet(data,name,value) {
 };
 
 function httpPost(url,data,handler,errorHandler,async) {
+    // Add event listener to check whether request is cancelled by navigation
+    var unloading = false;
+    $(window).on('beforeunload.httpPost', function() {
+        unloading = true;
+        window.setZeroTimeout(function() {
+            unloading = false;
+        });
+    });
     jQuery.ajax ({
 	type: "POST",
 	cache: false,
@@ -8215,6 +8226,8 @@ function httpPost(url,data,handler,errorHandler,async) {
 	url: url,
 	data: data,
 	success: function(data, textStatus, jqXHR) {
+            $(window).off('.httpPost');
+
 	    // USER ERROR
 	    var error = jQuery('error', data).first();
 	    if ( error.size() ) {
@@ -8226,6 +8239,8 @@ function httpPost(url,data,handler,errorHandler,async) {
 	    return handler(data, textStatus, jqXHR);
 	},
 	error: function(jqXHR, textStatus) {
+            $(window).off('.httpPost');
+
 	    // HTTP ERROR
 	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
 		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
@@ -8237,9 +8252,15 @@ function httpPost(url,data,handler,errorHandler,async) {
 		errorMessage = 'Error ! Unable to parse XML response';
 		return errorHandler(errorMessage,'XML');
 	    }
+
+            // Cancelled by navigation
+            if ( jqXHR.status == 0 && unloading ) {
+                errorMessage = "Request cancelled by navigation";
+                return errorHandler(errorMessage,'NAVIGATION');
+            }
 	    
 	    // DEFAULT ERROR
-	    errorMessage = 'Error ! '+ textStatus;
+	    errorMessage = 'Error ! Test: '+ textStatus;
 	    return errorHandler(errorMessage, 'UNKNOWN');
 	}
     });
