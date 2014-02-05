@@ -1,4 +1,11 @@
+/* ===================================================================
+Backwards-compatible support for toLocaleString.
+Currently only GB is supported
+=================================================================== */
 ;(function(undefined) {
+
+    // Test for support. Modern browsers should throw a RangeError
+    // When toLocaleString is called with an invalid locale code
     var supported = false;
     try {
         (0).toLocaleString("");
@@ -7,7 +14,9 @@
             supported = true;
         }
     }
+
     if ( ! supported ) {
+        // Util function - return first defined argument
         function coalesce() {
             for(var i = 0; i < arguments.length; i++){
 	        if ( typeof arguments[i] != "undefined" ) {
@@ -15,6 +24,9 @@
 	        }
             }
         }
+        // Throw a RangeError if value is not an int,
+        // or is outside min-max range.
+        // Use name for RangeError message.
         function checkInt(value, min, max, name) {
             if ( value !== parseInt(value)
                  || value < min
@@ -22,13 +34,18 @@
                 throw new RangeError(name + ' value is out of range');
             }
         }
+
         Number.prototype.toLocaleString = function(locales, options) {
+            // "locales" option is currently non-functional
             options = coalesce(options, {});
             var minInteger = options.minimumIntegerDigits;
             var minFraction = options.minimumFractionDigits;
             var maxFraction = options.maximumFractionDigits;
             var minSignificant = options.minimumSignificantDigits;
             var maxSignificant = options.maximumSignificantDigits;
+            var useGrouping = coalesce(options.useGrouping, true); 
+
+            // Support for styles and currency
             var style = coalesce(options.style, 'decimal');
             switch (style) {
             case 'currency':
@@ -60,22 +77,28 @@
             default:
                 throw new RangeError('Value '+style+' out of range for numberformat options property style');
             }
-            var useGrouping = coalesce(options.useGrouping, true);              
-
+             
+            // If significant digit arguments are provided,
+            // integer/fraction arguments are ignored
             if ( minSignificant !== undefined || maxSignificant !== undefined ) {
+
+                // defaults and checks
                 minSignificant = coalesce(minSignificant,1);
                 maxSignificant = coalesce(maxSignificant,minSignificant);
                 checkInt(minSignificant, 1, 21, 'minimumSignificantDigits');
                 checkInt(maxSignificant, minSignificant, 21, 'maximumSignificantDigits');
 
+                // Round value based on maximum significant digits
                 var rounded = this.toPrecision(maxSignificant) * 1;
 
+                // Split string into integer part and fraction part
                 var string = rounded.toString();
                 var parts = string.split('.');
                 if ( parts[1] === undefined ) {
                     parts[1] = "";
                 }
 
+                // pad to minimum significant digits with trailing 0s
                 var length = parts[0].length + parts[1].length;
                 if ( length < minSignificant ) {
                     var padding = minSignificant - length;
@@ -85,6 +108,10 @@
                 }
 
             } else {
+                // If significant digit arguments are not provided,
+                // fall back to integer/fraction arguments
+
+                // defaults and checks
                 minInteger = coalesce(minInteger, 1);
                 switch (style) {
                 case 'decimal':
@@ -106,26 +133,35 @@
                 checkInt(minFraction, 0, 20, 'minimumFractionDigits');
                 checkInt(maxFraction, 0, 20, 'maximumFractionDigits');
 
+                // Round value based on maximum decimal places
                 var rounded = this.toFixed(maxFraction) * 1;
 
+                // Split string into integer and fraction components
                 var string = rounded.toString();
                 var parts = string.split('.');
                 if ( parts[1] === undefined ) {
                     parts[1] = "";
                 }
 
-                if ( parts[0].length < minInteger ) {
-                    for(var i = minInteger - parts[0].length; i--; i > 0) {
-                        parts[0] = '0' + parts[0];
-                    }
+                // Pad integer component with leading 0s, based on
+                // minimum integer digits argument
+                for(var i = minInteger - parts[0].length; i > 0; i--) {
+                    parts[0] = '0' + parts[0];
                 }
-                if ( parts[1].length < minFraction ) {
-                    for(var i = minFraction - parts[1].length; i--; i > 0 ) {
-                        parts[1] = parts[1] + '0';
-                    }
+
+                // Pad fraction component with trailing 0s, based on
+                // minimum fraction digits argument
+                for(var i = minFraction - parts[1].length; i > 0; i-- ) {
+                    parts[1] = parts[1] + '0';
                 }
             }
 
+            // At this point parts[] should contain 2 values -
+            // the intger component and the fractional component.
+            // Both should be rounded/padded as appropriate
+
+            // Group the digits in the integer component into groups
+            // of 3, separated by commas.
             if ( coalesce(options.useGrouping, true) ) {
                 var remainder = parts[0];
                 var groups = [];
@@ -140,11 +176,14 @@
                 parts[0] = groups.join(',');
             }
 
+            // Join the integer and fraction parts back together
             if ( parts[1] === "" ) {
                 string = parts[0];
             } else {
                 string = parts.join('.');
             }
+
+            // Output the resulting string in the desired style.
             switch (style) {
             case 'decimal':
                 return string;
