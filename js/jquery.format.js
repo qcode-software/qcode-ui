@@ -9,15 +9,15 @@
         }, settings);
         this.each(function(index, element) {
             // Get the original text value of the element (and store in $.data)
-            var originalData = $(element).data('qcode-format-original-data');
-            if ( originalData === undefined ) {
-                originalData = $(element).text().trim();
-                $(element).data('qcode-format-original-data', originalData);
+            var originalText = $(element).data('qcode-format-original-data');
+            if ( originalText === undefined ) {
+                originalText = $(element).text().trim();
+                $(element).data('qcode-format-original-data', originalText);
             }
 
             // Decide whether or not to show zeros
             if ( options.zeros === "auto" ) {
-                if ( originalData === "" ) {
+                if ( originalText === "" ) {
                     var zeros = false;
                 } else {
                     var zeros = true
@@ -28,11 +28,11 @@
 
             // Custom function
             if ( options.function !== undefined ) {
-                $(element).text(options.function.call(element, originalData));
+                $(element).text(options.function.call(element, originalText));
 
             } else {
                 // Extract numeric value
-                var value = originalData.replace(/[^0-9.]/g, '') * 1;
+                var value = originalText.replace(/[^0-9.]/g, '') * 1;
 
                 // Leave non-numeric values alone
                 if ( Number.isNaN(value) ) {
@@ -40,22 +40,24 @@
                 }
 
                 // Hide zeros if option is selected
-                if ( value * 1 === 0 && ! zeros ) {
+                if ( value === 0 && ! zeros ) {
                     $(element).text("");
                     return;
                 }
 
-                // Round to significant figures (but display as number, not using scientific notation)
                 if ( options.sigfigs !== null ) {
-                    value = value.toPrecision(options.sigfigs) * 1;
+                    var text = value.toLocaleString(lan, {
+                        maximumSignificantDigits: options.sigfigs
+                    });
+                } else if ( options.dps !== null ) {
+                    var text = value.toLocaleString(lan, {
+                        minimumFractionDigits: options.dps,
+                        maximumFractionDigits: options.dps
+                    });
+                } else {
+                    var text = value.toLocaleString();
                 }
-
-                // Round to decimal places, and pad with trailing 0s
-                if ( options.dps !== null ) {
-                    value = value.toFixed(options.dps);
-                }
-
-                $(element).text(value);
+                $(element).text(text);
             }
         });
         return this;

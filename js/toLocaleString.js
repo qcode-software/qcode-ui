@@ -23,6 +23,7 @@
             }
         }
         Number.prototype.toLocaleString = function(locales, options) {
+            options = coalesce(options, {});
             var minInteger = options.minimumIntegerDigits;
             var minFraction = options.minimumFractionDigits;
             var maxFraction = options.maximumFractionDigits;
