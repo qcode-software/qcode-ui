@@ -50,3 +50,8 @@ if (typeof console.time == "undefined" ) {
     console.time = function() {};
     console.timeEnd = function() {};
 }
+if ( ! String.prototype.trim ) {
+    String.prototype.trim = function () {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
+}
