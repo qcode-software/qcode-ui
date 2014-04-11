@@ -105,6 +105,11 @@
 	    }
 	},
 	save: function(async) {
+            if ( jQuery.fn.validation ) {
+                if ( ! $(this.form).validation('validate') ) {
+                    return false;
+                }
+            }
             async = coalesce(async, false);
 	    switch( this.settings.formType ) {
 	    case "update":

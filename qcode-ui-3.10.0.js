@@ -3280,6 +3280,11 @@ function dynamicResize(oContainer) {
 	    }
 	},
 	save: function(async) {
+            if ( jQuery.fn.validation ) {
+                if ( ! $(this.form).validation('validate') ) {
+                    return false;
+                }
+            }
             async = coalesce(async, false);
 	    switch( this.settings.formType ) {
 	    case "update":
@@ -8521,50 +8526,70 @@ function preloadImages() {
    $.validation.hideMessage($element);
    $.validation.isPostcode(value);
 */
-(function($) {
+(function($, undefined) {
     // Closure variables
     var submitButtonSelector = "input[type=button],input[type=image],button[type!=reset][type!=button][type!=menu]";
 
     // Plugin function
-    $.fn.validation = function(options) {
+    $.fn.validation = function(arg1) {
         var $form = this;
-        $.each(options, function(selector, fieldOptions) {
-            // Validate each element on blur
-            $form.find(selector)
-                    .on('blur', function() {
-                        $(this).val($(this).val().trim());
-                        if ( ! fieldOptions.check.call(this) ) {
-                            $.validation.showMessage($(this), fieldOptions.message);
-                        }
-                    })
-                    .on('focus', function() {
+        if ( arg1 === "validate" ) {
+            var options = $form.data('qcode-validation-options');
+            if ( options === undefined ) {
+                return true;
+            } else {
+                return validate($form, options);
+            }
+        } else {
+            var options = arg1;
+            $form.data('qcode-validation-options', options);
+            $.each(options, function(selector, fieldOptions) {
+                // Validate each element on blur
+                $form.find(selector)
+                        .on('blur', function() {
+                            $(this).val($(this).val().trim());
+                            if ( ! fieldOptions.check.call(this) ) {
+                                $.validation.showMessage($(this), fieldOptions.message);
+                            }
+                        })
+                        .on('focus', function() {
+                            $.validation.hideMessage($(this));
+                        });
+            });
+            $form.on('submit', function(event) {
+                // Validate the entire form on submit
+                if ( ! validate($form, options) ) {
+                    event.preventDefault();
+                }
+                // Disable submit buttons to prevent duplicate submission
+                if ( ! event.isDefaultPrevented() ) {
+                    $(this).find(submitButtonSelector).attr('disabled', true);
+                }
+            });
+            $form.on('reset', function() {
+                $.each(options, function(selector, fieldOptions) {
+                    $form.find(selector).each(function() {
                         $.validation.hideMessage($(this));
                     });
-        });
-        $form.on('submit', function(event) {
-            // Validate the entire form on submit
-            $.each(options, function(selector, fieldOptions) {
-                $form.find(selector).each(function() {
-                    $(this).val($(this).val().trim());
-                    if ( ! fieldOptions.check.call(this) ) {
-                        $.validation.showMessage($(this), fieldOptions.message);
-                        event.preventDefault();
-                    }
                 });
             });
-            // Disable submit buttons to prevent duplicate submission
-            if ( ! event.isDefaultPrevented() ) {
-                $(this).find(submitButtonSelector).attr('disabled', true);
-            }
-        });
-        $form.on('reset', function() {
-            $.each(options, function(selector, fieldOptions) {
-                $form.find(selector).each(function() {
-                    $.validation.hideMessage($(this));
-                });
+            return this;
+        }
+    }
+
+    function validate($form, options) {
+        // Validate the entire form
+        var valid = true;
+        $.each(options, function(selector, fieldOptions) {
+            $form.find(selector).each(function() {
+                $(this).val($(this).val().trim());
+                if ( ! fieldOptions.check.call(this) ) {
+                    $.validation.showMessage($(this), fieldOptions.message);
+                    valid = false;
+                }
             });
         });
-        return this;
+        return valid;
     }
 
     // Utils
