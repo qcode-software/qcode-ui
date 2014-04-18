@@ -290,3 +290,26 @@ function preloadImages() {
         }
     }
 })(window);
+
+// Call on a table where some meta data is implied through the colgroup and col elements
+// For example $('#dbGrid').columnCells('[name="product_id"]') 
+// with a col <col name="product_id">
+(function($){
+    $.fn.columnCells = function(selector) {
+	var $cells = $([]);
+	if ( $(this).is('tr') ) {
+	    var $rows = $(this);
+	} else {
+	    var $rows = $(this).find('tr');
+	}
+	$rows.closest('table').each(function(){
+	    var $table = $(this);
+	    $table.find('col').filter(selector).each(function(index){
+		var $col = $(this);
+		var n = $col.index() + 1;
+		$cells = $cells.add($table.find($rows).find('td:nth-child('+n+')'));
+	    });
+	});
+	return $cells;
+    }
+})(jQuery);
