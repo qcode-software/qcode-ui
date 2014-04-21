@@ -118,24 +118,33 @@
             return re.test(string);
         },    
         showMessage: function($element, message) {
-            $element.qtip({
-                content: message,
-                position: {
-                    my: "left top",
-                    at: "top right",
-                    target: $element
-                },
-                show: {
-                    ready: true
-                },
-                hide: {
-                    event: 'focus',
-                    delay: 0
-                }
-            });
+            var api = $element.qtip('api');
+            if ( api === undefined ) {
+                // initialise qtip
+                $element.qtip({
+                    content: message,
+                    position: {
+                        my: "left top",
+                        at: "top right",
+                        target: $element
+                    },
+                    show: {
+                        ready: true
+                    },
+                    hide: {
+                        event: 'focus',
+                        delay: 0
+                    }
+                });
+            } else {
+                // Update exisiting qtip and show
+                api.set('content.text', message);
+                api.reposition();
+                api.show();
+            }
         },
         hideMessage: function($element) {
-            $element.qtip('destroy');
+            $element.qtip('hide');
         }
     }
 })(jQuery);
