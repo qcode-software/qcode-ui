@@ -60,6 +60,23 @@
         // Get the short name of this date's month
         return monthShort[this.getMonth()];
     }
+    if ( !Date.prototype.toISODateString ) {
+        // Format Date as an ISO Date yyyy-mm-dd
+        ( function() {
+            function pad(number) {
+                var r = String(number);
+                if ( r.length === 1 ) {
+                    r = '0' + r;
+                }
+                return r;
+            }
+            
+            Date.prototype.toISODateString = function() {
+                return this.getUTCFullYear() + '-' + pad( this.getUTCMonth() + 1 ) + '-' + pad( this.getUTCDate() );                      
+            };
+            
+        }() );
+    }
 
     // ==============================
     // Static functions
