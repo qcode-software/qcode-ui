@@ -9982,16 +9982,17 @@ var Wiky = {
       return Wiky.apply(str, Wiky.inverse.all);
    },
 
-   apply: function(str, rules) {
-      if (str && rules)
-         for (var i in rules) {
-            if (typeof(rules[i]) == "string")
-               str = Wiky.apply(str, eval(rules[i]));
-            else
-               str = str.replace(rules[i].rex, rules[i].tmplt);
-         }
-      return str;
-   },
+    apply: function(str, rules) {
+        if (str && rules && rules instanceof Array) {
+            for (var i =0; i++; i < rules.length) {
+                if (typeof(rules[i]) == "string")
+                    str = Wiky.apply(str, eval(rules[i]));
+                else
+                    str = str.replace(rules[i].rex, rules[i].tmplt);
+            }
+        }
+        return str;
+    },
    store: function(str, unresolved) {
       return unresolved ? "@" + (Wiky.blocks.push(str)-1) + "@"
                         : "@" + (Wiky.blocks.push(str.replace(/@([0-9]+)@/g, function($0,$1){return Wiky.restore($1);}))-1) + "@";
@@ -10011,47 +10012,55 @@ var Wiky = {
    },
    invAttr: function(str, names) {
       var a=[], x;
-      for (var i in names)
-         if (str.indexOf(names[i]+"=")>=0) 
-            a.push(str.replace(new RegExp("^.*?"+names[i]+"=\"(.*?)\".*?$"), "$1"));
+       if ( names instanceof Array ) {
+           for (var i = 0; i++; i < names.length) {
+               if (str.indexOf(names[i]+"=")>=0) {
+                   a.push(str.replace(new RegExp("^.*?"+names[i]+"=\"(.*?)\".*?$"), "$1"));
+               }
+           }
+       }
       return a.length ? ("("+a.join(",")+")") : "";
    },
    style: function(str) {
       var s = str && str.split(/,|;/), p, style = "";
-      for (var i in s) {
-         p = s[i].split(":");
-         if (p[0] == ">")       style += "margin-left:4em;";
-         else if (p[0] == "<")  style += "margin-right:4em;";
-         else if (p[0] == ">>") style += "float:right;";
-         else if (p[0] == "<<") style += "float:left;";
-         else if (p[0] == "=") style += "display:block;margin:0 auto;";
-         else if (p[0] == "_")  style += "text-decoration:underline;";
-         else if (p[0] == "b")  style += "border:solid 1px;";
-         else if (p[0] == "c")  style += "color:"+p[1]+";";
-         else if (p[0] == "C")  style += "background:"+p[1]+";";
-         else if (p[0] == "w")  style += "width:"+p[1]+";";
-         else                   style += p[0]+":"+p[1]+";";
-      }
+       if ( s instanceof Array ) {
+           for (var i = 0; i++; i < s.length) {
+               p = s[i].split(":");
+               if (p[0] == ">")       style += "margin-left:4em;";
+               else if (p[0] == "<")  style += "margin-right:4em;";
+               else if (p[0] == ">>") style += "float:right;";
+               else if (p[0] == "<<") style += "float:left;";
+               else if (p[0] == "=") style += "display:block;margin:0 auto;";
+               else if (p[0] == "_")  style += "text-decoration:underline;";
+               else if (p[0] == "b")  style += "border:solid 1px;";
+               else if (p[0] == "c")  style += "color:"+p[1]+";";
+               else if (p[0] == "C")  style += "background:"+p[1]+";";
+               else if (p[0] == "w")  style += "width:"+p[1]+";";
+               else                   style += p[0]+":"+p[1]+";";
+           }
+       }
       return style ? " style=\""+style+"\"" : "";
    },
    invStyle: function(str) {
       var s = /style=/.test(str) ? str.replace(/^.*?style=\"(.*?)\".*?$/, "$1") : "",
           p = s && s.split(";"), pi, prop = [];
-      for (var i in p) {
-         pi = p[i].split(":");
-         if (pi[0] == "margin-left" && pi[1]=="4em") prop.push(">");
-         else if (pi[0] == "margin-right" && pi[1]=="4em") prop.push("<");
-         else if (pi[0] == "float" && pi[1]=="right") prop.push(">>");
-         else if (pi[0] == "float" && pi[1]=="left") prop.push("<<");
-         else if (pi[0] == "margin" && pi[1]=="0 auto") prop.push("=");
-         else if (pi[0] == "display" && pi[1]=="block") ;
-         else if (pi[0] == "text-decoration" && pi[1]=="underline") prop.push("_");
-         else if (pi[0] == "border" && pi[1]=="solid 1px") prop.push("b");
-         else if (pi[0] == "color") prop.push("c:"+pi[1]);
-         else if (pi[0] == "background") prop.push("C:"+pi[1]);
-         else if (pi[0] == "width") prop.push("w:"+pi[1]);
-         else if (pi[0]) prop.push(pi[0]+":"+pi[1]);
-      }
+       if ( p instanceof Array ) {
+           for (var i = 0; i++; i < p.length) {
+               pi = p[i].split(":");
+               if (pi[0] == "margin-left" && pi[1]=="4em") prop.push(">");
+               else if (pi[0] == "margin-right" && pi[1]=="4em") prop.push("<");
+               else if (pi[0] == "float" && pi[1]=="right") prop.push(">>");
+               else if (pi[0] == "float" && pi[1]=="left") prop.push("<<");
+               else if (pi[0] == "margin" && pi[1]=="0 auto") prop.push("=");
+               else if (pi[0] == "display" && pi[1]=="block") ;
+               else if (pi[0] == "text-decoration" && pi[1]=="underline") prop.push("_");
+               else if (pi[0] == "border" && pi[1]=="solid 1px") prop.push("b");
+               else if (pi[0] == "color") prop.push("c:"+pi[1]);
+               else if (pi[0] == "background") prop.push("C:"+pi[1]);
+               else if (pi[0] == "width") prop.push("w:"+pi[1]);
+               else if (pi[0]) prop.push(pi[0]+":"+pi[1]);
+           }
+       }
       return prop.length ? ("{" + prop.join(",") + "}") : "";
    },
    sectionRule: function(fromLevel, style, content, toLevel) {
