@@ -9338,10 +9338,10 @@ var Wiky = {
        "Wiky.rules.pre",
        "Wiky.rules.nonwikiblocks",
        "Wiky.rules.wikiblocks",
-       "Wiky.rules.post",
+       "Wiky.rules.post"
      ],
      pre: [
-       { rex:/(\r?\n)/g, tmplt:"\xB6" },  // replace line breaks with '¶' ..
+       { rex:/(\r?\n)/g, tmplt:"\xB6" }  // replace line breaks with '¶' ..
      ],
      post: [
        { rex:/(^\xB6)|(\xB6$)/g, tmplt:"" },  // .. remove linebreaks at BOS and EOS ..
@@ -9404,7 +9404,7 @@ var Wiky = {
        { rex:/[\.]{3}/g, tmplt:"&#8230;"}, // &hellip;
        { rex:/<->/g, tmplt:"&#8596;"}, // $harr;
        { rex:/<-/g, tmplt:"&#8592;"}, // &larr;
-       { rex:/->/g, tmplt:"&#8594;"}, //&rarr;
+       { rex:/->/g, tmplt:"&#8594;"} //&rarr;
      ],
      code: [
        { rex:/&/g, tmplt:"&amp;"},
@@ -9476,7 +9476,7 @@ var Wiky = {
        { rex:/<del[^>]*?>(.*?)<\/del>/mgi, tmplt:"(-$1-)" },
        { rex:/<abbr title=\"([^\"]*)\">(.*?)<\/abbr>/mgi, tmplt:"?$2($1)?" },
        { rex:/<a href=\"([^\"]*)\"[^>]*?>(.*?)<\/a>/mgi, tmplt:function($0,$1,$2){return $1==$2?$1:"["+$1+","+$2+"]";}},
-       { rex:/<img([^>]*)\/>/mgi, tmplt:function($0,$1){var a=Wiky.attrVal($1,"alt"),h=Wiky.attrVal($1,"src"),t=Wiky.attrVal($1,"title"),s=Wiky.attrVal($1,"style");return s||(t&&h!=t)?("["+Wiky.invStyle($1)+"img:"+h+(t&&(","+t))+"]"):h;}},
+       { rex:/<img([^>]*)\/>/mgi, tmplt:function($0,$1){var a=Wiky.attrVal($1,"alt"),h=Wiky.attrVal($1,"src"),t=Wiky.attrVal($1,"title"),s=Wiky.attrVal($1,"style");return s||(t&&h!=t)?("["+Wiky.invStyle($1)+"img:"+h+(t&&(","+t))+"]"):h;}}
      ],
      escapes: [
        { rex:/([|*~%\^])/g, tmplt:"\\$1" },
@@ -9512,7 +9512,7 @@ var Wiky = {
 
     apply: function(str, rules) {
         if (str && rules && rules instanceof Array) {
-            for (var i =0; i++; i < rules.length) {
+            for (var i = 0; i < rules.length; i++) {
                 if (typeof(rules[i]) == "string")
                     str = Wiky.apply(str, eval(rules[i]));
                 else
@@ -9541,7 +9541,7 @@ var Wiky = {
    invAttr: function(str, names) {
       var a=[], x;
        if ( names instanceof Array ) {
-           for (var i = 0; i++; i < names.length) {
+           for (var i = 0; i < names.length; i++) {
                if (str.indexOf(names[i]+"=")>=0) {
                    a.push(str.replace(new RegExp("^.*?"+names[i]+"=\"(.*?)\".*?$"), "$1"));
                }
@@ -9552,7 +9552,7 @@ var Wiky = {
    style: function(str) {
       var s = str && str.split(/,|;/), p, style = "";
        if ( s instanceof Array ) {
-           for (var i = 0; i++; i < s.length) {
+           for (var i = 0; i < s.length; i++) {
                p = s[i].split(":");
                if (p[0] == ">")       style += "margin-left:4em;";
                else if (p[0] == "<")  style += "margin-right:4em;";
@@ -9573,7 +9573,7 @@ var Wiky = {
       var s = /style=/.test(str) ? str.replace(/^.*?style=\"(.*?)\".*?$/, "$1") : "",
           p = s && s.split(";"), pi, prop = [];
        if ( p instanceof Array ) {
-           for (var i = 0; i++; i < p.length) {
+           for (var i = 0; i < p.length; i++) {
                pi = p[i].split(":");
                if (pi[0] == "margin-left" && pi[1]=="4em") prop.push(">");
                else if (pi[0] == "margin-right" && pi[1]=="4em") prop.push("<");
