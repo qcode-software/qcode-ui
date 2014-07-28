@@ -137,7 +137,7 @@
                     }
                 });
             } else {
-                // Update exisiting qtip and show
+                // Update existing qtip and show
                 api.set('content.text', message);
                 api.reposition();
                 api.show();
