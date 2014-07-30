@@ -9,13 +9,17 @@
         if ( ! target.length ) {
             $.error('positionRelativeTo called with empty target');
         }
-	var $body = $('body');
 
+        var root = $('<div>').offsetParent();
+        
 	// Find chain of offset parents from this element to body
 	var myOffsetParents = this;
 	var current = this;
-	while ( ! current.is($body) ) {
+	while ( ! current.is(root) ) {
 	    current = current.offsetParent();
+            if ( current.is(myOffsetParents) ) {
+                $.error('positionRelativeTo Looping error');
+            }
 	    myOffsetParents = myOffsetParents.add(current);
             if ( current.length !== 1 ) {
                 $.error('Offset chain error - perhaps positionRelativeTo was called on a detached object?');
@@ -24,7 +28,7 @@
 
 	// Search offset parents from target element up until a common offset parent is found
 	current = target;
-	while ( ! current.is(myOffsetParents) ) {
+	while (( ! current.is(myOffsetParents)) && ( ! current.is(root)) ) {
 	    current = current.offsetParent();
             if ( current.length !== 1 ) {
                 $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
@@ -50,7 +54,7 @@
             }
 	    current = current.offsetParent();
 	}
-	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
+	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is(root)) ) {
 	    myPosition.left += commonOffsetParent.scrollLeft();
 	    myPosition.top += commonOffsetParent.scrollTop();
 	}
@@ -73,7 +77,7 @@
             }
 	    current = current.offsetParent();
 	}
-	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is('body')) ) {
+	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is(root)) ) {
 	    targetPosition.left += commonOffsetParent.scrollLeft();
 	    targetPosition.top += commonOffsetParent.scrollTop();
 	}
