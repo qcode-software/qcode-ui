@@ -59,7 +59,7 @@
 	}, 
 	repaint: function() {
 	    // repaint the editor
-	    if ( this.currentElement.length == 1 ) {
+	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {
 		var editor = this.editor;
 		var element = this.currentElement;
 
