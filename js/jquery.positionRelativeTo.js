@@ -43,8 +43,10 @@
 	    myPosition.left += positionOfCurrent.left;
 	    myPosition.top += positionOfCurrent.top;
             if ( current != this ) {
-                myPosition.left += parseInt(current.css('border-left-width'));
-                myPosition.top += parseInt(current.css('border-top-width'));
+                myPosition.left += parseFloat(current.css('border-left-width'))
+                        + parseFloat(current.css('margin-left'));
+                myPosition.top += parseFloat(current.css('border-top-width'))
+                        + parseFloat(current.css('margin-top'));
             }
 	    current = current.offsetParent();
 	}
@@ -64,8 +66,10 @@
 	    targetPosition.left += positionOfCurrent.left;
 	    targetPosition.top += positionOfCurrent.top;
             if ( current != target ) {
-                targetPosition.left += parseInt(current.css('border-left-width'));
-                targetPosition.top += parseInt(current.css('border-top-width'));
+                targetPosition.left += parseFloat(current.css('border-left-width'))
+                        + parseFloat(current.css('margin-left'));
+                targetPosition.top += parseFloat(current.css('border-top-width'))
+                        + parseFloat(current.css('margin-top'));
             }
 	    current = current.offsetParent();
 	}
