@@ -17,14 +17,8 @@
 var qcode = qcode || {};
 
 (function($, undefined) {
-    var ding;
     var alertQueue = [];
     var timeoutID;
-    $(function() {
-        if ( qcode.Sound.supported ) {
-            ding = new qcode.Sound('/Sounds/Windows%20Ding.wav');
-        }
-    });
 
     function showNextMessage() {
         if ( alertQueue.length > 0 && timeoutID === undefined ) {
@@ -69,12 +63,13 @@ var qcode = qcode || {};
                             showNextMessage();
                         }
                     });
-            if ( qcode.Sound && qcode.Sound.supported ) {
-                ding.play();
+            if ( qcode.Sound && qcode.Sound.supported && qcode.alert.config.sound ) {
+                qcode.alert.config.sound.play();
             }
         });
         showNextMessage();
     }
+    qcode.alert.config = {};
 
     qcode.confirm = function(message, onConfirm) {
         alertQueue.push(function() {
@@ -125,10 +120,11 @@ var qcode = qcode || {};
                             showNextMessage();
                         }
                     });
-            if ( qcode.Sound && qcode.Sound.supported ) {
-                ding.play();
+            if ( qcode.Sound && qcode.Sound.supported && qcode.confirm.config.sound ) {
+                qcode.confirm.config.sound.play();
             }
         });
         showNextMessage();
     }
+    qcode.confirm.config = {};
 })(jQuery);
