@@ -78,6 +78,7 @@
 	show: function(element, value, searchURL){
 	    // Show this editor positioned over the target element and set the value of the editor
 	    this.currentElement = $(element);
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
 	    this.lastValue = value;
 	    this.searchURL = searchURL;
@@ -91,6 +92,7 @@
 	    }
 	    this.editor.add(this.comboOptions)
 		.hide();
+	    this.currentElement.css('visibility', "inherit");
 	},
 	selectOption: function(index) {
 	    // Select the option for this 0-based index

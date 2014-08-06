@@ -42,6 +42,7 @@
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
 	    this.repaint()
 	    if ( parseBoolean(value) ) {
@@ -56,6 +57,7 @@
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	    this.currentElement.css('visibility', "inherit");
 	}, 
 	repaint: function() {
 	    // repaint the editor

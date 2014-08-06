@@ -47,6 +47,7 @@
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
 	    this.repaint();
 	    this.editor.html(value);
@@ -57,6 +58,7 @@
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	    this.currentElement.css('visibility', "inherit");
 	},
 	repaint: function() {
 	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {

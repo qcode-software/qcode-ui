@@ -5,7 +5,11 @@
     $.widget("qcode.dbField", {
 	_create: function() {
 	    // saveType
-	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecord().dbRecord("option", "saveType"))
+	    this.options.saveType = coalesce(
+                this.element.attr('saveType'),
+                this.options.saveType,
+                this.getRecord().dbRecord("option", "saveType")
+            );
 	    
 	    if ( this.options.saveType === 'fieldOut' ) {
 		this._on({
@@ -16,6 +20,14 @@
 		    }
 		});
 	    }
+
+            if ( this.element.is(':input') ) {
+                this._on({
+                    'keydown': function() {
+                        
+                    }
+                });
+            }
 	},
         _destroy: function() {
             //this.editor('destroy');
@@ -53,19 +65,33 @@
 	    var recordSet = this.getRecordSet();
 	    
 	    recordSet.dbRecordSet('setCurrentField', this.element);
-	    this.element.css('visibility', "hidden");
 	    
-	    // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	    this.editor('show', this.element, this.getValue());
+            if ( this.element.is(':input') ) {
+	        // Call the appropriate dbEditor plugin on the record set to show the editor over this field
+	        this.editor('show', this.element, this.getValue());
 
-	    // Optionally set the text selection
-	    if (select) {
-		this.editor('selectText', select);
-	    } else if ( this.element.attr('fieldInSelect') != null ) {
-		this.editor('selectText', this.element.attr('fieldInSelect'));
-	    } else {
-		this.editor('selectText', 'all');
-	    }
+	        // Optionally set the text selection
+	        if (select) {
+		    this.editor('selectText', select);
+	        } else if ( this.element.attr('fieldInSelect') != null ) {
+		    this.editor('selectText', this.element.attr('fieldInSelect'));
+	        } else {
+		    this.editor('selectText', 'all');
+	        }
+            } else {
+                this.cachedValue = this.getValue();
+                switch (select || this.element.attr('fieldInSelect') || 'all') {
+	        case "start":
+		    this.element.textrange('set', "start", "start");
+		    break;
+	        case "end":
+		    this.element.textrange('set', "end", "end");
+		    break;
+	        case "all":
+		    this.element.textrange('set', "all");
+		    break;
+                }
+            }
 	    // custom event
 	    this.element.trigger('dbFieldIn');
 	}, 
@@ -74,14 +100,19 @@
 	    recordSet.dbRecordSet('setCurrentField', null);
 
 	    // Check if dirty
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		this.write();
-		var record = this.getRecord();
-		record.dbRecord('setState', 'dirty');
-	    }
+            if ( this.element.is(':input') ) {
+	        if ( this.getValue() !== this.editor('getValue') ) {
+		    this.write();
+		    var record = this.getRecord();
+		    record.dbRecord('setState', 'dirty');
+	        }
 
-	    this.element.css('visibility', "inherit");
-	    this.editor('hide');
+	        this.editor('hide');
+            } else {
+                if ( this.cachedValue != this.getValue() ) {
+		    this.getRecord().dbRecord('setState', 'dirty');
+                }
+            }
 	    // custom event
 	    this.element.trigger('dbFieldOut');
 	}, 
