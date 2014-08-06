@@ -38,13 +38,16 @@
 	    });
 	    this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
 	}, 
 	show: function(element, value){
 	    // Show this editor positioned over the target element and set the value of the editor
-	    this.currentElement = $(element);
+	    this.currentElement = $(element).first();
             this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
 	    this.repaint();
@@ -57,10 +60,11 @@
 	    }
 	    this.editor.hide();
 	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	},
 	repaint: function() {
 	    // repaint the editor
-	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {
+	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
 

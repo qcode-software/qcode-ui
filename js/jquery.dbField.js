@@ -20,18 +20,21 @@
 		    }
 		});
 	    }
-
-            if ( this.element.is(':input') ) {
-                this._on({
-                    'keydown': function() {
-                        
+            this._on({
+                'focus': this.fieldIn,
+                'blur': this.fieldOut,
+                'editorBlur': this.fieldOut,
+                'valueChange': function() {
+                    if ( this.element.editable('getValue') !== this.storedValue ) {
+                        this.getrecord().setState('dirty');
                     }
-                });
+                }
+            });
+            if ( this.element.editable('hasFocus') ) {
+                this.fieldIn();
             }
+            this.storedValue = this.element.editable('getValue');
 	},
-        _destroy: function() {
-            //this.editor('destroy');
-        },
 	getRecordSet: function() {
 	    return this.element.closest('.record-set');
 	},
@@ -42,78 +45,15 @@
 	    return this.element.attr('name');
 	},
 	getValue: function(){
-	    if ( this.getType() == "htmlarea" ) {
-		return this.element.html();
-	    } else if ( this.element.is(':input') ) {
-		return this.element.val();
-	    } else {
-		return this.element.text();
-	    }
+            return this.element.editable('getValue');
 	}, 
 	setValue: function(newValue){
-	    if ( this.getType() == "htmlarea" ) {
-		this.element.html(newValue);
-	    } else if ( this.element.is(':input') ) {
-		this.element.val(newValue);
-	    } else {
-		this.element.text(newValue);
-	    }
+            this.element.editable('setValue', newValue);
 	}, 
 	fieldIn: function(select){
-	    // Show the editor on this field
-	    // select can be one of "all", "start" or "end", and indicates the text range to select
-	    var recordSet = this.getRecordSet();
-	    
-	    recordSet.dbRecordSet('setCurrentField', this.element);
-	    
-            if ( this.element.is(':input') ) {
-	        // Call the appropriate dbEditor plugin on the record set to show the editor over this field
-	        this.editor('show', this.element, this.getValue());
-
-	        // Optionally set the text selection
-	        if (select) {
-		    this.editor('selectText', select);
-	        } else if ( this.element.attr('fieldInSelect') != null ) {
-		    this.editor('selectText', this.element.attr('fieldInSelect'));
-	        } else {
-		    this.editor('selectText', 'all');
-	        }
-            } else {
-                this.cachedValue = this.getValue();
-                switch (select || this.element.attr('fieldInSelect') || 'all') {
-	        case "start":
-		    this.element.textrange('set', "start", "start");
-		    break;
-	        case "end":
-		    this.element.textrange('set', "end", "end");
-		    break;
-	        case "all":
-		    this.element.textrange('set', "all");
-		    break;
-                }
-            }
-	    // custom event
 	    this.element.trigger('dbFieldIn');
 	}, 
 	fieldOut: function(){
-	    var recordSet = this.getRecordSet();
-	    recordSet.dbRecordSet('setCurrentField', null);
-
-	    // Check if dirty
-            if ( this.element.is(':input') ) {
-	        if ( this.getValue() !== this.editor('getValue') ) {
-		    this.write();
-		    var record = this.getRecord();
-		    record.dbRecord('setState', 'dirty');
-	        }
-
-	        this.editor('hide');
-            } else {
-                if ( this.cachedValue != this.getValue() ) {
-		    this.getRecord().dbRecord('setState', 'dirty');
-                }
-            }
-	    // custom event
 	    this.element.trigger('dbFieldOut');
 	}, 
 	getType: function(){
@@ -127,7 +67,7 @@
 	    if ( this.isEditable() ) {
 		this.getRecordSet().dbRecordSet('fieldChange', this.element);
 		// Don't blur the editor that we just showed
-		event.preventDefault();
+		event.preventDefault();q
 	    }
 	}, 
 	editorKeyDown: function(event){

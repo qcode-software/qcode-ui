@@ -61,16 +61,8 @@
         });
     };
     Navigate.prototype.changeFocus = function(fromField, nextField) {
-        // Collapse current textrange selection
-        if (fromField.is('input[type=text],textarea,[contenteditable=true]')) {
-            fromField.textrange('set','start','start');
-        }
-
         // Move focus to nextField and select text contents
         nextField.focus();
-        if (nextField.is('input[type=text],textarea,[contenteditable=true]')) {
-            nextField.textrange('set','all');
-        }
     };
 
     // Make Navigate Class available as a jQuery plugin   

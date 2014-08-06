@@ -13,20 +13,19 @@
 	    // Ensure recordSet class is set
 	    this.element.addClass('record-set');
 
+            this.element.find('.editable, input[type!="hidden"], textarea, select').editable({
+                container: this.element
+            });
+
 	    // Elements with class "editable" are editable fields.
 	    this._on({
-		'click .editable': function(event) {
-		    $(event.currentTarget).dbField('onClick', event);
-		},
-		'editorKeyDown .editable': function(event) {
-		    $(event.currentTarget).dbField('editorKeyDown', event);
-		},
-                'editorValueChange .editable': function(event) {
-                    $(event.currentTarget).dbField('editorValueChange', event);
-                },
-		'editorBlur .editable': function(event) {
-		    $(event.currentTarget).dbField('editorBlur', event);
-		}
+                'focus .editable': function(event) {
+                    $(event.currentTarget)
+                            .editable({
+                                container: this.element
+                            })
+                            .dbField('getRecord').dbRecord();
+                }
 	    });
 	    this._on(window, {
 		'beforeunload': this._onBeforeUnload,
