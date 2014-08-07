@@ -8233,13 +8233,13 @@ function unescapeHTML(str) {
 };
 
 function urlSet(url,name,value) {
-  var re = /([^\?]+)(?:\?([^\#]*))?(\#.*)?/;
-  re.exec(url);
-  var path = RegExp.$1;
-  var queryString = RegExp.$2;
-  var fragment = RegExp.$3;
-  url = path + "?" + urlDataSet(queryString,name,value) + fragment;
-  return url;
+    var re = /([^\?]+)(?:\?([^\#]*))?(\#.*)?/;
+    re.exec(url);
+    var path = RegExp.$1;
+    var queryString = RegExp.$2;
+    var fragment = RegExp.$3;
+    url = path + "?" + urlDataSet(queryString,name,value) + fragment;
+    return url;
 }
 
 function urlDataSet(data,name,value) {
