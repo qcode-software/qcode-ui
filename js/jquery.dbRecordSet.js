@@ -1,31 +1,26 @@
 // dbRecordSet plugin
 // Provides an ui for editable database records.
+// Relies on records having class "record", all fields having "name" attributes,
+// and all editable fields having the "editable" class.
+// All editable fields must be focussable - use the tabIndex attribute, if required, to force this.
 ;(function($, window, undefined){
 
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	options: {
-	    saveType: "recordOut" /*recordOut or fieldOut*/
+	    saveEvent: "recordOut" /*recordOut or fieldOut*/
 	},
 	_create: function(){
-	    // check saveType attr
-	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType);
+	    // check saveEvent attr
+	    this.options.saveEvent = coalesce(this.element.attr('saveEvent'), this.options.saveEvent);
+
 	    // Ensure recordSet class is set
 	    this.element.addClass('record-set');
 
-            this.element.find('.editable, input[type!="hidden"], textarea, select').editable({
-                container: this.element
-            });
-
 	    // Elements with class "editable" are editable fields.
 	    this._on({
-                'focus .editable': function(event) {
-                    $(event.currentTarget)
-                            .editable({
-                                container: this.element
-                            })
-                            .dbField('getRecord').dbRecord();
-                }
+                'focus .editable': this._onFieldFocus,
+                'dbRecordActionReturn': this._onDbRecordActionReturn
 	    });
 	    this._on(window, {
 		'beforeunload': this._onBeforeUnload,
@@ -36,6 +31,19 @@
 	    this.currentField = $([]);
 	    this.currentRecord = $([]);
 	},
+        _onFieldFocus: function(event) {
+            // Ensure editable plugin is initialised, then switch to the chosen field.
+            $(event.currentTarget).editable({container: this.element});
+            this.fieldChange($(event.currentTarget));
+        },
+        _onDbRecordActionReturn: function(event, action) {
+            if ( action == "delete" ) {
+                this.element.trigger('message', [{
+                    type: 'message',
+                    html: 'Record Deleted.'
+                }]);
+            }
+        },
         _destroy: function() {
             this.currentField.dbField('fieldOut');
             this.element.find('.record').dbRecord('destroy');
@@ -56,20 +64,26 @@
 	setCurrentField: function(newField) {
 	    this.currentField = $(newField);
 	}, 
-	fieldChange: function(toField) {
-	    //
+	fieldChange: function(newField) {
+            // Change the current field.
+	    var newRecord = newField.dbField('getRecord');
+            var currentField = this.getCurrentField();
 	    var currentRecord = this.getCurrentRecord();
-	    var newRecord = toField.dbField('getRecord');
+            
+            if ( ! currentField.is(newField) ) {
+	        currentField.dbField('fieldOut');
 
-	    this.getCurrentField().dbField('fieldOut');
-	    if ( ! currentRecord.is(newRecord) ) {
-		currentRecord.dbRecord('recordOut');
-	    }
+	        if ( ! currentRecord.is(newRecord) ) {
+		    currentRecord.dbRecord('recordOut');
+	        }
 
-	    toField.dbField('fieldIn');
-	    if ( ! currentRecord.is(newRecord) ) {
-		newRecord.dbRecord('recordIn');
-	    }
+	        newField.dbField('fieldIn');
+
+	        if ( ! currentRecord.is(newRecord) ) {
+		    newRecord.dbRecord('recordIn');
+	        }
+            }
+
 	},
 	_onBeforeUnload: function(event){
 	    // Before leaving the page, offer the user a chance to save changes.

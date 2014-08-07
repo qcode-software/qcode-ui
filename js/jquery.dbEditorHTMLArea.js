@@ -20,7 +20,14 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.repaint,
+                'styleChange': function(event) {
+                    if ( $(event.target).is(this.currentElement)
+                         || jQuery.contains(event.target,this.currentElement)
+                       ) {
+                        this.repaint();
+                    }
+                }
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable', true)
@@ -40,6 +47,9 @@
 	    });
 	    this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.html();
@@ -59,6 +69,7 @@
 	    }
 	    this.editor.hide();
 	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	},
 	repaint: function() {
 	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {
@@ -198,7 +209,16 @@
             }
 	},
 	_inputOnKeyUp: function(e) {
-            this.currentElement.trigger('editorValueChange');
+            var selection = this.editor.textrange('get');
+            if ( (e.which == 13 // return key
+                  && ( ! e.shiftKey)
+                  && ( ! this.option('tab_on_return'))
+                  && ( ! (selection.selectionAtStart && selection.selectionAtEnd) )
+                 )
+                 || isEditingKeyEvent(e)
+               ) {
+                this.currentElement.trigger('editorValueChange');
+            }
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 

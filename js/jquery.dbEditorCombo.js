@@ -25,7 +25,14 @@
 	_create: function() {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.repaint,
+                'styleChange': function(event) {
+                    if ( $(event.target).is(this.currentElement)
+                         || jQuery.contains(event.target,this.currentElement)
+                       ) {
+                        this.repaint();
+                    }
+                }
 	    });
 
             this._on(this.element.parentsUntil('html'), {
@@ -67,6 +74,9 @@
 
 	    this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
@@ -93,6 +103,7 @@
 	    this.editor.add(this.comboOptions)
 		.hide();
 	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	},
 	selectOption: function(index) {
 	    // Select the option for this 0-based index

@@ -15,10 +15,12 @@
 		    options;
 
 		if ( isMethodCall ) {
+                    debug(name, options);
 		    this.each(function() {
 			var methodValue,
 			instance = $.data( this, fullName );
 			if ( !instance ) {
+                            // Create widget with default when method is called before init.
 			    $.data( this, fullName, new object( undefined, this ) );
 			    instance = $.data( this, fullName );
 			}

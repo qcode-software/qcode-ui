@@ -82,7 +82,9 @@
         },
 
         set: function(selectionStart, selectionEnd) {
-            this.focus();
+            if ( ! $(this).is(':focus') ) {
+                this.focus();
+            }
             var text = this.is(':input') ?  this.val() :  this.text();
             if (selectionStart === 'start') {
                 selectionStart = 0;

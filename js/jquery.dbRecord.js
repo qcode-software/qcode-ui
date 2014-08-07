@@ -6,24 +6,86 @@
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
 	_create: function() {
-	    // saveType option
-	    this.options.saveType = coalesce(this.element.attr('saveType'), this.options.saveType, this.getRecordSet().dbRecordSet("option", "saveType"));
+	    // saveEvent option
+	    this.options.saveEvent = coalesce(
+                this.element.attr('saveEvent'),
+                this.options.saveEvent,
+                this.getRecordSet().dbRecordSet("option", "saveEvent")
+            );
+
+            // Inital state
 	    this.state = 'current';
-	    if ( this.element.attr('recordType') === "add" ) {
-		this.type = "add";
+
+            // Record type
+	    if ( this.element.attr('saveAction') === "add" ) {
+		this.saveAction = "add";
 	    } else {
-		this.type = "update";
+		this.saveAction = "update";
 	    }
-	    if ( this.options.saveType === 'recordOut' ) {
+
+	    if ( this.options.saveEvent === 'recordOut' ) {
 		this._on({
-		    'dbRecordOut': function() {
-			if ( this.getState() === "dirty" ) {
-			    this.save();
-			}
-		    }
+		    'dbRecordOut': this._onDbRecordOut
 		});
 	    }
+
+            this._on({
+                'dbRecordStateChange': this._onDbRecordStateChange,
+                'keydown .editable': this._onFieldKeyDown,
+                'editorKeyDown': this._onFieldKeyDown
+            });
 	},
+        _onDbRecordOut: function() {
+	    if ( this.getState() === "dirty" ) {
+		this.save();
+	    }
+	},
+        _onFieldKeyDown: function(event) {
+            // ctrl+s to save.
+            if ( event.which == 83 // S
+                 && event.ctrlKey ) {
+                this.save();
+                event.preventDefault();
+            }
+        },
+        _onDbRecordStateChange: function(event) {
+            switch ($(event.target).dbRecord('getState')) {
+            case "updating":
+                this.element.trigger('message', [{
+                    type: 'notice',
+                    html: 'Updating...'
+                }]);
+                break;
+            case "error":
+                this.element.trigger('message', [{
+                    type: 'error',
+                    html: this.getErrorMessage()
+                }]);
+                break;
+            case "current":
+                this.element.trigger('message', [{
+                    type: 'notice',
+                    html: ''
+                }]);
+                break;
+            case "dirty":
+                var saver = $('<span>')
+                        .text('save')
+                        .on('click',this.save.bind(this, true))
+                        .addClass('action save');
+                var message = $('<span>')
+                        .text('Editing .. to ')
+                        .append(saver)
+                        .append(', type Ctrl+S');
+                this.element.trigger('message', [{
+                    type: 'message',
+                    html: message
+                }]);
+                break;
+	    default:
+		$.error('Invalid state');
+	    }
+        },
         _destroy: function() {
             this.element.find('.editable').dbField('destroy');
         },
@@ -35,20 +97,22 @@
 	}, 
 	setState: function(newState) {
 	    // Set the state of this record
-	    switch(newState) {
-	    case "updating":
-	    case "error":
-	    case "current":
-	    case "dirty":
-		this.element.removeClass("current dirty updating error");
-		this.element.addClass(newState);
-		this.state = newState;
-		this.getCurrentField().dbField('editor', 'repaint');
-		this.element.trigger('dbRecordStateChange');
-		break;
-	    default:
-		$.error('Invalid state');
-	    }
+            if ( this.getState() != newState ) {
+	        switch(newState) {
+	        case "updating":
+	        case "error":
+	        case "current":
+	        case "dirty":
+		    this.element.removeClass("current dirty updating error");
+		    this.element.addClass(newState);
+		    this.state = newState;
+		    this.element.trigger('dbRecordStateChange');
+                    this.element.trigger('styleChange');
+		    break;
+	        default:
+		    $.error('Invalid state');
+	        }
+            }
 	},
 	getErrorMessage: function() {
 	    return this.error;
@@ -58,11 +122,11 @@
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
-	    var url = this.getRecordSet().attr(this.type + "URL");
+	    var url = this.getRecordSet().attr(this.saveAction + "URL");
 	    if ( ! url ) {
-		$.error('Could not '+this.type+' record - no url provided');
+		$.error('Could not '+this.saveAction+' record - no url provided');
 	    }
-	    this.action(this.type, url, async);
+	    this.action(this.saveAction, url, async);
 	}, 
 	delete: function(async) {
 	    // Delete this record
@@ -78,9 +142,7 @@
 	action: function(action, url, async) {
 	    // Perform the given action (add, update, delete), by submitting record data to the server.
 	    var async = coalesce(async, true);
-
 	    this.setState('updating');
-	    this.getCurrentField().dbField('write');
 
 	    var urlPieces = splitURL(url);
 	    var path = urlPieces.path;
@@ -145,7 +207,7 @@
 		break;
 	    case "add":
 		// Once added, a record becomes an updatable record
-		this.type = "update";
+		this.saveAction = "update";
 		this.setValues(xmlDoc);
 		break;
 	    }
@@ -163,11 +225,11 @@
 	},
 	_actionReturnError: function(action, message, type) {
 	    // Called when a server action returns an error
+	    this.error = message;
 	    this.setState('error');
 	    if ( type != 'USER' ) {
 		qcode.alert(message);
 	    }
-	    this.error = message;
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
 	}
     });

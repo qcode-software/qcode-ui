@@ -4,34 +4,45 @@
 ;(function($, undefined) {
     $.widget('qcode.editable', {
         options: {
+            // type - type of editor
+            // currently one of "auto","input","text","combo","bool","textarea","htmlarea"
+            // ("auto" behaves as "input" for form elements, as "text" for everything else"
             type: "auto",
+
+            // defaultRange - range to select on focus. currently one of null,"start","end","all"
+            // (null defaults to "all" for non-form elements because the browser won't put the
+            // cursor to where the mouse was clicked.
             defaultRange: null,
             container: null
-        }
+        },
         _create: function() {
-            if ( this.options === "auto" ) {
+            if ( this.options.type === "auto" ) {
                 if ( this.element.is(':input') ) {
-                    options.type = "input";
+                    this.options.type = "input";
                 } else {
-                    options.type = "text";
+                    this.options.type = "text";
                 }
+            }
+            if ( this.options.type !== "input"
+                 && this.options.defaultRange === null
+               ) {
+                this.options.defaultRange = "all";
             }
             if ( this.options.container === null ) {
                 this.options.container = this.element.offsetParent();
             }
-            if ( this.options.container.is('html') ) {
+            if ( $(this.options.container).is('html') ) {
                 this.options.container = $('body');
             }
             this._on({
                 'focus': this._onFocus,
-                'editorBlur': function() {
-                    this.element.setValue(this._editor('getValue'));
-                },
-                'editorValueChange': function() {
-                    this.element.trigger('valueChange');
-                }
+                'editorBlur': this._onEditorBlur,
+                'cut': this._onCut,
+                'paste': this._onPaste,
+                'keyup': this._onKeyUp
             });
             if ( this.element.is(':focus') ) {
+                // Initialised on already-focussed element (probably in response to focus event)
                 this._onFocus();
             }
         },
@@ -48,18 +59,38 @@
                 }
             }
         },
+        _onEditorBlur: function() {
+            this._editor('hide');
+            this.setValue(this._editor('getValue'));
+        },
+        _onCut: function() {
+            this.trigger('valueChange');
+        },
+        _onPaste: function() {
+            this.trigger('valueChange');
+        },
+        _onKeyUp: function(e) {
+            // On keyup of a "printable" key or backspace, fire editorValueChange event.
+            if ( isEditingKeyEvent(e) ) {
+                this.element.trigger('editorValueChange');
+            }
+            if ( e.which == 13 // return key
+                 && this.element.is('textarea') ) {
+                this.element.trigger('editorValueChange');
+            }
+        },
         hasFocus: function() {
-            return ( ( this.options.type !== "input"
-                       && this._editor('getCurrentElement').is(this.element)
-                     )
-                     || this.element.is(':focus')
-                   );        
+            return ( this.element.is(':focus') 
+                     || ( this.options.type !== "input"
+                          && this._editor('getCurrentElement').is(this.element)
+                        )
+                   );
         },
         getValue: function() {
             if ( this.options.type !== "input"
                  && this._editor('getCurrentElement').is(this.element)
                ) {
-                return this._editor.getValue();
+                return this._editor('getValue');
 
             } else if ( this.options.type === "htmlarea" ) {
                 return this.element.html();
@@ -75,7 +106,7 @@
             if ( this.options.type !== "input"
                  && this._editor('getCurrentElement').is(this.element)
                ) {
-                this._editor.setValue(newValue);
+                this._editor('setValue',newValue);
                 return
             }
             
@@ -88,7 +119,6 @@
             } else {
                 this.element.text(newValue);
             }
-            this.element.trigger('valueChange');
         },
         setRange: function(newRange) {
             if ( this.options.type !== "input" 
@@ -98,10 +128,13 @@
             } else {
                 switch (newRange) {
                 case "start":
+		    this.element.textrange('set', "start", "start");
                     break;
                 case "end":
+		    this.element.textrange('set', "end", "end");
                     break;
-                case "all";
+                case "all":
+		    this.element.textrange('set', "all");
                     break;
                 default:
                     $.error('Unrecognised range declaration');
@@ -128,7 +161,7 @@
             default:
                 $.error('Unknown editor type');
             }
-            return this.options.container[pluginName].apply(recordSet, arguments);
+            return $(this.options.container)[pluginName].apply($(this.options.container), arguments);
         }
     });
 })(jQuery);
