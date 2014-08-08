@@ -8233,7 +8233,7 @@ function unescapeHTML(str) {
 };
 
 function urlSet(url,name,value) {
-    var re = /([^\?]+)(?:\?([^\#]*))?(\#.*)?/;
+    var re = /([^\?\#]+)(?:\?([^\#]*))?(\#.*)?/;
     re.exec(url);
     var path = RegExp.$1;
     var queryString = RegExp.$2;
