@@ -224,7 +224,7 @@ function focusFirstChild(elmt) {
 }
 
 function urlSet(url,name,value) {
-    var re = /([^\?]+)(?:\?([^\#]*))?(\#.*)?/;
+    var re = /([^\?\#]+)(?:\?([^\#]*))?(\#.*)?/;
     re.exec(url);
     var path = RegExp.$1;
     var queryString = RegExp.$2;
@@ -258,7 +258,7 @@ function urlDataSet(data,name,value) {
 }
 
 function urlGet(url,name) {
-  var re = /([^\?]+)\??([^\#]*)/;
+  var re = /([^\?\#]+)\??([^\#]*)/;
   re.exec(url);
   var path = RegExp.$1;
   var queryString = RegExp.$2;
