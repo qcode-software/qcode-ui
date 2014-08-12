@@ -30,7 +30,6 @@
 	    }
 
             this._on({
-                'dbRecordStateChange': this._onDbRecordStateChange,
                 'keydown .editable': this._onFieldKeyDown,
                 'editorKeyDown': this._onFieldKeyDown
             });
@@ -48,8 +47,8 @@
                 event.preventDefault();
             }
         },
-        _onDbRecordStateChange: function(event) {
-            switch ($(event.target).dbRecord('getState')) {
+        _sendMessage: function() {
+            switch (this.getState()) {
             case "updating":
                 this.element.trigger('message', [{
                     type: 'notice',
@@ -106,8 +105,8 @@
 		    this.element.removeClass("current dirty updating error");
 		    this.element.addClass(newState);
 		    this.state = newState;
-		    this.element.trigger('dbRecordStateChange');
-                    this.element.trigger('styleChange');
+                    this._sendMessage();
+                    this.element.trigger('cosmeticChange');
 		    break;
 	        default:
 		    $.error('Invalid state');

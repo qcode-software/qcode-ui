@@ -3,6 +3,19 @@
 // Relies on records having class "record", all fields having "name" attributes,
 // and all editable fields having the "editable" class.
 // All editable fields must be focussable - use the tabIndex attribute, if required, to force this.
+
+// Fires:
+// message
+// dbRecordStateChange
+// cosmeticChange
+// dbRecordAction
+// dbRecordActionReturn
+// dbRecordActionReturnError
+// resize
+// dbRecordIn
+// dbRecordOut
+// dbFieldIn
+// dbFieldOut
 ;(function($, window, undefined){
 
     // Use the jQuery UI widget factory.

@@ -21,7 +21,7 @@
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {

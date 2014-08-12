@@ -315,16 +315,6 @@ function preloadImages() {
     }
 })(jQuery);
 
-// console log message if pluginName appears in debug.plugins array
-var debug = (function() {
-    return function(pluginName, message) {
-        if ( debug.plugins.indexOf(pluginName) > -1 ) {
-            console.log('Debug ' + pluginName + ': ' + message);
-        }
-    }
-})();
-debug.plugins = [];
-
 // isEditingKeyEvent
 // takes a jQuery keyboard event (keyup, keydown, keypress)
 // returns true if the event would modify the contents of the currently focussed input

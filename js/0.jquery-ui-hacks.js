@@ -15,7 +15,6 @@
 		    options;
 
 		if ( isMethodCall ) {
-                    debug(name, options);
 		    this.each(function() {
 			var methodValue,
 			instance = $.data( this, fullName );
