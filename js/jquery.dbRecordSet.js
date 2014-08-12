@@ -6,7 +6,6 @@
 
 // Fires:
 // message
-// dbRecordStateChange
 // cosmeticChange
 // dbRecordAction
 // dbRecordActionReturn

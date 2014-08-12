@@ -1,6 +1,9 @@
 // editable
 // - plugin to standardise editable elements
 // - uses dbEditor plugins to make non-form elements, such as <div>s, editable
+
+// fire
+// valueChange
 ;(function($, undefined) {
     $.widget('qcode.editable', {
         options: {
@@ -85,13 +88,13 @@
             }
         },
         _onCut: function() {
-            this.trigger('valueChange');
+            this.trigger('editorValueChange');
         },
         _onPaste: function() {
-            this.trigger('valueChange');
+            this.trigger('editorValueChange');
         },
         _onKeyUp: function(e) {
-            // On keyup of a "printable" key or backspace, fire editorValueChange event.
+            // On keyup of a "printable" key or backspace, fire valueChange event.
             if ( isEditingKeyEvent(e) ) {
                 this.element.trigger('editorValueChange');
             }

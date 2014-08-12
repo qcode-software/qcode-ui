@@ -147,7 +147,6 @@
 		}
 	    case 83: // S
 		if ( e.ctrlKey ) {
-                    debug('dbEditorText','ctrl+S');
 		    break;
 		} else {
 		    return true;

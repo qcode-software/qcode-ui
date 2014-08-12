@@ -27,10 +27,10 @@
                 });
 	    }
             this._on({
-                'editorValueChange': this._onEditorValueChange
+                'editorValueChange': this._onValueChange
             });
 	},
-        _onEditorValueChange: function() {
+        _onValueChange: function() {
             this.getRecord().dbRecord('setState','dirty');
         },
         _onDbFieldOut: function() {

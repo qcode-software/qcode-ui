@@ -41,6 +41,7 @@
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+            this.currentElement = $([]);
 	},
         getCurrentElement: function() {
             return this.currentElement;
