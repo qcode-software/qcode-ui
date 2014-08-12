@@ -64,10 +64,6 @@
 	}, 
 	hide: function() {
 	    // Hide the editor
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.currentElement = $([]);
 	    this.editor.hide();
 	    this.currentElement.css('visibility', "inherit");
             this.currentElement = $([]);
@@ -227,7 +223,9 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e) {
-	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus,
+            // don't pass the blur event on to the target element
+            // (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event('editorBlur', {

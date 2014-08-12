@@ -6,7 +6,6 @@
         options: {
             // type - type of editor
             // currently one of "auto","input","text","combo","bool","textarea","htmlarea"
-            // ("auto" behaves as "input" for form elements, as "text" for everything else"
             type: "auto",
 
             // defaultRange - range to select on focus. currently one of null,"start","end","all"
@@ -20,7 +19,20 @@
                 if ( this.element.is(':input') ) {
                     this.options.type = "input";
                 } else {
-                    this.options.type = "text";
+                    switch ( this.element.attr('type') ) {
+                    case "combo":
+                    case "bool":
+                    case "textarea":
+                    case "htmlarea":
+                        this.options.type = this.element.attr('type');
+                        break;
+                    case "text":
+                    case undefined:
+                        this.options.type = "text";
+                        break;
+                    default:
+                        $.error('Unknown editor type');
+                    }
                 }
             }
             if ( this.options.type !== "input"
@@ -41,6 +53,17 @@
                 'paste': this._onPaste,
                 'keyup': this._onKeyUp
             });
+            if ( this.options.type !== "input" ) {
+                this._on({
+                    'editorBlur': this._onEditorBlur
+                });
+            } else {
+                this._on({
+                    'blur': function() {
+                        this.element.trigger('editorBlur');
+                    }
+                });
+            }
             if ( this.element.is(':focus') ) {
                 // Initialised on already-focussed element (probably in response to focus event)
                 this._onFocus();

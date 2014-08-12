@@ -11,10 +11,20 @@
                 this.getRecord().dbRecord("option", "saveEvent")
             );
 	    
-	    if ( this.options.saveEvent === 'fieldOut' ) {
+	    switch ( this.options.saveEvent ) {
+            case 'fieldOut':
 		this._on({
 		    'dbFieldOut': this._onDbFieldOut
 		});
+                break;
+            case 'blur':
+                this._on({
+                    'editorBlur': function() {
+	                if ( this.getRecord().dbRecord('getState') === "dirty" ) {
+		            this.getRecord().dbRecord('save');
+	                }
+	            }
+                });
 	    }
             this._on({
                 'editorValueChange': this._onEditorValueChange

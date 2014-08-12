@@ -8,7 +8,7 @@
     // Use the jQuery UI widget factory.
     $.widget('qcode.dbRecordSet', {
 	options: {
-	    saveEvent: "recordOut" /*recordOut or fieldOut*/
+	    saveEvent: "recordOut" /*recordOut, fieldOut, or blur*/
 	},
 	_create: function(){
 	    // check saveEvent attr
