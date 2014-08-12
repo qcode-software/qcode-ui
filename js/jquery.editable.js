@@ -48,14 +48,16 @@
             }
             this._on({
                 'focus': this._onFocus,
-                'editorBlur': this._onEditorBlur,
                 'cut': this._onCut,
                 'paste': this._onPaste,
                 'keyup': this._onKeyUp
             });
             if ( this.options.type !== "input" ) {
                 this._on({
-                    'editorBlur': this._onEditorBlur
+                    'editorBlur': function() {
+                        this._editor('hide');
+                        this.setValue(this._editor('getValue'));
+                    }
                 });
             } else {
                 this._on({
@@ -81,10 +83,6 @@
                     });
                 }
             }
-        },
-        _onEditorBlur: function() {
-            this._editor('hide');
-            this.setValue(this._editor('getValue'));
         },
         _onCut: function() {
             this.trigger('valueChange');
