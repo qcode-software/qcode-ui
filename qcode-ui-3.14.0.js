@@ -49,7 +49,6 @@
 		    options;
 
 		if ( isMethodCall ) {
-                    debug(name, options);
 		    this.each(function() {
 			var methodValue,
 			instance = $.data( this, fullName );
@@ -1637,7 +1636,7 @@ function dynamicResize(oContainer) {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {
@@ -1660,6 +1659,7 @@ function dynamicResize(oContainer) {
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+            this.currentElement = $([]);
 	},
         getCurrentElement: function() {
             return this.currentElement;
@@ -1900,7 +1900,7 @@ function dynamicResize(oContainer) {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {
@@ -2301,7 +2301,7 @@ function dynamicResize(oContainer) {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {
@@ -2567,7 +2567,7 @@ function dynamicResize(oContainer) {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {
@@ -2696,7 +2696,6 @@ function dynamicResize(oContainer) {
 		}
 	    case 83: // S
 		if ( e.ctrlKey ) {
-                    debug('dbEditorText','ctrl+S');
 		    break;
 		} else {
 		    return true;
@@ -2795,7 +2794,7 @@ function dynamicResize(oContainer) {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
 		'resize': this.repaint,
-                'styleChange': function(event) {
+                'cosmeticChange': function(event) {
                     if ( $(event.target).is(this.currentElement)
                          || jQuery.contains(event.target,this.currentElement)
                        ) {
@@ -3044,10 +3043,10 @@ function dynamicResize(oContainer) {
                 });
 	    }
             this._on({
-                'editorValueChange': this._onEditorValueChange
+                'editorValueChange': this._onValueChange
             });
 	},
-        _onEditorValueChange: function() {
+        _onValueChange: function() {
             this.getRecord().dbRecord('setState','dirty');
         },
         _onDbFieldOut: function() {
@@ -4337,7 +4336,6 @@ function dbFormHTMLArea(oDiv) {
 	    }
 
             this._on({
-                'dbRecordStateChange': this._onDbRecordStateChange,
                 'keydown .editable': this._onFieldKeyDown,
                 'editorKeyDown': this._onFieldKeyDown
             });
@@ -4355,8 +4353,8 @@ function dbFormHTMLArea(oDiv) {
                 event.preventDefault();
             }
         },
-        _onDbRecordStateChange: function(event) {
-            switch ($(event.target).dbRecord('getState')) {
+        _sendMessage: function() {
+            switch (this.getState()) {
             case "updating":
                 this.element.trigger('message', [{
                     type: 'notice',
@@ -4413,8 +4411,8 @@ function dbFormHTMLArea(oDiv) {
 		    this.element.removeClass("current dirty updating error");
 		    this.element.addClass(newState);
 		    this.state = newState;
-		    this.element.trigger('dbRecordStateChange');
-                    this.element.trigger('styleChange');
+                    this._sendMessage();
+                    this.element.trigger('cosmeticChange');
 		    break;
 	        default:
 		    $.error('Invalid state');
@@ -4548,6 +4546,18 @@ function dbFormHTMLArea(oDiv) {
 // Relies on records having class "record", all fields having "name" attributes,
 // and all editable fields having the "editable" class.
 // All editable fields must be focussable - use the tabIndex attribute, if required, to force this.
+
+// Fires:
+// message
+// cosmeticChange
+// dbRecordAction
+// dbRecordActionReturn
+// dbRecordActionReturnError
+// resize
+// dbRecordIn
+// dbRecordOut
+// dbFieldIn
+// dbFieldOut
 ;(function($, window, undefined){
 
     // Use the jQuery UI widget factory.
@@ -5009,58 +5019,73 @@ function dbFormHTMLArea(oDiv) {
 // editable
 // - plugin to standardise editable elements
 // - uses dbEditor plugins to make non-form elements, such as <div>s, editable
+// Exposes methods for setValue, getValue, setRange (the selected text range), and hasFocus.
+
+// fires
+// editorValueChange event
 ;(function($, undefined) {
     $.widget('qcode.editable', {
         options: {
-            // type - type of editor
+            // editorType - type of editor (or "input" for no editor)
             // currently one of "auto","input","text","combo","bool","textarea","htmlarea"
-            type: "auto",
+            // "auto" defaults to "input" for form elements, and otherwise looks for a "type" attribute (defaulting to "text")
+            editorType: "auto",
 
             // defaultRange - range to select on focus. currently one of null,"start","end","all"
             // (null defaults to "all" for non-form elements because the browser won't put the
             // cursor to where the mouse was clicked.
             defaultRange: null,
+
+            // container for the editor plugins. Should be a the target element's offset parent or a descendent thereof.
+            // defaults to the element's offset parent.
             container: null
         },
         _create: function() {
-            if ( this.options.type === "auto" ) {
+            // Replace "auto" editorType with default
+            if ( this.options.editorType === "auto" ) {
                 if ( this.element.is(':input') ) {
-                    this.options.type = "input";
+                    this.options.editorType = "input";
                 } else {
                     switch ( this.element.attr('type') ) {
                     case "combo":
                     case "bool":
                     case "textarea":
                     case "htmlarea":
-                        this.options.type = this.element.attr('type');
+                        this.options.editorType = this.element.attr('type');
                         break;
                     case "text":
                     case undefined:
-                        this.options.type = "text";
+                        this.options.editorType = "text";
                         break;
                     default:
                         $.error('Unknown editor type');
                     }
                 }
             }
-            if ( this.options.type !== "input"
+
+            // defaultRange for non-form elements
+            if ( this.options.editorType !== "input"
                  && this.options.defaultRange === null
                ) {
                 this.options.defaultRange = "all";
             }
+
+            // default container
             if ( this.options.container === null ) {
                 this.options.container = this.element.offsetParent();
             }
             if ( $(this.options.container).is('html') ) {
                 this.options.container = $('body');
             }
+
+            // event listeners
             this._on({
                 'focus': this._onFocus,
                 'cut': this._onCut,
                 'paste': this._onPaste,
                 'keyup': this._onKeyUp
             });
-            if ( this.options.type !== "input" ) {
+            if ( this.options.editorType !== "input" ) {
                 this._on({
                     'editorBlur': function() {
                         this._editor('hide');
@@ -5074,14 +5099,15 @@ function dbFormHTMLArea(oDiv) {
                     }
                 });
             }
+
+            // Initialised on already-focussed element (probably in response to focus event)
             if ( this.element.is(':focus') ) {
-                // Initialised on already-focussed element (probably in response to focus event)
                 this._onFocus();
             }
         },
         _onFocus: function() {
             if ( ! this.element.is('[disabled]') ) {
-                if ( this.options.type !== "input" ) {
+                if ( this.options.editorType !== "input" ) {
                     this._editor('show', this.element, this.getValue());
                 }
                 if ( this.options.defaultRange !== null ) {
@@ -5093,13 +5119,13 @@ function dbFormHTMLArea(oDiv) {
             }
         },
         _onCut: function() {
-            this.trigger('valueChange');
+            this.trigger('editorValueChange');
         },
         _onPaste: function() {
-            this.trigger('valueChange');
+            this.trigger('editorValueChange');
         },
         _onKeyUp: function(e) {
-            // On keyup of a "printable" key or backspace, fire editorValueChange event.
+            // On keyup of a "printable" key or backspace, fire valueChange event.
             if ( isEditingKeyEvent(e) ) {
                 this.element.trigger('editorValueChange');
             }
@@ -5110,18 +5136,18 @@ function dbFormHTMLArea(oDiv) {
         },
         hasFocus: function() {
             return ( this.element.is(':focus') 
-                     || ( this.options.type !== "input"
+                     || ( this.options.editorType !== "input"
                           && this._editor('getCurrentElement').is(this.element)
                         )
                    );
         },
         getValue: function() {
-            if ( this.options.type !== "input"
+            if ( this.options.editorType !== "input"
                  && this._editor('getCurrentElement').is(this.element)
                ) {
                 return this._editor('getValue');
 
-            } else if ( this.options.type === "htmlarea" ) {
+            } else if ( this.options.editorType === "htmlarea" ) {
                 return this.element.html();
 
             } else if ( this.element.is(':input') ) {
@@ -5132,14 +5158,14 @@ function dbFormHTMLArea(oDiv) {
             }
         },
         setValue: function(newValue) {
-            if ( this.options.type !== "input"
+            if ( this.options.editorType !== "input"
                  && this._editor('getCurrentElement').is(this.element)
                ) {
                 this._editor('setValue',newValue);
                 return
             }
             
-            if ( this.options.type === "htmlarea" ) {
+            if ( this.options.editorType === "htmlarea" ) {
                 this.element.html(newValue);
 
             } else if ( this.element.is(':input') ) {
@@ -5150,7 +5176,7 @@ function dbFormHTMLArea(oDiv) {
             }
         },
         setRange: function(newRange) {
-            if ( this.options.type !== "input" 
+            if ( this.options.editorType !== "input" 
                  && this._editor('getCurrentElement').is(this.element) ) {
                 this._editor('selectText', newRange);
 
@@ -5171,7 +5197,7 @@ function dbFormHTMLArea(oDiv) {
             }
         },
         _editor: function(args) {
-            switch(this.options.type) {
+            switch(this.options.editorType) {
             case "combo":
                 pluginName="dbEditorCombo";
                 break;
@@ -5915,7 +5941,8 @@ uses the existing id if it has one
 	    })
 	    .on('mouseleave', function(){
 		if ( scrollBox.is('.scrolling') ) {
-		    // If the mouse leaves the upwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
+		    // If the mouse leaves the upwards scroller before scrolling is finished,
+                    // stop scrolling and return the scroller to its base opacity
 		    upScroller.stop().fadeTo(0, 0.2);
 		    stopScrolling();
 		}
@@ -5934,7 +5961,8 @@ uses the existing id if it has one
 	// End of hover scroller plugin; return original target for jQuery chainability
 	return this;
 
-	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
+	// Only display the scroller controls when the content is overflowing
+        // - listen for resize events to indicate that this may have changed.
 	function updateControls() {
 	    if ( ! scrollBox.is('.scrolling') ) {
 		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {
@@ -8481,13 +8509,14 @@ function unescapeHTML(str) {
 };
 
 function urlSet(url,name,value) {
-    var re = /([^\?]+)\??(.*)/;
+    var re = /([^\?\#]+)(?:\?([^\#]*))?(\#.*)?/;
     re.exec(url);
     var path = RegExp.$1;
     var queryString = RegExp.$2;
-    url = path + "?" + urlDataSet(queryString,name,value);
+    var fragment = RegExp.$3;
+    url = path + "?" + urlDataSet(queryString,name,value) + fragment;
     return url;
-};
+}
 
 function urlDataSet(data,name,value) {
     var list = new Array();
@@ -8726,16 +8755,6 @@ function preloadImages() {
     }
 })(jQuery);
 
-// console log message if pluginName appears in debug.plugins array
-var debug = (function() {
-    return function(pluginName, message) {
-        if ( debug.plugins.indexOf(pluginName) > -1 ) {
-            console.log('Debug ' + pluginName + ': ' + message);
-        }
-    }
-})();
-debug.plugins = [];
-
 // isEditingKeyEvent
 // takes a jQuery keyboard event (keyup, keydown, keypress)
 // returns true if the event would modify the contents of the currently focussed input
@@ -8763,6 +8782,7 @@ function isEditingKeyEvent(e) {
         return false;
     }
 }
+
 
 /* ==== jquery.validation.js ==== */
 /* validation plugin
