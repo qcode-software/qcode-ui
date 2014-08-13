@@ -314,3 +314,31 @@ function preloadImages() {
 	return $cells;
     }
 })(jQuery);
+
+// isEditingKeyEvent
+// takes a jQuery keyboard event (keyup, keydown, keypress)
+// returns true if the event would modify the contents of the currently focussed input
+// (Does not match cuy/paste events, returns false for the return key)
+function isEditingKeyEvent(e) {
+    if ( e.altkey ) { // Modifying with the alt key prevents editing.
+        return false;
+
+    } else if ( e.which == 8 || e.which == 46 ) { // backspace and delete
+        return true;
+
+    } else if ( e.ctrlKey ) { // Modifying with ctrl prevents *most* editing
+        return false;
+        
+    } else if ( (e.which > 47 && e.which < 58) // number keys
+                || e.which == 32 // spacebar
+                || (e.which > 64 && e.which < 91) // letter keys
+                || (e.which > 95 && e.which < 112) // numpad key (as numbers)
+                || (e.which > 185 && e.which < 193) // ;=,-./` keys
+                || (e.which > 218 && e.which < 223) // [\]' keys
+              ) {
+        return true;
+
+    } else {
+        return false;
+    }
+}

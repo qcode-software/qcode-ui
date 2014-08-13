@@ -17,7 +17,14 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.repaint,
+                'cosmeticChange': function(event) {
+                    if ( $(event.target).is(this.currentElement)
+                         || jQuery.contains(event.target,this.currentElement)
+                       ) {
+                        this.repaint();
+                    }
+                }
 	    });
 	    this.editor = $('<div>')
 		.attr('contentEditable',true)
@@ -34,21 +41,29 @@
 		'paste': this._inputOnPaste,
 		'blur': this._inputOnBlur
 	    });
+            this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return parseBoolean(this.editor.text());
-	}, 
+	},
+        setValue: function(newValue) {
+            if ( parseBoolean(newValue) ) {
+		this.setTrue();
+            } else {
+		this.setFalse();
+            }
+        },
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
-	    this.repaint()
-	    if ( parseBoolean(value) ) {
-		this.setTrue();
-	    } else {
-		this.setFalse();
-	    }
+            this.setValue(value);
+	    this.repaint();
 	},
 	hide: function() {
 	    // Hide the editor
@@ -56,6 +71,8 @@
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	}, 
 	repaint: function() {
 	    // repaint the editor

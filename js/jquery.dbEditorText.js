@@ -17,7 +17,14 @@
 	_create: function() {
 	    // Create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.repaint,
+                'cosmeticChange': function(event) {
+                    if ( $(event.target).is(this.currentElement)
+                         || jQuery.contains(event.target,this.currentElement)
+                       ) {
+                        this.repaint();
+                    }
+                }
 	    });
 	    this.editor = $('<input type="text">')
 		.addClass('db-editor text')
@@ -38,16 +45,23 @@
 	    });
 	    this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
-	}, 
+	},
+        setValue: function(newValue) {
+            this.editor.val(newValue);
+        },
 	show: function(element, value){
 	    // Show this editor positioned over the target element and set the value of the editor
-	    this.currentElement = $(element);
+	    this.currentElement = $(element).first();
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
+	    this.setValue(value);
 	    this.repaint();
-	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
@@ -55,10 +69,12 @@
 		this.editor.trigger('blur');
 	    }
 	    this.editor.hide();
+	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	},
 	repaint: function() {
 	    // repaint the editor
-	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {
+	    if ( this.currentElement.length == 1 ) {
 		var editor = this.editor;
 		var element = this.currentElement;
 
@@ -150,7 +166,7 @@
 		'data': e.data, 
 		'ctrlKey': e.ctrlKey, 
 		'altKey': e.altKey, 
-		'shiftKey': e.shiftKey, 
+		'shiftKey': e.shiftKey,
 		'which': e.which
 	    });
 	    this.currentElement.trigger(event);
@@ -159,7 +175,9 @@
             }
 	},
 	_inputOnKeyUp: function(e) {
-            this.currentElement.trigger('editorValueChange');
+            if ( isEditingKeyEvent(e) ) {
+                this.currentElement.trigger('editorValueChange');
+            }
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 

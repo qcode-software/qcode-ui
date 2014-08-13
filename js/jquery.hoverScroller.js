@@ -86,7 +86,8 @@
 	    })
 	    .on('mouseleave', function(){
 		if ( scrollBox.is('.scrolling') ) {
-		    // If the mouse leaves the upwards scroller before scrolling is finished, stop scrolling and return the scroller to its base opacity
+		    // If the mouse leaves the upwards scroller before scrolling is finished,
+                    // stop scrolling and return the scroller to its base opacity
 		    upScroller.stop().fadeTo(0, 0.2);
 		    stopScrolling();
 		}
@@ -105,7 +106,8 @@
 	// End of hover scroller plugin; return original target for jQuery chainability
 	return this;
 
-	// Only display the scroller controls when the content is overflowing - listen for resize events to indicate that this may have changed.
+	// Only display the scroller controls when the content is overflowing
+        // - listen for resize events to indicate that this may have changed.
 	function updateControls() {
 	    if ( ! scrollBox.is('.scrolling') ) {
 		if ( parseInt(scrollBox.prop('scrollHeight')) == parseInt(scrollBox.height()) ) {

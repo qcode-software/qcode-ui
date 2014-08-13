@@ -14,34 +14,52 @@
         container.on('keydown', function(event) {
             var currentElement = jQuery(event.target)
             var nextElement;
-            var fields = jQuery(this.selector, this.container);
+            var fields = jQuery(navigate.selector, navigate.container);
             switch (event.which) {
             case 37:
                 // left arrow key pressed - move left (if at selectionStart)
-                if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtStart) {
+                if ( currentElement.is(':not(input[type!="hidden"],textarea,[contenteditable=true])')
+                     || currentElement.textrange('get').selectionAtStart) {
                     nextElement = currentElement.westOf(fields);
+                } else {
+                    return true;
                 }
                 break;
             case 39:
                 // right arrow key pressed - move right (if at SelectionEnd) 
-                if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtEnd) {
+                if ( currentElement.is(':not(input[type!="hidden"],textarea,[contenteditable=true])')
+                     || currentElement.textrange('get').selectionAtEnd) {
                     nextElement = currentElement.eastOf(fields);
+                } else {
+                    return true;
                 }
                 break;
             case 38:
                 // up arrow key pressed - move up 
-                if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtStart) {
+                if ( currentElement.is(':not(input[type!="hidden"],textarea,[contenteditable=true])')
+                     || currentElement.textrange('get').selectionAtStart) {
                     nextElement = currentElement.northOf(fields);
+                } else {
+                    return true;
                 }
                 break;
             case 40:
                 // down arrow key pressed - move down
-                if (currentElement.is(':not(input[type=text],textarea,[contenteditable=true])') || currentElement.textrange('get').selectionAtEnd) {
+                if ( currentElement.is(':not(input[type!="hidden"],textarea,[contenteditable=true])')
+                     || currentElement.textrange('get').selectionAtEnd) {
                     nextElement = currentElement.southOf(fields);
+                } else {
+                    return true;
                 }
                 break;
             case 13:
-                // return key pressed - move down 
+                // return key pressed - move down
+                if ( currentElement.is('textarea') ) {
+	            var selection = currenElement.textrange('get');
+                    if ( ! (selection.selectionAtStart && selection.selectionAtEnd) ) {
+                        return true;
+                    }
+                }
                 nextElement = currentElement.southOf(fields);
                 break;
             case 9:
@@ -61,16 +79,8 @@
         });
     };
     Navigate.prototype.changeFocus = function(fromField, nextField) {
-        // Collapse current textrange selection
-        if (fromField.is('input[type=text],textarea,[contenteditable=true]')) {
-            fromField.textrange('set','start','start');
-        }
-
         // Move focus to nextField and select text contents
         nextField.focus();
-        if (nextField.is('input[type=text],textarea,[contenteditable=true]')) {
-            nextField.textrange('set','all');
-        }
     };
 
     // Make Navigate Class available as a jQuery plugin   

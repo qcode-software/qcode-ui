@@ -17,7 +17,14 @@
 	_create: function() {
 	    // Constructor function - create the editor element, and bind event listeners.
 	    this._on(window, {
-		'resize': this.repaint
+		'resize': this.repaint,
+                'cosmeticChange': function(event) {
+                    if ( $(event.target).is(this.currentElement)
+                         || jQuery.contains(event.target,this.currentElement)
+                       ) {
+                        this.repaint();
+                    }
+                }
 	    });
 	    this.editor = $('<textarea>')
 		.appendTo(this.element)
@@ -37,6 +44,12 @@
 	    });
 	    this.currentElement = $([]);
 	},
+        getCurrentElement: function() {
+            return this.currentElement;
+        },
+        setValue: function(newValue) {
+            this.editor.val(newValue);
+        },
 	getValue: function() {
 	    // Get the current value of the editor
 	    return this.editor.val();
@@ -44,17 +57,16 @@
 	show: function(element, value){
 	    // Show this editor over the target element and set the value
 	    this.currentElement = $(element);
+            this.currentElement.css('visibility', "hidden");
 	    this.editor.show();
 	    this.repaint();
 	    this.editor.val(value);
 	}, 
 	hide: function() {
 	    // Hide the editor
-	    if ( this.editor.is(':focus') ) {
-		this.editor.trigger('blur');
-	    }
-	    this.currentElement = $([]);
 	    this.editor.hide();
+	    this.currentElement.css('visibility', "inherit");
+            this.currentElement = $([]);
 	},
 	repaint: function() {
 	    if ( this.currentElement.length == 1 && this.editor.css('display') !== 'none' ) {
@@ -168,7 +180,14 @@
             }
 	},
 	_inputOnKeyUp: function(e) {
-            this.currentElement.trigger('editorValueChange');
+	    var selection = this.editor.textrange('get');
+            if ( (e.which == 13 // return key
+                  && ( ! (selection.selectionAtStart && selection.selectionAtEnd))
+                 )
+                 || isEditingKeyEvent(e)
+               ) {
+                this.currentElement.trigger('editorValueChange');
+            }
 	    // Pass all key up events on to the target element.
             var event = jQuery.Event('editorKeyUp', {
 		'data': e.data, 
@@ -204,7 +223,9 @@
 	    this.currentElement.trigger(event);
 	},
 	_inputOnBlur: function(e) {
-	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus, don't pass the blur event on to the target element (especially since the current target has probably changed since then).
+	    // If handlers responding to an event that caused the editor to lose focus cause it to regain focus,
+            // don't pass the blur event on to the target element
+            // (especially since the current target has probably changed since then).
 	    // Otherwise, pass blur events on to the target element.
 	    if ( ! this.editor.is(':focus') ) {
 		var event = jQuery.Event('editorBlur', {

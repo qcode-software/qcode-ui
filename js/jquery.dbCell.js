@@ -117,12 +117,6 @@
 		return true;
 	    }
 	},
-	hide: function(){
-	    this.element.css('visibility','hidden');
-	},
-	show: function(){
-	    this.element.css('visibility','inherit');
-	},
 	cellIn: function(select) {
 	    // Update currentCell dbGrid variable, hide the cell, show the editor and set editor text selection.
 	    var cell = this.element;
@@ -130,7 +124,6 @@
 
             cell.trigger('dbCellIn');
 
-	    this.hide();
             this.editor('option', 'tab_on_return', this.options.tab_on_return);
 	    if ( this.getType() === 'combo' ) {
                 var data = this.getRow().dbRow('getRowData');
@@ -158,7 +151,6 @@
 	    var oldValue = this.getValue();
 	    var newValue = this.editor('getValue');
 	    this.write();
-	    this.show();
 	    this.editor('hide');
 	    grid.dbGrid('setCurrentCell', $([]));
 	  
