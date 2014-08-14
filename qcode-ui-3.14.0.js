@@ -6113,7 +6113,7 @@ uses the existing id if it has one
             case 13:
                 // return key pressed - move down
                 if ( currentElement.is('textarea') ) {
-	            var selection = currenElement.textrange('get');
+	            var selection = currentElement.textrange('get');
                     if ( ! (selection.selectionAtStart && selection.selectionAtEnd) ) {
                         return true;
                     }
@@ -6131,9 +6131,9 @@ uses the existing id if it has one
             // if nextElement exists change focus and prevent event defaults
             if (nextElement.length === 1) {
                 navigate.changeFocus(currentElement, nextElement);
-                event.preventDefault();
-                return false;
             }
+            event.preventDefault();
+            return false;
         });
     };
     Navigate.prototype.changeFocus = function(fromField, nextField) {
