@@ -4438,11 +4438,34 @@ function dbFormHTMLArea(oDiv) {
 	    if ( this.getState() === "updating" ) {
 		return false;
 	    }
-	    var url = this.getRecordSet().attr('deleteURL');
-	    if ( ! url ) {
-		$.error('Could not delete record - no url provided');
-	    }
-	    this.action('delete', url, async);
+            var dbRecord = this;
+            switch (this.saveAction) {
+            case "add":
+                var deleteFunction = function() {
+		    // When a record is deleted, remove it from the DOM.
+		    var recordSet = dbRecord.getRecordSet();
+		    dbRecord.destroy();
+		    dbRecord.element.remove();
+                    recordSet.trigger('message', [{
+                        type: 'message',
+                        html: 'Record Deleted.'
+                    }]);
+		    recordSet.trigger('resize');
+                }
+                break;
+            case "update":
+                var deleteFunction = function() {
+	            var url = dbRecord.getRecordSet().attr('deleteURL');
+	            if ( ! url ) {
+		        $.error('Could not delete record - no url provided');
+	            }
+	            dbRecord.action('delete', url, async);
+                }
+                break;
+            default:
+                $.error('Attempt to delete record with unknown save action');
+            }
+            qcode.confirm("Delete the current record?", deleteFunction);
 	}, 
 	action: function(action, url, async) {
 	    // Perform the given action (add, update, delete), by submitting record data to the server.
