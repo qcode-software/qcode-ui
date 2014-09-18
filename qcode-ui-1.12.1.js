@@ -8928,7 +8928,7 @@ function coalesce() {
             return re1.test(string) || re2.test(string);
         },       
         isEmail: function(string) {
-            var re = /^[a-zA-Z0-9_\-]+(\.[a-zA-Z0-9_\-]+)*@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$/;
+            var re = /^[a-zA-Z0-9_\-]+([\.\+][a-zA-Z0-9_\-]+)*@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$/;
             return re.test(string);
         },  
         showMessage: function($element, message) {
