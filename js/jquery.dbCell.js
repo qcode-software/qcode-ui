@@ -189,13 +189,10 @@
 	    }		   
 	},
         editorValueChange: function(){
-	    // If the Editor's value has changed, mark row as dirty.
+	    // Mark row as dirty and set a delayed save timeout
 	    var row = this.getRow();
 	    var grid = this.getGrid();
-
-	    if ( this.getValue() !== this.editor('getValue') ) {
-		row.dbRow('setState', 'dirty');
-	    }
+	    row.dbRow('setState', 'dirty');
 	    if ( grid.dbGrid('option','updateType') === "onKeyUp" ) {
 		this._cancelDelayedSave();
 		this.keyUpTimer = setTimeout(this._delayedSave.bind(this),750);
