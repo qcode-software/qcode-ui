@@ -1,6 +1,6 @@
 .gantt-chart.wrapper {
     position: relative;
-    padding: 0.1px; /*padding hack to prevent collapsing margins*/
+    padding: 0.1px 0; /*padding hack to prevent collapsing margins*/
 }
 .gantt-chart .calendar-frame {
     position: absolute;
