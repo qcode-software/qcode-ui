@@ -10,8 +10,7 @@ upload: check-version
 	./css-concat.tcl > $(NAME)-$(VERSION).css
 	scp $(NAME)-$(VERSION).css $(REMOTEHOST):$(REMOTEDIR)/css/$(NAME)-$(VERSION).css
 	# change permissions to read only to prevent files being overwritten
-	ssh $(REMOTEHOST) 'chmod 0444 $(REMOTEDIR)/js/$(NAME)-$(VERSION).js'
-	ssh $(REMOTEHOST) 'chmod 0444 $(REMOTEDIR)/css/$(NAME)-$(VERSION).css'
+	ssh $(REMOTEHOST) 'chmod 0444 $(REMOTEDIR)/js/$(NAME)-$(VERSION).js $(REMOTEDIR)/css/$(NAME)-$(VERSION).css'
 clean: check-version
 	rm $(NAME)-$(VERSION).js
 	rm $(NAME)-$(VERSION).css
