@@ -14,10 +14,11 @@ function coalesce() {
 
 // Takes an url with query data and splits it, returning the path (with no data) and an object representing the data as name/value pairs.
 function splitURL(url) {
-    var re = /([^\?]+)\??(.*)/;
+    var re = /([^\?#]+)\??([^#]*)#?(.*)/;
     re.exec(url);
     var path = RegExp.$1;
     var queryString = RegExp.$2;
+    var hashString = RegExp.$3;
     var data = {};
     if ( queryString !== "" ) {
 	$.each(queryString.split('&'),function(i, pair){
@@ -35,7 +36,8 @@ function splitURL(url) {
     }
     return {
 	'path': path,
-	'data': data
+	'data': data,
+        'hash': hashString
     }
 };
 
