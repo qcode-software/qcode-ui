@@ -25,7 +25,7 @@ upload: check-version
 	# Upload concatenated CSS and JS files to js.qcode.co.uk
 	scp -r $(NAME)-$(VERSION) $(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION)
 	# Change permissions to read only to prevent files being overwritten
-	ssh $(REMOTEHOST) 'chmod -R 0444 $(REMOTEDIR)/$(NAME)-$(VERSION)'
+	ssh $(REMOTEHOST) 'chmod -R a=rX $(REMOTEDIR)/$(NAME)-$(VERSION)'
 clean: 
 	rm -rf $(NAME)-$(VERSION)
 check-version:
