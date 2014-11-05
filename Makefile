@@ -5,25 +5,29 @@ REMOTEDIR=/var/www/js.qcode.co.uk
 all: check-version concat upload clean
 concat: check-version
 	# Checkout files from github to a pristine temporary directory
+	rm -rf $(NAME)-$(VERSION)-tmp
+	mkdir $(NAME)-$(VERSION)-tmp
+	curl --fail -K ~/.curlrc_github -L -o $(NAME)-$(VERSION).tar.gz https://api.github.com/repos/qcode-software/$(NAME)/tarball/v$(VERSION)
+	tar --strip-components=1 -xzvf $(NAME)-$(VERSION).tar.gz -C $(NAME)-$(VERSION)-tmp
+	# Create a directory to hold the concatenated files and required resources
 	rm -rf $(NAME)-$(VERSION)
 	mkdir $(NAME)-$(VERSION)
-	curl --fail -K ~/.curlrc_github -L -o $(NAME)-$(VERSION).tar.gz https://api.github.com/repos/qcode-software/$(NAME)/tarball/v$(VERSION)
-	tar --strip-components=1 -xzvf $(NAME)-$(VERSION).tar.gz -C $(NAME)-$(VERSION)
-	# Concat CSS and JS files
-	$(NAME)-$(VERSION)/js-concat.tcl > $(NAME)-$(VERSION).js
-	$(NAME)-$(VERSION)/css-concat.tcl > $(NAME)-$(VERSION).css
+	mkdir $(NAME)-$(VERSION)/js
+	mkdir $(NAME)-$(VERSION)/css
+	# Concat CSS and JS files, copy image files
+	$(NAME)-$(VERSION)-tmp/js-concat.tcl > $(NAME)-$(VERSION)/js/qcode-ui.js
+	$(NAME)-$(VERSION)-tmp/css-concat.tcl > $(NAME)-$(VERSION)/css/qcode-ui.css
+	cp -r $(NAME)-$(VERSION)-tmp/images $(NAME)-$(VERSION)/images 
 	# Clean up
-	rm -rf $(NAME)-$(VERSION)
-	rm $(NAME)-$(VERSION).tar.gz		
+	rm -rf $(NAME)-$(VERSION)-tmp
+	rm $(NAME)-$(VERSION).tar.gz
 upload: check-version
 	# Upload concatenated CSS and JS files to js.qcode.co.uk
-	scp $(NAME)-$(VERSION).js $(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION).js
-	scp $(NAME)-$(VERSION).css $(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION).css
+	scp -r $(NAME)-$(VERSION) $(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION)
 	# Change permissions to read only to prevent files being overwritten
-	ssh $(REMOTEHOST) 'chmod 0444 $(REMOTEDIR)/$(NAME)-$(VERSION).js $(REMOTEDIR)/$(NAME)-$(VERSION).css'
+	ssh $(REMOTEHOST) 'chmod -R 0444 $(REMOTEDIR)/$(NAME)-$(VERSION)'
 clean: 
-	rm $(NAME)-$(VERSION).js
-	rm $(NAME)-$(VERSION).css
+	rm -rf $(NAME)-$(VERSION)
 check-version:
 ifndef VERSION
     $(error VERSION is undefined. Usage make VERSION=x.x.x)
