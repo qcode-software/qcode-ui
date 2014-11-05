@@ -56,3 +56,19 @@ A database grid
 ### jquery.tableFilterMin
 Filter the rows of a table on the values of one or more columns, client-side  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/7GUKK/)
+
+### jquery.editable
+Assorted tools for allowing the user to edit the contents of an element.
+[jsFiddle](http://jsfiddle.net/PeterChaplin/t155eadk/)
+
+### jquery.navigate
+Arrow key navigation between focusable elements
+[jsFiddle](http://jsfiddle.net/PeterChaplin/bspsf7w5/)
+
+### jquery.validation
+Client-side form validation
+[jsFiddle](http://jsfiddle.net/PeterChaplin/w2g6vzyp/)
+
+### textrange plugin
+For getting/setting selected text and cursor position
+[jsFiddle](http://jsfiddle.net/PeterChaplin/d62x808r/)
