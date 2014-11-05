@@ -69,6 +69,6 @@ Arrow key navigation between focusable elements
 Client-side form validation
 [jsFiddle](http://jsfiddle.net/PeterChaplin/w2g6vzyp/)
 
-### textrange plugin
+### jquery.textrange
 For getting/setting selected text and cursor position
 [jsFiddle](http://jsfiddle.net/PeterChaplin/d62x808r/)
