@@ -3,7 +3,7 @@
 
 ### jquery.maximiseHeight
 Maximise the height of an element within the window  
-[jsFiddle](http://jsfiddle.net/daniel_qcode/Xedb3)
+[jsFiddle](http://jsfiddle.net/PeterChaplin/omehe80e)
 
 ### dbRecordSet
 Provide an editable set of records  
