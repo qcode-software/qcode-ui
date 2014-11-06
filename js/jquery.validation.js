@@ -26,9 +26,6 @@
    $.validation.isPostcode(value);
 */
 (function($, undefined) {
-    // Closure variables
-    var submitButtonSelector = "input[type=button],input[type=image],button[type!=reset][type!=button][type!=menu]";
-
     // Plugin function
     $.fn.validation = function(arg1) {
         var $form = this;
@@ -59,10 +56,6 @@
                 // Validate the entire form on submit
                 if ( ! validate($form, options) ) {
                     event.preventDefault();
-                }
-                // Disable submit buttons to prevent duplicate submission
-                if ( ! event.isDefaultPrevented() ) {
-                    $(this).find(submitButtonSelector).attr('disabled', true);
                 }
             });
             $form.on('reset', function() {
