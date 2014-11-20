@@ -91,12 +91,14 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             this._on($(window), {
                 'resize': function(event) {
                     if ( $(event.target).closest(this.element.add(this.headClone)).length > 0 ) {
-                        this.repaintWidths();
+                        this.repaint();
 
-                    } else if (( ! this.options.fixedWidth )
-                               && windowWidth != window.innerWidth ) {
-                        this.repaintWidths();
-                        windowWidth = window.innerWidth;
+                    } else if ( windowWidth != window.innerWidth ) {
+                        this.repaintStyles();
+                        if ( ! this.options.fixedWidth ) {
+                            this.repaintWidths();
+                            windowWidth = window.innerWidth;
+                        }
                     }
                 }
             });
