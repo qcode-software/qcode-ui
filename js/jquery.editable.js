@@ -9,8 +9,9 @@
     $.widget('qcode.editable', {
         options: {
             // editorType - type of editor (or "input" for no editor)
-            // currently one of "auto","input","text","combo","bool","textarea","htmlarea"
-            // "auto" defaults to "input" for form elements, and otherwise looks for a "type" attribute (defaulting to "text")
+            // currently one of "auto","input","text","bool","textarea","htmlarea"
+            // "auto" defaults to "input" for form elements,
+            // and otherwise looks for a "type" attribute (defaulting to "text")
             editorType: "auto",
 
             // defaultRange - range to select on focus. currently one of null,"start","end","all"
@@ -29,7 +30,6 @@
                     this.options.editorType = "input";
                 } else {
                     switch ( this.element.attr('type') ) {
-                    case "combo":
                     case "bool":
                     case "textarea":
                     case "htmlarea":
@@ -146,7 +146,9 @@
                 this._editor('setValue',newValue);
                 return
             }
-            
+            if ( this.options.editorType === "bool" ) {
+                newValue = newValue ? "Yes" : "No";
+            }
             if ( this.options.editorType === "htmlarea" ) {
                 this.element.html(newValue);
 
@@ -180,9 +182,6 @@
         },
         _editor: function(args) {
             switch(this.options.editorType) {
-            case "combo":
-                pluginName="dbEditorCombo";
-                break;
             case "bool":
                 pluginName="dbEditorBool";
                 break;
