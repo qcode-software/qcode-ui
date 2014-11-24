@@ -217,7 +217,6 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     };
                 });
                 qcode.style(styles);
-                console.log(multiplier);
             }
         },
         repaintWidths: function() {
