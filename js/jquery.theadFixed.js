@@ -191,11 +191,34 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Add the head to the page last, after widths and styles have been calculated
             // (this avoids a google chrome bug)
             this.wrapper.prepend(this.headClone);
+
+            this.zoomFix();
             // end of _create;
 	},
 	repaint: function() {
             this.repaintStyles();
             this.repaintWidths();
+        },
+        zoomFix: function() {
+            var cloneRow = this.headClone.children('thead').children('tr').first();
+            var originalRow = this.table.children('thead').children('tr').first();
+            var thSelectors = this.thSelectors;
+            for ( var multiplier = 0.99 ; multiplier > 0 ; multiplier -= 0.01 ) {
+                if ( cloneRow.height() <= originalRow.height() ) {
+                    break
+                }
+                styles = {};
+                this.theadCells.each(function(i, originalTH) {
+                    styles[thSelectors[i]] = {
+                        'font-size':
+                        (
+                            parseFloat( $(originalTH).css('font-size') ) * multiplier
+                        ) + "px"
+                    };
+                });
+                qcode.style(styles);
+                console.log(multiplier);
+            }
         },
         repaintWidths: function() {
             // Measure and apply table and column widths
@@ -206,7 +229,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             var styles = {};
             styles['#' + id] = {
-                'display': this.table.css('dsiplay'),
+                'display': this.table.css('display'),
                 'width': this.table.outerWidth() + "px"
             }
 
