@@ -72,3 +72,7 @@ Client-side form validation
 ### jquery.textrange
 For getting/setting selected text and cursor position
 [jsFiddle](http://jsfiddle.net/PeterChaplin/d62x808r/)
+
+### jquery.dbForm
+Ajax form for database record editing
+[jsFiddle](http://jsfiddle.net/PeterChaplin/gpfRg/)
