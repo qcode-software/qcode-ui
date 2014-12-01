@@ -1,3 +1,7 @@
+/*
+  imagePasteTarget plugin
+  handle paste events containing images on the target element
+*/
 $.fn.imagePasteTarget = function(handleFiles) {
     this.on('paste', function (event) {
         for (var i = event.originalEvent.clipboardData.items.length - 1; i >= 0; i--) {
