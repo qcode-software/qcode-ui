@@ -62,8 +62,9 @@ $.fn.markDownImageHandler = function(options) {
                         })
                         .on('complete', function(event, xhr) {
                             var url = options.getImageURL(xhr, file);
+                            var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
                             $textarea.val(
-                                $textarea.val().replace(tagPattern, '![image](' + url + ')')
+                                $textarea.val().replace(tagPattern, '![' + alt + '](' + url + ')')
                             );
                         })
                         .on('error', function(event, xhr) {
