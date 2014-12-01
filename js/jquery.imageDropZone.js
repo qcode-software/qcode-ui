@@ -8,6 +8,7 @@
                 .on('dragenter dragover', function(event) {
                     event.stopPropagation();
                     event.preventDefault();
+                    event.originalEvent.dataTransfer.dropEffect = "copy";
                 })
                 .on('drop', function(event) {
                     event.stopPropagation();

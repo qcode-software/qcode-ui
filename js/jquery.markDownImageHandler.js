@@ -37,8 +37,9 @@ $.fn.markDownImageHandler = function(options) {
 
             $(uploader)
                     .on('progress', function(event) {
-                        var perct = parseInt((event.loaded / event.total) * 100).toLocaleString("GB",{
-                            minimumSignificantDigits: 2,
+                        var perct = (event.loaded / event.total).toLocaleString("GB",{
+                            minimumIntegerDigits: 2,
+                            maximumFractionDigits: 0,
                             style: "percent"
                         });
                         var selection = $textarea.textrange('get');

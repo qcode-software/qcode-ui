@@ -26,4 +26,4 @@ $.fn.imagePasteTarget = function(handleFiles) {
         };
     });
     return this;
-}
+};
