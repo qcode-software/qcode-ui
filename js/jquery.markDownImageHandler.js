@@ -1,50 +1,30 @@
 /*
+  markDownImageHandler
+  call on a textarea, allows images to be dropped or pasted, handles the upload, and generates the markdown tag.
+  requires an upload url, and a function to convert the response and/or file into an image src url.
   options = {
     uploadURL: string,
-    getImageURL: function(xhr, file) {},
+    getImageURL: function(xmlHttpRequest, file) {return string},
     postData: object (optional),
     chunkSize: string (optional, default "1MiB")
   }
 */
 $.fn.markDownImageHandler = function(options) {
-    $(this).each(function(t, target) {
+    this.each(function(t, target) {
         var $textarea = $(target);
 
         $textarea.imageDropZone(handleFiles);
-
-        $textarea.on('paste', function (event) {
-            for (var i = event.originalEvent.clipboardData.items.length - 1; i >= 0; i--) {
-                var item = event.originalEvent.clipboardData.items[i];
-                if (item.kind === "file") {
-                    var file = item.getAsFile();
-                    switch (item.type) {
-                    case "image/png":
-                        var ext = ".png";
-                        break;
-                    case "image/jpeg":
-                        var ext = ".jpeg";
-                        break;
-                    case "image/gif":
-                        var ext = ".gif";
-                        break;
-                    default:
-                        var ext = '';
-                    }
-                    file.name = guidGenerate() + ext;
-                    file.isPasted = true;
-                    handleFiles([file]);
-                }
-            };
-        });
+        $textarea.imagePasteTarget(handleFiles);
 
         function handleFiles(fileList) {
             var index = $textarea.textrange('get').selectionStart;
             $.each(fileList, function (i, file) {
                 var head = $textarea.val().slice(0, index);
                 var tail = $textarea.val().slice(index);
+                var uploadName = file.name || guidGenerate();
 
-                var tag = "![Uploading " + file.name + " 0%]()";
-                var tagPattern = new RegExp('!\\[Uploading ' + file.name + ' [0-9]+%\\]\\(\\)');
+                var tag = "![Uploading " + uploadName + " 0%]()";
+                var tagPattern = new RegExp('!\\[Uploading ' + uploadName + ' [0-9]+%\\]\\(\\)');
                 $textarea.val(head + tag + tail);
 
                 var uploader = new qcode.Uploader({
@@ -58,15 +38,15 @@ $.fn.markDownImageHandler = function(options) {
                         .on('progress', function(event) {
                             var perct = parseInt((event.loaded / event.total) * 100);
                             $textarea.val(
-                                $textarea.val().replace(tagPattern, "![Uploading " + file.name + " " + perct + "%]()")
+                                $textarea.val().replace(tagPattern, "![Uploading " + uploadName + " " + perct + "%]()")
                             );
                         })
                         .on('complete', function(event, xhr) {
                             var url = options.getImageURL(xhr, file);
-                            if ( file.isPasted ) {
-                                var alt = "Image";
-                            } else {
+                            if ( file.name ) {
                                 var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
+                            } else {
+                                var alt = "image";
                             }
                             $textarea.val(
                                 $textarea.val().replace(tagPattern, '![' + alt + '](' + url + ')')
@@ -74,7 +54,7 @@ $.fn.markDownImageHandler = function(options) {
                         })
                         .on('error', function(event, xhr) {
                             $textarea.val(
-                                $textarea.val().replace(tagPattern, '![Error uploading ' + file.name + ']()')
+                                $textarea.val().replace(tagPattern, '![Error uploading ' + uploadName + ']()')
                             );
                             $textarea.trigger('error', [xhr]);
                         });

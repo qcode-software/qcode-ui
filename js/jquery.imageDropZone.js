@@ -1,6 +1,7 @@
+// imageDropZone plugin
+// when image files are dropped onto the target element,
+// call handleFiles with a fileList of the dropped files.
 (function() {
-    // imageDropZone plugin - when image files are dropped onto the target element,
-    // call handleFiles with a fileList of the dropped files.
     var allowedMimeTypes = ['image/png','image/jpeg','image/gif'];
     jQuery.fn.imageDropZone = function(handleFiles) {
         $(this)
