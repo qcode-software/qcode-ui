@@ -31,6 +31,7 @@ $.fn.markDownImageHandler = function(options) {
                         var ext = '';
                     }
                     file.name = guidGenerate() + ext;
+                    file.isPasted = true;
                     handleFiles([file]);
                 }
             };
@@ -62,7 +63,11 @@ $.fn.markDownImageHandler = function(options) {
                         })
                         .on('complete', function(event, xhr) {
                             var url = options.getImageURL(xhr, file);
-                            var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
+                            if ( file.isPasted ) {
+                                var alt = "Image";
+                            } else {
+                                var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
+                            }
                             $textarea.val(
                                 $textarea.val().replace(tagPattern, '![' + alt + '](' + url + ')')
                             );
