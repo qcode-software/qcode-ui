@@ -77,4 +77,4 @@ $.fn.markDownImageHandler = function(options) {
             uploader.start();
         });
     };
-});
+};
