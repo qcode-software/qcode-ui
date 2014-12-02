@@ -60,7 +60,7 @@ $.fn.markDownImageHandler = function(options) {
     };
 };
 
-/* textareaReplae plugin
+/* textareaReplace plugin
    performs a regexp-replace on the contents of a textarea, while preserving the caret/selection.
 */
 $.fn.textareaReplace = function(regexp, replacement) {
