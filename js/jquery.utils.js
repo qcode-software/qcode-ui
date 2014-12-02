@@ -344,3 +344,54 @@ function isEditingKeyEvent(e) {
         return false;
     }
 }
+
+function guidGenerate() {
+    // - could not generate a guid from system data (which isn't exposed to js)
+    // - this follows the specs for a guid based on pseudo-random data
+    var str = "";
+    for (var i = 0; i < 4; i++ ) {
+        var num = Math.random()*Math.pow(16,8);
+        str = str.concat("00000000".concat(num.toString(16)).slice(-8));
+    }
+    var guid = str.slice(0,8).concat(
+        '-',str.slice(8,12),
+        '-4',str.slice(13,16),
+        '-',((Math.random()*Math.pow(16,8) & 11) | 7).toString(16),str.slice(17,20),
+        '-',str.slice(20,32)
+    );
+    return guid;
+}
+
+function bytesWithUnits2Int(bytes_with_units) {
+    // Convert a human-readable string such as "10MiB" to an integer number of bytes
+    // (Use ISO units, 1MB = 1000^2 bytes, 1MiB = 1024^2 bytes. kilobytes should be kB or KiB)
+    // (Allow units to be chained, eg. 1kKiB = 1024000 bytes)
+    var prefixValues = {
+        k: 1000,
+        Ki: 1024,
+        M: Math.pow(1000,2),
+        Mi: Math.pow(1024,2),
+        G: Math.pow(1000,3),
+        Gi: Math.pow(1024,3),
+        T: Math.pow(1000,4),
+        Ti: Math.pow(1024,4)
+    }
+    var re = /^([0-9]+(?:\.[0-9]+)?)(?:((?:k|Ki|M|Mi|G|Gi|T|Ti)+)?B)?$/;
+    var matches = bytes_with_units.match(re);
+    if ( ! matches ) {
+        jQuery.error('Could not parse string to byte measure');
+    }
+    var qty = matches[1];
+    var prefixes = matches[2];
+    var multiplier = 1;
+    if ( prefixes ) {
+        var re = /k|Ki|M(?!i)|Mi|G(?!i)|Gi|T(?!i)|Ti/g;
+        var matches = prefixes.match(re);
+        if ( matches ) {
+            matches.forEach(function(prefix) {
+                multiplier *= prefixValues[prefix];
+            });
+        }
+    }
+    return parseInt(qty * multiplier);
+}
