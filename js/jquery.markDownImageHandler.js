@@ -20,7 +20,7 @@ $.fn.markDownImageHandler = function(options) {
             var tail = $textarea.val().slice(index);
             var uploadName = file.name || guidGenerate();
 
-            var tag = "![Uploading " + uploadName + " 00%]()";
+            var tag = "![Uploading " + uploadName + " 0%]()";
             var tagPattern = new RegExp('!\\[Uploading ' + uploadName + ' [0-9]+%\\]\\(\\)');
             $textarea.val(head + tag + tail);
             index = index + tag.length;
@@ -40,11 +40,7 @@ $.fn.markDownImageHandler = function(options) {
                             maximumFractionDigits: 0,
                             style: "percent"
                         });
-                        var selection = $textarea.textrange('get');
-                        var oldVal = $textarea.val();
-                        var newVal = oldVal.replace(tagPattern, "![Uploading " + uploadName + " " + perct + "]()");
-                        $textarea.val(newVal);
-                        $textarea.textrange('set', selection.selectionStart, selection.selectionEnd);
+                        $textarea.textareaReplace(tagPattern, "![Uploading " + uploadName + " " + perct + "]()");
                     })
                     .on('complete', function(event, xhr) {
                         var url = options.getImageURL(xhr, file);
@@ -53,19 +49,38 @@ $.fn.markDownImageHandler = function(options) {
                         } else {
                             var alt = "image";
                         }
-                        var selection = $textarea.textrange('get');
-                        $textarea.val(
-                            $textarea.val().replace(tagPattern, '![' + alt + '](' + url + ')')
-                        );
-                        $textarea.textrange('set', selection.selectionStart, selection.selectionEnd);
+                        $textarea.textareaReplace(tagPattern, '![' + alt + '](' + url + ')');
                     })
                     .on('error', function(event, xhr) {
-                        $textarea.val(
-                            $textarea.val().replace(tagPattern, '![Error uploading ' + uploadName + ']()')
-                        );
+                        $textarea.textareaReplace(tagPattern, '![Error uploading ' + uploadName + ']()');
                         $textarea.trigger('error', [xhr]);
                     });
             uploader.start();
         });
     };
 };
+
+/* textareaReplae plugin
+   performs a regexp-replace on the contents of a textarea, while preserving the caret/selection.
+*/
+$.fn.textareaReplace = function(regexp, replacement) {
+    textarea = this;
+    var oldValue = textarea.val();
+    var selection = textarea.textrange('get');
+    var start = selection.selectionStart;
+    var end = selection.selectionEnd;
+    var match = oldValue.match(regexp);
+    if ( match ) {
+        var diff = replacement.length - match[0].length;
+        if ( start > match.index ) {
+            start += diff;
+        }
+        if ( end > match.index ) {
+            end += diff;
+        }
+        var newValue = oldValue.slice(0,match.index) + replacement + oldValue.slice(match.index + match[0].length);
+        textarea.val(newValue);
+        textarea.textrange('set',start,end);
+    }
+    return this;
+}
