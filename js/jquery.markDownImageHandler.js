@@ -25,7 +25,7 @@ $.fn.markDownImageHandler = function(options) {
             var tag = "![Uploading " + uploadName + " 00%]()";
             var tagPattern = new RegExp('!\\[Uploading ' + uploadName + ' [0-9]+%\\]\\(\\)');
             $textarea.val(head + tag + tail);
-            index = index + tag.length + 1;
+            index = index + tag.length;
             $textarea.textrange('set', index, index);
 
             var uploader = new qcode.Uploader({
