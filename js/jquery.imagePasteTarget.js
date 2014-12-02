@@ -4,26 +4,15 @@
 */
 $.fn.imagePasteTarget = function(handleFiles) {
     this.on('paste', function (event) {
-        for (var i = event.originalEvent.clipboardData.items.length - 1; i >= 0; i--) {
-            var item = event.originalEvent.clipboardData.items[i];
-            if (item.kind === "file") {
-                var file = item.getAsFile();
-                switch (item.type) {
-                case "image/png":
-                    var ext = ".png";
-                    break;
-                case "image/jpeg":
-                    var ext = ".jpeg";
-                    break;
-                case "image/gif":
-                    var ext = ".gif";
-                    break;
-                default:
-                    var ext = '';
-                }
-                handleFiles([file]);
+        var files = [];
+        Array.prototype.forEach.call(event.originalEvent.clipboardData.items, function(item) {
+            if ( item.kind === "file" ) {
+                files.push(item.getAsFile());
             }
-        };
+        });
+        if ( file.length > 0 ) {
+            handleFiles(files);
+        }
     });
     return this;
 };

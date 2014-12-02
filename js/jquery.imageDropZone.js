@@ -2,16 +2,15 @@
 // when image files are dropped onto the target element,
 // call handleFiles with a fileList of the dropped files.
 (function() {
-    var allowedMimeTypes = ['image/png','image/jpeg','image/gif'];
-    jQuery.fn.imageDropZone = function(handleFiles) {
-        $(this)
+    jQuery.fn.imageDropZone = function(handleFiles, options) {
+        var options = options || {};
+        var allowedMimeTypes = options.allowedMimeTypes || ['image/png','image/jpeg','image/gif'];
+        this
                 .on('dragenter dragover', function(event) {
-                    event.stopPropagation();
                     event.preventDefault();
                     event.originalEvent.dataTransfer.dropEffect = "copy";
                 })
                 .on('drop', function(event) {
-                    event.stopPropagation();
                     event.preventDefault();
                     var fileList = event.originalEvent.dataTransfer.files;
                     if ( Array.prototype.every.call(fileList, function(file) {
@@ -19,8 +18,9 @@
                     }) ) {
                         handleFiles(fileList);
                     } else {
-                        qcode.alert('Only png, jpg, and gif files are currently supported');
+                        qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
                     }
                 });
+        return this;
     }
 })();
