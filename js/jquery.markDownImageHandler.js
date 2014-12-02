@@ -1,16 +1,14 @@
 /*
   markDownImageHandler
-  call on a textarea, allows images to be dropped or pasted, handles the upload, and generates the markdown tag.
-  requires an upload url, and a function to convert the response and/or file into an image src url.
+  call on a textarea, returns a function. When the function is called with a fileList, it uploads the files,
+  and generates markdown image tags in the textarea for them.
+  requires an upload url, and a function to convert the xmlHttpRequest response and/or file object into an image src url.
   options = {
     uploadURL: string,
     getImageURL: function(xmlHttpRequest, file) {return string},
     postData: object (optional),
     chunkSize: string (optional, default "1MiB")
   }
-
-    $textarea.imageDropZone(handleFiles);
-    $textarea.imagePasteTarget(handleFiles);
 */
 $.fn.markDownImageHandler = function(options) {
     var $textarea = this.first();
