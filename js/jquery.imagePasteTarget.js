@@ -10,7 +10,7 @@ $.fn.imagePasteTarget = function(handleFiles) {
                 files.push(item.getAsFile());
             }
         });
-        if ( file.length > 0 ) {
+        if ( files.length > 0 ) {
             handleFiles(files);
         }
     });
