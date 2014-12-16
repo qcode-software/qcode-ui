@@ -76,3 +76,6 @@ For getting/setting selected text and cursor position
 ### jquery.dbForm
 Ajax form for database record editing
 [jsFiddle](http://jsfiddle.net/PeterChaplin/gpfRg/)
+
+### Prism.js Tcl definition
+[jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
