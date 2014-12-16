@@ -80,7 +80,7 @@ Ajax form for database record editing
 ### Image upload to textarea
 Demo for jquery.markDownImageHandler, jquery.imageDropZone, jquery.imagePasteTarget, and jquery.imageUploadButton.
 Upload an image and add to the textarea as a markdown tag.
-http://jsfiddle.net/PeterChaplin/9grmcmun/
+[jsFiddle](http://jsfiddle.net/PeterChaplin/9grmcmun/)
 
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
