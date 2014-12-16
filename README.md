@@ -77,5 +77,10 @@ For getting/setting selected text and cursor position
 Ajax form for database record editing
 [jsFiddle](http://jsfiddle.net/PeterChaplin/gpfRg/)
 
+### Image upload to textarea
+Demo for jquery.markDownImageHandler, jquery.imageDropZone, jquery.imagePasteTarget, and jquery.imageUploadButton.
+Upload an image and add to the textarea as a markdown tag.
+http://jsfiddle.net/PeterChaplin/9grmcmun/
+
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
