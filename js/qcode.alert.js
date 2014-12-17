@@ -71,7 +71,7 @@ var qcode = qcode || {};
     }
     qcode.alert.config = {};
 
-    qcode.confirm = function(message, onConfirm) {
+    qcode.confirm = function(message, onConfirm, onCancel) {
         alertQueue.push(function() {
             var toFocus = $(document.activeElement);
             if ( toFocus.is(':input') ) {
@@ -89,7 +89,9 @@ var qcode = qcode || {};
                                 text: "Yes",
                                 click: function() {
                                     $(this).dialog('close');
-                                    onConfirm();
+                                    if ( typeof onConfirm === "function" ) {
+                                        onConfirm();
+                                    }
                                 },
                                 keydown: function(event) {
                                     // Arrow key events
@@ -102,6 +104,9 @@ var qcode = qcode || {};
                                 text: "No",
                                 click: function() {
                                     $(this).dialog('close');
+                                    if ( typeof onCancel === "function" ) {
+                                        onCancel();
+                                    }
                                 },
                                 keydown: function(event) {
                                     // Arrow key events
