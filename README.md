@@ -82,5 +82,9 @@ Demo for jquery.markDownImageHandler, jquery.imageDropZone, jquery.imagePasteTar
 Upload an image and add to the textarea as a markdown tag.
 [jsFiddle](http://jsfiddle.net/PeterChaplin/9grmcmun/)
 
+### jquery.uploaderUI
+Demo for jquery uploaderUI plugin
+[jsFiddle](http://jsfiddle.net/PeterChaplin/8vunt0d8/)
+
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
