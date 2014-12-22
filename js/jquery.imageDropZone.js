@@ -7,6 +7,7 @@
         var allowedMimeTypes = options.allowedMimeTypes || ['image/png','image/jpeg','image/gif'];
         this
                 .on('dragenter dragover', function(event) {
+                    $(this).addClass('drag-hover');
                     event.preventDefault();
                     event.originalEvent.dataTransfer.dropEffect = "copy";
                 })
@@ -19,6 +20,11 @@
                         handleFiles(fileList);
                     } else {
                         qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
+                    }
+                })
+                .on('dragleave drop', function() {
+                    if ( $(event.target).is(this) ) {
+                        $(this).removeClass('drag-hover');
                     }
                 });
         return this;
