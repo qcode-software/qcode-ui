@@ -85,6 +85,7 @@ Upload an image and add to the textarea as a markdown tag.
 ### jquery.uploaderUI
 Demo for jquery uploaderUI plugin
 [jsFiddle](http://jsfiddle.net/PeterChaplin/8vunt0d8/)
+[jsFiddle with more css](http://jsfiddle.net/PeterChaplin/c0nn6ymr/)
 
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
