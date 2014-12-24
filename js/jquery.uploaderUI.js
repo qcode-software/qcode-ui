@@ -18,8 +18,8 @@
         }
 
         var $dropzone = this.find('.dropzone');
-        $dropzone.imageDropZone(uploadHandler);
-        this.find('.image-upload.button').imageUploadButton(uploadHandler);
+        $dropzone.fileDropZone(uploadHandler, {allowedMimeTypes: options.allowedMimeTypes});
+        this.find('.upload-button').fileUploadButton(uploadHandler, {allowedMimeTypes: options.allowedMimeTypes});
         
         function uploadHandler(files) {
             $.when(validation(files))
