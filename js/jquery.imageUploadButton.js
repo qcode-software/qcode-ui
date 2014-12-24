@@ -5,6 +5,6 @@
     jQuery.fn.imageUploadButton = function(handleFiles, options) {
         return this.fileUploadButton(handleFiles, $.extend({
             allowedMimeTypes: ['image/png','image/jpeg','image/gif']
-        }, options);
+        }, options));
     }
 })();
