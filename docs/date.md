@@ -1,6 +1,7 @@
 #Date
 Qcode extensions to the Date api.
-[fiddle](http://jsfiddle.net/PeterChaplin/vq21npu8/)
+
+[Fiddle](http://jsfiddle.net/PeterChaplin/vq21npu8/)
 
 ##Date.prototype.incrDays(days)
 Move this date forward by a number of days (accepts negative and non-integer values)
