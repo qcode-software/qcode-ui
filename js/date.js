@@ -111,6 +111,6 @@
     // Static properties
     // ==============================
     var now = new Date();
-    // A date representing mindnight (00:00:00) today
+    // A date representing midnight (00:00:00) today
     Date.today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
 })();
