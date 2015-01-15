@@ -15,6 +15,29 @@
 
         // Initialisation
         this.addClass('qc-column-resize');
+
+        if ( options.overflow === 'hidden' ) {
+            var styles = {};
+            this.filter('table').each(function() {
+                var $table = $(this);
+                if ( $table.css('table-layout') === 'auto' ) {
+                    var id = $table.getID();
+                    styles['#'+id] = {
+                        "table-layout": "fixed",
+                        "width": "0"
+                    };
+                    $table.children('thead').first().children('tr').first().children('th').each(function() {
+                        var $th = $(this);
+                        var nth = $th.index() + 1;
+                        styles['#'+id+' > colgroup > col:nth-child('+nth+')'] = {
+                            "width": $th.width() + 'px'
+                        };
+                    });
+                }
+            });
+            qcode.style(styles);
+        }
+
         this.find('th').each(function() {
             var th = $(this);
             var nth = th.index() + 1;
@@ -28,8 +51,10 @@
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
 
-            case 'hidden':
-                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', "hidden");
+            case 'hidden':                
+                qcode.style('#'+id+' > * > tr > *:nth-child('+nth+')', 'overflow-x', "hidden");
+                break;
+
             case 'normal':
                 break;
 

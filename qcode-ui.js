@@ -259,7 +259,7 @@ if ( ! String.prototype.trim ) {
     // Static properties
     // ==============================
     var now = new Date();
-    // A date representing mindnight (00:00:00) today
+    // A date representing midnight (00:00:00) today
     Date.today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
 })();
 
@@ -851,6 +851,29 @@ function dynamicResize(oContainer) {
 
         // Initialisation
         this.addClass('qc-column-resize');
+
+        if ( options.overflow === 'hidden' ) {
+            var styles = {};
+            this.filter('table').each(function() {
+                var $table = $(this);
+                if ( $table.css('table-layout') === 'auto' ) {
+                    var id = $table.getID();
+                    styles['#'+id] = {
+                        "table-layout": "fixed",
+                        "width": "0"
+                    };
+                    $table.children('thead').first().children('tr').first().children('th').each(function() {
+                        var $th = $(this);
+                        var nth = $th.index() + 1;
+                        styles['#'+id+' > colgroup > col:nth-child('+nth+')'] = {
+                            "width": $th.width() + 'px'
+                        };
+                    });
+                }
+            });
+            qcode.style(styles);
+        }
+
         this.find('th').each(function() {
             var th = $(this);
             var nth = th.index() + 1;
@@ -864,8 +887,10 @@ function dynamicResize(oContainer) {
                 th.data('original-font-size', parseInt(th.css('font-size')));
                 break;
 
-            case 'hidden':
-                qcode.style('#'+id+' > thead > tr > th:nth-child('+nth+')', 'overflow-x', "hidden");
+            case 'hidden':                
+                qcode.style('#'+id+' > * > tr > *:nth-child('+nth+')', 'overflow-x', "hidden");
+                break;
+
             case 'normal':
                 break;
 
@@ -5268,6 +5293,75 @@ function dbFormHTMLArea(oDiv) {
     };
 })(jQuery);
 
+/* ==== jquery.fileDropZone.js ==== */
+// fileDropZone plugin
+// when image files are dropped onto the target element,
+// call handleFiles with a fileList of the dropped files.
+;(function() {
+    jQuery.fn.fileDropZone = function(handleFiles, options) {
+        var options = options || {};
+        var allowedMimeTypes = options.allowedMimeTypes || "any";
+        this
+                .on('dragenter dragover', function(event) {
+                    $(this).addClass('drag-hover');
+                    event.preventDefault();
+                    event.originalEvent.dataTransfer.dropEffect = "copy";
+                })
+                .on('drop', function(event) {
+                    event.preventDefault();
+                    var fileList = event.originalEvent.dataTransfer.files;
+                    if ( allowedMimeTypes === "any" || Array.prototype.every.call(fileList, function(file) {
+                        return ( allowedMimeTypes.indexOf(file.type) > -1 )
+                    }) ) {
+                        handleFiles(fileList);
+                    } else {
+                        qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
+                    }
+                })
+                .on('dragleave drop', function() {
+                    if ( $(event.target).is(this) ) {
+                        $(this).removeClass('drag-hover');
+                    }
+                });
+        return this;
+    }
+})();
+
+/* ==== jquery.fileUploadButton.js ==== */
+// fileUploadButton plugin
+// - open a file select dialog when the user clicks the target,
+// call handleFiles with a fileList of the selected files.
+;(function() {
+    jQuery.fn.fileUploadButton = function(handleFiles, options) {
+        var hiddenInput;
+        var options = options || {};
+        var allowedMimeTypes = options.allowedMimeTypes || "all";
+        this.on('click',function() {
+            if ( hiddenInput === undefined ) {
+                hiddenInput = $('<input>').attr({
+                    type: "file",
+                    multiple: true
+                }).appendTo('body').hide();
+                if ( allowedMimeTypes !== "all" ) {
+                    hiddenInput.attr('accept', allowedMimeTypes.join(','));
+                }
+                hiddenInput.on('change', function(event) {
+                    var fileList = this.files;
+                    if ( allowedMimeTypes === "all" || Array.prototype.every.call(fileList, function(file) {
+                        return ( allowedMimeTypes.indexOf(file.type) > -1 )
+                    }) ) {
+                        handleFiles(fileList);
+                    } else {
+                        qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
+                    }
+                });
+            }
+            hiddenInput.click();
+        });
+        return this;
+    }
+})();
+
 /* ==== jquery.format.js ==== */
 /* ====================================================================
 jquery.format plugin
@@ -6033,6 +6127,114 @@ uses the existing id if it has one
         }
     }
 })(jQuery);
+
+/* ==== jquery.imageDropZone.js ==== */
+// imageDropZone plugin
+// when image files are dropped onto the target element,
+// call handleFiles with a fileList of the dropped files.
+;(function() {
+    jQuery.fn.imageDropZone = function(handleFiles, options) {
+        return this.fileDropZone(handleFiles, $.extend({
+            allowedMimeTypes: ['image/png','image/jpeg','image/gif']
+        }, options));
+    }
+})();
+
+/* ==== jquery.imagePasteTarget.js ==== */
+/*
+  imagePasteTarget plugin
+  handle paste events containing images on the target element
+*/
+$.fn.imagePasteTarget = function(handleFiles) {
+    this.on('paste', function (event) {
+        var files = [];
+        Array.prototype.forEach.call(event.originalEvent.clipboardData.items, function(item) {
+            if ( item.kind === "file" ) {
+                files.push(item.getAsFile());
+            }
+        });
+        if ( files.length > 0 ) {
+            handleFiles(files);
+        }
+    });
+    return this;
+};
+
+/* ==== jquery.imageUploadButton.js ==== */
+// imageUploadButton plugin
+// - open a file select dialog when the user clicks the target,
+// call handleFiles with a fileList of the selected files.
+;(function() {
+    jQuery.fn.imageUploadButton = function(handleFiles, options) {
+        return this.fileUploadButton(handleFiles, $.extend({
+            allowedMimeTypes: ['image/png','image/jpeg','image/gif']
+        }, options));
+    }
+})();
+
+/* ==== jquery.markDownImageHandler.js ==== */
+/*
+  markDownImageHandler
+  call on a textarea, returns a function. When the function is called with a fileList, it uploads the files,
+  and generates markdown image tags in the textarea for them.
+  requires an upload url, and a function to convert the xmlHttpRequest response and/or file object into an image src url.
+  options = {
+    uploadURL: string,
+    getImageURL: function(xmlHttpRequest, file) {return string},
+    postData: object (optional),
+    chunkSize: string (optional, default "1MiB")
+  }
+*/
+$.fn.markDownImageHandler = function(options) {
+    var $textarea = this.first();
+
+    return function handleFiles(fileList) {
+        var index = $textarea.textrange('get').selectionStart;
+        $.each(fileList, function (i, file) {
+            var head = $textarea.val().slice(0, index);
+            var tail = $textarea.val().slice(index);
+            var uploadName = file.name || guidGenerate();
+
+            var tag = "![Uploading " + uploadName + " 0%]()";
+            var tagPattern = new RegExp('!\\[Uploading ' + uploadName + ' [0-9]+%\\]\\(\\)');
+            $textarea.val(head + tag + tail);
+            index = index + tag.length;
+            $textarea.textrange('set', index, index);
+
+            var uploader = new qcode.Uploader({
+                file: file,
+                chunkSize: options.chunkSize,
+                url: options.uploadURL,
+                postData: options.postData
+            });
+
+            $(uploader)
+                    .on('progress', function(event) {
+                        var perct = (event.loaded / event.total).toLocaleString("GB",{
+                            minimumIntegerDigits: 2,
+                            maximumFractionDigits: 0,
+                            style: "percent"
+                        });
+                        $textarea.textareaReplace(tagPattern, "![Uploading " + uploadName + " " + perct + "]()");
+                    })
+                    .on('complete', function(event, xhr) {
+                        var url = options.getImageURL(xhr, file);
+                        if ( file.name ) {
+                            // Strip off the file extension to generate Alt text.
+                            var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
+                        } else {
+                            var alt = "image";
+                        }
+                        $textarea.textareaReplace(tagPattern, '![' + alt + '](' + url + ')');
+                    })
+                    .on('error', function(event, xhr) {
+                        $textarea.textareaReplace(tagPattern, '![Error uploading ' + uploadName + ']()');
+                        $textarea.trigger('error', [xhr]);
+                    });
+            uploader.start();
+        });
+    };
+};
 
 /* ==== jquery.maximiseHeight.js ==== */
 // Maximise the height of an element so that the content of a page spans the entire height of the window.  
@@ -7832,6 +8034,32 @@ uses the existing id if it has one
     });
 })(jQuery);
 
+/* ==== jquery.textareaReplace.js ==== */
+/* textareaReplace plugin
+   performs a regexp-replace on the contents of a textarea, while preserving the caret/selection.
+*/
+$.fn.textareaReplace = function(regexp, replacement) {
+    var textarea = this;
+    var oldValue = textarea.val();
+    var selection = textarea.textrange('get');
+    var start = selection.selectionStart;
+    var end = selection.selectionEnd;
+    var match = oldValue.match(regexp);
+    if ( match ) {
+        var diff = replacement.length - match[0].length;
+        if ( start > match.index ) {
+            start += diff;
+        }
+        if ( end > match.index ) {
+            end += diff;
+        }
+        var newValue = oldValue.slice(0,match.index) + replacement + oldValue.slice(match.index + match[0].length);
+        textarea.val(newValue);
+        textarea.textrange('set',start,end);
+    }
+    return this;
+};
+
 /* ==== jquery.textrange.js ==== */
 /* ==== jquery.textrange.js ==== */
 (function($, undefined) {
@@ -8333,11 +8561,33 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             // Add the head to the page last, after widths and styles have been calculated
             // (this avoids a google chrome bug)
             this.wrapper.prepend(this.headClone);
+
+            this.zoomFix();
             // end of _create;
 	},
 	repaint: function() {
             this.repaintStyles();
             this.repaintWidths();
+        },
+        zoomFix: function() {
+            var cloneRow = this.headClone.children('thead').children('tr').first();
+            var originalRow = this.table.children('thead').children('tr').first();
+            var thSelectors = this.thSelectors;
+            for ( var multiplier = 0.99 ; multiplier > 0 ; multiplier -= 0.01 ) {
+                if ( cloneRow.height() <= originalRow.height() ) {
+                    break
+                }
+                styles = {};
+                this.theadCells.each(function(i, originalTH) {
+                    styles[thSelectors[i]] = {
+                        'font-size':
+                        (
+                            parseFloat( $(originalTH).css('font-size') ) * multiplier
+                        ) + "px"
+                    };
+                });
+                qcode.style(styles);
+            }
         },
         repaintWidths: function() {
             // Measure and apply table and column widths
@@ -8348,7 +8598,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             var styles = {};
             styles['#' + id] = {
-                'display': this.table.css('dsiplay'),
+                'display': this.table.css('display'),
                 'width': this.table.outerWidth() + "px"
             }
 
@@ -8457,6 +8707,84 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
         return summary;
     }
 })(jQuery);
+
+/* ==== jquery.uploaderUI.js ==== */
+// jquery.uploaderUI plugin
+// A dropzone and upload button, with panels to indicate upload status
+// options {
+//   validation: (optional) function(fileList) {return accepted FileList or promise thereof for upload}
+//   uploadURL: json url to upload to
+//   uploadData: (optional) object-map of additional POST data, sent to upload url
+//   onUpload: (optional) function(responseObject) {called on upload completion, with response from server}
+// }
+;(function() {
+    "use strict";
+    jQuery.fn.uploaderUI = function(options) {
+        if ( typeof options.validation === 'undefined' ) {
+            var validation = function(files) {
+                return files;
+            }
+        } else {
+            var validation = options.validation;
+        }
+
+        var $dropzone = this.find('.dropzone');
+        $dropzone.fileDropZone(uploadHandler, {allowedMimeTypes: options.allowedMimeTypes});
+        this.find('.upload-button').fileUploadButton(uploadHandler, {allowedMimeTypes: options.allowedMimeTypes});
+        
+        function uploadHandler(files) {
+            $.when(validation(files))
+                    .done(function(okFiles) {
+                        $.each(okFiles, function(i, file) {
+                            var fileUpload = beginUpload(file, $dropzone, options.uploadURL, options.uploadData);
+                            if ( typeof options.onUpload === 'function' ) {
+                                fileUpload.done(options.onUpload);
+                            }
+                        });
+                    })
+                    .fail(function() {
+                        qcode.alert('Server Error - A report has been sent to our engineers');
+                    });
+        }
+
+        return this; //jQuery plugin chaining
+    }
+
+    function beginUpload(file, $dropzone, uploadURL, uploadData) {
+        // Upload a file, create a panel to display progress,
+        // return a promise of the server response object for the completed upload
+        var deferred = new jQuery.Deferred();
+        var percentSpan = $('<span>').addClass('percent').text("0%");
+        var filenameSpan = $('<span>').addClass('filename').text(file.name);
+        var progressPanel = $('<div>').append(filenameSpan).append(percentSpan).addClass('panel uploading');
+        $dropzone.append(progressPanel);
+        var uploader = new qcode.Uploader({
+            file: file,
+            chunkSize: '1MiB',
+            url: uploadURL,
+            postData: uploadData
+        });
+        $(uploader)
+                .on('progress', function(event) {
+                    var perct = (event.loaded / event.total).toLocaleString(
+                        "GB", { maximumFractionDigits: 0, style: "percent" }
+                    );
+                    percentSpan.text(perct);
+                })
+                .on('complete', function(event, xhr) {
+                    percentSpan.text('Complete');
+                    progressPanel.removeClass('uploading').addClass('complete');
+                    var response = jQuery.parseJSON(xhr.responseText);
+                    deferred.resolve(response);
+                })
+                .on('error', function(event, xhr) {
+                    percentSpan.text('Error');
+                    progressPanel.removeClass('uploading').addClass('error');
+                });
+        uploader.start();
+        return deferred.promise();
+    }
+})();
 
 /* ==== jquery.utils.js ==== */
 // Used for inheritance. Prefer Object.create
@@ -8806,6 +9134,56 @@ function isEditingKeyEvent(e) {
     }
 }
 
+function guidGenerate() {
+    // - could not generate a guid from system data (which isn't exposed to js)
+    // - this follows the specs for a guid based on pseudo-random data
+    var str = "";
+    for (var i = 0; i < 4; i++ ) {
+        var num = Math.random()*Math.pow(16,8);
+        str = str.concat("00000000".concat(num.toString(16)).slice(-8));
+    }
+    var guid = str.slice(0,8).concat(
+        '-',str.slice(8,12),
+        '-4',str.slice(13,16),
+        '-',((Math.random()*Math.pow(16,8) & 11) | 7).toString(16),str.slice(17,20),
+        '-',str.slice(20,32)
+    );
+    return guid;
+}
+
+function bytesWithUnits2Int(bytes_with_units) {
+    // Convert a human-readable string such as "10MiB" to an integer number of bytes
+    // (Use ISO units, 1MB = 1000^2 bytes, 1MiB = 1024^2 bytes. kilobytes should be kB or KiB)
+    // (Allow units to be chained, eg. 1kKiB = 1024000 bytes)
+    var prefixValues = {
+        k: 1000,
+        Ki: 1024,
+        M: Math.pow(1000,2),
+        Mi: Math.pow(1024,2),
+        G: Math.pow(1000,3),
+        Gi: Math.pow(1024,3),
+        T: Math.pow(1000,4),
+        Ti: Math.pow(1024,4)
+    }
+    var re = /^([0-9]+(?:\.[0-9]+)?)(?:((?:k|Ki|M|Mi|G|Gi|T|Ti)+)?B)?$/;
+    var matches = bytes_with_units.match(re);
+    if ( ! matches ) {
+        jQuery.error('Could not parse string to byte measure');
+    }
+    var qty = matches[1];
+    var prefixes = matches[2];
+    var multiplier = 1;
+    if ( prefixes ) {
+        var re = /k|Ki|M(?!i)|Mi|G(?!i)|Gi|T(?!i)|Ti/g;
+        var matches = prefixes.match(re);
+        if ( matches ) {
+            matches.forEach(function(prefix) {
+                multiplier *= prefixValues[prefix];
+            });
+        }
+    }
+    return parseInt(qty * multiplier);
+}
 
 /* ==== jquery.validation.js ==== */
 /* validation plugin
@@ -8953,6 +9331,72 @@ function isEditingKeyEvent(e) {
 })(jQuery);
 
 
+/* ==== qcode.FileNameCollisionChecker.js ==== */
+// qcode.FilenameCollisionChecker - takes an url and any additional post data, returns a "checker" function
+// checker function - takes an array of files, returns a promise of an array of accepted files
+// Uses the url, the filename, and any additional data to test for filename collision and ask the user to confirm.
+;var qcode = qcode || {};
+(function() {
+    "use strict";
+    qcode.FilenameCollisionChecker = function(url, additionalData) {
+        return function checkFiles(files) {
+            // Check files for name collisions (asynchronous), then upload
+            var deferred = new jQuery.Deferred();
+
+            jQuery.when(files).done(function(files) {
+                var checks = [];
+                $.each(files,function(i, file) {
+                    checks.push(checkFile(file, url, additionalData));
+                });
+                var fileChecks = jQuery.when.apply(jQuery, checks);
+                fileChecks
+                        .done(function() {
+                            var fileQueue = [];
+                            for ( var i = 0; i < arguments.length; i++ ) {
+                                if ( arguments[i] !== null ) {
+                                    fileQueue.push(arguments[i]);
+                                }
+                            }
+                            deferred.resolve(fileQueue);
+                        })
+                        .fail(function() {
+                            deferred.reject();
+                        });
+            });
+
+            return deferred.promise();
+        }
+    }
+
+    function checkFile(file, url, additionalData) {
+        // Check a file for namespace collision (asynchronous)
+        // Return a promise that resolves with the file if it is accepted, with null otherwise
+        var deferred = new jQuery.Deferred();
+	jQuery.ajax({
+            url: url,
+	    async: false,
+	    cache: false,
+	    data: $.extend({
+		filename: file.name
+	    },additionalData),
+	    dataType: "json"
+	}).done(function(data) {
+	    if ( data.result !== true ) {
+                deferred.resolve(file);
+            } else {
+                qcode.confirm(
+                    'File "' + file.name + '" already exists. Do you want to replace it?',
+                    function() {deferred.resolve(file);},
+                    function() {deferred.resolve(null);}
+                );
+            }
+	}).fail(function(jqXHR, textStatus, errorThrown) {
+            deferred.reject()
+        });
+        return deferred.promise();
+    }
+})();
+
 /* ==== qcode.alert.js ==== */
 ;/*
 ============================================================
@@ -9027,7 +9471,7 @@ var qcode = qcode || {};
     }
     qcode.alert.config = {};
 
-    qcode.confirm = function(message, onConfirm) {
+    qcode.confirm = function(message, onConfirm, onCancel) {
         alertQueue.push(function() {
             var toFocus = $(document.activeElement);
             if ( toFocus.is(':input') ) {
@@ -9045,7 +9489,9 @@ var qcode = qcode || {};
                                 text: "Yes",
                                 click: function() {
                                     $(this).dialog('close');
-                                    onConfirm();
+                                    if ( typeof onConfirm === "function" ) {
+                                        onConfirm();
+                                    }
                                 },
                                 keydown: function(event) {
                                     // Arrow key events
@@ -9058,6 +9504,9 @@ var qcode = qcode || {};
                                 text: "No",
                                 click: function() {
                                     $(this).dialog('close');
+                                    if ( typeof onCancel === "function" ) {
+                                        onCancel();
+                                    }
                                 },
                                 keydown: function(event) {
                                     // Arrow key events
@@ -9361,6 +9810,126 @@ if ( typeof qcode === "undefined" ) {
         // ================================================================================
     }
 })(jQuery);
+
+/* ==== qcode.uploader.js ==== */
+// ================================================================================
+// Uploader plugin
+// eg.
+/*
+  var uploader = new Uploader {
+  "file": file,
+  "chunkSize": 1048576, //(optional, defaults to 1MiB)
+  "url": '/upload'
+  };
+  $(uploader)
+  .on('progress', function progressHandler(event) {
+  var complete = event.loaded / event.total;
+  })
+  .on('complete', function uploadHandler(event, xhr) {})
+  .on('error', function errorHandler(event, xhr) {});
+  uploader.start();
+
+  proc /upload {name chunk chunks file filename mime_type} {
+  }
+*/
+var qcode = qcode || {};
+qcode.Uploader = (function() {
+    var Uploader = function(options) {
+        this.id = guidGenerate();
+        this.file = options.file;
+        if ( options.chunkSize ) {
+            this.chunkSize = bytesWithUnits2Int(options.chunkSize);
+        } else {
+            this.chunkSize = bytesWithUnits2Int("1MiB");
+        }
+        this.url = options.url;
+        this.options = options;
+    }
+    jQuery.extend(Uploader.prototype, {
+        start: function() {
+            var uploader = this;
+            var file = this.file;
+            var chunkSize = this.chunkSize;
+
+            // Chunk the file
+            var chunks = [];
+            if ( file.size > chunkSize ) {
+                var start = 0;
+                var end = start + chunkSize;
+                while ( start < file.size ) {
+                    chunks.push(file.slice(start,end));
+                    start = end;
+                    end = start + chunkSize;
+                }
+            } else {
+                chunks.push(file);
+            }
+
+            // Upload the chunks
+            var requests = [];
+            var chunkProgress = [];
+            chunks.forEach(function(chunk, index) {
+                var xhr = new XMLHttpRequest();
+                requests.push(xhr);
+
+                var data = new FormData();
+                data.append('name',uploader.id);
+                data.append('chunk',index);
+                data.append('chunks',chunks.length);
+                data.append('file',chunk);
+                data.append('filename',file.name);
+                data.append('mime_type',file.type);
+                if ( uploader.options.postData ) {
+                    jQuery.each(uploader.options.postData, function(name, value) {
+                        data.append(name,value);
+                    });
+                }
+
+                xhr.onreadystatechange = function() {
+                    if ( xhr.readyState != xhr.DONE ) {
+                        return;
+                    }
+                    if ( xhr.status != 200 ) {
+                        jQuery.each(requests, function(i, request) {
+                            if ( request !== xhr ) {
+                                request.onreadystatechange = null;
+                                request.onprogress = null;
+                                request.abort();
+                            }
+                        });
+                        $(uploader).trigger('error', [xhr]);
+                        return;
+                    }
+                    if ( requests.every(function(request) {
+                        return ( request.readyState == request.DONE );
+                    }) ) {
+                        $(uploader).trigger('complete', [xhr]);
+                    }
+                }
+                xhr.onprogress = function(event) {
+                    if ( event.lengthComputable ) {
+                        chunkProgress[index] = chunk.size * event.loaded / event.total;
+                        var totalProgress = 0;
+                        $.each(chunkProgress, function(index, progress) {
+                            if ( progress !== undefined ) {
+                                totalProgress += progress;
+                            }
+                        });
+                        $(uploader).trigger(jQuery.Event('progress',{
+                            loaded: totalProgress,
+                            total: file.size
+                        }));
+                    }
+                };
+                
+                xhr.open('POST', uploader.url);
+                xhr.send(data);
+            });
+        }
+    });
+    return Uploader;
+})();
+// ================================================================================
 
 /* ==== tableRowHighlight.js ==== */
 function tableRowHighlight(oTable) {

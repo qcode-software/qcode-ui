@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Column Reize Demo</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        border: 1px solid grey;
+        width: 450px;
+      }
+      th, td {
+        border: 1px solid grey;
+      }
+    </style>
+    <link href="../qcode-ui.css" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
+    <script src="../qcode-ui.js"></script>
+    <script>
+      $(function() {
+        $('table').columnResize({
+          "overflow": "hidden"
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <table>
+      <colgroup>
+        <col/><col/><col/>
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Firstname</th>
+          <th>Surname</th>
+          <th>Age</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Peter</td>
+          <td>Chaplin</td>
+          <td>28</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
