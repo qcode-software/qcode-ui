@@ -3,7 +3,7 @@
 ##$.fn.eastOf( selector )
 ##$.fn.southOf( selector )
 ##$.fn.westOf( selector )
-[Fiddle]()
+[Fiddle](http://jsfiddle.net/PeterChaplin/47js0aog/)
 
 Returns a jQuery selection of length 0 or 1, representing the element which:
 
