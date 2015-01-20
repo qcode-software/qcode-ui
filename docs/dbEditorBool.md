@@ -1,10 +1,11 @@
 # dbEditorBool plugin
 See $.fn.editable
 
-A hovering editor for boolean input. Copies various css attributes from the target element to try and look the same.
+A hovering editor for boolean input. Copies various css attributes from the target element to try and look the same. Note
+that this plugin should be called on the element which will contain the editor, not on the element to be edited.
 
 ## $.fn.dbEditorBool()
-Initialise the plugin
+Initialise the plugin.
 
 ## $.fn.dbEditorBool('getCurentElement')
 Get the element currently being edited.
