@@ -1,10 +1,11 @@
 # Databse Grid - dbGrid
 [Fiddle](http://jsfiddle.net/PeterChaplin/j6HPe/)
 
-An html table representing a database record set, with editable contents. Each row represents a record, dbGrid expects
-\<col\> elements with "name" attributes to describe the field names.
-
 See also: dbRow and dbCell.
+
+An html table representing a database record set, with editable contents. Each row represents a record, dbGrid expects
+\<col\> elements with "name" attributes to describe the field names. Columns can be made non-editable with the custom
+attributes "addDisabled" and "updateDisabled".
 
 The plugin uses the "editable" plugin, with the associated "dbEditor" plugins, to allow editing of cell contents.
 It adds a \<div\> wrapper around the table in order to support this plugin.
