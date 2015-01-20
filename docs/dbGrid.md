@@ -7,8 +7,13 @@ An html table representing a database record set, with editable contents. Each r
 See also: dbRow and dbCell.
 
 The plugin uses the "editable" plugin, with the associated "dbEditor" plugins, to allow editing of cell contents.
-It adds a \<div\> wrapper around the table in order to support this plugin. It also fires "message" events, as
-listened for by the "statusFrame" plugin, and "resize" events when the table is resized.
+It adds a \<div\> wrapper around the table in order to support this plugin.
+
+This plugin fires "message" events, as listened for by the "statusFrame" plugin.
+It fires "resize" events when the table is resized. When moving from one cell to another, a "cellOut" is fired on the
+cell being moved from, then a "cellIn" on the cell being moved to. When these cells are in different rows, a "rowOut"
+is fired on the row being moved from, and a "rowIn" is fired on the row being moved to. The sequence is cellOut -> rowOut
+-> rowIn -> cellIn.
 
 The plugin Supports adding new rows, updating existing rows, and deleting existing rows via AJAX. The row contents are
 submitted as form data on AJAX requests. For add and update requests, the response is checked for a root \<records\>
