@@ -6,7 +6,7 @@ represent individual records, which in turn should contain elements representing
 have class "record", and the fields should have "name" attributes. Editable fields should have the "editable" class,
 and should be focussable - use the tabIndex attribute to control this.
 
-This plugin uses the dbRecord and dbField plugins.
+This plugin uses the dbRecord and dbField plugins. Also uses the $.fn.editable plugin.
 
 Use the custom attributes "addURL", "updateURL" and "deleteURL" to specify urls for AJAX-based addition, update, and
 deletion of records.
@@ -49,4 +49,4 @@ Get the current field
 Intended for internal use. Sets the current field. Prefer "fieldChange" to control focus.
 
 ## $.fn.dbRecordSet("fieldChange", newField)
-Change the current fiel, switching to the new field.
+Change the current field, switching to the new field.
