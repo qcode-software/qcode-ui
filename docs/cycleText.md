@@ -7,6 +7,6 @@ Cycles through the given labels (each call replaces the current contents of the 
 When the end of the array is reached, cycle back to the first one.
 
 ### labels
-Type: Ayyar (required)
+Type: Array (required)
 
 An array of label stringsto cycle through.
