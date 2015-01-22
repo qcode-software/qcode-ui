@@ -33,9 +33,10 @@ var qcode = qcode || {};
     qcode.alert = function(message, callback) {
         alertQueue.push(function() {
             // Remember focus and blur
+            var textRange;
             var toFocus = $(document.activeElement);
             if ( toFocus.is(':input') ) {
-                var textRange = toFocus.textrange('get');
+                textRange = toFocus.textrange('get');
             }
             
             $('<div>')
@@ -73,9 +74,18 @@ var qcode = qcode || {};
 
     qcode.confirm = function(message, onConfirm, onCancel) {
         alertQueue.push(function() {
+            var supportsSelection, textrange;
             var toFocus = $(document.activeElement);
             if ( toFocus.is(':input') ) {
-                var textRange = toFocus.textrange('get');
+                try {
+                    toFocus[0].selectionStart;
+                    supportsSelection = true;
+                } catch (e) {
+                    supportsSelection = false;
+                }
+                if ( supportsSelection ) {
+                    textRange = toFocus.textrange('get');
+                }
             }
             
             $('<div>')
@@ -119,7 +129,7 @@ var qcode = qcode || {};
                         close: function() {
                             $(this).remove();
                             toFocus.trigger('focus');
-                            if ( toFocus.is(':input') ) {
+                            if ( toFocus.is(':input') && supportsSelection ) {
                                 toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
                             }
                             showNextMessage();
