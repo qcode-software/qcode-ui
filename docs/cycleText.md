@@ -9,4 +9,4 @@ When the end of the array is reached, cycle back to the first one.
 ### labels
 Type: Array (required)
 
-An array of label stringsto cycle through.
+An array of label strings to cycle through.
