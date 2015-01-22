@@ -75,7 +75,13 @@ var qcode = qcode || {};
         alertQueue.push(function() {
             var toFocus = $(document.activeElement);
             if ( toFocus.is(':input') ) {
-                var textRange = toFocus.textrange('get');
+                try {
+                    toFocus[0].selectionStart;
+                    var supportsSelection = true;
+                } catch (e) {}
+                if ( supportsSelection ) {
+                    var textRange = toFocus.textrange('get');
+                }
             }
             
             $('<div>')
@@ -119,7 +125,7 @@ var qcode = qcode || {};
                         close: function() {
                             $(this).remove();
                             toFocus.trigger('focus');
-                            if ( toFocus.is(':input') ) {
+                            if ( toFocus.is(':input') && supportsSelection ) {
                                 toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
                             }
                             showNextMessage();
