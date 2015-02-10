@@ -138,7 +138,7 @@
 			);
 		    }
 		}.bind(this));
-		this.form.submit();
+		this.formAction('submit', this.settings.submitURL, undefined, undefined, async)
 		break;
 	    }
 	},
@@ -146,7 +146,7 @@
 	    var dbForm = this;
 	    if ( typeof handler == "undefined" ) {
 		handler = function(data, textStatus, jqXHR){
-		    formActionSuccess.call(dbForm, data, type);
+		    formActionSuccess.call(dbForm, data, type, jqXHR);
 		}
 	    }
 	    if ( typeof errorHandler == "undefined" ) {
@@ -305,10 +305,10 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-    function formActionSuccess(response, type, dataType) {
+    function formActionSuccess(response, type, jqXHR) {
 
-        switch(dataType) {
-        case "json":
+        switch(jqXHR.getResponseHeader('Content-Type')) {
+        case "application/json":
             parseJSONResponse(response, type);
             break;
         default:
@@ -400,16 +400,45 @@
     }
     function parseJSONResponse(response, type) {
         var dbForm = this;
-        var response = jQuery.parseJSON(response);
-        var record = response.record;
-        $.each(record, function(name, value) {
+        // Record
+        var allValid = true;
+        $.each(response.record, function(name, obj) {
             var input = dbForm.form.find('#' + name);
-            if ($(input).is('input, textarea, select')) {
-                $(target).val(name.value);
+            if (record.valid) {
+                // update the value of the field
+                if ($(input).is('input, textarea, select')) {
+                    $(target).val(obj.value);
+                } else {
+                    $(target).html(obj.value);
+                }
             } else {
-                $(target).html(name.value);
+                // show invalid message
+                allValid = false;
+                this.form.validation('showMessage', input, obj.message);
             }
         });
+
+        // Messages
+        $.each(response.message, function(type, obj) {
+            var message = obj.value;
+            switch(type) {
+            case 'alert':
+                qcode.alert(message);
+                break;
+            case 'notify':
+                this.setStatus(message);
+                break;
+            case 'error':
+                this.setStatus(message);
+                qcode.alert(message);
+                break;
+            }
+        });
+
+        // Actions
+        if (allValid && response.action && response.action.redirect) {
+            window.location.href = response.action.redirect.value;
+        }
     }
     function formActionError(errorMessage) {
 	this.setState('error');
