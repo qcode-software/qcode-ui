@@ -305,43 +305,17 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-    function formActionSuccess(xmlDoc, type) {
-	var dbForm = this;
-	$('records > record *', xmlDoc).each(function(i, xmlNode){
-	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
-		if ( $(target).is('input, textarea, select') ) {
-		    $(target).val($(xmlNode).text());
-		} else {
-		    $(target).html($(xmlNode).text());
-		}
-	    });
-	});
-	$('records > html *', xmlDoc).each(function(i, xmlNode){
-	    behave(
-                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
-		    if ( $(target).is('input, textarea, select') ) {
-		        $(target).val($(xmlNode).text());
-		    } else {
-		        $(target).html($(xmlNode).text());
-		    }
-	        })
-            );
-	});
+    function formActionSuccess(response, type, dataType) {
+
+        switch(dataType) {
+        case "json":
+            parseJSONResponse(response, type);
+            break;
+        default:
+            parseXMLResponse(response, type);
+            break;
+        }
 	
-	if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
-	    this.setState('current');
-	}
-	
-	// Info
-	var rec = $(xmlDoc).find('records > info').first();
-	if ( rec.length == 1 ) {
-	    this.setStatus(rec.text());
-	}
-	// Alert
-	var rec = $(xmlDoc).find('records > alert').first();
-	if ( rec.length == 1 ) {
-	    qcode.alert(rec.text());
-	}
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
 	    var recordsLength =  this.form.find('[name="recordsLength"]').val();
@@ -385,6 +359,57 @@
 	}
 	// Event onFormActionReturn
 	this.form.trigger('formActionReturn', [type])
+    }
+    function parseXMLResponse(response, type) {
+        var dbForm = this;
+	$('records > record *', response).each(function(i, xmlNode){
+	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
+		if ( $(target).is('input, textarea, select') ) {
+		    $(target).val($(xmlNode).text());
+		} else {
+		    $(target).html($(xmlNode).text());
+		}
+	    });
+	});
+	$('records > html *', response).each(function(i, xmlNode){
+	    behave(
+                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
+		    if ( $(target).is('input, textarea, select') ) {
+		        $(target).val($(xmlNode).text());
+		    } else {
+		        $(target).html($(xmlNode).text());
+		    }
+	        })
+            );
+	});
+	
+	if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
+	    this.setState('current');
+	}
+	
+	// Info
+	var rec = $(response).find('records > info').first();
+	if ( rec.length == 1 ) {
+	    this.setStatus(rec.text());
+	}
+	// Alert
+	var rec = $(response).find('records > alert').first();
+	if ( rec.length == 1 ) {
+	    qcode.alert(rec.text());
+	}
+    }
+    function parseJSONResponse(response, type) {
+        var dbForm = this;
+        var response = jQuery.parseJSON(response);
+        var record = response.record;
+        $.each(record, function(name, value) {
+            var input = dbForm.form.find('#' + name);
+            if ($(input).is('input, textarea, select')) {
+                $(target).val(name.value);
+            } else {
+                $(target).html(name.value);
+            }
+        });
     }
     function formActionError(errorMessage) {
 	this.setState('error');
