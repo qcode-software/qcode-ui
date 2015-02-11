@@ -308,11 +308,11 @@
     function formActionSuccess(response, type, jqXHR) {
 
         switch(jqXHR.getResponseHeader('Content-Type')) {
-        case "application/json":
-            parseJSONResponse(response, type);
+        case "application/json; charset=utf-8":
+            parseJSONResponse.call(this, response, type);
             break;
         default:
-            parseXMLResponse(response, type);
+            parseXMLResponse.call(this, response, type);
             break;
         }
 	
@@ -399,22 +399,22 @@
 	}
     }
     function parseJSONResponse(response, type) {
-        var dbForm = this;
         // Record
+        var dbForm = this;
         var allValid = true;
         $.each(response.record, function(name, obj) {
-            var input = dbForm.form.find('#' + name);
-            if (record.valid) {
+            if (obj.valid) {
+                var element = $('#' + name);
                 // update the value of the field
-                if ($(input).is('input, textarea, select')) {
-                    $(target).val(obj.value);
+                if (element.is('input, textarea, select')) {
+                    element.val(obj.value);
                 } else {
-                    $(target).html(obj.value);
+                    element.html(obj.value);
                 }
             } else {
                 // show invalid message
                 allValid = false;
-                this.form.validation('showMessage', input, obj.message);
+                dbForm.form.validation('showMessage', element, obj.message);
             }
         });
 
