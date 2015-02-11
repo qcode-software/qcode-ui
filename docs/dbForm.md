@@ -1,7 +1,7 @@
 # Database form - dbForm
 [Fiddle](http://jsfiddle.net/PeterChaplin/gpfRg/)
 
-[Navigation Fiddle](http://jsfiddle.net/PeterChaplin/jeojasyk/) (incomplete)
+[Navigation Fiddle](http://jsfiddle.net/PeterChaplin/jeojasyk/)
 
 A form representing a database record. Can be saved using AJAX, and provides tools for navigating between records.
 
@@ -71,6 +71,24 @@ Url to to send search requests to when $.dbForm("find") is called
 ### options.deleteURL
 Type: string (optional)
 
-Url to send delete requests to.
+Url to send delete requests to when $.dbForm("del") is called
 
-TO DO: finish this
+### options.formActionReturn
+Type: function (optional)
+
+Function to call back on return from a server. Equivalent to using $.fn.on('formActionReturn') to bind the function.
+
+## $.fn.dbForm('save', async)
+Attempt to save this form. Asynchronous by default, can be made synchronous using the optional async flag.
+
+## $.fn.dbForm('formAction', type, url, handler, errorHandler, async)
+Low-level function for performing form actions involving server requests.
+
+## $.fn.dbForm('focus')
+Give focus to the first focussable element of the form.
+
+## $.fn.dbForm('nav', navTo)
+Attempt to navigate to a different record. Requires a (normally hidden) form element named "navTo". Sends a server request to options.qryURL with the current form data, including the value of navTo.
+
+## $.fn.dbForm('find', [name1, value1 .. nameN, valueN] )
+Uses a request to options.searchURL to navigate to another record. Accepts any even number of "name, value" arguments to pass in as additional form data to the request.
