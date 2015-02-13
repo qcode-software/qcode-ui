@@ -321,7 +321,7 @@
             } else {
                 // show invalid message
                 allValid = false;
-                dbForm.form.validation('showMessage', element, obj.message);
+                $.validation.showMessage(element, obj.message);
             }
         });
 
