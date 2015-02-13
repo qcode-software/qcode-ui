@@ -138,7 +138,7 @@
 			);
 		    }
 		}.bind(this));
-		this.formAction('submit', this.settings.submitURL, undefined, undefined, async)
+		this.formAction('submit', this.settings.submitURL, undefined, undefined, async);
 		break;
 	    }
 	},
@@ -305,17 +305,43 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-    function formActionSuccess(response, type, jqXHR) {
+    function formActionSuccess(response, type, jqXHR) {        
+	// Record
+        var dbForm = this;
+        var allValid = true;
+        $.each(response.record, function(name, obj) {
+            if (obj.valid) {
+                var element = $('#' + name);
+                // update the value of the field
+                if (element.is('input, textarea, select')) {
+                    element.val(obj.value);
+                } else {
+                    element.html(obj.value);
+                }
+            } else {
+                // show invalid message
+                allValid = false;
+                dbForm.form.validation('showMessage', element, obj.message);
+            }
+        });
 
-        switch(jqXHR.getResponseHeader('Content-Type')) {
-        case "application/json; charset=utf-8":
-            parseJSONResponse.call(this, response, type);
-            break;
-        default:
-            parseXMLResponse.call(this, response, type);
-            break;
-        }
-	
+        // Messages
+        $.each(response.message, function(type, obj) {
+            var message = obj.value;
+            switch(type) {
+            case 'alert':
+                qcode.alert(message);
+                break;
+            case 'notify':
+                this.setStatus(message);
+                break;
+            case 'error':
+                this.setStatus(message);
+                qcode.alert(message);
+                break;
+            }
+        });
+        
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
 	    var recordsLength =  this.form.find('[name="recordsLength"]').val();
@@ -358,82 +384,7 @@
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
 	// Event onFormActionReturn
-	this.form.trigger('formActionReturn', [type])
-    }
-    function parseXMLResponse(response, type) {
-        var dbForm = this;
-	$('records > record *', response).each(function(i, xmlNode){
-	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
-		if ( $(target).is('input, textarea, select') ) {
-		    $(target).val($(xmlNode).text());
-		} else {
-		    $(target).html($(xmlNode).text());
-		}
-	    });
-	});
-	$('records > html *', response).each(function(i, xmlNode){
-	    behave(
-                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
-		    if ( $(target).is('input, textarea, select') ) {
-		        $(target).val($(xmlNode).text());
-		    } else {
-		        $(target).html($(xmlNode).text());
-		    }
-	        })
-            );
-	});
-	
-	if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
-	    this.setState('current');
-	}
-	
-	// Info
-	var rec = $(response).find('records > info').first();
-	if ( rec.length == 1 ) {
-	    this.setStatus(rec.text());
-	}
-	// Alert
-	var rec = $(response).find('records > alert').first();
-	if ( rec.length == 1 ) {
-	    qcode.alert(rec.text());
-	}
-    }
-    function parseJSONResponse(response, type) {
-        // Record
-        var dbForm = this;
-        var allValid = true;
-        $.each(response.record, function(name, obj) {
-            if (obj.valid) {
-                var element = $('#' + name);
-                // update the value of the field
-                if (element.is('input, textarea, select')) {
-                    element.val(obj.value);
-                } else {
-                    element.html(obj.value);
-                }
-            } else {
-                // show invalid message
-                allValid = false;
-                dbForm.form.validation('showMessage', element, obj.message);
-            }
-        });
-
-        // Messages
-        $.each(response.message, function(type, obj) {
-            var message = obj.value;
-            switch(type) {
-            case 'alert':
-                qcode.alert(message);
-                break;
-            case 'notify':
-                this.setStatus(message);
-                break;
-            case 'error':
-                this.setStatus(message);
-                qcode.alert(message);
-                break;
-            }
-        });
+	this.form.trigger('formActionReturn', [type]);
 
         // Actions
         if (allValid && response.action && response.action.redirect) {
