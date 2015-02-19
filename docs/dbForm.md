@@ -3,7 +3,7 @@
 
 [Navigation Fiddle](http://jsfiddle.net/PeterChaplin/jeojasyk/)
 
-A form representing a database record. Can be saved using AJAX, and provides tools for navigating between records.
+A form representing a database record. Can be saved using AJAX, and provides tools for navigating between database records using AJAX requests.
 
 ## $.fn.dbForm( [options] )
 Initialise the plugin
@@ -92,3 +92,18 @@ Attempt to navigate to a different record. Requires a (normally hidden) form ele
 
 ## $.fn.dbForm('find', [name1, value1 .. nameN, valueN] )
 Uses a request to options.searchURL to navigate to another record. Accepts any even number of "name, value" arguments to pass in as additional form data to the request.
+
+## $.fn.dbForm('del')
+Display a confirmation dialog, on confirm delete the current record with a request to options.deleteURL.
+
+## $.fn.dbForm('setState', newState)
+Set the state of the current record. Records begin in state "current", and become "dirty" when the user begins editing. Records waiting for a server response (eg. when saving) are put into state "updating". On response from a sucessful server requests, records are put back into state "current", on error they are put into state "error" (until the user begins editing again).
+
+## $.fn.dbForm('setDirty')
+Alias of $.fn.dbForm('setState', 'dirty').
+
+## $.fn.dbForm('setStatus', message)
+Set the status message to be displayed in the status bar. Message can be an html fragment.
+
+## $.fn.dbForm('formData')
+Get a simple javascript object of name-value data from the form field elements.
