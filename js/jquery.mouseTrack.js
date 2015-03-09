@@ -41,6 +41,7 @@
   Return the last known mouse position, if recorded with the last "interval" ms
 */
 ;(function(undefined) {
+    "use strict";
     var trail = [];
     var maxTrailLength = 1000;
     var maxTimeDifference = 500;
