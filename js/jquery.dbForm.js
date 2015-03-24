@@ -105,8 +105,8 @@
 	    }
 	},
 	save: function(async) {
-            if ( jQuery.fn.validation ) {
-                if ( ! $(this.form).validation('validate') ) {
+            if ( jQuery.fn.check ) {
+                if ( ! $(this.form).check('validate') ) {
                     return false;
                 }
             }
