@@ -241,7 +241,7 @@
             
             // show any messages
             if (response.message) {
-                var recordSet = dbRecord.getRecordSet();
+                var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
                     recordSet.trigger('message', [{
                         type: 'message',
@@ -256,11 +256,11 @@
             }
         },
 	_actionReturn: function(action, data, status, jqXHR) {
-	    // Called on successfull return from a server action (add, update or delete)
-	    this.setState('current');
+	    // Called on successfull return from a server action (add, update or delete)	    
 	    this.error = undefined;
-            parseResponse(data);
-            if (response.status === 'valid') {
+            this.parseResponse(data);
+            if (data.status === 'valid') {
+                this.setState('current');
 	        switch(action){
 	        case "add":
 		    // Once added, a record becomes an updatable record
@@ -278,6 +278,8 @@
 		    this.element.remove();
 		    recordSet.trigger('resize');
 	        }
+            } else {
+                this.setState('error');
             }
 	},
 	_actionReturnError: function(action, message, type) {
