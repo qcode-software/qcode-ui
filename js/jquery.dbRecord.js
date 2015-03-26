@@ -198,21 +198,6 @@
 	    // Return the field currently being edited (or an empty jQuery object)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
-	setValues: function(data) {
-	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
-	    this.element.find('[name]').each(function(i, field) {
-		var node = $(xmlDoc).find('records > record > ' + $(field).dbField('getName'));
-		if ( node.length > 0 ) {
-		    if ( $(field).dbField('getType') == 'htmlarea') {
-			// xml cannot contain raw html, so escape/unescape it.
-			$(field).dbField('setValue', unescapeHTML(node.text()));
-		    } else {
-			$(field).dbField('setValue', node.text());
-		    }
-		}
-	    });
-	    this.element.trigger('resize');
-	}, 
 	recordIn: function(event) {
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', this.element);
 	    this.element.trigger('dbRecordIn', event);
@@ -231,6 +216,7 @@
                     // Record item not valid - mark invalid and display message to user.
                     if ( $element.length !== 0 ) {
                         // TODO: show qtip
+                        $.check.showMessage($element, object.message);
                         $element.addClass('invalid');
                     }
                 } else {
