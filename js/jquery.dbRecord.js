@@ -173,7 +173,7 @@
 	    this.element.find('[name]').each(function(i, field) {
 		var name = $(field).dbField('getName');
 		if ( $(field).dbField('getType') == 'htmlarea' ) {
-		    // xml cannot contain raw html, so escape/unescape field value.
+		    // cannot contain raw html, so escape/unescape field value.
 		    var value = escapeHTML($(field).dbField('getValue'));
 		} else {
 		    var value = $(field).dbField('getValue');
@@ -187,6 +187,8 @@
 		    data[name] = new Array(data[name], value);
 		}
 	    });
+            // Add the authenticity token.
+            data['_authenticity_token'] = $('[name=_authenticity_token]').val();
 	    // Post
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
 	    // custom event 
@@ -196,7 +198,7 @@
 	    // Return the field currently being edited (or an empty jQuery object)
 	    return this.element.find(this.getRecordSet().dbRecordSet('getCurrentField'));
 	},
-	setValues: function(xmlDoc) {
+	setValues: function(data) {
 	    // Takes an xml document/fragment and attempts to match the nodes to fields in the record, setting the values of those elements.
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(xmlDoc).find('records > record > ' + $(field).dbField('getName'));
@@ -219,31 +221,64 @@
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
-	_actionReturn: function(action, xmlDoc, status, jqXHR) {
+        parseResponse: function(response) {
+            // Parse the JSON response.
+            // Check each record item and show a message if invalid otherwise set value.
+            var $record = this.element;
+            $.each(response.record, function (name, object) {
+                var $element = $record.find('[name=' + name + ']');
+                if ( ! object.valid ) {
+                    // Record item not valid - mark invalid and display message to user.
+                    if ( $element.length !== 0 ) {
+                        // TODO: show qtip
+                        $element.addClass('invalid');
+                    }
+                } else {
+                    $element.removeClass('invalid');
+                    $element.val(object.value);
+                }
+            });
+            
+            // show any messages
+            if (response.message) {
+                var recordSet = dbRecord.getRecordSet();
+                $.each(response.message, function(type, object) {
+                    recordSet.trigger('message', [{
+                        type: 'message',
+                        html: object.value
+                    }]);
+                });
+            }
+            
+            if (response.action && response.action['redirect']) {
+                // Redirect if the redirect action was given
+                window.location.href = response.action.redirect.value;
+            }
+        },
+	_actionReturn: function(action, data, status, jqXHR) {
 	    // Called on successfull return from a server action (add, update or delete)
 	    this.setState('current');
 	    this.error = undefined;
-	    switch(action){
-	    case "update":
-		this.setValues(xmlDoc);
-		break;
-	    case "add":
-		// Once added, a record becomes an updatable record
-		this.saveAction = "update";
-		this.setValues(xmlDoc);
-		break;
-	    }
+            parseResponse(data);
+            if (response.status === 'valid') {
+	        switch(action){
+	        case "add":
+		    // Once added, a record becomes an updatable record
+		    this.saveAction = "update";
+		    break;
+	        }
 
-	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	    this.element.trigger('dbRecordActionReturn', [action, xmlDoc, status, jqXHR]);
+                // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
+	        this.element.trigger('dbRecordActionReturn', [action, data, status, jqXHR]);
 
-	    if ( action == "delete" ) {
-		// When a record is deleted, remove it from the DOM.
-		var recordSet = this.getRecordSet();
-		this.destroy();
-		this.element.remove();
-		recordSet.trigger('resize');
-	    }
+	        if ( action == "delete" ) {
+		    // When a record is deleted, remove it from the DOM.
+		    var recordSet = this.getRecordSet();
+		    this.destroy();
+		    this.element.remove();
+		    recordSet.trigger('resize');
+	        }
+            }
 	},
 	_actionReturnError: function(action, message, type) {
 	    // Called when a server action returns an error

@@ -117,7 +117,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	type: "POST",
 	cache: false,
 	async: async,
-	dataType: 'xml',
+	dataType: 'json',
 	url: url,
 	data: data,
 	success: function(data, textStatus, jqXHR) {
@@ -142,10 +142,10 @@ function httpPost(url,data,handler,errorHandler,async) {
 		return errorHandler(errorMessage,'HTTP');
 	    }
 
-	    // XML ERROR
+	    // PARSE ERROR
 	    if ( textStatus == 'parsererror' ) {
-		errorMessage = 'Error ! Unable to parse XML response';
-		return errorHandler(errorMessage,'XML');
+		errorMessage = 'Error ! Unable to parse response';
+		return errorHandler(errorMessage,'PARSE');
 	    }
 
             // Cancelled by navigation
