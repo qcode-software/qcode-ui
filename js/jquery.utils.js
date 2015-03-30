@@ -117,7 +117,6 @@ function httpPost(url,data,handler,errorHandler,async) {
 	type: "POST",
 	cache: false,
 	async: async,
-	dataType: 'json',
 	url: url,
 	data: data,
 	success: function(data, textStatus, jqXHR) {

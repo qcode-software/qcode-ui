@@ -206,7 +206,23 @@
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
-        parseResponse: function(response) {
+        parseXMLResponse: function(response) {
+            // Parse the XML response.
+            // Set the values of matched elements.
+	    this.element.find('[name]').each(function(i, field) {
+		var node = $(response).find('records > record > ' + $(field).dbField('getName'));
+		if ( node.length > 0 ) {
+		    if ( $(field).dbField('getType') == 'htmlarea') {
+			// xml cannot contain raw html, so escape/unescape it.
+			$(field).dbField('setValue', unescapeHTML(node.text()));
+		    } else {
+			$(field).dbField('setValue', node.text());
+		    }
+		}
+	    });
+	    this.element.trigger('resize');
+        },
+        parseJSONResponse: function(response) {
             // Parse the JSON response.
             // Check each record item and show a message if invalid otherwise set value.
             var $record = this.element;
@@ -215,7 +231,7 @@
                 if ( ! object.valid ) {
                     // Record item not valid - mark invalid and display message to user.
                     if ( $element.length !== 0 ) {
-                        // TODO: show qtip
+                        // Show message to user about error.
                         $.check.showMessage($element, object.message);
                         $element.addClass('invalid');
                     }
@@ -225,7 +241,7 @@
                 }
             });
             
-            // show any messages
+            // show any general messages.
             if (response.message) {
                 var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
@@ -235,17 +251,31 @@
                     }]);
                 });
             }
-            
+
+            // Redirect if the redirect action was given
             if (response.action && response.action['redirect']) {
-                // Redirect if the redirect action was given
                 window.location.href = response.action.redirect.value;
             }
         },
 	_actionReturn: function(action, data, status, jqXHR) {
 	    // Called on successfull return from a server action (add, update or delete)	    
 	    this.error = undefined;
-            this.parseResponse(data);
-            if (data.status === 'valid') {
+            var returnType = jqXHR.getResponseHeader('content-type');
+            var valid = true;
+            switch (returnType) {
+            case "application/json; charset-utf-8":
+                this.parseJSONResponse(data);
+                valid = data.status === 'valid';
+                break;
+            case "text/xml; charset=utf-8":
+                this.parseXMLResponse(data);
+                break;
+            default:
+                this._actionReturnError(action, 'Expected XML or JSON but got ' + returnType, 'RESPONSE');
+                return;
+            }
+
+            if (valid) {
                 this.setState('current');
 	        switch(action){
 	        case "add":
