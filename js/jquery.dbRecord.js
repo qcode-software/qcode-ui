@@ -263,7 +263,7 @@
             var returnType = jqXHR.getResponseHeader('content-type');
             var valid = true;
             switch (returnType) {
-            case "application/json; charset-utf-8":
+            case "application/json; charset=utf-8":
                 this.parseJSONResponse(data);
                 valid = data.status === 'valid';
                 break;
