@@ -122,6 +122,7 @@
                         target: $element
                     },
                     show: {
+                        event: false,
                         ready: true
                     },
                     hide: {
