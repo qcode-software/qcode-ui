@@ -121,6 +121,7 @@
 		this.formAction('add', this.settings.addURL,undefined,undefined,async);
 		break;
 	    case "submit":
+                this.setState('updating');
 		this.form.attr('action', this.settings.submitURL);
 		this.elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
@@ -307,40 +308,25 @@
     }
     function formActionSuccess(response, type, jqXHR) {        
 	// Record
-        var dbForm = this;
-        var allValid = true;
-        $.each(response.record, function(name, obj) {
-            if (obj.valid) {
-                var element = $('#' + name);
-                // update the value of the field
-                if (element.is('input, textarea, select')) {
-                    element.val(obj.value);
-                } else {
-                    element.html(obj.value);
+        var returnType = jqXHR.getResponseHeader('content-type');
+        var valid = true;
+        switch (returnType) {
+        case "application/json; charset=utf-8":
+            this.parseJSONResponse(response, type);
+            valid = response.status === 'valid';
+            var responseAction = function(response) {
+                if ( response.action && response.action.redirect ) {
+                    window.location.href = response.action.redirect.value;
                 }
-            } else {
-                // show invalid message
-                allValid = false;
-                $.validation.showMessage(element, obj.message);
-            }
-        });
-
-        // Messages
-        $.each(response.message, function(type, obj) {
-            var message = obj.value;
-            switch(type) {
-            case 'alert':
-                qcode.alert(message);
-                break;
-            case 'notify':
-                this.setStatus(message);
-                break;
-            case 'error':
-                this.setStatus(message);
-                qcode.alert(message);
-                break;
-            }
-        });
+            };
+            break;
+        case "text/xml; charset=utf-8":
+            this.parseXMLResponse(response, type);
+            break;
+        default:
+            this.formActionError('Expected XML or JSON but got ' + returnType);
+            return;
+        }
         
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
@@ -387,9 +373,83 @@
 	this.form.trigger('formActionReturn', [type]);
 
         // Actions
-        if (allValid && response.action && response.action.redirect) {
-            window.location.href = response.action.redirect.value;
+        if (valid && typeof responseAction === 'function') {
+            responseAction(response);
         }
+    }
+    function parseXMLResponse(response, type) {
+        var dbForm = this;
+        $('records > record *', response).each(function(i, xmlNode){
+	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
+		if ( $(target).is('input, textarea, select') ) {
+		    $(target).val($(xmlNode).text());
+		} else {
+		    $(target).html($(xmlNode).text());
+		}
+	    });
+	});
+	$('records > html *', response).each(function(i, xmlNode){
+	    behave(
+                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
+		    if ( $(target).is('input, textarea, select') ) {
+		        $(target).val($(xmlNode).text());
+		    } else {
+		        $(target).html($(xmlNode).text());
+		    }
+	        });
+            );
+	});
+	
+	if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+	    this.setState('current');
+	}
+	
+	// Info
+	var rec = $(response).find('records > info').first();
+	if ( rec.length == 1 ) {
+	    this.setStatus(rec.text());
+	}
+	// Alert
+	var rec = $(response).find('records > alert').first();
+	if ( rec.length == 1 ) {
+	    qcode.alert(rec.text());
+	}
+    }
+    function parseJSONResponse(response, type) {
+        $.each(response.record, function(name, obj) {
+            if (obj.valid) {
+                var element = $('#' + name);
+                // update the value of the field
+                if (element.is('input, textarea, select')) {
+                    element.val(obj.value);
+                } else {
+                    element.html(obj.value);
+                }
+            } else {
+                // show invalid message
+                $.validation.showMessage(element, obj.message);
+            }
+        });
+
+        if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry' || type == 'submit') {
+	    this.setState('current');
+	}
+
+        // Messages
+        $.each(response.message, function(type, obj) {
+            var message = obj.value;
+            switch(type) {
+            case 'alert':
+                qcode.alert(message);
+                break;
+            case 'notify':
+                this.setStatus(message);
+                break;
+            case 'error':
+                this.formActionError(message);
+                break;
+            }
+        });
     }
     function formActionError(errorMessage) {
 	this.setState('error');
