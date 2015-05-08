@@ -312,7 +312,7 @@
         var valid = true;
         switch (returnType) {
         case "application/json; charset=utf-8":
-            this.parseJSONResponse(response, type);
+            parseJSONResponse.call(this, response, type);
             valid = response.status === 'valid';
             var responseAction = function(response) {
                 if ( response.action && response.action.redirect ) {
@@ -321,10 +321,10 @@
             };
             break;
         case "text/xml; charset=utf-8":
-            this.parseXMLResponse(response, type);
+            parseXMLResponse.call(this, response, type);
             break;
         default:
-            this.formActionError('Expected XML or JSON but got ' + returnType);
+            formActionError.call(this, 'Expected XML or JSON but got ' + returnType);
             return;
         }
         
@@ -396,8 +396,8 @@
 		    } else {
 		        $(target).html($(xmlNode).text());
 		    }
-	        });
-            );
+	        })
+                    );
 	});
 	
 	if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
@@ -416,24 +416,26 @@
 	}
     }
     function parseJSONResponse(response, type) {
-        $.each(response.record, function(name, obj) {
-            if (obj.valid) {
-                var element = $('#' + name);
+        $.each(response.record, function(name, object) {
+            var element = $('#' + name);
+            if (object.valid) {
                 // update the value of the field
                 if (element.is('input, textarea, select')) {
-                    element.val(obj.value);
+                    element.val(object.value);
                 } else {
-                    element.html(obj.value);
+                    element.html(object.value);
                 }
             } else {
                 // show invalid message
-                $.validation.showMessage(element, obj.message);
+                $.check.showMessage(element, object.message);
             }
         });
 
-        if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry' || type == 'submit') {
-	    this.setState('current');
-	}
+        if ( response.status.valid === 'invalid' ) {
+	    this.setStatus('Invalid input.');
+	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+            this.setState('current');
+        }
 
         // Messages
         $.each(response.message, function(type, obj) {
@@ -446,7 +448,7 @@
                 this.setStatus(message);
                 break;
             case 'error':
-                this.formActionError(message);
+                formActionError.call(this, message);
                 break;
             }
         });
