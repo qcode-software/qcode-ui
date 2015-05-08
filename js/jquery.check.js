@@ -1,6 +1,6 @@
-/* validation plugin
+/* Client-side validation plugin
    - example usage -
-   $('#my_form').validation({
+   $('#my_form').check({
        '#age': {
            check: function() {
                if ( isInt($(this).val()) ) {
@@ -11,7 +11,7 @@
            },
            message: "Age must be an integer."
        },
-       '#name': $.validation.required,
+       '#name': $.check.required,
        '#height': {
            check: function() {
                return $(this).val() > 10;
@@ -21,13 +21,13 @@
    });
 
    - also exposes -
-   $.validation.showMessage($element, message);
-   $.validation.hideMessage($element);
-   $.validation.isPostcode(value);
+   $.check.showMessage($element, message);
+   $.check.hideMessage($element);
+   $.check.isPostcode(value);
 */
 (function($, undefined) {
     // Plugin function
-    $.fn.validation = function(arg1) {
+    $.fn.check = function(arg1) {
         var $form = this;
         if ( arg1 === "validate" ) {
             var options = $form.data('qcode-validation-options');
@@ -40,20 +40,20 @@
             var options = arg1;
             $form.data('qcode-validation-options', options);
             $.each(options, function(selector, fieldOptions) {
-                // Validate each element on blur
+                // Check each element on blur
                 $form.find(selector)
                         .on('blur', function() {
                             $(this).val($(this).val().trim());
                             if ( ! fieldOptions.check.call(this) ) {
-                                $.validation.showMessage($(this), fieldOptions.message);
+                                $.check.showMessage($(this), fieldOptions.message);
                             }
                         })
                         .on('focus', function() {
-                            $.validation.hideMessage($(this));
+                            $.check.hideMessage($(this));
                         });
             });
             $form.on('submit', function(event) {
-                // Validate the entire form on submit
+                // Check the entire form on submit
                 if ( ! validate($form, options) ) {
                     event.preventDefault();
                 }
@@ -61,7 +61,7 @@
             $form.on('reset', function() {
                 $.each(options, function(selector, fieldOptions) {
                     $form.find(selector).each(function() {
-                        $.validation.hideMessage($(this));
+                        $.check.hideMessage($(this));
                     });
                 });
             });
@@ -76,7 +76,7 @@
             $form.find(selector).each(function() {
                 $(this).val($(this).val().trim());
                 if ( ! fieldOptions.check.call(this) ) {
-                    $.validation.showMessage($(this), fieldOptions.message);
+                    $.check.showMessage($(this), fieldOptions.message);
                     valid = false;
                 }
             });
@@ -85,7 +85,7 @@
     }
 
     // Utils
-    $.validation = {
+    $.check = {
         required: {
             check: function() {
                 return $(this).val() != "";

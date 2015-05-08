@@ -94,7 +94,7 @@ jquery.theadFixed.js
 jquery.thSortMenu.js
 jquery.uploaderUI.js
 jquery.utils.js
-jquery.validation.js
+jquery.check.js
 qcode.alert.js
 qcode.FileNameCollisionChecker.js
 qcode.sound.js

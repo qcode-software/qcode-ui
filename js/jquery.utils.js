@@ -141,10 +141,10 @@ function httpPost(url,data,handler,errorHandler,async) {
 		return errorHandler(errorMessage,'HTTP');
 	    }
 
-	    // XML ERROR
+	    // PARSE ERROR
 	    if ( textStatus == 'parsererror' ) {
-		errorMessage = 'Error ! Unable to parse XML response';
-		return errorHandler(errorMessage,'XML');
+		errorMessage = 'Error ! Unable to parse response';
+		return errorHandler(errorMessage,'PARSE');
 	    }
 
             // Cancelled by navigation
