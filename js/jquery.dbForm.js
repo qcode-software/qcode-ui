@@ -431,7 +431,7 @@
             }
         });
 
-        if ( response.status.valid === 'invalid' ) {
+        if ( response.status === 'invalid' ) {
 	    this.setStatus('Invalid input.');
 	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
             this.setState('current');
