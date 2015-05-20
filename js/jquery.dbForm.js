@@ -139,7 +139,7 @@
 			);
 		    }
 		}.bind(this));
-		this.formAction('submit', this.settings.submitURL, undefined, undefined, async);
+		this.form.submit();
 		break;
 	    }
 	},
