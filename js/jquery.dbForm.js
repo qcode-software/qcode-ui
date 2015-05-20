@@ -306,10 +306,11 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-    function formActionSuccess(response, type, jqXHR) {        
-	// Record
+    function formActionSuccess(response, type, jqXHR) {
+        // Parse response and update nav
         var returnType = jqXHR.getResponseHeader('content-type');
         var valid = true;
+        // Check if JSON or XML and parse accordingly
         switch (returnType) {
         case "application/json; charset=utf-8":
             parseJSONResponse.call(this, response, type);
@@ -378,8 +379,11 @@
         }
     }
     function parseXMLResponse(response, type) {
+        // Parses and sets record information and messages from an XML response.
         var dbForm = this;
+        // Record
         $('records > record *', response).each(function(i, xmlNode){
+            // update values of fields
 	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
 		if ( $(target).is('input, textarea, select') ) {
 		    $(target).val($(xmlNode).text());
@@ -399,7 +403,8 @@
 	        })
                     );
 	});
-	
+
+        // update the form status
 	if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
 	    this.setState('current');
 	}
@@ -416,6 +421,8 @@
 	}
     }
     function parseJSONResponse(response, type) {
+        // Parses and sets record information and messages from a JSON response.
+        // Record
         $.each(response.record, function(name, object) {
             var element = $('#' + name);
             if (object.valid) {
@@ -431,6 +438,7 @@
             }
         });
 
+        // update the form status
         if ( response.status === 'invalid' ) {
 	    this.setStatus('Invalid input.');
 	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
