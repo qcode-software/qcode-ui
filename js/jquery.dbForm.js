@@ -446,6 +446,7 @@
         }
 
         // Messages
+        var dbForm = this;
         $.each(response.message, function(type, obj) {
             var message = obj.value;
             switch(type) {
@@ -453,10 +454,10 @@
                 qcode.alert(message);
                 break;
             case 'notify':
-                this.setStatus(message);
+                dbForm.setStatus(message);
                 break;
             case 'error':
-                formActionError.call(this, message);
+                formActionError.call(dbForm, message);
                 break;
             }
         });
