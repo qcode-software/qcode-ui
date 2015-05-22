@@ -121,6 +121,7 @@
 		this.formAction('add', this.settings.addURL,undefined,undefined,async);
 		break;
 	    case "submit":
+                this.setState('updating');
 		this.form.attr('action', this.settings.submitURL);
 		this.elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
@@ -146,7 +147,7 @@
 	    var dbForm = this;
 	    if ( typeof handler == "undefined" ) {
 		handler = function(data, textStatus, jqXHR){
-		    formActionSuccess.call(dbForm, data, type);
+		    formActionSuccess.call(dbForm, data, type, jqXHR);
 		}
 	    }
 	    if ( typeof errorHandler == "undefined" ) {
@@ -305,43 +306,29 @@
     function onKeyPress() {
 	this.setState('dirty');
     }
-    function formActionSuccess(xmlDoc, type) {
-	var dbForm = this;
-	$('records > record *', xmlDoc).each(function(i, xmlNode){
-	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
-		if ( $(target).is('input, textarea, select') ) {
-		    $(target).val($(xmlNode).text());
-		} else {
-		    $(target).html($(xmlNode).text());
-		}
-	    });
-	});
-	$('records > html *', xmlDoc).each(function(i, xmlNode){
-	    behave(
-                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
-		    if ( $(target).is('input, textarea, select') ) {
-		        $(target).val($(xmlNode).text());
-		    } else {
-		        $(target).html($(xmlNode).text());
-		    }
-	        })
-            );
-	});
-	
-	if ( type == 'update' || type== 'add' ||  type== 'delete' || type=='qry') {
-	    this.setState('current');
-	}
-	
-	// Info
-	var rec = $(xmlDoc).find('records > info').first();
-	if ( rec.length == 1 ) {
-	    this.setStatus(rec.text());
-	}
-	// Alert
-	var rec = $(xmlDoc).find('records > alert').first();
-	if ( rec.length == 1 ) {
-	    qcode.alert(rec.text());
-	}
+    function formActionSuccess(response, type, jqXHR) {
+        // Parse response and update nav
+        var returnType = jqXHR.getResponseHeader('content-type');
+        var valid = true;
+        // Check if JSON or XML and parse accordingly
+        switch (returnType) {
+        case "application/json; charset=utf-8":
+            parseJSONResponse.call(this, response, type);
+            valid = response.status === 'valid';
+            var responseAction = function(response) {
+                if ( response.action && response.action.redirect ) {
+                    window.location.href = response.action.redirect.value;
+                }
+            };
+            break;
+        case "text/xml; charset=utf-8":
+            parseXMLResponse.call(this, response, type);
+            break;
+        default:
+            formActionError.call(this, 'Expected XML or JSON but got ' + returnType);
+            return;
+        }
+        
 	// Nav
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
 	    var recordsLength =  this.form.find('[name="recordsLength"]').val();
@@ -384,7 +371,96 @@
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
 	// Event onFormActionReturn
-	this.form.trigger('formActionReturn', [type])
+	this.form.trigger('formActionReturn', [type]);
+
+        // Actions
+        if (valid && typeof responseAction === 'function') {
+            responseAction(response);
+        }
+    }
+    function parseXMLResponse(response, type) {
+        // Parses and sets record information and messages from an XML response.
+        var dbForm = this;
+        // Record
+        $('records > record *', response).each(function(i, xmlNode){
+            // update values of fields
+	    dbForm.form.find('#' + $(xmlNode).prop('nodeName') + ', [name="' + $(xmlNode).prop('nodeName') + '"]').each(function(j, target){
+		if ( $(target).is('input, textarea, select') ) {
+		    $(target).val($(xmlNode).text());
+		} else {
+		    $(target).html($(xmlNode).text());
+		}
+	    });
+	});
+	$('records > html *', response).each(function(i, xmlNode){
+	    behave(
+                $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
+		    if ( $(target).is('input, textarea, select') ) {
+		        $(target).val($(xmlNode).text());
+		    } else {
+		        $(target).html($(xmlNode).text());
+		    }
+	        })
+                    );
+	});
+
+        // update the form status
+	if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+	    this.setState('current');
+	}
+	
+	// Info
+	var rec = $(response).find('records > info').first();
+	if ( rec.length == 1 ) {
+	    this.setStatus(rec.text());
+	}
+	// Alert
+	var rec = $(response).find('records > alert').first();
+	if ( rec.length == 1 ) {
+	    qcode.alert(rec.text());
+	}
+    }
+    function parseJSONResponse(response, type) {
+        // Parses and sets record information and messages from a JSON response.
+        // Record
+        $.each(response.record, function(name, object) {
+            var element = $('#' + name);
+            if (object.valid) {
+                // update the value of the field
+                if (element.is('input, textarea, select')) {
+                    element.val(object.value);
+                } else {
+                    element.html(object.value);
+                }
+            } else {
+                // show invalid message
+                $.check.showMessage(element, object.message);
+            }
+        });
+
+        // update the form status
+        if ( response.status === 'invalid' ) {
+	    this.setStatus('Invalid input.');
+	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+            this.setState('current');
+        }
+
+        // Messages
+        var dbForm = this;
+        $.each(response.message, function(type, obj) {
+            var message = obj.value;
+            switch(type) {
+            case 'alert':
+                qcode.alert(message);
+                break;
+            case 'notify':
+                dbForm.setStatus(message);
+                break;
+            case 'error':
+                formActionError.call(dbForm, message);
+                break;
+            }
+        });
     }
     function formActionError(errorMessage) {
 	this.setState('error');
