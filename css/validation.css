@@ -1,0 +1,36 @@
+/* ======================================================================
+   Message Area
+   ====================================================================== */
+.message-area {
+  /* Message area to provide feedback used to display messages such as...
+     "Sorry, that email or password is not recognised." or "No comments yet :("
+  */
+  font-size: 1em;
+  color: #31708f;
+  background-color: #d9edf7;
+  border: 1px solid #bce8f1;
+  border-radius: 4px;
+  padding: 10px 20px;
+  margin: 0 0 20px 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.message-area > .icon--cross {
+  float: right;
+  width: 10px;
+  margin-top: 5px;
+  content: url("../images/cross.svg");
+}
+
+.message-area.alert {
+  color: #8a6d3b;
+  background-color: #fcf8e3;
+  border-color: #faebcc;
+}
+
+.message-area.error {
+  color: #a94442;
+  background-color: #f2dede;
+  border-color: #ebccd1;
+}
