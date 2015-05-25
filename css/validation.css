@@ -18,7 +18,8 @@
 
 .message-area > .icon--cross {
   float: right;
-  width: 16px;
+  width: 10px;
+  margin-top: 5px;
   content: url("../images/cross.svg");
 }
 
