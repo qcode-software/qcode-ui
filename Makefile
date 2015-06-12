@@ -1,6 +1,7 @@
 NAME=qcode-ui
 REMOTEHOST=js.qcode.co.uk
 REMOTEDIR=/var/www/js.qcode.co.uk
+REMOTEUSER=nsd
 
 all: check-version concat upload clean
 concat: check-version
@@ -23,9 +24,9 @@ concat: check-version
 	rm $(NAME)-$(VERSION).tar.gz
 upload: check-version
 	# Upload concatenated CSS and JS files to js.qcode.co.uk
-	scp -r $(NAME)-$(VERSION) $(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION)
+	scp -r $(NAME)-$(VERSION) $(REMOTEUSER)@$(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION)
 	# Change permissions to read only to prevent files being overwritten
-	ssh $(REMOTEHOST) 'chmod -R a=rX $(REMOTEDIR)/$(NAME)-$(VERSION)'
+	ssh $(REMOTEUSER)@$(REMOTEHOST) 'find $(REMOTEDIR)/$(NAME)-$(VERSION) -type f -exec chmod 444 {} +'
 clean: 
 	rm -rf $(NAME)-$(VERSION)
 check-version:
