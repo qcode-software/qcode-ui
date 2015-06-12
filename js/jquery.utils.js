@@ -104,7 +104,7 @@ function urlDataSet(data,name,value) {
     return data;
 };
 
-function httpPost(url,data,handler,errorHandler,async) {
+function httpPost(url,data,handler,errorHandler,async,headers) {
     // Add event listener to check whether request is cancelled by navigation
     var unloading = false;
     $(window).on('beforeunload.httpPost', function() {
@@ -119,6 +119,7 @@ function httpPost(url,data,handler,errorHandler,async) {
 	async: async,
 	url: url,
 	data: data,
+        headers: headers,
 	success: function(data, textStatus, jqXHR) {
             $(window).off('.httpPost');
 

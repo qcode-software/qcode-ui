@@ -32,7 +32,10 @@
                 submitURL: undefined,
                 searchURL: undefined,
                 deleteURL: undefined,
-                formActionReturn: undefined // function
+                formActionReturn: undefined, // function
+                headers: {
+                    Accept: "application/json,text/xml"
+                }
 	    }, options);
 	    if ( typeof this.settings.formActionReturn == "function" ) {
 		this.form.on('formActionReturn.DbForm', this.settings.formActionReturn);
@@ -158,7 +161,7 @@
 	    if ( typeof async == "undefined" ) {
 		async = false;
 	    }
-	    httpPost(url, this.formData(), handler, errorHandler, async);
+	    httpPost(url, this.formData(), handler, errorHandler, async, this.settings.headers);
 	},
 	focus: function() {
 	    this.elements.each(function(){
@@ -188,7 +191,7 @@
 	    var dbForm = this;
 	    httpPost(this.settings.searchURL, data, function(data, textStatus, jqXHR) {
 		formActionSuccess.call(dbForm, data, "search");
-	    }, formActionError.bind(this), true);
+	    }, formActionError.bind(this), true, this.settings.headers);
 	},
 	del: function() {
             var dbForm = this;
