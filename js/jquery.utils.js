@@ -127,7 +127,7 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	    var error = jQuery('error', data).first();
 	    if ( error.size() ) {
 		var errorMessage = error.text();
-		return errorHandler(errorMessage,'USER');
+		return errorHandler(errorMessage,'USER', jqXHR);
 	    }
 
 	    // NORMAL COMPLETION
@@ -139,24 +139,24 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	    // HTTP ERROR
 	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
 		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
-		return errorHandler(errorMessage,'HTTP');
+		return errorHandler(errorMessage,'HTTP', jqXHR);
 	    }
 
 	    // PARSE ERROR
 	    if ( textStatus == 'parsererror' ) {
 		errorMessage = 'Error ! Unable to parse response';
-		return errorHandler(errorMessage,'PARSE');
+		return errorHandler(errorMessage,'PARSE'. jqXHR);
 	    }
 
             // Cancelled by navigation
             if ( jqXHR.status == 0 && unloading ) {
                 errorMessage = "Request cancelled by navigation";
-                return errorHandler(errorMessage,'NAVIGATION');
+                return errorHandler(errorMessage,'NAVIGATION', jqXHR);
             }
 	    
 	    // DEFAULT ERROR
 	    errorMessage = 'Error ! Test: '+ textStatus;
-	    return errorHandler(errorMessage, 'UNKNOWN');
+	    return errorHandler(errorMessage, 'UNKNOWN', jqXHR);
 	}
     });
 };
