@@ -422,6 +422,13 @@
 	if ( rec.length == 1 ) {
 	    qcode.alert(rec.text());
 	}
+
+        // Error
+        var error = $(response).find('error').first();
+        if ( error.length == 1 ) {
+            this.setState('error');
+            qcode.alert('Your changes could not be saved:<br>' + error.text());
+        }
     }
     function parseJSONResponse(response, type) {
         // Parses and sets record information and messages from a JSON response.
