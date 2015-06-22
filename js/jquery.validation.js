@@ -67,53 +67,76 @@
                     type: 'POST',
                     dataType: 'JSON',
                     success: function(response, success, request) {
-                        var allValid = true;
-                        // Check each record item is valid.
-                        $.each(response.record, function (name, object) {
-                            var $element = $form.find('[name=' + name + ']');
-                            if ( ! object.valid ) {
-                                // Record item not valid - mark invalid and display message to user.
-                                allValid = false;
-                                if ( $element.length !== 0 ) {
-                                    $form.validation('showValidationMessage', $element, object.message);
-                                    $element.addClass('invalid');
-                                }
-                            } else {
-                                $element.removeClass('invalid');
-                            }
-                        });
-                        
-                        if ( allValid && response.status === 'valid') {
-                            if (response.action && response.action['redirect']) {
-                                // Redirect if record was valid and the redirect action was given
-                                window.location.href = response.action['redirect'].value;
-                            } else if (response.message['notify']) {
-                                $form.validation('showMessage', 'notify', response.message['notify'].value);
-                                $form.validation('reposition');
-                            }
-                            // Reset the form
-                            $form.trigger('reset');
-                            
-                        } else if (response.message) {
-                            $.each(response.message, function(type, object) {
-                                $form.validation('showMessage', type, object.value);
-                                $form.validation('reposition');
-                            });
-                        }
-                        // Trigger validation completion event
-                        $form.trigger({
-                            type: 'validationComplete',
-                            response: response
-                        });
+                        $form.validation('parseResponse', response);
                     },
-                    error: function(response, error, message) {
-                        var myWindow = window.open('', '_parent');
-                        myWindow.document.write(response.responseText);
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // HTTP ERROR
+	                if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
+                            $form.validation('parseResponse', response);
+                            return;
+                        }
+
+                        switch (textStatus) {
+                        case "parseerror":
+                            $form.validation('showMessage', 'error', "Couldn't parse the response.");
+                            break;
+                        case "timeout":
+                            $form.validation('showMessage', 'error', "Request timed out.");
+                            break;
+                        case "abort":
+                            $form.validation('showMessage', 'error', "Request was aborted.");
+                            break;
+                        default:
+                            $form.validation('showMessage', 'error', "An error occurred: " + errorThrown);
+                        }
                     }
                 });
             }
             
             $(this.element).on('submit.validate', validate);
+        },
+
+        parseResponse: function(response) {
+            // Parses the response to show qtips and messages where necessary.
+            var $form = $(this);
+            var allValid = true;
+            // Check each record item is valid.
+            $.each(response.record, function (name, object) {
+                var $element = $form.find('[name=' + name + ']');
+                if ( ! object.valid ) {
+                    // Record item not valid - mark invalid and display message to user.
+                    allValid = false;
+                    if ( $element.length !== 0 ) {
+                        $form.validation('showValidationMessage', $element, object.message);
+                        $element.addClass('invalid');
+                    }
+                } else {
+                    $element.removeClass('invalid');
+                }
+            });
+            
+            if ( allValid && response.status === 'valid') {
+                if (response.action && response.action['redirect']) {
+                    // Redirect if record was valid and the redirect action was given
+                    window.location.href = response.action['redirect'].value;
+                } else if (response.message['notify']) {
+                    $form.validation('showMessage', 'notify', response.message['notify'].value);
+                    $form.validation('reposition');
+                }
+                // Reset the form
+                $form.trigger('reset');
+                
+            } else if (response.message) {
+                $.each(response.message, function(type, object) {
+                    $form.validation('showMessage', type, object.value);
+                    $form.validation('reposition');
+                });
+            }
+            // Trigger validation completion event
+            $form.trigger({
+                type: 'validationComplete',
+                response: response
+            });
         },
         
         showValidationMessage: function($element, message) {
