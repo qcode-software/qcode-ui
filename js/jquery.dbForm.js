@@ -147,6 +147,7 @@
 	    }
 	},
 	formAction: function(type,url,handler,errorHandler,async) {
+            // TODO: If type == "info" then ajax GET (instead of POST)
 	    var dbForm = this;
 	    if ( typeof handler == "undefined" ) {
 		handler = function(data, textStatus, jqXHR){
@@ -427,6 +428,7 @@
         var error = $(response).find('error').first();
         if ( error.length == 1 ) {
             this.setState('error');
+            this.setStatus('Changes could not be saved.');
             qcode.alert('Your changes could not be saved:<br>' + error.text());
         }
     }

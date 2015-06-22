@@ -111,6 +111,8 @@
             return re.test(string);
         },    
         showMessage: function($element, message) {
+            // Set zindex to be lower than jquery-ui dialog
+            $.fn.qtip.zindex = 100;
             var api = $element.qtip('api');
             if ( api === undefined ) {
                 // initialise qtip
