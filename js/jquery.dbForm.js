@@ -458,6 +458,7 @@
         }
 
         // Messages
+        var dbForm = this;
         $.each(response.message, function(type, obj) {
             var message = obj.value;
             switch(type) {
@@ -468,7 +469,8 @@
                 dbForm.setStatus(message);
                 break;
             case 'error':
-                qcode.alert(message);
+                dbForm.setState('error');
+                qcode.alert('Your changes could not be saved:<br>' + message);
                 break;
             }
         });
