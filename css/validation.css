@@ -19,10 +19,11 @@
 
 .message-area > .icon--cross {
     position: absolute;
-    width: 10px;
-    top: calc(50% - 5px);
-    left: calc(98% - 10px);
-    content: url("../images/cross.svg");
+    top: 6px;
+    right: 18px;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .message-area.alert {
