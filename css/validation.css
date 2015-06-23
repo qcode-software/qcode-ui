@@ -4,7 +4,7 @@
 .message-area {
     /* Message area to provide feedback used to display messages such as...
        "Sorry, that email or password is not recognised." or "No comments yet :("
-       */
+     */
     font-size: 1em;
     color: #31708f;
     background-color: #d9edf7;
@@ -15,6 +15,10 @@
     text-align: left;
     cursor: pointer;
     position: relative;
+}
+
+.icon--cross:before {
+    content: "\00d7"
 }
 
 .message-area > .icon--cross {

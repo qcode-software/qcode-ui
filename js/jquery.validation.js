@@ -178,9 +178,9 @@
                 // Message area doesn't exist so create it.
                 var messageDiv = $('<div></div>').addClass(this.options.messages[type].classes)
                 var messageContent = $('<span></span>').html(message).addClass('message-content');
-                var messageClose = $('<span></span>').html('&times;').addClass('icon icon--cross');
+                var messageClose = $('<span></span>').addClass('icon icon--cross');
                 
-                messageDiv.append(messageClose, messageContent);
+                messageDiv.append(messageContent, messageClose);
                 var validationElement = $(this.element);
                 messageDiv.click(function(event){
                     validationElement.validation('hideMessage', type);
