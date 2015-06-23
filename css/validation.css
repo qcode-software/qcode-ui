@@ -17,17 +17,14 @@
     position: relative;
 }
 
-.icon--cross:before {
-    content: "\00d7"
-}
-
-.message-area > .icon--cross {
+.message-area:before {
     position: absolute;
     top: 6px;
     right: 18px;
     font-size: 25px;
     font-weight: 700;
     line-height: 1;
+    content: "\00d7"
 }
 
 .message-area.alert {
