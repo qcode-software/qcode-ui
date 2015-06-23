@@ -72,7 +72,7 @@
                     error: function(jqXHR, textStatus, errorThrown) {
                         // HTTP ERROR
 	                if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-                            $form.validation('parseResponse', response);
+                            $form.validation('parseResponse', $.parseJSON(jqXHR.responseText));
                             return;
                         }
 
@@ -98,7 +98,7 @@
 
         parseResponse: function(response) {
             // Parses the response to show qtips and messages where necessary.
-            var $form = $(this);
+            var $form = $(this.element);
             var allValid = true;
             // Check each record item is valid.
             $.each(response.record, function (name, object) {
@@ -177,7 +177,7 @@
             if (! this[type]) {
                 // Message area doesn't exist so create it.
                 var messageDiv = $('<div></div>').addClass(this.options.messages[type].classes)
-                var messageContent = $('<span></span>').text(message).addClass('message-content');
+                var messageContent = $('<span></span>').html(message).addClass('message-content');
                 var messageClose = $('<span></span>').addClass('icon icon--cross');
                 
                 messageDiv.append(messageContent, messageClose);
@@ -198,7 +198,7 @@
                 this[type] = messageDiv;
             } else {
                 // Update the message
-                $('.' + type + ' > .message-content').text(message);
+                $('.' + type + ' > .message-content').html(message);
             }
         },
         
