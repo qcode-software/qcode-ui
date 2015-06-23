@@ -251,6 +251,21 @@
             if (response.message) {
                 var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
+                    var message = object.value;
+                    // TODO
+                    switch(type) {
+                    case 'alert':
+                        qcode.alert(message);
+                        break;
+                    case 'notify':
+                        dbForm.setStatus(message);
+                        break;
+                    case 'error':
+                        dbForm.setState('error');
+                        qcode.alert('Your changes could not be saved:<br>' + message);
+                        break;
+                    }
+                    // TODO
                     recordSet.trigger('message', [{
                         type: 'message',
                         html: object.value
@@ -306,13 +321,28 @@
                 this.setState('error');
             }
 	},
-	_actionReturnError: function(action, message, type) {
+	_actionReturnError: function(action, message, type, jqXHR) {
 	    // Called when a server action returns an error
 	    this.error = message;
 	    this.setState('error');
-	    if ( type != 'USER' ) {
+            switch(errorType) {
+            case 'HTTP':
+                var returnType = jqXHR.getResponseHeader('content-type');
+                // Check if JSON or XML and parse accordingly
+                switch (returnType) {
+                case "application/json; charset=utf-8":
+                    this.parseJSONResponse($.parseJSON(jqXHR.responseText));
+                    break;
+                case "text/xml; charset=utf-8":
+                    this.parseXMLResponse($.parseXML(jqXHR.responseText));
+                    break;
+                default:
+                    qcode.alert('Your changes could not be saved.<br>Expected XML or JSON but got ' + returnType);
+            case 'USER':
+                    break;
+            default:
 		qcode.alert(message);
-	    }
+            }
 	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
 	}
     });
