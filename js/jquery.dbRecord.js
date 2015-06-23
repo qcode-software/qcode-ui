@@ -5,6 +5,7 @@
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
+        
 	_create: function() {
 	    // saveEvent option
 	    this.options.saveEvent = coalesce(
@@ -28,6 +29,11 @@
 		    'dbRecordOut': this._onDbRecordOut
 		});
 	    }
+
+            // AJAX headers
+            this.headers = {
+                Accept: "application/json,text/xml"
+            }
 
             this._on({
                 'keydown .editable': this._onFieldKeyDown,
@@ -190,7 +196,7 @@
             // Add the authenticity token.
             data['_authenticity_token'] = $('[name=_authenticity_token]').val();
 	    // Post
-	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
+	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async, this.headers);
 	    // custom event 
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
@@ -255,6 +261,8 @@
             // Redirect if the redirect action was given
             if (response.action && response.action['redirect']) {
                 window.location.href = response.action.redirect.value;
+            } else {
+                this.element.trigger('resize');
             }
         },
 	_actionReturn: function(action, data, status, jqXHR) {
