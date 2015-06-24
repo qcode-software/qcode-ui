@@ -346,8 +346,9 @@
                 default:
                     qcode.alert('Expected XML or JSON but got ' + returnType);
                 }
+                break;
             case 'USER':
-                    break;
+                break;
             default:
                 this.error = message;
 		qcode.alert(message);
