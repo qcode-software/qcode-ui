@@ -226,6 +226,14 @@
 		    }
 		}
 	    });
+            
+            // Messages
+            var xmlError = $(response).find('error').first();
+            if ( xmlError.length == 1 ) {
+                this.error = xmlError.text();
+                qcode.alert(xmlError.text());
+            }
+            
 	    this.element.trigger('resize');
         },
         parseJSONResponse: function(response) {
@@ -243,7 +251,7 @@
                     }
                 } else {
                     $element.removeClass('invalid');
-                    $element.val(object.value);
+                    $element.dbField('setValue', object.value);
                 }
             });
             
@@ -252,24 +260,25 @@
                 var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
                     var message = object.value;
-                    // TODO
                     switch(type) {
                     case 'alert':
                         qcode.alert(message);
+                        recordSet.trigger('message', [{
+                            type: 'message',
+                            html: message
+                        }]);
                         break;
                     case 'notify':
-                        dbForm.setStatus(message);
+                        recordSet.trigger('message', [{
+                            type: 'message',
+                            html: message
+                        }]);
                         break;
                     case 'error':
-                        dbForm.setState('error');
-                        qcode.alert('Your changes could not be saved:<br>' + message);
+                        this.error = message
+                        qcode.alert(message);
                         break;
                     }
-                    // TODO
-                    recordSet.trigger('message', [{
-                        type: 'message',
-                        html: object.value
-                    }]);
                 });
             }
 
@@ -323,9 +332,7 @@
 	},
 	_actionReturnError: function(action, message, type, jqXHR) {
 	    // Called when a server action returns an error
-	    this.error = message;
-	    this.setState('error');
-            switch(errorType) {
+            switch(type) {
             case 'HTTP':
                 var returnType = jqXHR.getResponseHeader('content-type');
                 // Check if JSON or XML and parse accordingly
@@ -337,13 +344,16 @@
                     this.parseXMLResponse($.parseXML(jqXHR.responseText));
                     break;
                 default:
-                    qcode.alert('Your changes could not be saved.<br>Expected XML or JSON but got ' + returnType);
+                    qcode.alert('Expected XML or JSON but got ' + returnType);
+                }
             case 'USER':
                     break;
             default:
+                this.error = message;
 		qcode.alert(message);
             }
-	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
+            this.setState('error');
+	    this.element.trigger('dbRecordActionReturnError', [action, this.error, type]);
 	}
     });
 })(jQuery);
