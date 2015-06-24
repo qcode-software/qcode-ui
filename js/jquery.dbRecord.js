@@ -5,6 +5,7 @@
 
     // Use the jQuery UI widget factory
     $.widget('qcode.dbRecord', {
+        
 	_create: function() {
 	    // saveEvent option
 	    this.options.saveEvent = coalesce(
@@ -28,6 +29,11 @@
 		    'dbRecordOut': this._onDbRecordOut
 		});
 	    }
+
+            // AJAX headers
+            this.headers = {
+                Accept: "application/json,text/xml"
+            }
 
             this._on({
                 'keydown .editable': this._onFieldKeyDown,
@@ -190,7 +196,7 @@
             // Add the authenticity token.
             data['_authenticity_token'] = $('[name=_authenticity_token]').val();
 	    // Post
-	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async);
+	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async, this.headers);
 	    // custom event 
 	    this.element.trigger('dbRecordAction', [action]);
 	}, 
@@ -220,6 +226,14 @@
 		    }
 		}
 	    });
+            
+            // Messages
+            var xmlError = $(response).find('error').first();
+            if ( xmlError.length == 1 ) {
+                this.error = xmlError.text();
+                qcode.alert(xmlError.text());
+            }
+            
 	    this.element.trigger('resize');
         },
         parseJSONResponse: function(response) {
@@ -237,7 +251,7 @@
                     }
                 } else {
                     $element.removeClass('invalid');
-                    $element.val(object.value);
+                    $element.dbField('setValue', object.value);
                 }
             });
             
@@ -245,16 +259,34 @@
             if (response.message) {
                 var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
-                    recordSet.trigger('message', [{
-                        type: 'message',
-                        html: object.value
-                    }]);
+                    var message = object.value;
+                    switch(type) {
+                    case 'alert':
+                        qcode.alert(message);
+                        recordSet.trigger('message', [{
+                            type: 'message',
+                            html: message
+                        }]);
+                        break;
+                    case 'notify':
+                        recordSet.trigger('message', [{
+                            type: 'message',
+                            html: message
+                        }]);
+                        break;
+                    case 'error':
+                        this.error = message
+                        qcode.alert(message);
+                        break;
+                    }
                 });
             }
 
             // Redirect if the redirect action was given
             if (response.action && response.action['redirect']) {
                 window.location.href = response.action.redirect.value;
+            } else {
+                this.element.trigger('resize');
             }
         },
 	_actionReturn: function(action, data, status, jqXHR) {
@@ -298,14 +330,31 @@
                 this.setState('error');
             }
 	},
-	_actionReturnError: function(action, message, type) {
+	_actionReturnError: function(action, message, type, jqXHR) {
 	    // Called when a server action returns an error
-	    this.error = message;
-	    this.setState('error');
-	    if ( type != 'USER' ) {
+            switch(type) {
+            case 'HTTP':
+                var returnType = jqXHR.getResponseHeader('content-type');
+                // Check if JSON or XML and parse accordingly
+                switch (returnType) {
+                case "application/json; charset=utf-8":
+                    this.parseJSONResponse($.parseJSON(jqXHR.responseText));
+                    break;
+                case "text/xml; charset=utf-8":
+                    this.parseXMLResponse($.parseXML(jqXHR.responseText));
+                    break;
+                default:
+                    qcode.alert('Expected XML or JSON but got ' + returnType);
+                }
+                break;
+            case 'USER':
+                break;
+            default:
+                this.error = message;
 		qcode.alert(message);
-	    }
-	    this.element.trigger('dbRecordActionReturnError', [action, message, type]);
+            }
+            this.setState('error');
+	    this.element.trigger('dbRecordActionReturnError', [action, this.error, type]);
 	}
     });
 })(jQuery);

@@ -6,6 +6,10 @@
 	_create: function(){
 	    this.state = 'current';
 	    this.error = undefined;
+            // AJAX headers
+            this.headers = {
+                Accept: "text/xml"
+            }
 	},
 	getGrid: function(){
 	    return this.element.closest('table');
@@ -132,7 +136,7 @@
 	    var urlPieces = splitURL(url);
 	    var path = urlPieces.path;
 	    var data = $.extend(urlPieces.data, this.getRowData());
-	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async);
+	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async, this.headers);
 	    this.element.trigger('dbRowAction', [action]);
 	},
 	actionReturn: function(action, xmlDoc, status, jqXHR){
@@ -168,15 +172,27 @@
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action,errorMessage, errorType) {
-            if ( errorType == 'NAVIGATION' ) {
+	actionReturnError: function(action,errorMessage, errorType, jqXHR) {
+            // Handler for errors returned from server.
+            switch(errorType) {
+            case "NAVIGATION":
                 return;
+            case "HTTP":
+                var xml = $.parseXML(jqXHR.responseText);
+                var xmlError = $(xml).find('error').first();
+                if ( xmlError.length == 1 ) {
+                    this.error = xmlError.text();
+                }
+                break;
+            default:
+                this.error = errorMessage;
             }
-	    this.error = errorMessage;
-	    this.setState('error');
-	    if ( errorType != 'USER' ) {
-		qcode.alert(errorMessage);
-	    }
+
+            // Alert on all errors that aren't user errors.
+            if ( jqXHR.status !== 400 ) {
+                qcode.alert(this.error)
+            }
+            this.setState('error');
 	},
 	xmlSetValues: function(xmlDoc) {
 	    // Update row, calculated & external html values,

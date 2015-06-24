@@ -15,7 +15,12 @@
 	},
 	_create: function(){
 	    var dbGrid = this;
-	    
+
+            // AJAX headers
+            this.headers = {
+                Accept: "text/xml"
+            }
+            
 	    // Plugin Variables
 	    dbGrid.colgroup = this.element.children('colgroup');
 	    dbGrid.tbody = dbGrid.element.children('tbody');
@@ -306,7 +311,7 @@
 	    // Remove all rows
 	    this.tbody.children('tr').remove();
 	    
-	    httpPost(url,data,this._requeryReturn.bind(this),this._requeryReturnError.bind(this),false);
+	    httpPost(url,data,this._requeryReturn.bind(this),this._requeryReturnError.bind(this),false,this.headers);
 	},
 	_requeryReturn: function(xmlDoc){
 	    // Rebuild dbGrid from requeryReturn response
@@ -353,13 +358,25 @@
 		}
 	    }
 	},
-	_requeryReturnError: function(errorMessage) {
+	_requeryReturnError: function(errorMessage, errorType, jqXHR) {
             // Notify plugins such as statusFrame of the error
+            if ( errorType === "HTTP" ) {
+                var xml = $.parseXML(jqXHR.responseText);
+                var xmlError = $(xml).find('error').first();
+                if ( xmlError.length == 1 ) {
+                    errorMessage = xmlError.text();
+                }
+            }
+            
             this.element.trigger('message', [{
                 type: 'error',
                 html: errorMessage
             }]);
-	    qcode.alert(errorMessage);
+
+            // Alert on all errors that aren't user errors.
+            if ( jqXHR.status !== 400 ) {
+                qcode.alert(errorMessage)
+            }
 	},
 	cellAbove: function(fromCell) {
 	    // Return the first editable cell of the same column on previous rows. 
