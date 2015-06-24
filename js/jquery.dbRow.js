@@ -173,6 +173,7 @@
 	    }
 	},
 	actionReturnError: function(action,errorMessage, errorType, jqXHR) {
+            // Handler for errors returned from server.
             switch(errorType) {
             case "NAVIGATION":
                 return;
@@ -186,9 +187,12 @@
             default:
                 this.error = errorMessage;
             }
-	    
-	    this.setState('error');
-            qcode.alert(this.error);
+
+            // Alert on all errors that aren't user errors.
+            if ( jqXHR.status !== 400 ) {
+                qcode.alert(this.error)
+            }
+            this.setState('error');
 	},
 	xmlSetValues: function(xmlDoc) {
 	    // Update row, calculated & external html values,

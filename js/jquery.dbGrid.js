@@ -367,11 +367,16 @@
                     errorMessage = xmlError.text();
                 }
             }
+            
             this.element.trigger('message', [{
                 type: 'error',
                 html: errorMessage
             }]);
-	    qcode.alert(errorMessage);
+
+            // Alert on all errors that aren't user errors.
+            if ( jqXHR.status !== 400 ) {
+                qcode.alert(errorMessage)
+            }
 	},
 	cellAbove: function(fromCell) {
 	    // Return the first editable cell of the same column on previous rows. 
