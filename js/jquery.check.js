@@ -128,7 +128,7 @@
                         ready: true
                     },
                     hide: {
-                        event: 'focus',
+                        event: 'focus blurs reset keydown paste cut',
                         delay: 0
                     }
                 });
