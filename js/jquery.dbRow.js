@@ -8,7 +8,7 @@
 	    this.error = undefined;
             // AJAX headers
             this.headers = {
-                Accept: "application/json, text/xml"
+                Accept: "application/json,text/xml"
             }
 	},
 	getGrid: function(){
