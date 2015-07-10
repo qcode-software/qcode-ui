@@ -395,3 +395,19 @@ function bytesWithUnits2Int(bytes_with_units) {
     }
     return parseInt(qty * multiplier);
 }
+
+function scrollToElement($element, duration) {
+    // Scrolls to the top of the given element if it isn't fully visible in the viewport.
+    var $window = $(window);
+    var viewportTop = $window.scrollTop();
+    var viewportBottom = viewportTop + $window.height();
+    var elementTop = $element.offset().top;
+    var elementBottom = elementTop + $element.height();
+    
+    if ( elementBottom > viewportBottom || elementTop < viewportTop ) {                                
+        // Element is not fully visible - scroll page to the element
+        $('body').animate({
+            scrollTop: $element.offset().top
+        }, duration);
+    }
+}
