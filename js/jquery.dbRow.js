@@ -8,7 +8,7 @@
 	    this.error = undefined;
             // AJAX headers
             this.headers = {
-                Accept: "text/xml"
+                Accept: "application/json, text/xml"
             }
 	},
 	getGrid: function(){
@@ -139,11 +139,23 @@
 	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async, this.headers);
 	    this.element.trigger('dbRowAction', [action]);
 	},
-	actionReturn: function(action, xmlDoc, status, jqXHR){
+	actionReturn: function(action, data, status, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
-
-	    this.xmlSetValues(xmlDoc);
+            var contentType = jqXHR.getResponseHeader('content-type');
+            switch(contentType) {
+            case "application/json; charset=utf-8":
+                this.jsonSetValues(data);
+                break;
+            case "text/xml; charset=utf-8":
+                this.xmlSetValues(data);
+                break;
+            default:
+                this.error = "Expected XML or JSON but got " + contentType; 
+                this.setState('error');
+                return;
+            }
+            
 	    this.error = undefined;
 
 	    switch(action){
@@ -159,7 +171,7 @@
 	    }
 
 	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	    this.element.trigger('dbRowActionReturn', [action, xmlDoc, status, jqXHR]);
+	    this.element.trigger('dbRowActionReturn', [action, data, status, jqXHR]);
 
 	    if ( action == "delete" ) {
 		// When a record is deleted, remove it from the DOM.	
@@ -248,6 +260,17 @@
 		qcode.alert(xmlNode.text());
 	    }
 	},
+        jsonSetValues: function(json) {
+            // Update row, calculated & external html values, and display messages.
+            var grid = this.getGrid();
+            var currentCell = grid.dbGrid('getCurrentCell');
+            var dbRow = this;
+
+            // Update row with record values
+            $.each(json.record, function(name, object) {
+                dbRow.setCellValue(name, object.value);
+            });
+        },
 	setCellValue: function(colName, value){
 	    // Set the value of the cell corresponding to colName.
 	    var colIndex = $('col[name='+colName+']', this.getColgroup()).index();
