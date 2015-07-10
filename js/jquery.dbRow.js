@@ -143,6 +143,7 @@
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
             var contentType = jqXHR.getResponseHeader('content-type');
+            console.log('Content Type: ' + contenType);
             switch(contentType) {
             case "application/json; charset=utf-8":
                 this.jsonSetValues(data);
@@ -262,14 +263,54 @@
 	},
         jsonSetValues: function(json) {
             // Update row, calculated & external html values, and display messages.
+            console.log('jsonSetValues');
             var grid = this.getGrid();
             var currentCell = grid.dbGrid('getCurrentCell');
             var dbRow = this;
 
             // Update row with record values
-            $.each(json.record, function(name, object) {
-                dbRow.setCellValue(name, object.value);
+            $.each(json.record, function(name, properties) {
+                console.log('Setting value: ' + name + ' - ' + properties.value);
+                dbRow.setCellValue(name, properties.value);
             });
+
+            // Update 'calculated' elements
+            if ( json.record.calculated ) {
+                $.each(json.record.calculated.value, function(name, value) {
+                    console.log('Setting calculated: ' + name + ' - ' + value);
+                    $('#' + name, grid).setObjectValue(value);
+                });
+            }
+
+            // Update html elements outwith the grid
+            if ( json.record.html ) {
+                $.each(json.record.html.value, function(name, value) {
+                    behave(
+                        $('#' + name + ',[name=' + name + ']').setObjectValue(value);
+                    );
+                });
+            }
+
+            // Display messages
+            var element = this.element;
+            if ( json.message && (!json.action || !json.action.redirect) ) {
+                $.each(json.message, function(type, properties) {
+                    switch(type) {
+                    case 'notify':
+                        element.trigger('message', [{
+                            type: 'info',
+                            html: properties.value
+                        }]);
+                        break;
+                    case 'alert':
+                        qcode.alert(properties.value);
+                        break;
+                    case 'error':
+                        dbRow.error = properties.value;
+                        dbRow.setState('error');
+                    }
+                });
+            }
         },
 	setCellValue: function(colName, value){
 	    // Set the value of the cell corresponding to colName.
