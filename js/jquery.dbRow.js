@@ -142,8 +142,8 @@
 	actionReturn: function(action, data, status, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
-            var contentType = jqXHR.getResponseHeader('content-type');
-            console.log('Content Type: ' + contenType);
+            var contentType = jqXHR.getResponseHeader('Content-Type');
+            console.log('Content Type: ' + contentType);
             switch(contentType) {
             case "application/json; charset=utf-8":
                 this.jsonSetValues(data);
@@ -187,15 +187,50 @@
 	},
 	actionReturnError: function(action,errorMessage, errorType, jqXHR) {
             // Handler for errors returned from server.
+            var dbRow = this;
+            
             switch(errorType) {
             case "NAVIGATION":
                 return;
             case "HTTP":
-                var xml = $.parseXML(jqXHR.responseText);
-                var xmlError = $(xml).find('error').first();
-                if ( xmlError.length == 1 ) {
-                    this.error = xmlError.text();
+                var contentType = jqXHR.getResponseHeader('Content-Type');
+                switch(contentType) {
+                case "application/json; charset=utf-8":
+                    var json = $.parseJSON(jqXHR.responseText);
+                    var dbRow = this;
+                    var element = this.element;
+                    if ( json.message && (!json.action || !json.action.redirect) {
+                        $.each(json.message, function(type, properties) {
+                            switch(type) {
+                            case 'notify':
+                                element.trigger('message', [{
+                                    type: 'info',
+                                    html: properties.value
+                                }]);
+                                break;
+                            case 'alert':
+                                qcode.alert(properties.value);
+                                break;
+                            case 'error':
+                                dbRow.error = properties.value;
+                                dbRow.setState('error');
+                            }
+                        });
+                    }
+                    break;
+                case "text/xml; charset=utf-8":
+                    var xml = $.parseXML(jqXHR.responseText);
+                    var xmlError = $(xml).find('error').first();
+                    if ( xmlError.length == 1 ) {
+                        this.error = xmlError.text();
+                    }
+                    break;
+                default:
+                    this.error = "Expected XML or JSON but got " + contentType; 
+                    this.setState('error');
+                    return;
                 }
+                
                 break;
             default:
                 this.error = errorMessage;
@@ -268,25 +303,27 @@
             var currentCell = grid.dbGrid('getCurrentCell');
             var dbRow = this;
 
-            // Update row with record values
+            // Update 'calculated' elements
+            if ( json.record.calculated ) {
+                var calculated = $.parseJSON(json.record.calculated.value);
+                $.each(calculated, function(name, value) {
+                    console.log('Setting calculated: ' + name + ' - ' + value);
+                    $('#' + name, grid).setObjectValue(value);
+                });
+                delete json.record.calculated;
+            }
+
+            // Update row with the rest of the record values
             $.each(json.record, function(name, properties) {
                 console.log('Setting value: ' + name + ' - ' + properties.value);
                 dbRow.setCellValue(name, properties.value);
             });
 
-            // Update 'calculated' elements
-            if ( json.record.calculated ) {
-                $.each(json.record.calculated.value, function(name, value) {
-                    console.log('Setting calculated: ' + name + ' - ' + value);
-                    $('#' + name, grid).setObjectValue(value);
-                });
-            }
-
             // Update html elements outwith the grid
             if ( json.record.html ) {
                 $.each(json.record.html.value, function(name, value) {
                     behave(
-                        $('#' + name + ',[name=' + name + ']').setObjectValue(value);
+                        $('#' + name + ',[name=' + name + ']').setObjectValue(value)
                     );
                 });
             }
