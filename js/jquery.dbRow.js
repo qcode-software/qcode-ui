@@ -193,13 +193,16 @@
             case "NAVIGATION":
                 return;
             case "HTTP":
+                var errorList = $('<ul></ul>');
                 var contentType = jqXHR.getResponseHeader('Content-Type');
                 switch(contentType) {
                 case "application/json; charset=utf-8":
                     var json = $.parseJSON(jqXHR.responseText);
-                    var dbRow = this;
-                    var element = this.element;
-                    if ( json.message && (!json.action || !json.action.redirect) {
+                    if ( json.action && json.action.redirect ) {
+                        window.location.href = json.action.redirect.value;
+                        return;
+                    } else if ( json.message ) {
+                        var element = this.element;
                         $.each(json.message, function(type, properties) {
                             switch(type) {
                             case 'notify':
@@ -212,11 +215,20 @@
                                 qcode.alert(properties.value);
                                 break;
                             case 'error':
-                                dbRow.error = properties.value;
-                                dbRow.setState('error');
+                                errorList.append($('<li>' + properties.value + '</li>'));
+                                break;
                             }
                         });
                     }
+
+                   
+                    $.each(json.record, function(name, properties) {
+                        if ( !properties.valid ) {
+                            errorList.append($('<li>' + properties.message + '</li>'));
+                        }
+                    });
+
+                    this.error = errorList;
                     break;
                 case "text/xml; charset=utf-8":
                     var xml = $.parseXML(jqXHR.responseText);
@@ -226,9 +238,7 @@
                     }
                     break;
                 default:
-                    this.error = "Expected XML or JSON but got " + contentType; 
-                    this.setState('error');
-                    return;
+                    this.error = "Expected XML or JSON but got " + contentType;
                 }
                 
                 break;

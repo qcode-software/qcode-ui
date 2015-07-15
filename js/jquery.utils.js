@@ -145,7 +145,7 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	    // PARSE ERROR
 	    if ( textStatus == 'parsererror' ) {
 		errorMessage = 'Error ! Unable to parse response';
-		return errorHandler(errorMessage,'PARSE'. jqXHR);
+		return errorHandler(errorMessage,'PARSE', jqXHR);
 	    }
 
             // Cancelled by navigation
