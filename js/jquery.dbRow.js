@@ -192,6 +192,8 @@
             switch(errorType) {
             case "NAVIGATION":
                 return;
+            case "USER":
+                // Fall through
             case "HTTP":
                 var errorList = $('<ul></ul>');
                 var contentType = jqXHR.getResponseHeader('Content-Type');
@@ -313,30 +315,24 @@
             var currentCell = grid.dbGrid('getCurrentCell');
             var dbRow = this;
 
-            // Update 'calculated' elements
-            if ( json.record.calculated ) {
-                var calculated = $.parseJSON(json.record.calculated.value);
-                $.each(calculated, function(name, value) {
-                    console.log('Setting calculated: ' + name + ' - ' + value);
-                    $('#' + name, grid).setObjectValue(value);
-                });
-                delete json.record.calculated;
-            }
-
             // Update row with the rest of the record values
             $.each(json.record, function(name, properties) {
                 console.log('Setting value: ' + name + ' - ' + properties.value);
                 dbRow.setCellValue(name, properties.value);
             });
 
+            // Update 'calculated' elements
+            $.each(json.calculated, function(name, value) {
+                console.log('Setting calculated: ' + name + ' - ' + value);
+                $('#' + name, grid).setObjectValue(value);
+            });
+
             // Update html elements outwith the grid
-            if ( json.record.html ) {
-                $.each(json.record.html.value, function(name, value) {
-                    behave(
-                        $('#' + name + ',[name=' + name + ']').setObjectValue(value)
-                    );
-                });
-            }
+            $.each(json.html, function(name, value) {
+                behave(
+                    $('#' + name + ',[name=' + name + ']').setObjectValue(value)
+                );
+            });
 
             // Display messages
             var element = this.element;
