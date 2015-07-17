@@ -146,6 +146,11 @@
             
             switch(contentType) {
             case "application/json; charset=utf-8":
+                // Redirect if action is given
+                if ( json.action && json.action.redirect ) {
+                    window.location.href = json.action.redirect.value;
+                    break;
+                }
                 this.jsonSetValues(data);
                 break;
             case "text/xml; charset=utf-8":
@@ -318,12 +323,6 @@
             var grid = this.getGrid();
             var currentCell = grid.dbGrid('getCurrentCell');
             var dbRow = this;
-
-            // Redirect if action is given
-            if ( json.action && json.action.redirect ) {
-                window.location.href = json.action.redirect.value;
-                return;
-            }
 
             // Update row record values
             if ( json.record ) {
