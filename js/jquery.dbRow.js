@@ -143,7 +143,7 @@
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
             var contentType = jqXHR.getResponseHeader('Content-Type');
-            console.log('Content Type: ' + contentType);
+            
             switch(contentType) {
             case "application/json; charset=utf-8":
                 this.jsonSetValues(data);
@@ -152,7 +152,8 @@
                 this.xmlSetValues(data);
                 break;
             default:
-                this.error = "Expected XML or JSON but got " + contentType; 
+                this.error = "Expected XML or JSON but got " + contentType;
+                qcode.alert(this.error);
                 this.setState('error');
                 return;
             }
@@ -185,7 +186,7 @@
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action,errorMessage, errorType, jqXHR) {
+	actionReturnError: function(action, errorMessage, errorType, jqXHR) {
             // Handler for errors returned from server.
             var dbRow = this;
             
@@ -197,13 +198,17 @@
             case "HTTP":
                 var errorList = $('<ul></ul>');
                 var contentType = jqXHR.getResponseHeader('Content-Type');
+                
                 switch(contentType) {
                 case "application/json; charset=utf-8":
                     var json = $.parseJSON(jqXHR.responseText);
+                    
                     if ( json.action && json.action.redirect ) {
+                        // Redirect
                         window.location.href = json.action.redirect.value;
                         return;
                     } else if ( json.message ) {
+                        // Show messages
                         var element = this.element;
                         $.each(json.message, function(type, properties) {
                             switch(type) {
@@ -223,7 +228,7 @@
                         });
                     }
 
-                   
+                    // Add invalid cell messages to error message.
                     $.each(json.record, function(name, properties) {
                         if ( !properties.valid ) {
                             errorList.append($('<li>' + properties.message + '</li>'));
@@ -249,7 +254,7 @@
             }
 
             // Alert on all errors that aren't user errors.
-            if ( jqXHR.status !== 400 ) {
+            if ( jqXHR.status !== 400 && jqXHR.status !== 200 ) {
                 qcode.alert(this.error)
             }
             this.setState('error');
@@ -310,29 +315,42 @@
 	},
         jsonSetValues: function(json) {
             // Update row, calculated & external html values, and display messages.
-            console.log('jsonSetValues');
             var grid = this.getGrid();
             var currentCell = grid.dbGrid('getCurrentCell');
             var dbRow = this;
 
-            // Update row with the rest of the record values
-            $.each(json.record, function(name, properties) {
-                console.log('Setting value: ' + name + ' - ' + properties.value);
-                dbRow.setCellValue(name, properties.value);
-            });
+            // Redirect if action is given
+            if ( json.action && json.action.redirect ) {
+                window.location.href = json.action.redirect.value;
+                return;
+            }
+
+            // Update row record values
+            if ( json.record ) {
+                $.each(json.record, function(name, properties) {
+                    dbRow.setCellValue(name, properties.value);
+                });
+                
+                if ( currentCell.size() && this.element.find(currentCell).size() ) {
+		    currentCell.dbCell('cellIn', 'end');
+		}
+            }
 
             // Update 'calculated' elements
-            $.each(json.calculated, function(name, value) {
-                console.log('Setting calculated: ' + name + ' - ' + value);
-                $('#' + name, grid).setObjectValue(value);
-            });
+            if ( json.calculated ) {
+                $.each(json.calculated, function(name, value) {                
+                    $('#' + name, grid).setObjectValue(value.toFixed(2));
+                });
+            }
 
             // Update html elements outwith the grid
-            $.each(json.html, function(name, value) {
-                behave(
-                    $('#' + name + ',[name=' + name + ']').setObjectValue(value)
-                );
-            });
+            if ( json.html ) {
+                $.each(json.html, function(name, value) {
+                    behave(
+                        $('#' + name + ',[name=' + name + ']').setObjectValue(value)
+                    );
+                });
+            }
 
             // Display messages
             var element = this.element;
