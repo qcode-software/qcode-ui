@@ -147,9 +147,9 @@
             switch(contentType) {
             case "application/json; charset=utf-8":
                 // Redirect if action is given
-                if ( json.action && json.action.redirect ) {
-                    window.location.href = json.action.redirect.value;
-                    break;
+                if ( data.action && data.action.redirect ) {
+                    window.location.href = data.action.redirect.value;
+                    return;
                 }
                 this.jsonSetValues(data);
                 break;
