@@ -64,13 +64,23 @@
             this.calendar = $('<canvas class="calendar">').appendTo(this.calendarFrame);
 
             // In case the table is a dbGrid, listen for updates.
-            this._on({'dbRowActionReturn': function(event, action, xmlDoc, status, jqXHR) {
+            this._on({'dbRowActionReturn': function(event, action, data, status, jqXHR) {
                 var ganttChart = this;
-                $('records other_record', xmlDoc).each(function(i, record) {
-                    var taskID = $(record).children('task_id').text();
-                    var barColor = $(record).children('bar_color').text();
-                    ganttChart._getRowByID(taskID).dbRow('setCellValue', 'bar_color', barColor);
-                });
+                var contentType = jqXHR.getResponseHeader('Content-Type');
+
+                switch(contentType) {
+                case "text/xml; charset=utf-8":
+                    $('records other_record', data).each(function(i, record) {
+                        var taskID = $(record).children('task_id').text();
+                        var barColor = $(record).children('bar_color').text();
+                        ganttChart._getRowByID(taskID).dbRow('setCellValue', 'bar_color', barColor);
+                    });
+                    break;
+                default:
+                    var message = "Expected XML but got " + contentType;
+                    qcode.alert(message);
+                    throw new Error(message);
+                }
                 var targetRowIndex = $(event.target).index();
                 this.rowUpdate(targetRowIndex);
                 this.getDependentRows(targetRowIndex).each(function(i, row) {
