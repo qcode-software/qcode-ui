@@ -123,11 +123,21 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	success: function(data, textStatus, jqXHR) {
             $(window).off('.httpPost');
 
-	    // USER ERROR
-	    var error = jQuery('error', data).first();
-	    if ( error.size() ) {
-		var errorMessage = error.text();
-		return errorHandler(errorMessage,'USER', jqXHR);
+            // Check for user error
+            var contentType = jqXHR.getResponseHeader('Content-Type');
+            switch(contentType) {
+            case "application/json; charset=utf-8":
+                if ( data.status === 'invalid' ) {
+                    return errorHandler(errorMessage,'USER', jqXHR);
+                }
+                break;
+            case "text/xml; charset=utf-8":
+                var error = jQuery('error', data).first();
+	        if ( error.size() ) {
+		    var errorMessage = error.text();
+		    return errorHandler(errorMessage,'USER', jqXHR);
+	        }
+                break;
 	    }
 
 	    // NORMAL COMPLETION
@@ -145,7 +155,7 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	    // PARSE ERROR
 	    if ( textStatus == 'parsererror' ) {
 		errorMessage = 'Error ! Unable to parse response';
-		return errorHandler(errorMessage,'PARSE'. jqXHR);
+		return errorHandler(errorMessage,'PARSE', jqXHR);
 	    }
 
             // Cancelled by navigation

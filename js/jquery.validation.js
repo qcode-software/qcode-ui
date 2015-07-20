@@ -278,7 +278,7 @@
                 }, this));
             } else {
                 // Update the message
-                this.message[type].find('.message-content').text(message);
+                this.message[type].find('.message-content').html(message);
                 this.message[type].show(200, $.proxy(function() {
                     this.reposition();
                 }, this));

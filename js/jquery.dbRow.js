@@ -8,7 +8,7 @@
 	    this.error = undefined;
             // AJAX headers
             this.headers = {
-                Accept: "text/xml"
+                Accept: "application/json,text/xml"
             }
 	},
 	getGrid: function(){
@@ -139,11 +139,30 @@
 	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async, this.headers);
 	    this.element.trigger('dbRowAction', [action]);
 	},
-	actionReturn: function(action, xmlDoc, status, jqXHR){
+	actionReturn: function(action, data, status, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
-
-	    this.xmlSetValues(xmlDoc);
+            var contentType = jqXHR.getResponseHeader('Content-Type');
+            
+            switch(contentType) {
+            case "application/json; charset=utf-8":
+                // Redirect if action is given
+                if ( data.action && data.action.redirect ) {
+                    window.location.href = data.action.redirect.value;
+                    return;
+                }
+                this.jsonSetValues(data);
+                break;
+            case "text/xml; charset=utf-8":
+                this.xmlSetValues(data);
+                break;
+            default:
+                this.error = "Expected XML or JSON but got " + contentType;
+                qcode.alert(this.error);
+                this.setState('error');
+                return;
+            }
+            
 	    this.error = undefined;
 
 	    switch(action){
@@ -159,7 +178,7 @@
 	    }
 
 	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	    this.element.trigger('dbRowActionReturn', [action, xmlDoc, status, jqXHR]);
+	    this.element.trigger('dbRowActionReturn', [action, data, status, jqXHR]);
 
 	    if ( action == "delete" ) {
 		// When a record is deleted, remove it from the DOM.	
@@ -172,24 +191,75 @@
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action,errorMessage, errorType, jqXHR) {
+	actionReturnError: function(action, errorMessage, errorType, jqXHR) {
             // Handler for errors returned from server.
+            var dbRow = this;
+            
             switch(errorType) {
             case "NAVIGATION":
                 return;
+            case "USER":
+                // Fall through
             case "HTTP":
-                var xml = $.parseXML(jqXHR.responseText);
-                var xmlError = $(xml).find('error').first();
-                if ( xmlError.length == 1 ) {
-                    this.error = xmlError.text();
+                var errorList = $('<ul></ul>');
+                var contentType = jqXHR.getResponseHeader('Content-Type');
+                
+                switch(contentType) {
+                case "application/json; charset=utf-8":
+                    var json = $.parseJSON(jqXHR.responseText);
+                    
+                    if ( json.action && json.action.redirect ) {
+                        // Redirect
+                        window.location.href = json.action.redirect.value;
+                        return;
+                    } else if ( json.message ) {
+                        // Show messages
+                        var element = this.element;
+                        $.each(json.message, function(type, properties) {
+                            switch(type) {
+                            case 'notify':
+                                element.trigger('message', [{
+                                    type: 'info',
+                                    html: properties.value
+                                }]);
+                                break;
+                            case 'alert':
+                                qcode.alert(properties.value);
+                                break;
+                            case 'error':
+                                errorList.append($('<li>' + properties.value + '</li>'));
+                                break;
+                            }
+                        });
+                    }
+
+                    // Add invalid cell messages to error message.
+                    $.each(json.record, function(name, properties) {
+                        if ( !properties.valid ) {
+                            errorList.append($('<li>' + properties.message + '</li>'));
+                        }
+                    });
+
+                    this.error = errorList;
+                    break;
+                case "text/xml; charset=utf-8":
+                    var xml = $.parseXML(jqXHR.responseText);
+                    var xmlError = $(xml).find('error').first();
+                    if ( xmlError.length == 1 ) {
+                        this.error = xmlError.text();
+                    }
+                    break;
+                default:
+                    this.error = "Expected XML or JSON but got " + contentType;
                 }
+                
                 break;
             default:
                 this.error = errorMessage;
             }
 
             // Alert on all errors that aren't user errors.
-            if ( jqXHR.status !== 400 ) {
+            if ( jqXHR.status !== 400 && jqXHR.status !== 200 ) {
                 qcode.alert(this.error)
             }
             this.setState('error');
@@ -248,6 +318,60 @@
 		qcode.alert(xmlNode.text());
 	    }
 	},
+        jsonSetValues: function(json) {
+            // Update row, calculated & external html values, and display messages.
+            var grid = this.getGrid();
+            var currentCell = grid.dbGrid('getCurrentCell');
+            var dbRow = this;
+
+            // Update row record values
+            if ( json.record ) {
+                $.each(json.record, function(name, properties) {
+                    dbRow.setCellValue(name, properties.value);
+                });
+                
+                if ( currentCell.size() && this.element.find(currentCell).size() ) {
+		    currentCell.dbCell('cellIn', 'end');
+		}
+            }
+
+            // Update 'calculated' elements
+            if ( json.calculated ) {
+                $.each(json.calculated, function(name, value) {                
+                    $('#' + name, grid).setObjectValue(value.toFixed(2));
+                });
+            }
+
+            // Update html elements outwith the grid
+            if ( json.html ) {
+                $.each(json.html, function(name, value) {
+                    behave(
+                        $('#' + name + ',[name=' + name + ']').setObjectValue(value)
+                    );
+                });
+            }
+
+            // Display messages
+            var element = this.element;
+            if ( json.message && (!json.action || !json.action.redirect) ) {
+                $.each(json.message, function(type, properties) {
+                    switch(type) {
+                    case 'notify':
+                        element.trigger('message', [{
+                            type: 'info',
+                            html: properties.value
+                        }]);
+                        break;
+                    case 'alert':
+                        qcode.alert(properties.value);
+                        break;
+                    case 'error':
+                        dbRow.error = properties.value;
+                        dbRow.setState('error');
+                    }
+                });
+            }
+        },
 	setCellValue: function(colName, value){
 	    // Set the value of the cell corresponding to colName.
 	    var colIndex = $('col[name='+colName+']', this.getColgroup()).index();
