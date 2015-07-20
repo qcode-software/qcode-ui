@@ -338,7 +338,7 @@
             // Update 'calculated' elements
             if ( json.calculated ) {
                 $.each(json.calculated, function(name, value) {                
-                    $('#' + name, grid).setObjectValue(value.toFixed(2));
+                    $('#' + name, grid).setObjectValue(value);
                 });
             }
 
