@@ -478,6 +478,8 @@
     function formActionError(errorMessage, errorType, jqXHR) {
         // Error handler for AJAX errors to let the user know what went wrong. 
         switch(errorType) {
+        case 'USER':
+            // Fall through
         case 'HTTP':
             var returnType = jqXHR.getResponseHeader('content-type');
             // Check if JSON or XML and parse accordingly
