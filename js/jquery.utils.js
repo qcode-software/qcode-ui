@@ -121,24 +121,8 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	data: data,
         headers: headers,
 	success: function(data, textStatus, jqXHR) {
+            // Unbind httpPost listener
             $(window).off('.httpPost');
-
-            // Check for user error
-            var contentType = jqXHR.getResponseHeader('Content-Type');
-            switch(contentType) {
-            case "application/json; charset=utf-8":
-                if ( data.status === 'invalid' ) {
-                    return errorHandler(errorMessage,'USER', jqXHR);
-                }
-                break;
-            case "text/xml; charset=utf-8":
-                var error = jQuery('error', data).first();
-	        if ( error.size() ) {
-		    var errorMessage = error.text();
-		    return errorHandler(errorMessage,'USER', jqXHR);
-	        }
-                break;
-	    }
 
 	    // NORMAL COMPLETION
 	    return handler(data, textStatus, jqXHR);
@@ -146,6 +130,11 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	error: function(jqXHR, textStatus) {
             $(window).off('.httpPost');
 
+            // status 400 is a user error; delegate to success handler.
+            if ( jqXHR.status == 400 ) {
+                return handler(jqXHR.responseText, textStatus, jqXHR);
+            }
+            
 	    // HTTP ERROR
 	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
 		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;

@@ -318,12 +318,6 @@
         switch (returnType) {
         case "application/json; charset=utf-8":
             parseJSONResponse.call(this, response, type);
-            valid = response.status === 'valid';
-            var responseAction = function(response) {
-                if ( response.action && response.action.redirect ) {
-                    window.location.href = response.action.redirect.value;
-                }
-            };
             break;
         case "text/xml; charset=utf-8":
             parseXMLResponse.call(this, response, type);
@@ -376,15 +370,14 @@
 	}
 	// Event onFormActionReturn
 	this.form.trigger('formActionReturn', [type]);
-
-        // Actions
-        if (valid && typeof responseAction === 'function') {
-            responseAction(response);
-        }
     }
     function parseXMLResponse(response, type) {
         // Parses and sets record information and messages from an XML response.
         var dbForm = this;
+        if ( typeof response === "string" ) {
+            // The response hasn't yet been parsed into an object
+            response = $.parseXML(response);
+        }
         // Record
         $('records > record *', response).each(function(i, xmlNode){
             // update values of fields
@@ -434,6 +427,17 @@
     }
     function parseJSONResponse(response, type) {
         // Parses and sets record information and messages from a JSON response.
+        if ( typeof response === "string" ) {
+            // The response hasn't yet been parsed into an object
+            response = $.parseJSON(response);
+        }
+        
+        // Actions
+        if ( response.action && response.action.redirect ) {
+            window.location.href = response.action.redirect.value;
+            return;
+        }
+        
         // Record
         $.each(response.record, function(name, object) {
             var element = $('#' + name);
@@ -483,10 +487,10 @@
             // Check if JSON or XML and parse accordingly
             switch (returnType) {
             case "application/json; charset=utf-8":
-                parseJSONResponse.call(this, $.parseJSON(jqXHR.responseText), 'error');
+                parseJSONResponse.call(this, jqXHR.responseText, 'error');
                 break;
             case "text/xml; charset=utf-8":
-                parseXMLResponse.call(this, $.parseXML(jqXHR.responseText), 'error');
+                parseXMLResponse.call(this, jqXHR.responseText, 'error');
                 break;
             default:
                 this.setState('error');
