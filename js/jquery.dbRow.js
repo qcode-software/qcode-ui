@@ -139,7 +139,7 @@
 	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async, this.headers);
 	    this.element.trigger('dbRowAction', [action]);
 	},
-	actionReturn: function(action, data, status, jqXHR){
+	actionReturn: function(action, data, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
             var contentType = jqXHR.getResponseHeader('Content-Type');
@@ -178,7 +178,7 @@
 	    }
 
 	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	    this.element.trigger('dbRowActionReturn', [action, data, status, jqXHR]);
+	    this.element.trigger('dbRowActionReturn', [action, data, jqXHR]);
 
 	    if ( action == "delete" ) {
 		// When a record is deleted, remove it from the DOM.	
@@ -198,8 +198,6 @@
             switch(errorType) {
             case "NAVIGATION":
                 return;
-            case "USER":
-                // Fall through
             case "HTTP":
                 var errorList = $('<ul></ul>');
                 var contentType = jqXHR.getResponseHeader('Content-Type');
@@ -258,11 +256,8 @@
                 this.error = errorMessage;
             }
 
-            // Alert on all errors that aren't user errors.
-            if ( jqXHR.status !== 400 && jqXHR.status !== 200 ) {
-                qcode.alert(this.error)
-            }
             this.setState('error');
+            qcode.alert(this.error);
 	},
 	xmlSetValues: function(xmlDoc) {
 	    // Update row, calculated & external html values,

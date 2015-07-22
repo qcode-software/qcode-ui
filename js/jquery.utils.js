@@ -125,14 +125,36 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
             $(window).off('.httpPost');
 
 	    // NORMAL COMPLETION
-	    return handler(data, textStatus, jqXHR);
+	    return handler(data, jqXHR);
 	},
 	error: function(jqXHR, textStatus) {
             $(window).off('.httpPost');
 
             // status 400 is a user error; delegate to success handler.
             if ( jqXHR.status == 400 ) {
-                return handler(jqXHR.responseText, textStatus, jqXHR);
+                return handler(jqXHR.responseText, jqXHR);
+            }
+            
+            var type = 'UNKNOWN';
+            
+            switch(jqXHR.status) {
+            case 0:
+            case 200:
+                type = 'HTTP';
+                break;
+            case 400:
+                return handler(jqXHR.responseText, jqXHR);
+            case 401:
+                type = 'AUTH';
+                break;
+            case 404:
+                type = 'NOT_FOUND';
+                break;
+            case 500:
+                type = 'SERVER';
+                break;
+            default:
+                // TODO
             }
             
 	    // HTTP ERROR

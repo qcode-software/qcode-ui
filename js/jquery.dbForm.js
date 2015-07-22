@@ -150,7 +150,7 @@
             // TODO: If type == "info" then ajax GET (instead of POST)
 	    var dbForm = this;
 	    if ( typeof handler == "undefined" ) {
-		handler = function(data, textStatus, jqXHR){
+		handler = function(data, jqXHR){
 		    formActionSuccess.call(dbForm, data, type, jqXHR);
 		}
 	    }
@@ -190,7 +190,7 @@
 		data[arguments[i]] = arguments[i+1];
 	    }
 	    var dbForm = this;
-	    httpPost(this.settings.searchURL, data, function(data, textStatus, jqXHR) {
+	    httpPost(this.settings.searchURL, data, function(data, jqXHR) {
 		formActionSuccess.call(dbForm, data, "search");
 	    }, formActionError.bind(this), true, this.settings.headers);
 	},

@@ -64,7 +64,7 @@
             this.calendar = $('<canvas class="calendar">').appendTo(this.calendarFrame);
 
             // In case the table is a dbGrid, listen for updates.
-            this._on({'dbRowActionReturn': function(event, action, data, status, jqXHR) {
+            this._on({'dbRowActionReturn': function(event, action, data, jqXHR) {
                 var ganttChart = this;
                 var contentType = jqXHR.getResponseHeader('Content-Type');
 

@@ -289,7 +289,7 @@
                 this.element.trigger('resize');
             }
         },
-	_actionReturn: function(action, data, status, jqXHR) {
+	_actionReturn: function(action, data, jqXHR) {
 	    // Called on successfull return from a server action (add, update or delete)	    
 	    this.error = undefined;
             var returnType = jqXHR.getResponseHeader('content-type');
@@ -317,7 +317,7 @@
 	        }
 
                 // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	        this.element.trigger('dbRecordActionReturn', [action, data, status, jqXHR]);
+	        this.element.trigger('dbRecordActionReturn', [action, data, jqXHR]);
 
 	        if ( action == "delete" ) {
 		    // When a record is deleted, remove it from the DOM.
