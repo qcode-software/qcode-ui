@@ -155,8 +155,8 @@
 		}
 	    }
 	    if ( typeof errorHandler == "undefined" ) {
-		errorHandler = function(errorMessage, errorType, jqXHR){
-		    formActionError.call(dbForm, errorMessage, errorType, jqXHR);
+		errorHandler = function(errorType, data, jqXHR){
+		    formActionError.call(dbForm, errorType, data, jqXHR);
 		}
 	    }
 	    if ( typeof async == "undefined" ) {
@@ -323,7 +323,11 @@
             parseXMLResponse.call(this, response, type);
             break;
         default:
-            formActionError.call(this, 'Expected XML or JSON but got ' + returnType);
+            var message = 'Expected XML or JSON but got ' + returnType
+            this.setState('error');
+            this.setStatus(message);
+            qcode.alert(message);
+            this.form.trigger('formActionError', [message]);
             return;
         }
         
@@ -374,10 +378,7 @@
     function parseXMLResponse(response, type) {
         // Parses and sets record information and messages from an XML response.
         var dbForm = this;
-        if ( typeof response === "string" ) {
-            // The response hasn't yet been parsed into an object
-            response = $.parseXML(response);
-        }
+        
         // Record
         $('records > record *', response).each(function(i, xmlNode){
             // update values of fields
@@ -426,12 +427,7 @@
         }
     }
     function parseJSONResponse(response, type) {
-        // Parses and sets record information and messages from a JSON response.
-        if ( typeof response === "string" ) {
-            // The response hasn't yet been parsed into an object
-            response = $.parseJSON(response);
-        }
-        
+        // Parses and sets record information and messages from a JSON response.        
         // Actions
         if ( response.action && response.action.redirect ) {
             window.location.href = response.action.redirect.value;
@@ -456,6 +452,7 @@
 
         // update the form status
         if ( response.status === 'invalid' ) {
+            this.setState('error');
 	    this.setStatus('Changes could not be saved.');
 	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
             this.setState('current');
@@ -473,39 +470,30 @@
                 dbForm.setStatus(message);
                 break;
             case 'error':
-                dbForm.setState('error');
                 qcode.alert('Your changes could not be saved:<br>' + message);
                 break;
             }
         });
     }
-    function formActionError(errorMessage, errorType, jqXHR) {
+    function formActionError(errorType, data, jqXHR) {
         // Error handler for AJAX errors to let the user know what went wrong. 
-        switch(errorType) {
-        case 'HTTP':
-            var returnType = jqXHR.getResponseHeader('content-type');
-            // Check if JSON or XML and parse accordingly
-            switch (returnType) {
-            case "application/json; charset=utf-8":
-                parseJSONResponse.call(this, jqXHR.responseText, 'error');
-                break;
-            case "text/xml; charset=utf-8":
-                parseXMLResponse.call(this, jqXHR.responseText, 'error');
-                break;
-            default:
-                this.setState('error');
-                this.setStatus(errorMessage);
-                qcode.alert('Your changes could not be saved.<br>Expected XML or JSON but got ' + returnType);
-                return;
-            }
+        var returnType = jqXHR.getResponseHeader('content-type');
+        // Check if JSON or XML and parse accordingly
+        switch (returnType) {
+        case "application/json; charset=utf-8":
+            parseJSONResponse.call(this, data, 'error');
+            break;
+        case "text/xml; charset=utf-8":
+            parseXMLResponse.call(this, data, 'error');
             break;
         default:
             this.setState('error');
-            this.setStatus(errorMessage);
-            qcode.alert("Your changes could not be saved.<br>" + stripHTML(errorMessage));
+            this.setStatus(data);
+            qcode.alert(data);
+            return;
         }
 	
-	this.form.trigger('formActionError', [errorMessage]);
+	this.form.trigger('formActionError', [data]);
     }
     function cancelDelayedSave() {
 	if ( this.keyUpTimer !== undefined ) {
