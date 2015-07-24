@@ -146,6 +146,7 @@
             
             switch(contentType) {
             case 'application/json; charset=utf-8':
+                // JSON response
                 // Check if redirect action given
                 if ( data.action && data.action.redirect ) {
                     window.location.href = json.action.redirect.value;
@@ -163,6 +164,7 @@
                 }
                 break;
             case 'text/xml; charset=utf-8':
+                // XML response
                 // Check for user errors
                 var xmlError = $(data).find('error').first();
                 if ( xmlError.length == 1 ) {
@@ -177,8 +179,8 @@
             default:
                 // Not XML or JSON
                 this.error = 'Expected XML or JSON but got ' + contentType;
-                qcode.alert(this.error);
                 this.setState('error');
+                qcode.alert(this.error);
                 return;
             }
             
@@ -371,16 +373,15 @@
             });
             
             // Check for error message
-            if ( json.message.error ) {
+            if ( json.message && json.message.error ) {
                 errors.push(json.message.error.value);
             }
 
-            // Set this.error
             if ( errors.length == 1 ) {
-                // Set this.error as the error
+                // Return the error
                 return errors[0];
             } else if ( errors.length > 1 ) {
-                // Set this.error as an unordered list of the errors
+                // Return errors as an unordered list
                 var errorList = $('<ul></ul>');
                 $.each(errors, function(index, value) {
                     errorList.append('<li>' + value + '</li>')

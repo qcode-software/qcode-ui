@@ -212,9 +212,8 @@
 	    this.getRecordSet().dbRecordSet('setCurrentRecord', null);
 	    this.element.trigger('dbRecordOut', event);
 	},
-        parseXMLResponse: function(response) {
-            // Parse the XML response.
-            // Set the values of matched elements.
+        xmlSetValues: function(response) {
+            // Set the values and messages from the XML response and display any user errors.
 	    this.element.find('[name]').each(function(i, field) {
 		var node = $(response).find('records > record > ' + $(field).dbField('getName'));
 		if ( node.length > 0 ) {
@@ -236,26 +235,25 @@
             
 	    this.element.trigger('resize');
         },
-        parseJSONResponse: function(response) {
-            // Parse the JSON response.
-            // Check each record item and show a message if invalid otherwise set value.
+        jsonSetValues: function(response) {
+            // Set values and messages from the JSON response and display any user errors.
+            // Record
             var $record = this.element;
             $.each(response.record, function (name, object) {
                 var $element = $record.find('[name=' + name + ']');
-                if ( ! object.valid ) {
-                    // Record item not valid - mark invalid and display message to user.
-                    if ( $element.length !== 0 ) {
-                        // Show message to user about error.
-                        $.check.showMessage($element, object.message);
-                        $element.addClass('invalid');
-                    }
+                if ( !object.valid && $element.length !== 0 ) {
+                    // User error
+                    $.check.showMessage($element, object.message);
+                    $element.addClass('invalid');
                 } else {
+                    // Update value
                     $element.removeClass('invalid');
                     $element.dbField('setValue', object.value);
                 }
             });
             
-            // show any general messages.
+            // Messages
+            var dbRecord = this;
             if (response.message) {
                 var recordSet = this.getRecordSet();
                 $.each(response.message, function(type, object) {
@@ -275,86 +273,112 @@
                         }]);
                         break;
                     case 'error':
-                        this.error = message
+                        dbRecord.error = message;
                         qcode.alert(message);
                         break;
                     }
                 });
             }
 
-            // Redirect if the redirect action was given
-            if (response.action && response.action['redirect']) {
-                window.location.href = response.action.redirect.value;
-            } else {
-                this.element.trigger('resize');
-            }
+            this.element.trigger('resize');
         },
 	_actionReturn: function(action, data, jqXHR) {
-	    // Called on successfull return from a server action (add, update or delete)	    
+	    // Called on successfull return from a server action (add, update or delete)
 	    this.error = undefined;
-            var returnType = jqXHR.getResponseHeader('content-type');
-            var valid = true;
-            switch (returnType) {
+            var contentType = jqXHR.getResponseHeader('content-type');
+            var responseValid = true;
+            switch (contentType) {
             case "application/json; charset=utf-8":
-                this.parseJSONResponse(data);
-                valid = data.status === 'valid';
+                // JSON response
+                if (data.action && data.action.redirect) {
+                    window.location.href = data.action.redirect.value;
+                    return;
+                }
+
+                this.jsonSetValues(data);
+                responseValid = data.status === 'valid';
                 break;
             case "text/xml; charset=utf-8":
-                this.parseXMLResponse(data);
+                // XML response
+                this.xmlSetValues(data);
+                responseValid = $(data).find('error').first().length == 0;
                 break;
             default:
-                this._actionReturnError(action, 'Expected XML or JSON but got ' + returnType, 'RESPONSE');
+                this.error = 'Expected XML or JSON but got ' + contentType;
+                this.setState('error');
+                qcode.alert(this.error);
+            }
+
+            if ( !responseValid ) {
+                // User errors
+                this.setState('error');
+                this.element.trigger('dbRecordActionReturnError', [action, this.error, 'USER']);
                 return;
             }
+            
+            this.setState('current');
+            this.error = undefined;
+            
+	    switch(action){
+	    case "add":
+		// Once added, a record becomes an updatable record
+		this.saveAction = "update";
+		break;
+	    }
 
-            if (valid) {
-                this.setState('current');
-	        switch(action){
-	        case "add":
-		    // Once added, a record becomes an updatable record
-		    this.saveAction = "update";
-		    break;
-	        }
+            // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
+	    this.element.trigger('dbRecordActionReturn', [action, data, jqXHR]);
 
-                // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	        this.element.trigger('dbRecordActionReturn', [action, data, jqXHR]);
-
-	        if ( action == "delete" ) {
-		    // When a record is deleted, remove it from the DOM.
-		    var recordSet = this.getRecordSet();
-		    this.destroy();
-		    this.element.remove();
-		    recordSet.trigger('resize');
-	        }
-            } else {
-                this.setState('error');
-            }
+	    if ( action == "delete" ) {
+		// When a record is deleted, remove it from the DOM.
+		var recordSet = this.getRecordSet();
+		this.destroy();
+		this.element.remove();
+		recordSet.trigger('resize');
+	    }
 	},
-	_actionReturnError: function(action, message, type, jqXHR) {
+	_actionReturnError: function(action, errorType, data, jqXHR) {
 	    // Called when a server action returns an error
-            switch(type) {
-            case 'HTTP':
-                var returnType = jqXHR.getResponseHeader('content-type');
-                // Check if JSON or XML and parse accordingly
-                switch (returnType) {
+            switch(errorType) {
+            case "NAVIGATION":
+                return;
+            default:
+                var contentType = jqXHR.getResponseHeader('content-type');
+                
+                switch (contentType) {
                 case "application/json; charset=utf-8":
-                    this.parseJSONResponse($.parseJSON(jqXHR.responseText));
+                    // JSON response
+                    if (data.action && data.action.redirect) {
+                        window.location.href = data.action.redirect.value;
+                        return;
+                    }
+
+                    if ( data.message && data.message.error ) {
+                        this.error = data.message.error.value;
+                    }
+                    
                     break;
                 case "text/xml; charset=utf-8":
-                    this.parseXMLResponse($.parseXML(jqXHR.responseText));
+                    // XML response
+                    var xmlError = $(data).find('error').first();
+                    if ( xmlError.length == 1 ) {
+                        this.error = xmlError.text();
+                    }
                     break;
                 default:
-                    qcode.alert('Expected XML or JSON but got ' + returnType);
+                    this.error = data;
                 }
-                break;
-            case 'USER':
-                break;
-            default:
-                this.error = message;
-		qcode.alert(message);
-            }
+	    }
+            
             this.setState('error');
-	    this.element.trigger('dbRecordActionReturnError', [action, this.error, type]);
-	}
+
+            if ( typeof this.error === 'undefined' ) {
+                qcode.alert('An unspecified error occurred. An email report has been sent to our engineers.');
+                throw 'No error description found in response.'
+            }
+            
+            qcode.alert(this.error);
+            this.element.trigger('dbRecordActionReturnError', [action, this.error, errorType]);
+        }
     });
 })(jQuery);
