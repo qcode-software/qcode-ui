@@ -340,7 +340,6 @@
 
         if ( !responseValid ) {
             // User errors
-            // TODO - Discuss missing error feedback
             var error = coalesce(this.error, '');
             this.form.trigger('formActionError', [error]);
             return;
