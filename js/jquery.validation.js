@@ -153,14 +153,10 @@
                 });
             }
             
-            if ( response.status === 'valid') {
-                if (response.action && response.action.redirect) {
-                    // Redirect if record was valid and the redirect action was given
-                    window.location.href = response.action.redirect.value;
-                }
-                // Reset the form
-                $form.trigger('reset');
-                
+            if ( response.status === 'valid' && response.action && response.action.redirect) {
+                // Redirect if record was valid and the redirect action was given
+                window.location.href = response.action.redirect.value;
+                return;
             }
 
             // Scroll to the element if there is one to scroll to
