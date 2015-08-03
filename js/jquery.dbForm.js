@@ -150,13 +150,13 @@
             // TODO: If type == "info" then ajax GET (instead of POST)
 	    var dbForm = this;
 	    if ( typeof handler == "undefined" ) {
-		handler = function(data, textStatus, jqXHR){
+		handler = function(data, jqXHR){
 		    formActionSuccess.call(dbForm, data, type, jqXHR);
 		}
 	    }
 	    if ( typeof errorHandler == "undefined" ) {
-		errorHandler = function(errorMessage, errorType, jqXHR){
-		    formActionError.call(dbForm, errorMessage, errorType, jqXHR);
+		errorHandler = function(errorType, data, jqXHR){
+		    formActionError.call(dbForm, errorType, data, jqXHR);
 		}
 	    }
 	    if ( typeof async == "undefined" ) {
@@ -190,7 +190,7 @@
 		data[arguments[i]] = arguments[i+1];
 	    }
 	    var dbForm = this;
-	    httpPost(this.settings.searchURL, data, function(data, textStatus, jqXHR) {
+	    httpPost(this.settings.searchURL, data, function(data, jqXHR) {
 		formActionSuccess.call(dbForm, data, "search");
 	    }, formActionError.bind(this), true, this.settings.headers);
 	},
@@ -229,6 +229,9 @@
 		    break;
 		}
 		break;
+            case "error":
+                this.setStatus('Changes could not be saved.');
+                break;
 	    };
 	    this.state = newState;
 	},
@@ -312,28 +315,39 @@
     }
     function formActionSuccess(response, type, jqXHR) {
         // Parse response and update nav
-        var returnType = jqXHR.getResponseHeader('content-type');
-        var valid = true;
-        // Check if JSON or XML and parse accordingly
-        switch (returnType) {
-        case "application/json; charset=utf-8":
-            parseJSONResponse.call(this, response, type);
-            valid = response.status === 'valid';
-            var responseAction = function(response) {
-                if ( response.action && response.action.redirect ) {
-                    window.location.href = response.action.redirect.value;
-                }
-            };
+        var responseValid = true;
+        var contentType = jqXHR.getResponseHeader('content-type');
+        switch (contentType) {
+        case 'application/json; charset=utf-8':
+            // JSON response
+            if ( response.action && response.action.redirect ) {
+                window.location.href = response.action.redirect.value;
+                return;
+            }
+            jsonSetValues.call(this, response, type);
+            responseValid = response.status === 'valid';
             break;
-        case "text/xml; charset=utf-8":
-            parseXMLResponse.call(this, response, type);
+        case 'text/xml; charset=utf-8':
+            // XML response
+            xmlSetValues.call(this, response, type);
+            responseValid = $(response).find('error').first().length == 0;
             break;
         default:
-            formActionError.call(this, 'Expected XML or JSON but got ' + returnType);
+            this.error = 'Expected XML or JSON but got ' + contentType
+            this.setState('error');
+            qcode.alert(this.error);
+        }
+
+        if ( !responseValid ) {
+            // User errors
+            var error = coalesce(this.error, '');
+            this.form.trigger('formActionError', [error]);
             return;
         }
+
+        this.error = undefined;
         
-	// Nav
+        // Update NAV        
 	if ( this.form.find('[name="recordsLength"]').length > 0 && this.form.find('[name="recordNumber"]').length > 0 ) {
 	    var recordsLength =  this.form.find('[name="recordsLength"]').val();
 	    var recordNumber = this.form.find('[name="recordNumber"]').val();
@@ -374,17 +388,14 @@
 	    this.form.find('#recordIndicator').html(recordNumber + ' of ' + recordsLength);
 	    this.form.find('[name="navTo"]').val('HERE');
 	}
+        
 	// Event onFormActionReturn
 	this.form.trigger('formActionReturn', [type]);
-
-        // Actions
-        if (valid && typeof responseAction === 'function') {
-            responseAction(response);
-        }
     }
-    function parseXMLResponse(response, type) {
+    function xmlSetValues(response, type) {
         // Parses and sets record information and messages from an XML response.
         var dbForm = this;
+        
         // Record
         $('records > record *', response).each(function(i, xmlNode){
             // update values of fields
@@ -396,6 +407,8 @@
 		}
 	    });
 	});
+
+        // HTML elements
 	$('records > html *', response).each(function(i, xmlNode){
 	    behave(
                 $('#'+$(xmlNode).prop('nodeName')).each(function(j, target) {
@@ -407,11 +420,6 @@
 	        })
                     );
 	});
-
-        // update the form status
-	if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
-	    this.setState('current');
-	}
 	
 	// Info
 	var rec = $(response).find('records > info').first();
@@ -424,16 +432,23 @@
 	    qcode.alert(rec.text());
 	}
 
-        // Error
+        // User error
         var error = $(response).find('error').first();
         if ( error.length == 1 ) {
+            this.error = error.text(); 
             this.setState('error');
-            this.setStatus('Changes could not be saved.');
-            qcode.alert('Your changes could not be saved:<br>' + error.text());
+            qcode.alert(this.error);
+            return;
         }
+
+        // update the form state
+        if ( type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+	    this.setState('current');
+	}
     }
-    function parseJSONResponse(response, type) {
+    function jsonSetValues(response, type) {
         // Parses and sets record information and messages from a JSON response.
+        
         // Record
         $.each(response.record, function(name, object) {
             var element = $('#' + name);
@@ -450,11 +465,17 @@
             }
         });
 
-        // update the form status
-        if ( response.status === 'invalid' ) {
-	    this.setStatus('Changes could not be saved.');
-	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
-            this.setState('current');
+        // HTML elements
+        if ( response.html ) {
+            $.each(json.html, function(name, value) {
+                var element = $('#' + name);
+                if ( element.is('input, textarea, select') ) {
+                    element.val(value);
+                } else {
+                    element.html(value);
+                }
+                behave(element);
+            });
         }
 
         // Messages
@@ -469,39 +490,61 @@
                 dbForm.setStatus(message);
                 break;
             case 'error':
-                dbForm.setState('error');
-                qcode.alert('Your changes could not be saved:<br>' + message);
+                dbForm.error = message;
+                qcode.alert(message);
                 break;
             }
         });
+
+        // Update the form state
+        if ( response.status === 'invalid' ) {
+            this.setState('error');
+	} else if (type == 'update' || type == 'add' ||  type == 'delete' || type =='qry' || type == 'submit') {
+            this.setState('current');
+        }
     }
-    function formActionError(errorMessage, errorType, jqXHR) {
-        // Error handler for AJAX errors to let the user know what went wrong. 
+    function formActionError(errorType, data, jqXHR) {
+        // Error handler for AJAX errors to let the user know what went wrong.
+        this.error = undefined;
         switch(errorType) {
-        case 'HTTP':
-            var returnType = jqXHR.getResponseHeader('content-type');
-            // Check if JSON or XML and parse accordingly
-            switch (returnType) {
-            case "application/json; charset=utf-8":
-                parseJSONResponse.call(this, $.parseJSON(jqXHR.responseText), 'error');
+        case 'NAVIGATION':
+            return;
+        default:
+            var contentType = jqXHR.getResponseHeader('content-type');
+            
+            switch (contentType) {
+            case 'application/json; charset=utf-8':
+                // JSON response
+                if ( response.action && response.action.redirect ) {
+                    window.href.location = response.action.redirect.value;
+                    return;
+                }
+
+                if ( data.message && data.message.error ) {
+                    this.error = data.message.error;
+                }
                 break;
-            case "text/xml; charset=utf-8":
-                parseXMLResponse.call(this, $.parseXML(jqXHR.responseText), 'error');
+            case 'text/xml; charset=utf-8':
+                // XML response
+                var xmlError = $(data).find('error').first();
+                if ( xmlError.length == 1 ) {
+                    this.error = xmlError.text();
+                }
                 break;
             default:
-                this.setState('error');
-                this.setStatus(errorMessage);
-                qcode.alert('Your changes could not be saved.<br>Expected XML or JSON but got ' + returnType);
-                return;
+                this.error = data;
             }
-            break;
-        default:
-            this.setState('error');
-            this.setStatus(errorMessage);
-            qcode.alert("Your changes could not be saved.<br>" + stripHTML(errorMessage));
         }
-	
-	this.form.trigger('formActionError', [errorMessage]);
+        
+	this.setState('error');
+        
+        if ( typeof this.error === 'undefined' ) {
+            qcode.alert('An unspecified error occurred. An email report has been sent to our engineers.');
+            throw 'No error description found in response.'
+        }
+        
+        qcode.alert(this.error);
+	this.form.trigger('formActionError', [this.error]);
     }
     function cancelDelayedSave() {
 	if ( this.keyUpTimer !== undefined ) {

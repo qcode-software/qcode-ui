@@ -139,130 +139,106 @@
 	    httpPost(path, data, this.actionReturn.bind(this, action), this.actionReturnError.bind(this, action), async, this.headers);
 	    this.element.trigger('dbRowAction', [action]);
 	},
-	actionReturn: function(action, data, status, jqXHR){
+	actionReturn: function(action, data, jqXHR){
 	    // Called on successful return from a server action (add, update or delete)
 	    var grid = this.getGrid();
             var contentType = jqXHR.getResponseHeader('Content-Type');
             
             switch(contentType) {
-            case "application/json; charset=utf-8":
-                // Redirect if action is given
+            case 'application/json; charset=utf-8':
+                // JSON response
+                // Check if redirect action given
                 if ( data.action && data.action.redirect ) {
-                    window.location.href = data.action.redirect.value;
+                    window.location.href = json.action.redirect.value;
                     return;
                 }
-                this.jsonSetValues(data);
+
+                // Set row values if response valid otherwise feedback errors.
+                if ( data.status === 'valid' ) {
+                    this.jsonSetValues(data);
+                } else {
+                    // User errors
+                    this.error = this._jsonParseErrors(data);
+                    this.setState('error');
+                    return;
+                }
                 break;
-            case "text/xml; charset=utf-8":
-                this.xmlSetValues(data);
+            case 'text/xml; charset=utf-8':
+                // XML response
+                // Check for user errors
+                var xmlError = $(data).find('error').first();
+                if ( xmlError.length == 1 ) {
+                    this.error = xmlError.text();
+                    this.setState('error');
+                    return;
+                } else {
+                    // No errors - set row values
+                    this.xmlSetValues(data);
+                }
                 break;
             default:
-                this.error = "Expected XML or JSON but got " + contentType;
-                qcode.alert(this.error);
+                // Not XML or JSON
+                this.error = 'Expected XML or JSON but got ' + contentType;
                 this.setState('error');
+                qcode.alert(this.error);
                 return;
             }
             
 	    this.error = undefined;
 
-	    switch(action){
-	    case "update":
+	    switch(action) {
+	    case 'update':
 		this.setState('current');
 		break;
-	    case "add":
+	    case 'add':
 		// Once added, a record becomes an updatable record
-		this.option('type', "update");
+		this.option('type', 'update');
 		this.setState('current');
 		grid.dbGrid('incrRecCount', 1);
 		break;
 	    }
 
 	    // For add and update, we want to handle incoming data before triggering event handlers. For delete, we want event handlers to trigger first.
-	    this.element.trigger('dbRowActionReturn', [action, data, status, jqXHR]);
+	    this.element.trigger('dbRowActionReturn', [action, data, jqXHR]);
 
-	    if ( action == "delete" ) {
+	    if ( action == 'delete' ) {
 		// When a record is deleted, remove it from the DOM.	
 		grid.dbGrid('removeRow',this.element)
 		grid.dbGrid('incrRecCount', -1);
                 grid.trigger('message', [{
                     type: 'notice',
-                    html: "Deleted."
+                    html: 'Deleted.'
                 }]);
 		this.destroy();
 	    }
 	},
-	actionReturnError: function(action, errorMessage, errorType, jqXHR) {
-            // Handler for errors returned from server.
-            var dbRow = this;
-            
+	actionReturnError: function(action, errorType, data, jqXHR) {
+            // Handler for errors returned from server.            
             switch(errorType) {
             case "NAVIGATION":
                 return;
-            case "USER":
-                // Fall through
-            case "HTTP":
-                var errorList = $('<ul></ul>');
+            default:
                 var contentType = jqXHR.getResponseHeader('Content-Type');
                 
                 switch(contentType) {
                 case "application/json; charset=utf-8":
-                    var json = $.parseJSON(jqXHR.responseText);
-                    
-                    if ( json.action && json.action.redirect ) {
-                        // Redirect
-                        window.location.href = json.action.redirect.value;
-                        return;
-                    } else if ( json.message ) {
-                        // Show messages
-                        var element = this.element;
-                        $.each(json.message, function(type, properties) {
-                            switch(type) {
-                            case 'notify':
-                                element.trigger('message', [{
-                                    type: 'info',
-                                    html: properties.value
-                                }]);
-                                break;
-                            case 'alert':
-                                qcode.alert(properties.value);
-                                break;
-                            case 'error':
-                                errorList.append($('<li>' + properties.value + '</li>'));
-                                break;
-                            }
-                        });
-                    }
-
-                    // Add invalid cell messages to error message.
-                    $.each(json.record, function(name, properties) {
-                        if ( !properties.valid ) {
-                            errorList.append($('<li>' + properties.message + '</li>'));
-                        }
-                    });
-
-                    this.error = errorList;
+                    // JSON response
+                    this.error = this._jsonParseErrors(data);
                     break;
                 case "text/xml; charset=utf-8":
-                    var xml = $.parseXML(jqXHR.responseText);
-                    var xmlError = $(xml).find('error').first();
+                    // XML response
+                    var xmlError = $(data).find('error').first();
                     if ( xmlError.length == 1 ) {
                         this.error = xmlError.text();
                     }
                     break;
                 default:
-                    this.error = "Expected XML or JSON but got " + contentType;
+                    this.error = data;
                 }
-                
-                break;
-            default:
-                this.error = errorMessage;
             }
 
-            // Alert on all errors that aren't user errors.
-            if ( jqXHR.status !== 400 && jqXHR.status !== 200 ) {
-                qcode.alert(this.error)
-            }
             this.setState('error');
+            qcode.alert(this.error);
 	},
 	xmlSetValues: function(xmlDoc) {
 	    // Update row, calculated & external html values,
@@ -270,7 +246,7 @@
 	    var grid = this.getGrid();
 	    var currentCell = grid.dbGrid('getCurrentCell')
 	    var dbRow = this;
-
+            
 	    // Update row with record values in xmlDoc response
 	    var rec = $('records record', xmlDoc).first();
 	    if ( rec.size() ) {
@@ -365,9 +341,6 @@
                     case 'alert':
                         qcode.alert(properties.value);
                         break;
-                    case 'error':
-                        dbRow.error = properties.value;
-                        dbRow.setState('error');
                     }
                 });
             }
@@ -387,6 +360,36 @@
 		$.error('Could not delete record - no url provided');
 	    }
 	    this.action('delete', url, async); 
-	}
+	},
+        _jsonParseErrors: function(json) {
+            // Parses error messages in the JSON object and returns an HTML formatted string.
+            var errors = [];
+
+            // Add messages from invalid record items.
+            $.each(json.record, function(name, properties) {
+                if ( !properties.valid ) {
+                    errors.push(properties.message);
+                }
+            });
+            
+            // Check for error message
+            if ( json.message && json.message.error ) {
+                errors.push(json.message.error.value);
+            }
+
+            if ( errors.length == 1 ) {
+                // Return the error
+                return errors[0];
+            } else if ( errors.length > 1 ) {
+                // Return errors as an unordered list
+                var errorList = $('<ul></ul>');
+                $.each(errors, function(index, value) {
+                    errorList.append('<li>' + value + '</li>')
+                });
+                return errorList;
+            } else {
+                throw "No error descriptions found!"
+            }
+        }
     });
 })(jQuery, window, document);

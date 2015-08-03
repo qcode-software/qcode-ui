@@ -121,53 +121,55 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
 	data: data,
         headers: headers,
 	success: function(data, textStatus, jqXHR) {
+            // Remove httpPost namespaced event handlers
             $(window).off('.httpPost');
 
-            // Check for user error
-            var contentType = jqXHR.getResponseHeader('Content-Type');
-            switch(contentType) {
-            case "application/json; charset=utf-8":
-                if ( data.status === 'invalid' ) {
-                    return errorHandler(errorMessage,'USER', jqXHR);
-                }
-                break;
-            case "text/xml; charset=utf-8":
-                var error = jQuery('error', data).first();
-	        if ( error.size() ) {
-		    var errorMessage = error.text();
-		    return errorHandler(errorMessage,'USER', jqXHR);
-	        }
-                break;
-	    }
-
-	    // NORMAL COMPLETION
-	    return handler(data, textStatus, jqXHR);
+	    // Normal completion
+	    return handler(data, jqXHR);
 	},
 	error: function(jqXHR, textStatus) {
+            var errorMessage;
+            // Remove httpPost namespaced event handlers
             $(window).off('.httpPost');
 
-	    // HTTP ERROR
-	    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-		errorMessage = "Error ! Expected response 200 but got " + jqXHR.status;
-		return errorHandler(errorMessage,'HTTP', jqXHR);
-	    }
-
-	    // PARSE ERROR
+             // Parse error
 	    if ( textStatus == 'parsererror' ) {
-		errorMessage = 'Error ! Unable to parse response';
-		return errorHandler(errorMessage,'PARSE', jqXHR);
+		return errorHandler('PARSE', 'Error! Unable to parse response.', jqXHR);
 	    }
 
             // Cancelled by navigation
             if ( jqXHR.status == 0 && unloading ) {
-                errorMessage = "Request cancelled by navigation";
-                return errorHandler(errorMessage,'NAVIGATION', jqXHR);
+                return errorHandler('NAVIGATION', 'Error! Request cancelled by navigation.', jqXHR);
+            }
+
+             // Any other non-HTTP error
+            if ( jqXHR.status == 0  ) {
+                return errorHandler('UNKNOWN', 'Error! Something went wrong.', jqXHR);
             }
 	    
-	    // DEFAULT ERROR
-	    errorMessage = 'Error ! Test: '+ textStatus;
-	    return errorHandler(errorMessage, 'UNKNOWN', jqXHR);
-	}
+            // HTTP error
+            var contentType = jqXHR.getResponseHeader('Content-Type');
+            var data;
+            switch(contentType) {
+            case "application/json; charset=utf-8":
+                try {
+                    data = $.parseJSON(jqXHR.responseText);
+                } catch(error) {
+		    return errorHandler('PARSE', 'Error! Unable to parse response', jqXHR);
+                }
+                break;
+            case "text/xml; charset=utf-8":
+                try {
+                    data = $.parseXML(jqXHR.responseText);
+                } catch(error) {
+		    return errorHandler('PARSE','Error! Unable to parse response', jqXHR);
+                }
+                break;
+            default:
+                data = jqXHR.responseText;
+            }
+            return errorHandler('HTTP', data, jqXHR);
+        }
     });
 };
 
