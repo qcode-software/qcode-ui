@@ -15,6 +15,7 @@
                 switch(tag) {
                 case "BUTTON":
                     var yesFunction = function() {
+                        // Submit the form that the button belongs to.
                         $element.closest('form').submit();
                     }
                     
@@ -25,6 +26,7 @@
                     }
                     
                     var yesFunction = function() {
+                        // Navigate to the anchor href.
                         window.location = $element.attr('href');
                     }
                     
@@ -32,7 +34,8 @@
                 default:
                     return;
                 }
-                
+
+                // Dialog prompt for user to confirm their action.
 	        $('<div>')
 		        .text(text)
 		        .dialog({
