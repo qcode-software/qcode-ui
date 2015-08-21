@@ -43,11 +43,13 @@
                 alert: {
                     classes: 'message-area alert'
                 }
-            }
+            },
+            method: 'POST'
         },
         
         _create: function() {
             this.message = [];
+            var method = this.options.method;
             // Click handlers for submit buttons on the form.
             // Used to add hidden input elements with the button's name and value because jQuery form.serialize() function does not
             // include submit button data since it has no way of knowing which button was used to submit the form.
@@ -72,12 +74,12 @@
                 $form.validation('hideMessage', 'notify');
                 $form.validation('hideMessage', 'error');
                 
-                // POST the form data
+                // Send the form data
                 var path = $form.attr('action');
                 $.ajax({
                     url: path,
                     data: $form.serialize(),
-                    type: 'POST',
+                    type: method,
                     dataType: 'JSON',
                     success: function(response, success, request) {
                         $form.validation('parseResponse', response);
