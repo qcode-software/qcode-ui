@@ -107,7 +107,7 @@ function urlDataSet(data,name,value) {
 function httpPost(url,data,handler,errorHandler,async,headers) {
     // Add event listener to check whether request is cancelled by navigation
     var unloading = false;
-    headers = $.extend({'X-Authenticity-Token': getCookie('autenticity_token')}, headers);
+    headers = $.extend({'X-Authenticity-Token': getCookie('authenticity_token')}, headers);
     $(window).on('beforeunload.httpPost', function() {
         unloading = true;
         window.setZeroTimeout(function() {
@@ -432,7 +432,7 @@ function getCookie(name) {
     var value = '';
     $.each(cookies, function(index, cookie) {
         // trim preceding whitespace from cookie
-        cookie.replace(/^\s+/, '');
+        var cookie = cookie.replace(/^\s+/, '');
         if ( cookie.indexOf(name) == 0 ) {
             // cookie found - return value
             value = cookie.substring(name.length, cookie.length);
