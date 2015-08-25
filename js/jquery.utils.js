@@ -107,7 +107,7 @@ function urlDataSet(data,name,value) {
 function httpPost(url,data,handler,errorHandler,async,headers) {
     // Add event listener to check whether request is cancelled by navigation
     var unloading = false;
-    headers = $.extend({'X-Authenticity-Token': getCookie('authenticity_token')}, headers);
+    headers = $.extend({'X-Authenticity-Token': Cookies.get('authenticity_token')}, headers);
     $(window).on('beforeunload.httpPost', function() {
         unloading = true;
         window.setZeroTimeout(function() {
@@ -423,21 +423,4 @@ function scrollToElement($element, duration) {
             scrollTop: $element.offset().top
         }, duration);
     }
-}
-
-function getCookie(name) {
-    // Returns the value of a cookie with the given name if it exists otherwise the empty string.
-    var name = name + '=';
-    var cookies = document.cookie.split(';');
-    var value = '';
-    $.each(cookies, function(index, cookie) {
-        // trim preceding whitespace from cookie
-        var cookie = cookie.replace(/^\s+/, '');
-        if ( cookie.indexOf(name) == 0 ) {
-            // cookie found - return value
-            value = cookie.substring(name.length, cookie.length);
-        }
-    });
-
-    return value;
 }
