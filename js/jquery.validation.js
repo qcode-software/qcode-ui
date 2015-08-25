@@ -82,7 +82,7 @@
                     type: method,
                     dataType: 'JSON',
                     headers: {
-                        'X-Authenticity-Token': getCookie('authenticity_token')
+                        'X-Authenticity-Token': Cookies.get('authenticity_token')
                     },
                     success: function(response, success, request) {
                         $form.validation('parseResponse', response);
