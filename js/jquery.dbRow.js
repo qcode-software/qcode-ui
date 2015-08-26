@@ -149,7 +149,7 @@
                 // JSON response
                 // Check if redirect action given
                 if ( data.action && data.action.redirect ) {
-                    window.location.href = json.action.redirect.value;
+                    window.location.href = data.action.redirect.value;
                     return;
                 }
 

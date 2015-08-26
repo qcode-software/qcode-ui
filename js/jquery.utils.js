@@ -107,6 +107,7 @@ function urlDataSet(data,name,value) {
 function httpPost(url,data,handler,errorHandler,async,headers) {
     // Add event listener to check whether request is cancelled by navigation
     var unloading = false;
+    headers = $.extend({'X-Authenticity-Token': Cookies.get('authenticity_token')}, headers);
     $(window).on('beforeunload.httpPost', function() {
         unloading = true;
         window.setZeroTimeout(function() {

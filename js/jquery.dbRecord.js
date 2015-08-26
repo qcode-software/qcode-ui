@@ -193,8 +193,6 @@
 		    data[name] = new Array(data[name], value);
 		}
 	    });
-            // Add the authenticity token.
-            data['_authenticity_token'] = $('[name=_authenticity_token]').val();
 	    // Post
 	    httpPost(path, data, this._actionReturn.bind(this, action), this._actionReturnError.bind(this, action), async, this.headers);
 	    // custom event 
