@@ -43,8 +43,7 @@
                 alert: {
                     classes: 'message-area alert'
                 }
-            },
-            method: 'POST'
+            }
         },
         
         _create: function() {
@@ -79,13 +78,21 @@
                 $.ajax({
                     url: path,
                     data: $form.serialize(),
-                    type: method,
+                    type: 'POST',
                     dataType: 'JSON',
                     headers: {
                         'X-Authenticity-Token': Cookies.get('authenticity_token')
                     },
                     success: function(response, success, request) {
                         $form.validation('parseResponse', response);
+                        var _method = $form.find('[name=_method]').val();
+                        if ( response.status === 'valid' && typeof _method === 'string' && _method === 'VALIDATE' ) {
+                            // Resubmit form as a GET request
+                            // Remove method override
+                            $form.find('[name=_method]').remove();
+                            // Change form method to GET and remove submit.validate handler then submit form
+                            $form.attr('method', 'GET').off('submit.validate').submit();
+                        }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         var returnType = jqXHR.getResponseHeader('content-type');
