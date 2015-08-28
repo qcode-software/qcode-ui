@@ -47,12 +47,28 @@
         },
         
         _create: function() {
+            var $form = $(this.element);
             this.message = [];
-            var method = this.options.method;
+            
+            // Logic for default http method to be used for validation service.
+            if ( typeof this.options.method === 'undefined' ) {
+                if ( typeof $form.attr('method') === 'undefined' || $form.attr('method') === 'GET' ) {
+                    var method = 'VALIDATE';
+                } else {
+                    var method = 'POST';
+                }
+            } else {
+                method = this.options.method;
+            }
+            
+            // Default url used for validation service.
+            if ( typeof this.options.url === 'undefined' ) {
+                var url = $form.attr('action');
+            }
+            
             // Click handlers for submit buttons on the form.
             // Used to add hidden input elements with the button's name and value because jQuery form.serialize() function does not
             // include submit button data since it has no way of knowing which button was used to submit the form.
-            var $form = $(this.element);
             $form.find('button:not([type]), button[type="submit"], input[type="submit"]').click(function(event) {
                 var name = $(this).attr('name');
                 var value = $(this).attr('value');
@@ -72,27 +88,43 @@
                 $form.validation('hideMessage', 'alert');
                 $form.validation('hideMessage', 'notify');
                 $form.validation('hideMessage', 'error');
+
+                // Set up form data
+                var data = $form.serializeArray();
+                var ajax_method;
+                if ( method === 'POST' || method === 'GET' ) {
+                    ajax_method = method;
+                } else {
+                    // Emulate HTTP method
+                    ajax_method = 'POST';
+                    var found = false;
+                    $.each(data, function(index, item) {
+                        if ( item.name === '_method' ) {
+                            item.value = method;
+                            found = true;
+                            return;
+                        }
+                    });
+
+                    if ( !found ) {
+                        data.push({
+                            name: '_method',
+                            value: method
+                        });
+                    }
+                }
                 
                 // Send the form data
-                var path = $form.attr('action');
                 $.ajax({
-                    url: path,
-                    data: $form.serialize(),
-                    type: 'POST',
+                    url: url,
+                    data: data,
+                    method: ajax_method,
                     dataType: 'JSON',
                     headers: {
                         'X-Authenticity-Token': Cookies.get('authenticity_token')
                     },
                     success: function(response, success, request) {
                         $form.validation('parseResponse', response);
-                        var _method = $form.find('[name=_method]').val();
-                        if ( response.status === 'valid' && typeof _method === 'string' && _method === 'VALIDATE' ) {
-                            // Resubmit form as a GET request
-                            // Remove method override
-                            $form.find('[name=_method]').remove();
-                            // Change form method to GET and remove submit.validate handler then submit form
-                            $form.attr('method', 'GET').off('submit.validate').submit();
-                        }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         var returnType = jqXHR.getResponseHeader('content-type');
@@ -165,10 +197,17 @@
                 });
             }
             
-            if ( response.status === 'valid' && response.action && response.action.redirect) {
-                // Redirect if record was valid and the redirect action was given
-                window.location.href = response.action.redirect.value;
-                return;
+            if ( response.status === 'valid' ) {
+                if ( response.action && response.action.redirect ) {
+                    // Redirect if record was valid and the redirect action was given
+                    window.location.href = response.action.redirect.value;
+                    return;
+                } else {
+                    // default action - resubmit form without validation
+                    // remove submit.validate handler then submit form
+                    $form.off('submit.validate').submit();
+                    return;
+                }
             }
 
             // Scroll to the element if there is one to scroll to
