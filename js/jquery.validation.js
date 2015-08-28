@@ -203,8 +203,8 @@
                     window.location.href = response.action.redirect.value;
                     return;
                 } else {
-                    // default action - resubmit form without validation
-                    // remove submit.validate handler then submit form
+                    // default action
+                    // resubmit form without validation
                     $form.off('submit.validate').submit();
                     return;
                 }
