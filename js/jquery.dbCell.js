@@ -60,8 +60,10 @@
 	},
 	setValue: function(value){
 	    var cellType = this.getType();
-            var oldWidth = this.element.width();
-            var oldHeight = this.element.height();
+            if ( this.element.css('display') !== 'none' ) {
+                var oldWidth = this.element.width();
+                var oldHeight = this.element.height();
+            }
 
             if ( cellType === "htmlarea" || cellType === "html" ) {
 		this.element.html(value);
@@ -80,7 +82,11 @@
                 this.element.text(value);
             }
 
-            if ( this.element.width() !== oldWidth || this.element.height() !== oldHeight ) {
+            if ( this.element.css('display') !== 'none'
+                 && ( this.element.width() !== oldWidth
+                      || this.element.height() !== oldHeight
+                    )
+               ) {
                 this.element.trigger('resize');
             }
 	},
