@@ -234,10 +234,14 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
 
             this.theadCells.each(function(i, th) {
                 var col = widget.columns.eq(i);
+                var display = col.css('display');
                 styles[colSelectors[i]] = {
-                    'display': col.css('display'),
-                    'width': $(th).outerWidth() + "px"
-                };
+                    'display': display
+                }
+                if ( display !== 'none' ) {
+                    var width = $(th).outerWidth() + "px";
+                    styles[colSelectors[i]]['width'] = width;
+                }
                 styles[thSelectors[i]] = {
                     'display': $(th).css('display')
                 }
