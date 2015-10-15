@@ -29,6 +29,9 @@ qcode.Uploader = (function() {
             this.chunkSize = bytesWithUnits2Int("1MiB");
         }
         this.url = options.url;
+        this.headers = $.extend({
+            'X-Authenticity-Token': Cookies.get('authenticity_token')
+        }, options.headers);
         this.options = options;
     }
     jQuery.extend(Uploader.prototype, {
@@ -109,6 +112,11 @@ qcode.Uploader = (function() {
                 };
                 
                 xhr.open('POST', uploader.url);
+                
+                $.each(uploader.headers, function(header, value) {
+                    xhr.setRequestHeader(header, value);
+                });
+
                 xhr.send(data);
             });
         }
