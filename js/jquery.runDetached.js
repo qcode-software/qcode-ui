@@ -19,7 +19,13 @@
         // If the target elements contain the currently focussed element, record the text range
         if ( $(document.activeElement).closest(this).length > 0 ) {
             var toFocus = $(document.activeElement);
-            var textRange = toFocus.textrange('get');
+
+            if ( toFocus.is(':input')
+                 || toFocus.is('[contenteditable=true]')
+               ) {
+                var textRange = toFocus.textrange('get');
+            }
+
             toFocus.trigger('blur.runDetached');
         }
 
@@ -43,7 +49,12 @@
         // Restore focus.
         if ( toFocus !== undefined ) {
             toFocus.trigger('focus.runDetached');
-            toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+
+            if ( toFocus.is(':input')
+                 || toFocus.is('[contenteditable=true]')
+               ) {
+                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+            }
         }
 
         return coalesce(returnValue, this);
