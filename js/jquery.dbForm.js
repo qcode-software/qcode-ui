@@ -515,13 +515,13 @@
             switch (contentType) {
             case 'application/json; charset=utf-8':
                 // JSON response
-                if ( response.action && response.action.redirect ) {
+                if ( data.action && data.action.redirect ) {
                     window.href.location = response.action.redirect.value;
                     return;
                 }
 
                 if ( data.message && data.message.error ) {
-                    this.error = data.message.error;
+                    this.error = data.message.error.value;
                 }
                 break;
             case 'text/xml; charset=utf-8':
