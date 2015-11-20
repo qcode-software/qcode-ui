@@ -7,75 +7,89 @@
     $.widget('qcode.actionConfirm', {
 
         _create: function() {
-            if ( $(this.element).is('form') ) {
-                
-            } else if ( $(this.element).is('button') ) {
-                
-            } else if ( $(this.element).is('a') ) {
-                
-            } else {
-                // unsupported element
-            }
-        }
-        
-    });
-})(jQuery);
-
-
-
-$.fn.actionConfirm = function() {
-    
-    
-    this.on('click', function(event) {
-        event.preventDefault();
-	var $element = $(this);
-
-        if ( ( ! $element.is('.disabled')) ) {
-            var title = $element.text();
-            var text = 'Are you sure you want to ' + coalesce($element.attr('title'), $element.text()) + '?';
-            var tag = $element.prop('tagName');
-            switch(tag) {
-            case "FORM":
-                var yesFunction = function() {
-                    // Submit the form.
+            var $element = $(this.element);
+            if ( $element.is('form') ) {
+                this.yesFunction = function() {
+                    // submit the form
                     $element.submit();
                 }
 
-                // Try to get dialogue information from a submit type input or button
-                if ( $element.find('input[type=submit], button[type=submit], button:not([type])').length > 1 ) {
-                    
-                }
+                var $submitButtons = $(this.element).find('input[type=submit], button[type=submit], button:not([type])');
+                $submitButtons.on('click', function(event) {
+                    event.preventDefault();
+                    var $this = $(this);
+                    if ( ! $this.is('.disabled') && ! $this.prop('disabled') ) {
+                        var action = $this.attr('title');
+                        if ( typeof action === "undefined" ) {
+                            // element has no title
+                            if ( $this.is('button') ) {
+                                // element is button
+                                action = $this.text();
+                            } else {
+                                // element is an input
+                                 action = $this.val();
+                            }
+                            
+                            if ( action === "" ) {
+                                // button/input doesn't have text/a value
+                                if ( $this.parent().is('label') && $this.parent().text() !== "") {
+                                    // use the label parent's text
+                                    action = $this.parent().text();
+                                } else {
+                                    // use a general message
+                                    action = "proceed"
+                                }
+                            }
+                        }
+                        
+                        $element.actionConfirm('confirmAction', action);
+                    }
+                });
                 
-                break;
-            case "BUTTON":
-                var yesFunction = function() {
-                    // Submit the form that the button belongs to.
+            } else if ( $element.is('button') ) {
+                this.yesFunction = function() {
+                    // submit the closest form
                     $element.closest('form').submit();
                 }
+
+                $element.on('click', function(event) {
+                    event.preventDefault();
+                    if ( ! $element.is('.disabled') && ! $element.prop('disabled') ) {
+                        var action = coalesce($element.attr('title'), $element.text());
+                        $element.actionConfirm('confirmAction', action);
+                    }
+                });
                 
-                break;
-            case "A":
+            } else if ( $element.is('a') ) {
+
                 if ( ! $element.attr('href') ) {
-                    return;
+                    // element has no href attribute
+                    throw "<a> must have an href property."
                 }
                 
-                var yesFunction = function() {
-                    // Navigate to the anchor href.
+                this.yesFunction = function() {
+                    // navigate to the href
                     window.location = $element.attr('href');
                 }
-                
-                break;
-            default:
-                return;
-            }
 
-            // Dialog prompt for user to confirm their action.
-	    $('<div>')
-		    .text(text)
+                $element.on('click', function(event) {
+                    event.preventDefault();
+                    if ( ! $element.is('.disabled') && ! $element.prop('disabled') ) {
+                        var action = coalesce($element.attr('title'), $element.text());
+                        $element.actionConfirm('confirmAction', action);
+                    }
+                });
+            }
+        },
+
+        confirmAction: function(action) {
+            var message = "Are you sure you wish to " + action + "?";
+            $('<div>')
+		    .text(message)
 		    .dialog({
-		        title: title,
+		        title: "Confirm Action",
 		        buttons: {
-			    Yes: yesFunction,
+			    Yes: this.yesFunction,
 			    No: function() {
 			        $(this).dialog('close').dialog('destroy').remove();
 			    }
@@ -84,6 +98,7 @@ $.fn.actionConfirm = function() {
 		        width: 400,
 		        height: 200
 		    });
-	}
+        }        
+                            
     });
-}
+})(jQuery, window, document);
