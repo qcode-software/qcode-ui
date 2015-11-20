@@ -1,14 +1,18 @@
 // actionConfirm plugin
-// Call on <a> or <button>
-// Prompts user with a dialog box to confirm their action.
-// If the user confirms then the form is submitted if a button otherwise navigates to the anchor href.
+// Call on <a>, <button>, or <form>
+// Prompts user with a modal dialog box to confirm their action.
+// If the user confirms then the form is submitted if a button or form otherwise navigates to the anchor href.
 ;(function($, window, document) {
 
     $.widget('qcode.actionConfirm', {
 
         _create: function() {
+            
             var $element = $(this.element);
+            
             if ( $element.is('form') ) {
+                
+                // function to perform if user confirms their action
                 this.yesFunction = function() {
                     // submit the form
                     $element.submit();
@@ -47,6 +51,8 @@
                 });
                 
             } else if ( $element.is('button') ) {
+                
+                // function to perform if user confirms their action
                 this.yesFunction = function() {
                     // submit the closest form
                     $element.closest('form').submit();
@@ -66,7 +72,8 @@
                     // element has no href attribute
                     throw "<a> must have an href property."
                 }
-                
+
+                // function to perform if user confirms their action
                 this.yesFunction = function() {
                     // navigate to the href
                     window.location = $element.attr('href');
@@ -83,6 +90,7 @@
         },
 
         confirmAction: function(action) {
+            // Display a modal dialog to confirm a user's action. 
             var message = "Are you sure you wish to " + action + "?";
             $('<div>')
 		    .text(message)
