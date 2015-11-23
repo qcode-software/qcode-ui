@@ -1,55 +1,38 @@
 // actionConfirm plugin
-// Call on <a>, <button>, or <form>
+// Call on <a>, <button>, or <input>
 // Prompts user with a modal dialog box to confirm their action.
-// If the user confirms then the form is submitted if a button or form otherwise navigates to the anchor href.
+// If the user confirms then the form is submitted if a button or input otherwise navigates to the anchor href.
 ;(function($, window, document) {
 
-    $.widget('qcode.actionConfirm', {
+    $.fn.actionConfirm = function() {
 
-        _create: function() {
-            
-            var $element = $(this.element);
-            var $clickables;
-            
-            if ( $element.is('form') ) {
+        this.each(function(index, element) {
+            if ( $(element).is('button[type=submit], button:not([type]), input[type=submit], input[type=button]') ) {
                 
-                this.yesFunction = function() {
-                    // submit the form
-                    $element.submit();
-                }
-
-                $clickables = $(this.element).find('input[type=submit], button[type=submit], button:not([type])');
-                
-            } else if ( $element.is('button') ) {
-                
-                this.yesFunction = function() {
+                var yesFunction = function() {
                     // submit the closest form
-                    $element.closest('form').submit();
+                    $(element).closest('form').submit();
                 }
-
-                $clickables = $element;
                 
-            } else if ( $element.is('a') ) {
+            } else if ( $(element).is('a') ) {
 
-                if ( ! $element.attr('href') ) {
+                if ( ! $(element).attr('href') ) {
                     // element has no href attribute
                     $.error("<a> must have an href property.");
                 }
 
-                this.yesFunction = function() {
+                var yesFunction = function() {
                     // navigate to the href
-                    window.location = $element.attr('href');
+                    window.location = $(element).attr('href');
                 }
-
-                $clickables = $element;
                 
             } else {
                 // Unsupported element
-                $.error('Unsupported element ' + $element.prop('tagName') + '. actionConfirm only supports <a>, <button>, and <form>.');
+                $.error('Unsupported element ' + $(element).prop('tagName') + '. actionConfirm only supports <a>, <button>, <input>.');
             }
 
             // bind confirm dialog to the element's clickable item(s).
-            $clickables.on('click', function(event) {
+            $(element).on('click', function(event) {
                 event.preventDefault();
                 var $this = $(this);
                 if ( ! $this.is('.disabled') && ! $this.prop('disabled') ) {
@@ -75,30 +58,27 @@
                             }
                         }
                     }
-                    
-                    $element.actionConfirm('confirmAction', action);
+
+                    // Display a modal dialog to confirm a user's action.
+                    $('<div>')
+		            .text("Are you sure you wish to " + action + "?")
+		            .dialog({
+		                title: "Confirm Action",
+		                buttons: {
+			            Yes: yesFunction,
+			            No: function() {
+			                $(this).dialog('close').dialog('destroy').remove();
+			            }
+		                },
+		                modal: true,
+		                width: 400,
+		                height: 200
+		            });
                 }
             });
-        },
+        });
 
-        confirmAction: function(action) {
-            // Display a modal dialog to confirm a user's action. 
-            var message = "Are you sure you wish to " + action + "?";
-            $('<div>')
-		    .text(message)
-		    .dialog({
-		        title: "Confirm Action",
-		        buttons: {
-			    Yes: this.yesFunction,
-			    No: function() {
-			        $(this).dialog('close').dialog('destroy').remove();
-			    }
-		        },
-		        modal: true,
-		        width: 400,
-		        height: 200
-		    });
-        }        
+        return this;
+    }     
                             
-    });
 })(jQuery, window, document);
