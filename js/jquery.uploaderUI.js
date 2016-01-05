@@ -25,7 +25,13 @@
             $.when(validation(files))
                     .done(function(okFiles) {
                         $.each(okFiles, function(i, file) {
-                            var fileUpload = beginUpload(file, $dropzone, options.uploadURL, options.uploadData);
+                            var fileUpload = beginUpload(
+                                file,
+                                $dropzone,
+                                options.uploadURL,
+                                options.uploadData,
+                                options.headers
+                            );
                             if ( typeof options.onUpload === 'function' ) {
                                 fileUpload.done(options.onUpload);
                             }
@@ -39,7 +45,7 @@
         return this; //jQuery plugin chaining
     }
 
-    function beginUpload(file, $dropzone, uploadURL, uploadData) {
+    function beginUpload(file, $dropzone, uploadURL, uploadData, headers) {
         // Upload a file, create a panel to display progress,
         // return a promise of the server response object for the completed upload
         var deferred = new jQuery.Deferred();
@@ -51,7 +57,8 @@
             file: file,
             chunkSize: '1MiB',
             url: uploadURL,
-            postData: uploadData
+            postData: uploadData,
+            headers: headers
         });
         $(uploader)
                 .on('progress', function(event) {
