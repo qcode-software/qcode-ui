@@ -183,9 +183,18 @@
                     $element.removeClass('invalid');
                 }
             });
-
+            
             // Show messages if action redirect is not given
-            if (response.message && (!response.action || !response.action.redirect) ) {
+            var showMessages = true;
+            if ( response.action && response.action.redirect ) {
+                // don't show messages if redirect action was given
+                showMessages = false;
+            }
+            if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
+                // don't show messages if resubmit action was given and resubmission has not been disabled
+                showMessages = false;
+            }
+            if ( showMessages && response.message ) {
                 $.each(response.message, function(type, object) {
                     $form.validation('showMessage', type, object.value);
                     // Compare message to highest element on page
@@ -198,6 +207,12 @@
             }
             
             if ( response.status === 'valid' ) {
+                // submission was valid
+                
+                // re-enable future resubmit actions
+                $form.data('resubmit-disabled',false);
+                
+                // redirect action
                 if ( response.action && response.action.redirect ) {
                     // Redirect if record was valid and the redirect action was given
                     window.location.href = response.action.redirect.value;
@@ -207,6 +222,20 @@
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
                     return;
+                }
+            } else {
+                // submission was invalid
+
+                // resubmit action - used for authenticity token errors
+                if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
+                    // resubmit the form
+                    $form.submit();
+                    // disable future resubmit actions to prevent inifite loop
+                    $form.data('resubmit-disabled',true);
+                    return;
+                } else {
+                    // re-enable future resubmit actions
+                    $form.data('resubmit-disabled',false);
                 }
             }
 
