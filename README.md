@@ -91,4 +91,5 @@ Demo for jquery uploaderUI plugin
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
 
 ### qcode.contextMenu
+Create and open a custom context-menu at the given co-ordinates.
 http://jsfiddle.net/PeterChaplin/xywdac5p/
