@@ -108,7 +108,17 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var copy = function copyEvent(event) {
                 var target = $(event.target);
                 var eventProperties = {};
-                $.each(['pageX', 'pageY', 'which', 'data', 'metaKey', 'namespace', 'timeStamp'], function(i, property) {
+                $.each([
+                    'pageX',
+                    'pageY',
+                    'which',
+                    'data',
+                    'metaKey',
+                    'namespace',
+                    'timeStamp',
+                    'clientX',
+                    'clientY'
+                ], function(i, property) {
                     eventProperties[property] = event[property];
                 });
                 $.each(['relatedTarget'], function(i, property) {
@@ -121,8 +131,19 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                 var originalElement = treeMap(target, this.headClone, this.table);
                 var eventCopy = jQuery.Event(event.type, eventProperties);
                 originalElement.trigger(eventCopy);
+                if ( eventCopy.isDefaultPrevented() ) {
+                    event.preventDefault();
+                }
             };
-            jQuery.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove'], function(i, eventName) {
+            jQuery.each([
+                'click',
+                'mousedown',
+                'mouseup',
+                'mouseover',
+                'mouseout',
+                'mousemove',
+                'contextmenu'
+            ], function(i, eventName) {
                 handlers[eventName] = copy;
             });
             this._on(this.headClone, handlers);
