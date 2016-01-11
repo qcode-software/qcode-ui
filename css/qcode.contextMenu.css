@@ -1,3 +1,8 @@
+/* ======================================================================
+   qcode.contextMenu default css
+*/
+
+/* Context menu block (wrapper <div>, closed by default) */
 .context-menu {
     display: none;
     position: fixed;
@@ -5,19 +10,26 @@
     border: 1px solid rgb(150,150,150);
     box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.3);
 }
+/* Modifier to open block */
 .context-menu--open {
     display: block;
 }
+
+/* <ul> element */
 .context-menu__list {
     display: block;
     margin: 0;
     padding: 0.1em 0;
 }
+
+/* Single <li> */
 .context-menu__item {
     display: block;
     margin: 0;
     padding: 0.5em 20px;
 }
+
+/* Focussed <li> */
 .context-menu__item:focus {
     background: rgb(50,50,150);
     color: white;
