@@ -27,11 +27,19 @@
 .context-menu__item {
     display: block;
     margin: 0;
-    padding: 0.5em 20px;
+    padding: 0;
 }
 
-/* Focussed <li> */
-.context-menu__item:focus {
+/* <a> */
+.context-menu__link {
+    display: block;
+    margin: 0;
+    padding: 0.5em 20px;
+    color: black;
+}
+
+/* Focussed <a> */
+.context-menu__link:focus {
     background: rgb(66,129,244);
     color: white;
 }

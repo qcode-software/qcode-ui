@@ -36,13 +36,14 @@ var qcode = qcode || {};
        Closure vars to track DOM elements and config
     */
     var menuDiv, menuUL;
-    var menuLIs = [];
+    var menuLinks = [];
     var config = {
         classes: {
             div: 'context-menu',
             open: 'context-menu--open',
             ul: 'context-menu__list',
-            li: 'context-menu__item'
+            li: 'context-menu__item',
+            a: 'context-menu__link'
         }
     };
 
@@ -78,7 +79,7 @@ var qcode = qcode || {};
             positionSet();
 
             // Set up arrow-key navigation
-            menuDiv.navigate('li');
+            menuDiv.navigate('a');
 
             // Append the menu div to the page body
             $('body').append(menuDiv);
@@ -108,7 +109,7 @@ var qcode = qcode || {};
             methods.open();
 
             // Give the first menu item focus by default
-            menuLIs[0].focus();
+            menuLinks[0].focus();
         },
 
         destroy: function() {
@@ -118,7 +119,7 @@ var qcode = qcode || {};
                 menuDiv.remove();
                 menuDiv = undefined;
                 menuUL = undefined;
-                menuLIs = [];
+                menuLinks = [];
                 $(window).off('.context-menu');
                 $('body').off('.context-menu');
                 $(document).off('.context-menu');
@@ -144,18 +145,19 @@ var qcode = qcode || {};
     */
     function itemAdd(itemConfig) {
         /* Add a menu item using itemConfig object */
-        menuLIs.push(
-            $('<li>')
-                    .attr('tabIndex', 0)
-                    .addClass(config.classes.li)
-                    .html(itemConfig.label)
-                    .on('click.context-menu', itemConfig.action)
-                    .on('click.context-menu', methods.close)
-                    .on('mouseenter.context-menu', function() {
-                        $(this).focus();
-                    })
-                    .appendTo(menuUL)
-        );
+        var link = $('<a href="#">')
+                .addClass(config.classes.a)
+                .html(itemConfig.label)
+                .on('click.context-menu', itemConfig.action)
+                .on('click.context-menu', methods.close)
+                .on('mouseenter.context-menu', function() {
+                    $(this).focus();
+                })
+        var item = $('<li>')
+                .addClass(config.classes.li)
+                .append(link)
+                .appendTo(menuUL);
+        menuLinks.push(link);
     }
     function positionSet() {
         /* Update the menu position from the config object */
