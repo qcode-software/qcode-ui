@@ -58,33 +58,33 @@ Filter the rows of a table on the values of one or more columns, client-side
 [jsFiddle](http://jsfiddle.net/PeterChaplin/7GUKK/)
 
 ### jquery.editable
-Assorted tools for allowing the user to edit the contents of an element.
+Assorted tools for allowing the user to edit the contents of an element.  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/t155eadk/)
 
 ### jquery.navigate
-Arrow key navigation between focusable elements
+Arrow key navigation between focusable elements  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/bspsf7w5/)
 
 ### jquery.check
-Client-side form validation
+Client-side form validation  
 [jsFiddle](http://jsfiddle.net/w2g6vzyp/21/)
 
 ### jquery.textrange
-For getting/setting selected text and cursor position
+For getting/setting selected text and cursor position  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/d62x808r/)
 
 ### jquery.dbForm
-Ajax form for database record editing
+Ajax form for database record editing  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/gpfRg/)
 
 ### Image upload to textarea
 Demo for jquery.markDownImageHandler, jquery.imageDropZone, jquery.imagePasteTarget, and jquery.imageUploadButton.
-Upload an image and add to the textarea as a markdown tag.
+Upload an image and add to the textarea as a markdown tag.  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/9grmcmun/)
 
 ### jquery.uploaderUI
-Demo for jquery uploaderUI plugin
-[jsFiddle](http://jsfiddle.net/PeterChaplin/8vunt0d8/)
+Demo for jquery uploaderUI plugin  
+[jsFiddle](http://jsfiddle.net/PeterChaplin/8vunt0d8/)  
 [jsFiddle with more css](http://jsfiddle.net/PeterChaplin/c0nn6ymr/)
 
 ### Prism.js Tcl definition
