@@ -8,6 +8,7 @@ Used to create a scrollable table with a fixed thead.
     /* Outermost wrapper, providing an anchor for the head clone */
     .thead-fixed-wrapper {
         position: relative;
+        z-index: 1;
         max-height: 100%;
     }
 
