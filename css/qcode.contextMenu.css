@@ -31,6 +31,6 @@
 
 /* Focussed <li> */
 .context-menu__item:focus {
-    background: rgb(50,50,150);
+    background: rgb(66,129,244);
     color: white;
 }
