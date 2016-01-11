@@ -80,20 +80,23 @@ var qcode = qcode || {};
             // Set up arrow-key navigation
             menuDiv.navigate('li');
 
-            // Event listeners to close the menu,
-            // if elsewhere on the page is clicked or focussed.
-            // Also append the menu div to the page body
-            $('body')
-                    .on('click.context-menu focusin.context-menu',
-                        function(event) {
-                            if ( ! menuDiv.is(event.target)
-                                 && menuDiv.find(event.target).length == 0
-                               ) {
-                                methods.close();
-                                methods.destroy();
-                            }
-                        })
-                    .append(menuDiv);
+            // Append the menu div to the page body
+            $('body').append(menuDiv);
+
+
+            // Event listeners to close the menu on blur
+            menuDiv.on('focusout.context-menu', function() {
+                window.setZeroTimeout(function() {
+                    if ( menuDiv.find(document.activeElement).length === 0 ) {
+                        methods.close();
+                        methods.destroy();
+                    }
+                });
+            });
+            $(window).on('blur.context-menu', function() {
+                methods.close();
+                methods.destroy();
+            });
 
             // Event listener to close the menu on page scroll
             $(document).on('scroll.context-menu', function() {
@@ -116,6 +119,7 @@ var qcode = qcode || {};
                 menuDiv = undefined;
                 menuUL = undefined;
                 menuLIs = [];
+                $(window).off('.context-menu');
                 $('body').off('.context-menu');
                 $(document).off('.context-menu');
             }
