@@ -82,7 +82,14 @@
         },
 
         set: function(selectionStart, selectionEnd) {
-            if ( ! $(this).is(':focus') ) {
+            if ( !this.is(':input')
+                 && !this.is('[contenteditable=true]')
+               ) {
+                $.error('jQuery.textrange("set") requires that only input or' +
+                        'contenteditable elements are contained in the' +
+                        'jQuery object');
+            }
+            if ( ! this.is(':focus') ) {
                 this.focus();
             }
             var text = this.is(':input') ?  this.val() :  this.text();
@@ -147,10 +154,6 @@
     }
 
     $.fn.textrange = function(method) {
-        if (!this.is(':input') && !this.is('[contenteditable=true]')) {
-            $.error('jQuery.textrange requires that only input or contenteditable elements are contained in the jQuery object');
-        }
-
 	if (typeof textrange[method] === 'function') {
             return textrange[method].apply(this, Array.prototype.slice.call(arguments, 1));
         } else {
