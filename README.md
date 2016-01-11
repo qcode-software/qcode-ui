@@ -89,3 +89,6 @@ Demo for jquery uploaderUI plugin
 
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
+
+### qcode.contextMenu
+http://jsfiddle.net/PeterChaplin/xywdac5p/
