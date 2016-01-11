@@ -83,7 +83,10 @@
                 // Stop the form submission.
                 event.preventDefault();
                 var $form = $(this);
-                
+
+                // blur any text inputs in the form that have focus; otherwise autocomplete popup can become detached from input when validation messages are updated
+                $('input[type=text]:focus', $form).blur();
+
                 // Get rid of old messages
                 $form.validation('hideMessage', 'alert');
                 $form.validation('hideMessage', 'notify');
