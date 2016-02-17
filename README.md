@@ -1,4 +1,10 @@
 # Qcode UI
+
+All versions of the library available from CDN
+
+**https://d44vkqoeluhey.cloudfront.net/**
+
+
 ## jsFiddle Demos
 
 ### jquery.maximiseHeight
