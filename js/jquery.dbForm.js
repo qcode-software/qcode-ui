@@ -94,6 +94,12 @@
                     break;
                 }
             }
+	    
+	    // Save instead of using default submit when buttons are used to submit form.
+	    this.form.find('button:not([type]), button[type="submit"], input[type="submit"]').on('click.DbForm', $.proxy(function(event) {
+		event.preventDefault();
+		this.save();
+	    }, this));
 
             // Should initial focus go to this form?
 	    if ( this.settings.initialFocus ) {
@@ -292,10 +298,11 @@
 	    return "Your changes have not been saved.\nStay on the current page to correct.";
 	}
     }
-    function onSubmit() {
+    function onSubmit(event) {
 	if ( this.settings.formType == 'submit' ) {
 	    return true;
 	}
+
 	return false;
     }
     function onKeyDown(e) {
