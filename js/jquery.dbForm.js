@@ -292,7 +292,7 @@
 	    return "Your changes have not been saved.\nStay on the current page to correct.";
 	}
     }
-    function onSubmit(event) {
+    function onSubmit() {
 	if ( this.settings.formType == 'submit' ) {
 	    return true;
 	}
