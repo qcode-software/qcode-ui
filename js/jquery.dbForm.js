@@ -94,7 +94,7 @@
                     break;
                 }
             }
-	    	    
+
             // Should initial focus go to this form?
 	    if ( this.settings.initialFocus ) {
 		this.focus();
