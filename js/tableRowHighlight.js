@@ -1,7 +1,7 @@
 // Table row highlighter plugin
 $.widget("qcode.tableRowHighlight", {
     options: {
-	class: "background-yellow"
+	class: "highlight"
     },
     _create: function() {
 	this._on(this.element, {
