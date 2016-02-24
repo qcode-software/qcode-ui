@@ -44,7 +44,7 @@
                     classes: 'message-area alert'
                 }
             },
-	    onValidResubmit: true
+	    onValidSubmit: true
         },
         
         _create: function() {
@@ -222,7 +222,7 @@
                     // Redirect if record was valid and the redirect action was given
                     window.location.href = response.action.redirect.value;
                     return;
-                } else if ( this.options.onValidResubmit ) {
+                } else if ( this.options.onValidSubmit ) {
                     // default action
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
