@@ -7,15 +7,14 @@ function tableRowHighlight(oTable) {
 }
 
 // Table row highlighter plugin
-$.widget("qcode.tableRowHighlight", {
-    options: {
-	class: "highlight"
-    },
-    _create: function() {
-	this._on(this.element, {
-	    "click tbody td": function(event) {
-		jQuery(event.target).closest("tr").toggleClass(this.options.class);
-	    }
+(function($) {
+    $.fn.tableRowHighlight = function(options) {
+	var settings = $.extend({}, {
+	    class: 'highlight'
+	}, options);
+
+	$(this).on('click', 'tbody td', function(event) {
+	    $(this).closest("tr").toggleClass(settings.class);
 	});
-    }
-});
+    };
+}(jQuery));
