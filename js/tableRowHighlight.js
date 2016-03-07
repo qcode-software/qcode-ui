@@ -5,3 +5,16 @@ function tableRowHighlight(oTable) {
         $(event.target).trigger('toggleHighlight');
     });
 }
+
+// Table row highlighter plugin
+(function($) {
+    $.fn.tableRowHighlight = function(options) {
+	var settings = $.extend({}, {
+	    class: 'highlight'
+	}, options);
+
+	$(this).on('click', 'tbody td', function(event) {
+	    $(this).closest("tr").toggleClass(settings.class);
+	});
+    };
+}(jQuery));
