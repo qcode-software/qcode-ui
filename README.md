@@ -2,7 +2,7 @@
 
 All versions of the library available from CDN
 
-**https://d44vkqoeluhey.cloudfront.net/**
+**https://d1ab3pgt4r9xn1.cloudfront.net/**
 
 
 ## jsFiddle Demos
