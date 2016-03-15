@@ -8,10 +8,16 @@
     getImageURL: function(xmlHttpRequest, file) {return string},
     postData: object (optional),
     chunkSize: string (optional, default "1MiB")
+    headers: object (optional, default { 'Accept': "application/json" } )
   }
 */
 $.fn.markDownImageHandler = function(options) {
     var $textarea = this.first();
+    var settings = $.extend({
+	headers: {
+	    'Accept': "application/json"
+	}
+    }, options);
 
     return function handleFiles(fileList) {
         var index = $textarea.textrange('get').selectionStart;
@@ -28,9 +34,10 @@ $.fn.markDownImageHandler = function(options) {
 
             var uploader = new qcode.Uploader({
                 file: file,
-                chunkSize: options.chunkSize,
-                url: options.uploadURL,
-                postData: options.postData
+                chunkSize: settings.chunkSize,
+                url: settings.uploadURL,
+                postData: settings.postData,
+		headers: settings.headers
             });
 
             $(uploader)
@@ -43,7 +50,7 @@ $.fn.markDownImageHandler = function(options) {
                         $textarea.textareaReplace(tagPattern, "![Uploading " + uploadName + " " + perct + "]()");
                     })
                     .on('complete', function(event, xhr) {
-                        var url = options.getImageURL(xhr, file);
+                        var url = settings.getImageURL(xhr, file);
                         if ( file.name ) {
                             // Strip off the file extension to generate Alt text.
                             var alt = /^(.*)\.[^.]*$/.exec(file.name)[1];
