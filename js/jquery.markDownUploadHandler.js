@@ -1,7 +1,7 @@
 /*
   markDownUploadHandler
   call on a textarea, returns a function. When the function is called with a fileList, it uploads the files,
-  and generates markdown image or file tags depending upon the type of file in the textarea for them.
+  and generates markdown image or link depending upon the type of file in the textarea for them.
   requires an upload url, and a function to convert the xmlHttpRequest response and/or file object into an image src url.
   options = {
     uploadURL: string,
