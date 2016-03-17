@@ -63,7 +63,7 @@ $.fn.markDownUploadHandler = function(options) {
                         $textarea.textareaReplace(tagPattern, "**Uploading file " + uploadName + " [" + progress_bar + "](" + perct + ")**");
                     })
                     .on('complete', function(event, xhr) {
-                        var url = settings.getImageURL(xhr, file);
+                        var url = settings.getFileURL(xhr, file);
 
 			// Alt attribute
 			if ( file.name ) {
