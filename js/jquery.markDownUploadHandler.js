@@ -1,11 +1,15 @@
 /*
   markDownUploadHandler
   call on a textarea, returns a function. When the function is called with a fileList, it uploads the files,
-  and generates markdown image or link depending upon the type of file in the textarea for them.
-  requires an upload url, and a function to convert the xmlHttpRequest response and/or file object into an image src url.
+  and generates markdown image or link tag depending upon the type of file in the textarea for them.
+  Requires 
+  1. an upload url 
+  2. function to convert the xmlHttpRequest response and/or file object into an file/image src url.
+  3. function to determine if the file is an image or a regular file
   options = {
     uploadURL: string,
-    getImageURL: function(xmlHttpRequest, file) {return string},
+    getFileURL: function(xmlHttpRequest, file) {return string},
+    isImage: function(xmlHttpRequest, file) {return boolean},
     postData: object (optional),
     chunkSize: string (optional, default "1MiB")
     headers: object (optional, default { 'Accept': "application/json" } )
@@ -60,7 +64,7 @@ $.fn.markDownUploadHandler = function(options) {
                     })
                     .on('complete', function(event, xhr) {
                         var url = settings.getImageURL(xhr, file);
-                        var mime_type = jQuery.parseJSON(xhr.responseText).record.mime_type.value;
+
 			// Alt attribute
 			if ( file.name ) {
                             // Strip off the file extension to generate Alt text.
@@ -69,7 +73,7 @@ $.fn.markDownUploadHandler = function(options) {
                             var alt = "image";
                         }
 			
-			if ( jQuery.inArray(mime_type,['image/jpeg', 'image/png', 'image/gif','image/svg+xml']) > -1 ) {
+			if (settings.isImage(xhr,file)) {
 			    // image
                             $textarea.textareaReplace(tagPattern, '![' + alt + '](' + url + ')');
 			} 
