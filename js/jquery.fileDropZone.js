@@ -1,5 +1,5 @@
 // fileDropZone plugin
-// when image files are dropped onto the target element,
+// When files are dropped onto the target element,
 // call handleFiles with a fileList of the dropped files.
 ;(function() {
     jQuery.fn.fileDropZone = function(handleFiles, options) {
