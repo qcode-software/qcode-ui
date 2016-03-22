@@ -1,11 +1,11 @@
 /*
   markDownUploadHandler
-  call on a textarea, returns a function. When the function is called with a fileList, it uploads the files,
-  and generates markdown image or link tag depending upon the type of file in the textarea for them.
+  Call on a textarea. Returns a handler function. When the function is called with a fileList, it uploads the files
+  and generates the markdown for an image or link tag depending upon the type of file uploaded.
   Requires 
   1. an upload url 
-  2. function to convert the xmlHttpRequest response and/or file object into an file/image src url.
-  3. function to determine if the file is an image or a regular file
+  2. a function that takes the xmlHttpRequest response and/or the file object and returns the file/image source url.
+  3. a function to determine if the file is an image or a regular file
   options = {
     uploadURL: string,
     getFileURL: function(xmlHttpRequest, file) {return string},
@@ -76,8 +76,7 @@ $.fn.markDownUploadHandler = function(options) {
 			if (settings.isImage(xhr,file)) {
 			    // image
                             $textarea.textareaReplace(tagPattern, '![' + alt + '](' + url + ')');
-			} 
-			else {
+			} else {
 			    // Non image file type
 			    $textarea.textareaReplace(tagPattern, '[' + alt + '](' + url + ')');
 			}
