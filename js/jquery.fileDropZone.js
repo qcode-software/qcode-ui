@@ -22,7 +22,7 @@
                         qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
                     }
                 })
-                .on('dragleave drop', function() {
+                .on('dragleave drop', function(event) {
                     if ( $(event.target).is(this) ) {
                         $(this).removeClass('drag-hover');
                     }
