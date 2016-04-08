@@ -80,6 +80,7 @@ $.fn.markDownUploadHandler = function(options) {
 			    // Non image file type
 			    $textarea.textareaReplace(tagPattern, '[' + alt + '](' + url + ')');
 			}
+			$textarea.trigger('uploadComplete', [xhr]);
                     })
                     .on('error', function(event, xhr) {
                         $textarea.textareaReplace(tagPattern, '![Error uploading ' + uploadName + ']()');
