@@ -19,50 +19,51 @@
     chunkSize: string (optional, default "10KiB")
   }
 */
-
-$.widget("qcode.markDownEditor", {
-    // Default options.
-    options: {
-	isImage: function(xhr, file) {
-	    var mime_type = file.type;
-	    var index = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'].indexOf(mime_type);
-	    return (index > -1);
+;(function($, window, document) {
+    $.widget("qcode.markDownEditor", {
+	// Default options.
+	options: {
+	    isImage: function(xhr, file) {
+		var mime_type = file.type;
+		var index = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'].indexOf(mime_type);
+		return (index > -1);
+	    },
+	    chunkSize: "10KiB"
 	},
-	chunkSize: "10KiB"
-    },
 
-    _create: function() {
-	// Options are already merged and stored in this.options
-	// Plugin logic goes here.
-	var $textarea = this.element;
+	_create: function() {
+	    // Options are already merged and stored in this.options
+	    // Plugin logic goes here.
+	    var $textarea = this.element;
 
-	/* Get a handler for uploading images and inserting
-	   them into the markdown */
-	var handler = $textarea.markDownUploadHandler1({
-	    uploadURL: this.options.uploadURL,
-	    getFileURL: this.options.getFileURL,
-	    isImage: this.options.isImage,
-	    chunkSize: this.options.chunkSize
-	});
-	/* Use the handler to enable image drag-and-drop,
-	   image pasting, and an image upload "button" */
-	$textarea.fileDropZone(handler);
-	$textarea.imagePasteTarget(handler);
-	this.options.uploadButton.fileUploadButton(handler);
+	    /* Get a handler for uploading images and inserting
+	       them into the markdown */
+	    var handler = $textarea.markDownUploadHandler({
+		uploadURL: this.options.uploadURL,
+		getFileURL: this.options.getFileURL,
+		isImage: this.options.isImage,
+		chunkSize: this.options.chunkSize
+	    });
+	    /* Use the handler to enable image drag-and-drop,
+	       image pasting, and an image upload "button" */
+	    $textarea.fileDropZone(handler);
+	    $textarea.imagePasteTarget(handler);
+	    this.options.uploadButton.fileUploadButton(handler);
 
-	/* Apply css styles to the textarea while dragging
-	   and dropping images over it.*/
-	$textarea.on('dragenter', function() {
-	    $(this).addClass('drag-hover');
-	});
-	$textarea.on('dragleave drop', function() {
-	    $(this).removeClass('drag-hover');
-	});
-    },
-    update: function() {
-	// Converts markdown in the textarea to html and
-	// updates the content of preview panel with the html
-	var html = this.options.markdownToHtml(this.element.val());
-	this.options.previewPanel.html(html);
-    }
-});
+	    /* Apply css styles to the textarea while dragging
+	       and dropping images over it.*/
+	    $textarea.on('dragenter', function() {
+		$(this).addClass('drag-hover');
+	    });
+	    $textarea.on('dragleave drop', function() {
+		$(this).removeClass('drag-hover');
+	    });
+	},
+	update: function() {
+	    // Converts markdown in the textarea to html and
+	    // updates the content of preview panel with the html
+	    var html = this.options.markdownToHtml(this.element.val());
+	    this.options.previewPanel.html(html);
+	}
+    });
+})(jQuery, window, document);
