@@ -16,14 +16,14 @@
             var autoValue;
             var $element = $(this);
 
-            // remove any esiting transitionend.transition events bound to this element.
+            // remove any existing transitionend.transition events bound to this element.
             $element.off('transitionend.transition');
             
             if ( ! $element.data('transition-in-progress') ) {
                 // If not currently transitioning...
                 $element.data('transition-in-progress', true);
 
-                // Turn off transitions so javascript width/height changes are not animated
+                // Turn off transitions so JavaScript width/height changes are not animated
                 $element.css('transition', 'none'); 
 
                 var initialValue = $element[options.property]();
@@ -63,7 +63,7 @@
                 $element.removeData('transition-auto-value');
                 $element.css('transition', '');
                 if (options.endValue === 'auto') {
-                    // Set height to 'auto' to instead of autoHeight to accomodate responsive layouts
+                    // Set height to 'auto' to instead of autoHeight to accommodate responsive layouts
                     $element.css(options.property, 'auto');
                 }
             });
