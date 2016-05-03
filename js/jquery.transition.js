@@ -9,10 +9,12 @@
         // options.timingFunction (optional) eg 'linear', 'ease' etc.
 
         // Default option values
-        options.duration = options.duration || '0.3s';
-        options.timingFunction = options.timingFunction || 'ease';
-
-        $(this).each(function() {
+        options = $.extend({
+            duration: '0.3s',
+            timingFunction: 'ease'
+        }, options);
+        
+        this.each(function() {
             var autoValue;
             var $element = $(this);
 
