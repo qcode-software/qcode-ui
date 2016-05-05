@@ -7,6 +7,7 @@ oForm.focus = focus;
 oForm.nav=nav;
 oForm.find=find;
 oForm.del=del;
+oForm.setDirty=setDirty;
 
 // Parameters
 if (oForm.formType == undefined) { oForm.formType = 'update' } 
