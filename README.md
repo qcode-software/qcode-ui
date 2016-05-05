@@ -120,5 +120,5 @@ Also uses markDownUploadHandler on textarea to upload file and add to textarea a
 [codePen](http://codepen.io/priyank-qcode/pen/Varrxb/?editors=1010)
 
 ### jquery.transition
-Transition function to animate width and height changes.
+Transition function to animate width and height changes.  
 [codePen](http://codepen.io/daniel-qcode/pen/QNJagW/)
