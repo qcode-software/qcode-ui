@@ -118,3 +118,7 @@ Plugin to check for unsaved data on the form.
 Plugin to convert markdown inside the textarea to html and display it in the preview panel.
 Also uses markDownUploadHandler on textarea to upload file and add to textarea as a markdown tag.
 [codePen](http://codepen.io/priyank-qcode/pen/Varrxb/?editors=1010)
+
+### jquery.transition
+Transition function to animate width and height changes.
+[codePen](http://codepen.io/daniel-qcode/pen/QNJagW/)
