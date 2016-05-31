@@ -45,11 +45,7 @@
 	    this.state = 'current';
 
 	    this.divStatus = this.form.find('.db-form-status').last();
-	    this.elements = this.elements
-                .add('input', this.form)
-                .add('select', this.form)
-                .add('textarea', this.form)
-                .add('.db-form-html-area, radio-group', this.form);
+	    this.elements = this.getElements();
 
 	    this.error = undefined;
 
@@ -126,14 +122,14 @@
 	    case "submit":
                 this.setState('updating');
 		this.form.attr('action', this.settings.submitURL);
-		this.elements.filter('.db-form-html-area').each(function(i, div){
+		this.getElements().filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
 			$('<input type="hidden">')
 			    .attr('name', $(div).attr('name'))
 			    .val($(div).html())
 		    );
 		}.bind(this));
-		this.elements.filter('input[type="checkbox"]:not(:checked)').each(function(i, input) {
+		this.getElements().filter('input[type="checkbox"]:not(:checked)').each(function(i, input) {
 		    if ( $(input).attr('boolean') ) {
 			this.form.append(
 			    $('<input type="hidden">')
@@ -165,7 +161,7 @@
 	    httpPost(url, this.formData(), handler, errorHandler, async, this.settings.headers);
 	},
 	focus: function() {
-	    this.elements.each(function(){
+	    this.getElements().each(function(){
 		$(this).focus();
 		return ! $(this).is(':focus');
 	    });
@@ -245,7 +241,7 @@
 	},
         formData: function() {
 	    var data = {};
-	    this.elements
+	    this.getElements()
 	            .filter(function(){ return $(this).prop('name') != ""; })
 	            .filter(function(){ return $(this).prop('type') != "checkbox" || $(this).attr('boolean') == "true" || $(this).is(':checked'); })
 	            .filter(function(){ return $(this).prop('type') != "radio" || $(this).is(':checked'); })
@@ -280,7 +276,12 @@
 
 	            });
 	    return data;
+        },
+        getElements: function() {
+            // Get the elements of this form
+            return this.form.find('input, select, textarea, .db-form-html-area, radio-group');
         }
+        
     });
     // End of public methods
 
