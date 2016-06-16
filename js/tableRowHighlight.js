@@ -10,11 +10,11 @@ function tableRowHighlight(oTable) {
 (function($) {
     $.fn.tableRowHighlight = function(options) {
 	var settings = $.extend({}, {
-	    class: 'highlight'
+	    "class": 'highlight'
 	}, options);
 
 	$(this).on('click', 'tbody td', function(event) {
-	    $(this).closest("tr").toggleClass(settings.class);
+	    $(this).closest("tr").toggleClass(settings["class"]);
 	});
     };
 }(jQuery));

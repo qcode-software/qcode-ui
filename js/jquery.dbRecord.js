@@ -133,7 +133,7 @@
 	    }
 	    this.action(this.saveAction, url, async);
 	}, 
-	delete: function(async) {
+	"delete": function(async) {
 	    // Delete this record
 	    if ( this.getState() === "updating" ) {
 		return false;

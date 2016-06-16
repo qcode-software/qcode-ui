@@ -44,10 +44,12 @@
                     classes: 'message-area alert'
                 }
             },
-	    submit: true
+	    submit: true,
+            timeout: 20000
         },
         
         _create: function() {
+            var widget = this;
             var $form = $(this.element);
             this.message = [];
             
@@ -85,85 +87,109 @@
                 event.preventDefault();
                 var $form = $(this);
 
-                // blur() then focus() any text inputs in the form that currently have focus
-                // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
-                $('input[type=text]:focus', $form).blur().focus();
+                // Do not allow concurrent validation requests
+                if ( ! $form.is('.validating') ) {
+                    $form.addClass('validating');
 
-                // Get rid of old messages
-                $form.validation('hideMessage', 'alert');
-                $form.validation('hideMessage', 'notify');
-                $form.validation('hideMessage', 'error');
+                    // blur() then focus() any text inputs in the form that currently have focus
+                    // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
+                    $('input[type=text]:focus', $form).blur().focus();
 
-                // Set up form data
-                var data = $form.serializeArray();
-                var ajax_method;
-                if ( method === 'POST' || method === 'GET' ) {
-                    ajax_method = method;
-                } else {
-                    // Emulate HTTP method
-                    ajax_method = 'POST';
-                    var found = false;
-                    $.each(data, function(index, item) {
-                        if ( item.name === '_method' ) {
-                            item.value = method;
-                            found = true;
-                            return;
-                        }
-                    });
+                    // Hide any existing validation messages
+                    $('[data-hasqtip]:visible').qtip('hide');
+                    $form.validation('hideMessage', 'alert');
+                    $form.validation('hideMessage', 'notify');
+                    $form.validation('hideMessage', 'error');
 
-                    if ( !found ) {
-                        data.push({
-                            name: '_method',
-                            value: method
-                        });
-                    }
-                }
-                
-                // Send the form data
-                $.ajax({
-                    url: url,
-                    data: data,
-                    method: ajax_method,
-                    dataType: 'JSON',
-                    headers: {
-                        'X-Authenticity-Token': Cookies.get('authenticity_token')
-                    },
-                    success: function(response, success, request) {
-                        $form.validation('parseResponse', response);
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        var returnType = jqXHR.getResponseHeader('content-type');
-                        switch (returnType) {
-                        case "application/json; charset=utf-8":
-                            // HTTP ERROR
-	                    if ( jqXHR.status != 200 && jqXHR.status != 0 ) {
-                                $form.validation('parseResponse', $.parseJSON(jqXHR.responseText));
-                            } else {
-                                switch (textStatus) {
-                                case "parseerror":
-                                    $form.validation('showMessage', 'error', "Couldn't parse the response.");
-                                    break;
-                                case "timeout":
-                                    $form.validation('showMessage', 'error', "Request timed out.");
-                                    break;
-                                case "abort":
-                                    $form.validation('showMessage', 'error', "Request was aborted.");
-                                    break;
-                                default:
-                                    $form.validation('showMessage', 'error', "An error occurred: " + errorThrown);
-                                }
+                    // Set up form data
+                    var data = $form.serializeArray();
+                    var ajax_method;
+                    if ( method === 'POST' || method === 'GET' ) {
+                        ajax_method = method;
+                    } else {
+                        // Emulate HTTP method
+                        ajax_method = 'POST';
+                        var found = false;
+                        $.each(data, function(index, item) {
+                            if ( item.name === '_method' ) {
+                                item.value = method;
+                                found = true;
+                                return;
                             }
-                            break;
-                        default:
-                            $form.validation('showMessage', 'error', 'Expected JSON but got ' + returnType);
-                        }
+                        });
 
-                        scrollToElement($form.validation('getMessage', 'error'), 200);
+                        if ( !found ) {
+                            data.push({
+                                name: '_method',
+                                value: method
+                            });
+                        }
                     }
-                });
+                    
+                    // Send the form data
+                    $.ajax({
+                        url: url,
+                        data: data,
+                        method: ajax_method,
+                        dataType: 'JSON',
+                        headers: {
+                            'X-Authenticity-Token': Cookies.get('authenticity_token')
+                        },
+                        timeout: widget.options.timeout,
+                        success: function(response, success, request) {
+                            $form.validation('parseResponse', response);
+                            
+                            // Trigger validation completion event
+                            $form.trigger({
+                                type: 'validationComplete',
+                                response: response
+                            });
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            var returnType = jqXHR.getResponseHeader('content-type');
+                            
+                            if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
+                                // HTTP Error with JSON response
+                                var response = $.parseJSON(jqXHR.responseText)
+                                $form.validation('parseResponse', response);
+
+                                // Trigger validation completion event
+                                $form.trigger({
+                                    type: 'validationComplete',
+                                    response: response
+                                });
+
+                            } else {
+                                if ( textStatus == "parseerror" ) {
+                                    // Parse error
+                                    var errorMessage = "Sorry we were unable to parse the server's response. Please try again.";
+                                } else if ( textStatus == "timeout" ) {
+                                    // Timeout
+                                    var errorMessage = "Sorry, your request timed out. Please try again.";
+                                } else {
+                                    // Generic error message
+                                    var errorMessage = "Oops, something went wrong. Please try again.";
+                                } 
+                                
+                                // Show error message
+                                $form.validation('showMessage', 'error', errorMessage);
+                                scrollToElement($form.validation('getMessage', 'error'), 200);
+                                
+                                // Trigger validation error event
+                                $form.trigger({
+                                    type: 'validationError',
+                                    errorMessage: errorMessage
+                                });
+                            }
+                        },
+                        complete: function(jqXHR, textStatus) {
+                            $form.removeClass('validating');
+                        }                            
+                    });
+                }
             }
             
-            $(this.element).on('submit.validate', validate);
+            $form.on('submit.validate', validate);
         },
 
         parseResponse: function(response) {
@@ -290,12 +316,6 @@
                 // $scrollElement exists but has no qtip - scroll to the $scrollElement
                 scrollToElement($scrollElement, 200);
             }
-            
-            // Trigger validation completion event
-            $form.trigger({
-                type: 'validationComplete',
-                response: response
-            });
         },
         
         showValidationMessage: function($element, message) {
@@ -394,6 +414,7 @@
         _destroy: function() {
             // Remove the elements created by this plugin.
             this.element.unbind('submit.validate');
+            $(this.element).removeClass('validating');
             this._validationMessagesDestroy();
             this._messagesDestroy();
         },
