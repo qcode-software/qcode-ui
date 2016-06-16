@@ -168,7 +168,7 @@
                                     var errorMessage = "Sorry, your request timed out. Please try again.";
                                 } else {
                                     // Generic error message
-                                    var errorMessage = "Oops, something went wrong. Please try again.";
+                                    var errorMessage = "Sorry, something went wrong. Please try again.";
                                 } 
                                 
                                 // Show error message
