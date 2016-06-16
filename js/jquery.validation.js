@@ -160,7 +160,7 @@
                                 });
 
                             } else {
-                                if ( textStatus == "parseerror" ) {
+                                if ( textStatus == "parsererror" ) {
                                     // Parse error
                                     var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
                                 } else if ( textStatus == "timeout" ) {
