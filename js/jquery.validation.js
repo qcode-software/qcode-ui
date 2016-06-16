@@ -139,7 +139,7 @@
                         success: function(response, success, request) {
                             $form.validation('parseResponse', response);
                             
-                            // Trigger validation completion event
+                            // Trigger validationComplete event
                             $form.trigger({
                                 type: 'validationComplete',
                                 response: response
@@ -153,7 +153,7 @@
                                 var response = $.parseJSON(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
 
-                                // Trigger validation completion event
+                                // Trigger validationComplete event
                                 $form.trigger({
                                     type: 'validationComplete',
                                     response: response
@@ -162,7 +162,7 @@
                             } else {
                                 if ( textStatus == "parseerror" ) {
                                     // Parse error
-                                    var errorMessage = "Sorry we were unable to parse the server's response. Please try again.";
+                                    var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
                                 } else if ( textStatus == "timeout" ) {
                                     // Timeout
                                     var errorMessage = "Sorry, your request timed out. Please try again.";
@@ -175,7 +175,7 @@
                                 $form.validation('showMessage', 'error', errorMessage);
                                 scrollToElement($form.validation('getMessage', 'error'), 200);
                                 
-                                // Trigger validation error event
+                                // Trigger validationError event
                                 $form.trigger({
                                     type: 'validationError',
                                     errorMessage: errorMessage
