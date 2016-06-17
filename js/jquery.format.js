@@ -20,7 +20,7 @@ Only one of sigfigs, dps, and customFunction will be applied
             sigfigs: null,
             dps: null,
             zeros: "auto",
-            function: undefined
+            "function": undefined
         }, settings);
         this.each(function(index, element) {
             // Get and store the original text value of the element
@@ -45,9 +45,9 @@ Only one of sigfigs, dps, and customFunction will be applied
             }
 
             // Custom function
-            if ( options.function !== undefined ) {
+            if ( options["function"] !== undefined ) {
                 $(element).text(
-                    options.function.call(element, originalText)
+                    options["function"].call(element, originalText)
                 );
 
             } else {

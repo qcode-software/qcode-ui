@@ -215,7 +215,7 @@
 	    }
 	    row.dbRow('save',async);
 	},
-	delete: function(row) {
+	"delete": function(row) {
 	    if ( row === undefined || ! row.size() ) {
 		var row = this.currentCell.closest('tr');
 	    }

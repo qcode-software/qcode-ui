@@ -353,7 +353,7 @@
 		cell.dbCell('setValue',value);
 	    }
 	},
-	delete: function(async){
+	"delete": function(async){
 	    var grid = this.getGrid();
 	    var url = grid.dbGrid('option', 'deleteURL');
 	    if ( ! url ) {
