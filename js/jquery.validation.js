@@ -356,7 +356,7 @@
             if (! this.message[type]) {
                 // Message area doesn't exist so create it.
                 var messageDiv = $('<div></div>').addClass(this.options.messages[type].classes)
-                var messageContent = $('<span></span>').html(message).addClass('message-content');
+                var messageContent = $('<div></div>').html(message).addClass('message-content');
                 
                 messageDiv.append(messageContent).hide();
                 var validationElement = $(this.element);
