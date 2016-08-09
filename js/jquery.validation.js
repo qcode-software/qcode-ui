@@ -259,6 +259,8 @@
 
                 // resubmit action - used for authenticity token errors
                 if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
+                    // remove the validating flag before auto-resubmission
+                    $form.removeClass('validating');
                     // resubmit the form
                     $form.submit();
                     // disable future resubmit actions to prevent inifite loop
@@ -426,9 +428,15 @@
         
         _messagesDestroy: function() {
             // Remove all messages added by this plugin.
-            this.message['alert'].remove();
-            this.message['error'].remove();
-            this.message['notify'].remove();
+            if ( this.message['alert'] ) {
+                this.message['alert'].remove();
+            }
+            if ( this.message['error'] ) {
+                this.message['error'].remove();
+            }
+            if ( this.message['notify'] ) {
+                this.message['notify'].remove();
+            }
         }
         
     });
