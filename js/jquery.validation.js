@@ -259,7 +259,7 @@
 
                 // resubmit action - used for authenticity token errors
                 if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
-                    // remove the validating class so that auto-resubmission can happen
+                    // remove the validating flag before auto-resubmission
                     $form.removeClass('validating');
                     // resubmit the form
                     $form.submit();
