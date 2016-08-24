@@ -438,6 +438,20 @@
                 this.message['notify'].remove();
             }
         }
+
+	setValuesFromResponse: function(response) {
+	    // Set form values from the response
+	    var $form = $(this.element);
+	    if (typeof response !== "undefined" && 'record' in response ) {
+		$.each(response.record, function (name, object) {
+		    var $element = $form.find('[name=' + name + ']');
+		    if ( 'valid' in object && object.valid && 'value' in object ) {
+			// Set the value of the field
+			$element.val(object.value);
+		    }
+		});
+	    }
+	}
         
     });
     
