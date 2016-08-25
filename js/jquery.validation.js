@@ -437,7 +437,7 @@
             if ( this.message['notify'] ) {
                 this.message['notify'].remove();
             }
-        }
+        },
 
 	setValuesFromResponse: function(response) {
 	    // Set form values from the response
