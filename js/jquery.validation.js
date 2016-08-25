@@ -442,17 +442,28 @@
 	setValuesFromResponse: function(response) {
 	    // Set form values from the response
 	    var $form = $(this.element);
-	    if (typeof response !== "undefined" && 'record' in response ) {
-		$.each(response.record, function (name, object) {
+	    if (typeof response !== "undefined" && 'record' in response) {
+		$.each(response.record, function(name, object) {
 		    var $element = $form.find('[name=' + name + ']');
-		    if ( 'valid' in object && object.valid && 'value' in object ) {
-			// Set the value of the field
-			$element.val(object.value);
+		    if ('valid' in object && object.valid && 'value' in object) {
+			if ($element.is("input[type='checkbox']")) {
+			    // Checkbox - set checked property              
+			    if ($element.val() === object.value) {
+				// Check checkbox if values match
+				$element.prop("checked", true);
+			    } else {
+				// Check checkbox if casted values are both true
+				var checked = parseBoolean($element.val()) && parseBoolean(object.value);
+				$element.prop("checked", checked);
+			    }
+			} else {
+			    // Set the value of the field
+			    $element.val(object.value);
+			}
 		    }
 		});
 	    }
-	}
-        
+	}        
     });
     
 })(jQuery, window, document);
