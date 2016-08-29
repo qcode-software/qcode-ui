@@ -110,6 +110,6 @@ Possible values: error, notify or alert
 Toggle funciton to reposition or hide all the validation messages.
 
 ## $('form').validation('setValuesFromResponse', response)
-Takes the response as an argument and sets value of the form elements by parsing the response.
+Takes the response as an argument and sets value of the form elements by parsing the response. [codePen](http://codepen.io/priyank-qcode/pen/EyEBBy)
 ### response
 Type: JSON
