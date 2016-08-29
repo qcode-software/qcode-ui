@@ -54,5 +54,56 @@ qtip: {
 ### timeout
 Type: time (milisecond)
 
-Allows user to customise timeout for submit request. Default values is 20000.
+Allows user to customise timeout for the submit request. Default value is 20000.
 
+# Public Functions
+
+### $('form').validation('parseResponse',response)
+##### response
+Type: JSON
+
+Takes response as an argument and displays qtips and the messages where necessary by parsing the response.
+
+### $('form').validation('showValidationMessage', element, messsage)
+##### element
+Type: jQuery selection
+##### message
+Type: string
+
+Takes form element and message as arguments and displays the message as the tooltip for the given element using qtip.
+
+### $('form').validation('hideValidationMessage', element)
+##### element
+Type: jQuery selection
+
+Hides tooltip for the given element.
+
+### $('form').validation('showMessage', type, messsage)
+##### type
+Possible values: error, notify or alert
+##### message
+Type: string
+
+Takes message and type as arguments and displays the message. Position of the message can be customised by using the ```messages``` option.
+
+### $('form').validation('hideMessage', type)
+##### type
+Possible values: error, notify or alert
+
+Takes type of message as an argument and hides the message of the given type.
+
+### $('form').validation('getMessage', type)
+##### type
+Possible values: error, notify or alert
+
+Takes type of message as an argument and returns the jQuery object for the message of the given type.
+
+### $('form').validation('reposition')
+
+Toggle funciton to reposition or hide all the validation messages.
+
+### $('form').validation('setValuesFromResponse', response)
+##### response
+Type: JSON
+
+Takes the response as an argument and sets value of the form elements by parsing the response.
