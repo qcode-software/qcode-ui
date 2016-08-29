@@ -9,6 +9,20 @@ Type: object, name-value pairs.
 
 Allows user to set attribute such as position,classes etc. for message. Supports three different types of messages error, notify and alert. Message applies to the entire form.
 
+```javascript
+messages: {
+    error: {
+	before: 'form'
+    },
+    alert: {
+	before: 'form'
+    },
+    notify: {
+	before: 'form'
+    }
+}
+```
+
 ### submit
 Type: boolean.
 
@@ -21,8 +35,8 @@ Type: object, name-value pairs.
 Allows user to set qtip tooltip properties such as position, style, show, hide, events using name-value pair. Default values are:
 
 ```javascript
-qtip: {
-    position: {
+qtip: {    
+    position: {	
 	my: 'bottom center',
 	at: 'bottom center',
 	viewport: $(window)
@@ -54,56 +68,48 @@ qtip: {
 ### timeout
 Type: time (milisecond)
 
-Allows user to customise timeout for the submit request. Default value is 20000.
+Allows user to customise timeout for the ajax request. Default value is 20000.
 
 # Public Functions
 
 ### $('form').validation('parseResponse',response)
+Takes response as an argument and displays qtips and the messages where necessary by parsing the response.
 ### response
 Type: JSON
 
-Takes response as an argument and displays qtips and the messages where necessary by parsing the response.
-
 ### $('form').validation('showValidationMessage', element, messsage)
+Takes form element and message as arguments and displays the message as the tooltip for the given element using qtip.
 ### element
 Type: jQuery selection
 ### message
 Type: string
-
-Takes form element and message as arguments and displays the message as the tooltip for the given element using qtip.
 
 ### $('form').validation('hideValidationMessage', element)
+Hides tooltip for the given element.
 ### element
 Type: jQuery selection
 
-Hides tooltip for the given element.
-
 ### $('form').validation('showMessage', type, messsage)
+Takes message and type as arguments and displays the message. Position of the message can be customised by using the ```messages``` option.
 ### type
 Possible values: error, notify or alert
 ### message
 Type: string
 
-Takes message and type as arguments and displays the message. Position of the message can be customised by using the ```messages``` option.
-
 ### $('form').validation('hideMessage', type)
+Takes type of message as an argument and hides the message of the given type.
 ### type
 Possible values: error, notify or alert
-
-Takes type of message as an argument and hides the message of the given type.
 
 ### $('form').validation('getMessage', type)
+Takes type of message as an argument and returns the jQuery object for the message of the given type.
 ### type
 Possible values: error, notify or alert
 
-Takes type of message as an argument and returns the jQuery object for the message of the given type.
-
 ### $('form').validation('reposition')
-
 Toggle funciton to reposition or hide all the validation messages.
 
 ### $('form').validation('setValuesFromResponse', response)
+Takes the response as an argument and sets value of the form elements by parsing the response.
 ### response
 Type: JSON
-
-Takes the response as an argument and sets value of the form elements by parsing the response.
