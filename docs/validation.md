@@ -72,44 +72,44 @@ Allows user to customise timeout for the ajax request. Default value is 20000.
 
 # Public Functions
 
-### $('form').validation('parseResponse',response)
+## $('form').validation('parseResponse',response)
 Takes response as an argument and displays qtips and the messages where necessary by parsing the response.
 ### response
 Type: JSON
 
-### $('form').validation('showValidationMessage', element, messsage)
+## $('form').validation('showValidationMessage', element, messsage)
 Takes form element and message as arguments and displays the message as the tooltip for the given element using qtip.
 ### element
 Type: jQuery selection
 ### message
 Type: string
 
-### $('form').validation('hideValidationMessage', element)
+## $('form').validation('hideValidationMessage', element)
 Hides tooltip for the given element.
 ### element
 Type: jQuery selection
 
-### $('form').validation('showMessage', type, messsage)
+## $('form').validation('showMessage', type, messsage)
 Takes message and type as arguments and displays the message. Position of the message can be customised by using the ```messages``` option.
 ### type
 Possible values: error, notify or alert
 ### message
 Type: string
 
-### $('form').validation('hideMessage', type)
+## $('form').validation('hideMessage', type)
 Takes type of message as an argument and hides the message of the given type.
 ### type
 Possible values: error, notify or alert
 
-### $('form').validation('getMessage', type)
+## $('form').validation('getMessage', type)
 Takes type of message as an argument and returns the jQuery object for the message of the given type.
 ### type
 Possible values: error, notify or alert
 
-### $('form').validation('reposition')
+## $('form').validation('reposition')
 Toggle funciton to reposition or hide all the validation messages.
 
-### $('form').validation('setValuesFromResponse', response)
+## $('form').validation('setValuesFromResponse', response)
 Takes the response as an argument and sets value of the form elements by parsing the response.
 ### response
 Type: JSON
