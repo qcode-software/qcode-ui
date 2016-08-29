@@ -20,7 +20,7 @@ Type: object, name-value pairs.
 
 Allows user to set qtip tooltip properties such as position, style, show, hide, events using name-value pair. Default values are:
 
-```json
+```
 qtip: {
     position: {
 	my: 'bottom center',
