@@ -7,7 +7,7 @@ This plugin is used with form element to validate user input using ajax.
 ### messages
 Type: object, name-value pairs.
 
-Allows user to set attribute such as position,classes etc. for message. Supports three different types of messages error, notify and alert. Message applies to the entire form.
+Allows user to set attribute such as position,classes etc. for message. Supports three different types of messages error, notify and alert. Message applies to the entire form. [codePen](http://codepen.io/priyank-qcode/pen/EyEBBy)
 
 ```javascript
 messages: {
@@ -32,7 +32,9 @@ Prevents form submit after the validation is complete, if set to false.
 ### qtip
 Type: object, name-value pairs.
 
-Allows user to set qtip tooltip properties such as position, style, show, hide, events using name-value pair. Default values are:
+Allows user to set qtip tooltip properties such as position, style, show, hide, events using name-value pair. [codePen](http://codepen.io/priyank-qcode/pen/OXKAKE)
+
+Default values are:
 
 ```javascript
 qtip: {    
@@ -110,6 +112,6 @@ Possible values: error, notify or alert
 Toggle funciton to reposition or hide all the validation messages.
 
 ## $('form').validation('setValuesFromResponse', response)
-Takes the response as an argument and sets value of the form elements by parsing the response. [codePen](http://codepen.io/priyank-qcode/pen/EyEBBy)
+Takes the response as an argument and sets value of the form elements by parsing the response. 
 ### response
 Type: JSON
