@@ -7,7 +7,7 @@ This plugin is used with form element to validate user input using ajax.
 ### messages
 Type: object, name-value pairs.
 
-Allows user to set attribute such as position,classes etc. for message. Supports three different types of messages error, notify and alert. Message applies to the entire form. [codePen](http://codepen.io/priyank-qcode/pen/EyEBBy)
+Allows user to set attribute such as position,classes etc. for message. Supports three different types of messages error, notify and alert. Message applies to the entire form. [codePen](http://codepen.io/priyank-qcode/pen/pbrmZz)
 
 ```javascript
 messages: {
