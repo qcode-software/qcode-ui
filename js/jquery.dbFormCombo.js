@@ -150,9 +150,11 @@
 	    }, "xml").success(function(data, textStatus, jqXHR){
 	        dbForm.xmlDoc = $(data);
 	        if ( dbForm.xmlDoc.find('error').length > 0 ) {
+		    dbForm.show();
 		    dbForm.div.text( dbForm.xmlDoc.find('error').text() );
 	        } else {
 		    if ( dbForm.xmlDoc.find('record').length > 0 ) {
+			dbForm.show();
 		        dbForm.updateList();
 		    } else if (dbForm.options.hideIfNoMatches) {
 			dbForm.hide();
