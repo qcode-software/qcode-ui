@@ -3,7 +3,8 @@
         options: {
 	    searchURL: "",
 	    searchLimit: 10,
-	    comboHeight: 200
+	    comboHeight: 200,
+	    hideIfNoMatches: false
         },
         _create: function() {
             this.options.comboWidth = coalesce(this.options.comboWidth, this.element.outerWidth());
@@ -134,8 +135,10 @@
         },
         search: function() {
 	    this.currentItem = undefined;
-	    this.div.text('Searching ...');
-	    this.show();
+	    if (!this.options.hideIfNoMatches) {
+		this.div.text('Searching ...');
+		this.show();
+	    }
 	    this.div.off('click.dbFormCombo');
 	    this.div.off('mouseover.dbFormCombo');
 	    this.xmlDoc = undefined;
@@ -151,6 +154,8 @@
 	        } else {
 		    if ( dbForm.xmlDoc.find('record').length > 0 ) {
 		        dbForm.updateList();
+		    } else if (dbForm.options.hideIfNoMatches) {
+			dbForm.hide();
 		    } else {
 		        dbForm.div.text("No Matches");
 		    }
