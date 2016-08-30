@@ -38,8 +38,8 @@
 	    this.div
                 .show()
 	        .css({
-		    'top': this.element.position().top + this.element.outerHeight(),
-		    'left': this.element.position().left
+		    'top': this.element.offset().top + this.element.outerHeight(),
+		    'left': this.element.offset().left
 	        });
 	},
 	hide: function() {
