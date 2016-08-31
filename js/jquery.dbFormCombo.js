@@ -15,7 +15,8 @@
 		    'height': this.options.comboHeight,
 		    'overflow': 'auto',
 		    'border': "1px solid black",
-		    'background': "white"
+		    'background': "white",
+		    'z-index':"99"
 	        })
 	        .appendTo('body')
 	        .hide()
@@ -133,6 +134,9 @@
 	        this.highlight($(event.target).index());
 	    }
         },
+	_destroy: function() {
+	    this.div.remove();
+	},
         search: function() {
 	    this.currentItem = undefined;
 	    if (!this.options.hideIfNoMatches) {
