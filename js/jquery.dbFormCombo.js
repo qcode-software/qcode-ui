@@ -16,7 +16,7 @@
 		    'overflow': 'auto',
 		    'border': "1px solid black",
 		    'background': "white",
-		    'z-index':"3"
+		    'z-index':"99"
 	        })
 	        .appendTo('body')
 	        .hide()
