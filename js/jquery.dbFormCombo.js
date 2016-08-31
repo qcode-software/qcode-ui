@@ -133,6 +133,9 @@
 	        this.highlight($(event.target).index());
 	    }
         },
+	_destroy: function() {
+	    this.div.remove();
+	},
         search: function() {
 	    this.currentItem = undefined;
 	    if (!this.options.hideIfNoMatches) {
