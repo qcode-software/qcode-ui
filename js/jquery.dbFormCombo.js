@@ -15,7 +15,8 @@
 		    'height': this.options.comboHeight,
 		    'overflow': 'auto',
 		    'border': "1px solid black",
-		    'background': "white"
+		    'background': "white",
+		    'z-index':"3"
 	        })
 	        .appendTo('body')
 	        .hide()
