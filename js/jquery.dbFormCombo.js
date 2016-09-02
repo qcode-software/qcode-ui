@@ -1,4 +1,4 @@
-;(function($, undefined) {
+;(function($, window, document, undefined) {
     $.widget('qcode.dbFormCombo', {
         options: {
 	    searchURL: "",
@@ -34,6 +34,10 @@
                 'click': this._divOnClick,
 	        'mouseover': this._divOnMouseOver
             });
+	    var $this = this;
+	    $(window).on('resize.' + this.element.attr('id'), function() {
+		$this.div.css('width', $this.element.outerWidth());
+	    });
         },
 	show: function(){
 	    this.div
@@ -136,6 +140,7 @@
         },
 	_destroy: function() {
 	    this.div.remove();
+	    $(window).off('resize.' + this.element.attr('id'));
 	},
         search: function() {
 	    this.currentItem = undefined;
@@ -171,4 +176,4 @@
 	    });
         }
     });
-})(jQuery);
+})(jQuery, window, document);
