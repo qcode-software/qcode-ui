@@ -37,6 +37,7 @@
 	    var $this = this;
 	    $(window).on('resize.' + this.element.attr('id'), function() {
 		$this.div.css('width', $this.element.outerWidth());
+		$this.hide();
 	    });
         },
 	show: function(){
