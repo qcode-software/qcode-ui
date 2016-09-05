@@ -59,6 +59,9 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
             var id = this.headClone.getID();
             qcode.style('#'+id, 'table-layout', "fixed");
 
+            // Remove "name" attribute from original thead form elements
+            this.table.children('thead').find(':input').removeAttr('name');
+
             // Generate and store column selectors
             var colSelectors = {};
             var thSelectors = {};
