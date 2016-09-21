@@ -13,3 +13,7 @@ Selector for the column(s) to show or hide
 Type: String ("show" or "hide")
 
 Whether to show or hide the columns. If undefined, default behavior is to toggle (show hidden columns, hide visible columns).
+
+## See also
+
+- [columnsShowHideControl.js](columnsShowHideControl.md)

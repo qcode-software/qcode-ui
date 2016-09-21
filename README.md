@@ -4,6 +4,13 @@ All versions of the library available from CDN
 
 **https://d1ab3pgt4r9xn1.cloudfront.net/**
 
+- [Tables](docs/tables.md) (plugins relating to tables)
+- [Forms](docs/forms.md) (plugins relating to forms and data entry)
+- [actionConfirm.js](docs/actionConfirm.md) (action confirmation)
+- [calendar.js](docs/calendar.md) (canvas calendar plugin)
+- [cycleClasses.js](docs/cycleClasses.md) (class cycling plugin)
+- [cycleText.js](docs/cycleText.md) (text cycling plugin)
+- [date.js](docs/date.md) (date utility functions)
 
 ## jsFiddle Demos
 
