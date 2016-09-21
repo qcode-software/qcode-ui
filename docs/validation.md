@@ -8,7 +8,7 @@ When validation is successful the plugin will parse the response from the server
 
 A plugin called [qTip2](http://qtip2.com/) is used to display helpful tooltips that inform the user about any problems with specific input.
 
-<image>
+![qtip-example](https://cloud.githubusercontent.com/assets/8330836/18712248/774b9062-8005-11e6-9abe-acc9f9e7093f.png)
 
 qcode-ui provides a default style for qTips however this can be overidden through the plethora of options qTip has available. See the Options section below for more information.
 
@@ -16,9 +16,9 @@ qcode-ui provides a default style for qTips however this can be overidden throug
 
 Messages are a means of indicating general feedback to the user and there are three types: `error`, `alert`, and `notify`.
 
-<image error>
-<image alert>
-<image notify>
+![error-message-example](https://cloud.githubusercontent.com/assets/8330836/18712257/7c780e1c-8005-11e6-8b28-c0f152658193.png)
+![alert-message-example](https://cloud.githubusercontent.com/assets/8330836/18712260/7dbfbc8e-8005-11e6-9510-a516109898d6.png)
+![notify-message-example](https://cloud.githubusercontent.com/assets/8330836/18712254/7acd0f68-8005-11e6-9755-bf24b6e7e682.png)
 
 Each message has a default style provided by qcode-ui that can be overwritten through use of the `classes` preoperty when setting up the plugin – see the Options section below for more information
 
@@ -27,9 +27,24 @@ Each message has a default style provided by qcode-ui that can be overwritten th
 ## messages
 **Type**: object
 
+**Defaults**:
+```javascript
+messages {
+    error: {
+        classes: 'message-area error'
+    },
+    alert: {
+        classes: 'message-area alert'
+    },
+    notify: {
+        classes: 'message-area notify'
+    }
+}
+```
+
 The position of messages in the DOM can be specified through use of `before` and `after` properties. If neither `before` or `after` are specified then the message will be appended to the `body` element. 
 
-Each message type has a default `classes` property of `message-area <type>`. You can customise the styling of message types by overwriting the `classes` property and providing your own CSS.
+You can customise the styling of message types by overwriting the `classes` property and providing your own CSS.
 
 ### Example 
 ```javascript
@@ -51,6 +66,7 @@ $('#myForm').validation({
 
 ## submit
 **Type**: boolean
+
 **Default**: `true`
 
 When this option is set to `true` the form will automatically be resubmitted to the server without validation if all inputs are valid. Setting this option to `false` will prevent this behaviour.
@@ -111,6 +127,7 @@ $('#myForm').validation({
 
 ## timeout
 **Type**: int
+
 **Default**: 20000
 
 Timeout for the ajax request in milliseconds.
@@ -129,6 +146,7 @@ Parses the given response and displays qTips and the messages where necessary.
 
 ## $('form').validation('showValidationMessage', element, message)
 `element` –  jQuery selection
+
 `message` – string
 
 Displays the given message as a tooltip for the given element using qTip.
@@ -140,6 +158,7 @@ Hides the tooltip for the given element.
 
 ## $('form').validation('showMessage', type, message)
 `type` – string: "error", "notify", or "alert"
+
 `message` – string
 
 Displays the given message in a message area of the given type.
