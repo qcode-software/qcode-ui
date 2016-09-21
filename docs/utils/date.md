@@ -10,7 +10,7 @@ Move this date forward by a number of days (accepts negative and non-integer val
 Return a new date object representing the first day of this date's week. Optionaly takes a base - 0 for Sunday, 1 for Monday, etc. Defaults to Monday as a base.
 
 ##Date.prototype.getWeekEnd( [base] )
-Rturn the last day of the week, as for getWeekStart (above).
+Return the last day of the week, as for getWeekStart (above).
 
 ##Date.prototype.getDayLetter()
 Get the first letter of this date's day of week name
