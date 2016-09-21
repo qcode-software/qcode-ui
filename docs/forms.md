@@ -1,6 +1,6 @@
 # Forms
 
-- [editable](forms/editable/editable.md) (editable data widgets)
+- [editable](forms/editable.md) (editable data widgets)
 - [Record Set](forms/recordset.md) (record set plugins)
 - [dbForm Editors](forms/dbFormEditors.md) (dbForm widgets)
 - [compass.js](forms/compass.md) (page element positioning comparison)
