@@ -20,7 +20,19 @@ Messages are a means of indicating general feedback to the user and there are th
 ![alert-message-example](https://cloud.githubusercontent.com/assets/8330836/18712260/7dbfbc8e-8005-11e6-9510-a516109898d6.png)
 ![notify-message-example](https://cloud.githubusercontent.com/assets/8330836/18712254/7acd0f68-8005-11e6-9755-bf24b6e7e682.png)
 
-Each message has a default style provided by qcode-ui that can be overwritten through use of the `classes` preoperty when setting up the plugin – see the Options section below for more information
+Each message is dimissable by clicking on it and has a default style provided by qcode-ui. You can customise the styles by overwritting the `classes` property when setting up the plugin – see [messages](#messages-1) in the [Options](#options) section for more information
+
+### Message Structure
+
+Messages are constructed using `div` elements with the parent `div` using classes from the [messages](#messages-1) option. The child `div` element will always have class `message-content`.
+
+Below is an example of the HTML for the error message shown above:
+
+```html
+<div class="message-area error">
+  <div class="message-content">This is an error message.</div>
+</div>
+```
 
 # Options
 
@@ -44,7 +56,7 @@ messages {
 
 The position of messages in the DOM can be specified through use of `before` and `after` properties. If neither `before` or `after` are specified then the message will be appended to the `body` element. 
 
-You can customise the styling of message types by overwriting the `classes` property and providing your own CSS.
+The styling of messages can be customised by overwriting the `classes` property and providing CSS.
 
 ### Example 
 ```javascript
@@ -84,7 +96,7 @@ $('#myForm').validation({submit: false});
 qtip: {    
     position: {	
         my: 'bottom center',
-	at: 'bottom center',
+        at: 'bottom center',
         viewport: $(window)
     },
     show: {
