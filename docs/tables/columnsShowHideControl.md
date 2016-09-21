@@ -10,4 +10,4 @@ Finally, if the checkbox has the "sticky" attribute set to true, checking or unc
 
 ## See Also
 
-- [columnsShowHide.js](columnsShowHideControl.md)
+- [columnsShowHide.js](columnsShowHide.md)
