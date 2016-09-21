@@ -1,5 +1,5 @@
 # Database Grid Row - dbRow
-Designed as a sub-component of dbGrid.
+Designed as a sub-component of [dbGrid](dbGrid.md).
 
 An html \<tr\> element representing a database record, as part of a database grid. Applies classes "current", "dirty",
 "updating", and "error" to indicated the current row state:

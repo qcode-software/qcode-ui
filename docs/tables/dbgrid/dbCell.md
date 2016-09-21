@@ -1,5 +1,5 @@
 # Database grid cell - dbCell
-Designed as a a sub-component of dbGrid
+Designed as a a sub-component of [dbGrid](dbGrid.md)
 
 A \<td\> element representing a single field in a single record in a database record set.
 
