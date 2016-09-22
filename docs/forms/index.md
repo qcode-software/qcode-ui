@@ -1,10 +1,11 @@
 # Forms
 
-- [Editors](editors/index.md) (editable data widgets)
-- [Record Set](recordset/dbRecordSet.md) (record set plugins)
-- [dbForm Editors](dbFormEditors/index.md) (dbForm widgets)
-- [compass.js](compass.md) (page element positioning comparison)
-- [dbForm.js](dbForm.md) (database-form plugin)
+- [Editors](editors/index.md)
+- [Record Set](recordset/dbRecordSet.md)
+- [dbForm Editors](dbFormEditors/index.md)
+- [compass.js](compass.md)
+- [dbForm.js](dbForm.md)
+- [jquery.navigate](navigate.md)
 
 ## See Also
 

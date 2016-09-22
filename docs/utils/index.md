@@ -2,8 +2,10 @@
 
 (Miscellaneous utility plugins)
 
-
-- [actionConfirm.js](docs/utils/actionConfirm.md) (link confirmation)
-- [calendar.js](docs/utils/calendar.md) (canvas calendar plugin)
-- [cycleClasses.js](docs/utils/cycleClasses.md) (class cycling plugin)
-- [cycleText.js](docs/utils/cycleText.md) (text cycling plugin)
+- [actionConfirm](actionConfirm.md) (link confirmation)
+- [calendar](calendar.md) (canvas calendar plugin)
+- [cycleClasses](cycleClasses.md) (class cycling plugin)
+- [cycleText](cycleText.md) (text cycling plugin)
+- [jquery.maximiseHeight](maximiseHeight.md)
+- [jquery.positionRelativeTo](positionRelativeTo.md)
+- [jquery.sidebar](sidebar.md)

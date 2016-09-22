@@ -13,50 +13,6 @@ All versions of the library available from CDN
 
 ## jsFiddle Demos
 
-### jquery.maximiseHeight
-Maximise the height of an element within the window  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/omehe80e)
-
-### jquery.hoverScroller
-Scroll up and down with mouseover hotspots at the top and bottom of the element  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/vbgFU/)
-
-### jquery.delayedHover
-Trigger custom events delayedHoverIn, delayedHoverOut after grace period following mouseenter or mouseleave  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/6vcPt/)
-
-### jquery.delayedGroupHover
-Trigger custom callbacks on moue hovering over or out of a group of elements after a grace period  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/ze9WH/)
-
-### jquery.enableDisable
-On a hyperlink remove the href attribute and add class disabled. Extendable for other elements  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/tnaZV/)
-
-### jquery.positionRelativeTo
-Get the position of one element relative to another  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/tb7w3/)
-
-### jquery.sidebar
-Turn a div into a right hand sidebar that is resizable and collapsible  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/RV7kH/)
-
-### jquery.theadFixed
-Fixed table headers with scrollable body  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/wAfbu/)
-
-### jquery.tableFilterMin
-Filter the rows of a table on the values of one or more columns, client-side  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/7GUKK/)
-
-### jquery.navigate
-Arrow key navigation between focusable elements  
-[jsFiddle](http://jsfiddle.net/PeterChaplin/bspsf7w5/)
-
-### jquery.check
-Client-side form validation  
-[jsFiddle](http://jsfiddle.net/w2g6vzyp/21/)
-
 ### jquery.textrange
 For getting/setting selected text and cursor position  
 [jsFiddle](http://jsfiddle.net/PeterChaplin/d62x808r/)
