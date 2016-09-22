@@ -4,9 +4,12 @@ All versions of the library available from CDN
 
 **https://d1ab3pgt4r9xn1.cloudfront.net/**
 
-- [Tables](docs/tables.md) (plugins relating to tables)
-- [Forms](docs/forms.md) (plugins relating to forms and data entry)
-- [Utils](docs/utils.md) (other plugins)
+- [Tables](docs/tables/tables.md)
+- [Forms](docs/forms/forms.md) (forms and data entry)
+- [Interaction](docs/interaction/interaction.md)
+- [Data Types](docs/data_types/data_types.md)
+- [Utils](docs/utils/utils.md)
+- [Index](docs/index.md)
 
 ## jsFiddle Demos
 
