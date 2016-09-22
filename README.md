@@ -4,11 +4,11 @@ All versions of the library available from CDN
 
 **https://d1ab3pgt4r9xn1.cloudfront.net/**
 
-- [Tables](docs/tables/tables.md)
-- [Forms](docs/forms/forms.md) (forms and data entry)
-- [Interaction](docs/interaction/interaction.md)
-- [Data Types](docs/data_types/data_types.md)
-- [Utils](docs/utils/utils.md)
+- [Tables](docs/tables/index.md)
+- [Forms](docs/forms/index.md) (forms and data entry)
+- [Interaction](docs/interaction/index.md)
+- [Data Types](docs/data_types/index.md)
+- [Utils](docs/utils/index.md)
 - [Index](docs/index.md)
 
 ## jsFiddle Demos

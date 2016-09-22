@@ -1,6 +1,12 @@
 # Databse Grid - dbGrid
 [Fiddle](http://jsfiddle.net/PeterChaplin/j6HPe/)
 
+## See also:
+
+- [dbRow](dbRow.md)
+- [dbCell](dbCell.md)
+- [editable](../../forms/editors/editable.md)
+
 An html table representing a database record set, with editable contents. Each row represents a record, dbGrid expects
 \<col\> elements with "name" attributes to describe the field names. Columns can be made non-editable with the custom
 attributes "addDisabled" and "updateDisabled".
@@ -186,9 +192,3 @@ Type: integer
 Type: string, number, or function
 
 The width to resize the column to, as per jQuery.fn.width( value ).
-
-## See also:
-
-- [dbRow](dbRow.md)
-- [dbCell](dbCell.md)
-- [editable](../../forms/editable.md)
