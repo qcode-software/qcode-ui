@@ -1,5 +1,5 @@
 # DB Form Editors
 
-- [dbFormCombo.js](dbFormEditors/dbFormCombo.md)
-- [dbFormHTMLArea.js](dbFormEditors/dbFormHTMLArea.md)
-- [dbFormImageCombo.js](dbFormEditors/dbFormImageCombo.md)
+- [dbFormCombo.js](dbFormCombo.md)
+- [dbFormHTMLArea.js](dbFormHTMLArea.md)
+- [dbFormImageCombo.js](dbFormImageCombo.md)
