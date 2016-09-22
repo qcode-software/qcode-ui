@@ -8,4 +8,4 @@
 
 ## See Also
 
-- [DB Grid](tables/dbGrid/dbGrid.md) (editable table data)
+- [DB Grid](../tables/dbGrid/dbGrid.md) (editable table data)
