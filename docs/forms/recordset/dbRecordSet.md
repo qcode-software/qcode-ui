@@ -2,8 +2,8 @@
 [Fiddle](http://jsfiddle.net/PeterChaplin/yCFQP/)
 
 ## See Also 
-- [dbRecord.js](recordset/dbRecord.md)
-- [dbField.js](recordset/dbField.md)
+- [dbRecord.js](dbRecord.md)
+- [dbField.js](dbField.md)
 
 Call on a page element representing an editable database record set. This element should contain descendants that
 represent individual records, which in turn should contain elements representing individual fields. The records should
