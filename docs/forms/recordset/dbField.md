@@ -1,5 +1,6 @@
 # Database field plugin - dbField
-Intended for use by dbRecordSet
+
+Intended for use by [dbRecordSet](dbRecordSet.md)
 
 An element representing a single field in a single record in a database record set. Uses the $.fn.editable plugin.
 

@@ -1,5 +1,6 @@
 # dbEditorHTMLArea plugin
-See also: $.fn.editable
+See also:
+[$.fn.editable](editable.md)
 
 A hovering editor for multi-line input, using a contentEditable div to allow html markup.
 

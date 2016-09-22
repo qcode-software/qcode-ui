@@ -1,10 +1,11 @@
 # Databse Grid - dbGrid
 [Fiddle](http://jsfiddle.net/PeterChaplin/j6HPe/)
 
-See also:
+## See also:
+
 - [dbRow](dbRow.md)
 - [dbCell](dbCell.md)
-- [editable](../../forms/editable.md)
+- [editable](../../forms/editors/editable.md)
 
 An html table representing a database record set, with editable contents. Each row represents a record, dbGrid expects
 \<col\> elements with "name" attributes to describe the field names. Columns can be made non-editable with the custom
