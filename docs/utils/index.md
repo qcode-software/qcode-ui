@@ -9,3 +9,5 @@
 - [jquery.maximiseHeight](maximiseHeight.md)
 - [jquery.positionRelativeTo](positionRelativeTo.md)
 - [jquery.sidebar](sidebar.md)
+- [jquery.transition](transition.md)
+- [qcode.copy](utils/copy.md)

@@ -4,3 +4,4 @@
 - [jquery.delayedHover](delayedHover.md)
 - [jquery.enableDisable](enableDisable.md)
 - [jquery.hoverScroller](hoverScroller.md)
+- [qcode.contextMenu](contextMenu.md)
