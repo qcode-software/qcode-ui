@@ -149,6 +149,17 @@ Timeout for the ajax request in milliseconds.
 $('#myForm').validation({timeout: 5000});
 ```
 
+# Usage Examples
+
+[Invalid Input](http://codepen.io/priyank-qcode/pen/OXKAKE)
+
+This example displays tooltips on form inputs that have invalid input.
+
+[Saving A Form](http://codepen.io/priyank-qcode/pen/pbrmZz)
+
+This example shows how a form can be saved with a notification message returned to inform the user.
+
+
 # Public Functions
 
 ## $('form').validation('parseResponse', response)
