@@ -151,13 +151,9 @@ $('#myForm').validation({timeout: 5000});
 
 # Usage Examples
 
-[Invalid Input](http://codepen.io/priyank-qcode/pen/OXKAKE)
+[Invalid Input](http://codepen.io/priyank-qcode/pen/OXKAKE) – Displays tooltips on form inputs that have invalid input.
 
-This example displays tooltips on form inputs that have invalid input.
-
-[Saving A Form](http://codepen.io/priyank-qcode/pen/pbrmZz)
-
-This example shows how a form can be saved with a notification message returned to inform the user.
+[Saving A Form](http://codepen.io/priyank-qcode/pen/pbrmZz) – Shows how a form can be saved with a notification message returned to inform the user.
 
 
 # Public Functions
