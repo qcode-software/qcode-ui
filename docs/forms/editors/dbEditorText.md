@@ -1,5 +1,7 @@
 # dbEditorText
-See also: $.fn.editable
+
+See also:
+[$.fn.editable](editable.md)
 
 Hovering text input plugin. Call on an element to contain the editor, then pass in an element for the editor to hover
 over as a method argument. Use for editing text-only contents of non-editable elements such as \<div\>s and \<td\>s.

@@ -1,5 +1,7 @@
 # dbEditorBool plugin
-See $.fn.editable
+
+See Also:
+[$.fn.editable](editable.md)
 
 A hovering editor for boolean input. Copies various css attributes from the target element to try and look the same. Note
 that this plugin should be called on the element which will contain the editor, not on the element to be edited.

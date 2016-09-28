@@ -1,6 +1,12 @@
 # Editable
 [Fiddle](http://jsfiddle.net/PeterChaplin/t155eadk/)
 
+## See also
+- [dbEditorBool.js](dbEditorBool.md)
+- [dbEditorHTMLArea.js](dbEditorHTMLArea.md)
+- [dbEditorTextArea.js](dbEditorTextArea.md)
+- [dbEditorText.js](dbEditorText.md)
+
 Use a hovering input to edit an otherwise non-editable element, such as a \<td\> or \<div\>. Supports
 several editor types - text, textarea, htmlarea, combo, bool - by using the associated dbGrid plugins. Also
 supports using the "input" type to wrap the same API around a form input element.

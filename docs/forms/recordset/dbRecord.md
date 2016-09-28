@@ -1,5 +1,6 @@
 # Database record plugin - dbRecord
-Intended for use by dbRecordSet
+
+Intended for use by [dbRecordSet](dbRecordSet.md)
 
 A plugin for an element representing a single record in a database record set. This plugin applies classes "current",
 "dirty", "updating", and "error" as the record moves through those states.
