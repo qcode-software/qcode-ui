@@ -2,7 +2,7 @@
 
 This plugin provides server-side validation of a form through use of ajax requests.
 
-When validation is successful the plugin will parse the response from the server and provide feedback to the user through use of tooltips and general messages. By default, if all inputs are valid then the form will be resubmitted without validation.
+When validation is successful the plugin will parse the response from the server and provide feedback to the user through use of tooltips that are directed at specific form elements and general messages. By default, if all inputs are valid then the form will be resubmitted without validation.
 
 ## Tooltips
 
@@ -10,7 +10,7 @@ A plugin called [qTip2](http://qtip2.com/) is used to display helpful tooltips t
 
 ![qtip-example](https://cloud.githubusercontent.com/assets/8330836/18712248/774b9062-8005-11e6-9abe-acc9f9e7093f.png)
 
-qcode-ui provides a default style for qTips however this can be overidden through the plethora of options qTip has available. See the Options section below for more information.
+qcode-ui provides a default style for qTips however this can be overidden through the plethora of options qTip has available. See [qtip](#qtip) in the [Options](#options) section below for more information.
 
 ## Messages
 
@@ -24,7 +24,7 @@ Each message is dimissable by clicking on it and has a default style provided by
 
 ### Message Structure
 
-Messages are constructed using `div` elements with the parent `div` using classes from the [messages](#messages-1) option. The child `div` element will always have class `message-content`.
+Messages are constructed using `div` elements with the parent `div` using classes from the [messages](#messages-1) option. The child `div` element will always have the class `message-content`.
 
 Below is an example of the HTML for the error message shown above:
 
@@ -56,7 +56,7 @@ messages {
 
 The position of messages in the DOM can be specified through use of `before` and `after` properties. If neither `before` or `after` are specified then the message will be appended to the `body` element. 
 
-The styling of messages can be customised by overwriting the `classes` property and providing CSS.
+The styling of messages can be customised by overwriting the `classes` property and providing your own CSS files in the response to the client.
 
 ### Example 
 ```javascript
