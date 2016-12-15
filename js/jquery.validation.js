@@ -195,6 +195,17 @@
         parseResponse: function(response) {
             // Parses the response to show qtips and messages where necessary.
             var $form = $(this.element);
+            if ( response.action && response.action.redirect ) {
+                // Redirect if the redirect action was given
+                window.location.href = response.action.redirect.value;
+                // Trigger redirect event
+                $form.trigger({
+                    type: 'redirect',
+                    response: response
+                });
+                return;
+            }            
+            
             var $scrollElement = undefined;
             // Check each record item is valid.
             $.each(response.record, function (name, object) {
@@ -217,10 +228,6 @@
             
             // Show messages if action redirect is not given
             var showMessages = true;
-            if ( response.action && response.action.redirect ) {
-                // don't show messages if redirect action was given
-                showMessages = false;
-            }
             if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
                 // don't show messages if resubmit action was given and resubmission has not been disabled
                 showMessages = false;
@@ -243,12 +250,7 @@
                 // re-enable future resubmit actions
                 $form.data('resubmit-disabled',false);
                 
-                // redirect action
-                if ( response.action && response.action.redirect ) {
-                    // Redirect if record was valid and the redirect action was given
-                    window.location.href = response.action.redirect.value;
-                    return;
-                } else if ( this.options.submit ) {
+                if ( this.options.submit ) {
                     // default action
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
