@@ -51,7 +51,7 @@
         _create: function() {
             var widget = this;
             var $form = $(this.element);
-            this.validationState="clean";
+            this.validationState = "clean";
             this.message = [];
             
             // Logic for default http method to be used for validation service.
@@ -91,7 +91,7 @@
                 // Do not allow concurrent validation requests
                 if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
                     $form.addClass('validating');
-                    // change state 
+                    // update plugin state 
                     $form.validation('state','validating');
 
                     // blur() then focus() any text inputs in the form that currently have focus
@@ -142,7 +142,7 @@
                         success: function(response, success, request) {
                             $form.validation('parseResponse', response);
                             
-                            // Trigger validationComplete event
+                            // Deprecated (replaced by valid, invalid events) - Trigger validationComplete event
                             $form.trigger({
                                 type: 'validationComplete',
                                 response: response
@@ -156,7 +156,7 @@
                                 var response = $.parseJSON(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
 
-                                // Trigger validationComplete event
+                                // Deprecated (replaced by valid, invalid events) - Trigger validationComplete event
                                 $form.trigger({
                                     type: 'validationComplete',
                                     response: response
@@ -181,7 +181,7 @@
                                 $form.validation('showMessage', 'error', errorMessage);
                                 scrollToElement($form.validation('getMessage', 'error'), 200);
                                 
-                                // Deprecated - Trigger validationError event
+                                // Deprecated (replaced by error event) - Trigger validationError event
                                 $form.trigger({
                                     type: 'validationError',
                                     errorMessage: errorMessage
@@ -206,11 +206,16 @@
         parseResponse: function(response) {
             // Parses the response to show qtips and messages where necessary.
             var $form = $(this.element);
+            
             if ( response.action && response.action.redirect ) {
                 // Redirect if the redirect action was given
+
+                // Update plugin state
                 $form.validation('state', 'redirecting');
-                
+
+                // Initiate redirect
                 window.location.href = response.action.redirect.value;
+                
                 // Trigger redirect event
                 $form.trigger({
                     type: 'redirect.validation',
@@ -264,18 +269,18 @@
                 // re-enable future resubmit actions
                 $form.data('resubmit-disabled',false);
 
-                // Trigger valid event
-                $form.trigger({
-                    type: 'valid.validation',
-                    response: response
-                });
-                
                 if ( this.options.submit ) {
                     // default action
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
                     return;
-                }                
+                }
+
+                // Trigger valid event
+                $form.trigger({
+                    type: 'valid.validation',
+                    response: response
+                });
             } else {
                 // submission was invalid
                 $form.validation('state', 'invalid');
