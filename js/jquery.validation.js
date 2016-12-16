@@ -90,10 +90,10 @@
 
                 // Do not allow concurrent validation requests
                 if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
-                    $form.addClass('validating');
                     // update plugin state 
                     $form.validation('state','validating');
-
+                    $form.addClass('validating');
+                    
                     // blur() then focus() any text inputs in the form that currently have focus
                     // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
                     $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
@@ -142,7 +142,7 @@
                         success: function(response, success, request) {
                             $form.validation('parseResponse', response);
                             
-                            // Deprecated (replaced by valid, invalid events) - Trigger validationComplete event
+                            // Deprecated (replaced by valid & invalid events) - Trigger validationComplete event
                             $form.trigger({
                                 type: 'validationComplete',
                                 response: response
@@ -156,7 +156,7 @@
                                 var response = $.parseJSON(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
 
-                                // Deprecated (replaced by valid, invalid events) - Trigger validationComplete event
+                                // Deprecated (replaced by valid & invalid events) - Trigger validationComplete event
                                 $form.trigger({
                                     type: 'validationComplete',
                                     response: response
