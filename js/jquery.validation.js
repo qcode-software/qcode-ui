@@ -186,9 +186,9 @@
                                     type: 'validationError',
                                     errorMessage: errorMessage
                                 });
-                                // Trigger validationError event
+                                // Trigger error event
                                 $form.trigger({
-                                    type: 'validation.error',
+                                    type: 'error.validation',
                                     errorMessage: errorMessage
                                 });
                             }
@@ -213,7 +213,7 @@
                 window.location.href = response.action.redirect.value;
                 // Trigger redirect event
                 $form.trigger({
-                    type: 'validation.redirect',
+                    type: 'redirect.validation',
                     response: response
                 });
                 return;
@@ -266,7 +266,7 @@
 
                 // Trigger valid event
                 $form.trigger({
-                    type: 'validation.valid',
+                    type: 'valid.validation',
                     response: response
                 });
                 
@@ -296,7 +296,7 @@
 
                 // Trigger invalid event
                 $form.trigger({
-                    type: 'validation.invalid',
+                    type: 'invalid.validation',
                     response: response
                 });
             }
