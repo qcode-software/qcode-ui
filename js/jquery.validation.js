@@ -142,7 +142,7 @@
                         success: function(response, success, request) {
                             $form.validation('parseResponse', response);
                             
-                            // Deprecated (replaced by valid & invalid events) - Trigger validationComplete event
+                            // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
                             $form.trigger({
                                 type: 'validationComplete',
                                 response: response
@@ -156,7 +156,7 @@
                                 var response = $.parseJSON(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
 
-                                // Deprecated (replaced by valid & invalid events) - Trigger validationComplete event
+                                // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
                                 $form.trigger({
                                     type: 'validationComplete',
                                     response: response
