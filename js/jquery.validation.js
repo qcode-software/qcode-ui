@@ -51,6 +51,7 @@
         _create: function() {
             var widget = this;
             var $form = $(this.element);
+            this.validationState="clean";
             this.message = [];
             
             // Logic for default http method to be used for validation service.
@@ -88,8 +89,10 @@
                 var $form = $(this);
 
                 // Do not allow concurrent validation requests
-                if ( ! $form.is('.validating') ) {
+                if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
                     $form.addClass('validating');
+                    // change state 
+                    $form.validation('state','validating');
 
                     // blur() then focus() any text inputs in the form that currently have focus
                     // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
@@ -160,6 +163,9 @@
                                 });
 
                             } else {
+                                // Update plugin state
+                                $form.validation('state', 'error');
+
                                 if ( textStatus == "parsererror" ) {
                                     // Parse error
                                     var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
@@ -175,9 +181,14 @@
                                 $form.validation('showMessage', 'error', errorMessage);
                                 scrollToElement($form.validation('getMessage', 'error'), 200);
                                 
-                                // Trigger validationError event
+                                // Deprecated - Trigger validationError event
                                 $form.trigger({
                                     type: 'validationError',
+                                    errorMessage: errorMessage
+                                });
+                                // Trigger validationError event
+                                $form.trigger({
+                                    type: 'validation.error',
                                     errorMessage: errorMessage
                                 });
                             }
@@ -197,10 +208,12 @@
             var $form = $(this.element);
             if ( response.action && response.action.redirect ) {
                 // Redirect if the redirect action was given
+                $form.validation('state', 'redirecting');
+                
                 window.location.href = response.action.redirect.value;
                 // Trigger redirect event
                 $form.trigger({
-                    type: 'redirect',
+                    type: 'validation.redirect',
                     response: response
                 });
                 return;
@@ -246,18 +259,26 @@
             
             if ( response.status === 'valid' ) {
                 // submission was valid
+                $form.validation('state', 'valid');
                 
                 // re-enable future resubmit actions
                 $form.data('resubmit-disabled',false);
+
+                // Trigger valid event
+                $form.trigger({
+                    type: 'validation.valid',
+                    response: response
+                });
                 
                 if ( this.options.submit ) {
                     // default action
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
                     return;
-                }
+                }                
             } else {
                 // submission was invalid
+                $form.validation('state', 'invalid');
 
                 // resubmit action - used for authenticity token errors
                 if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
@@ -272,6 +293,12 @@
                     // re-enable future resubmit actions
                     $form.data('resubmit-disabled',false);
                 }
+
+                // Trigger invalid event
+                $form.trigger({
+                    type: 'validation.invalid',
+                    response: response
+                });
             }
 
             // Scroll to the element if there is one to scroll to
@@ -465,7 +492,16 @@
 		    }
 		});
 	    }
-	}        
+	},
+
+        state: function(newState) {
+            // Get/set the state of the plugin
+            if(typeof(newState)=== "undefined") {
+                return this.validationState;
+            } else {
+                this.validationState= newState;
+            }            
+        }
     });
     
 })(jQuery, window, document);
