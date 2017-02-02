@@ -53,6 +53,7 @@
             var $form = $(this.element);
             this.validationState = "clean";
             this.message = [];
+            this.validationAJAX;
             
             // Logic for default http method to be used for validation service.
             if ( typeof this.options.method === 'undefined' ) {
@@ -130,7 +131,7 @@
                     }
                     
                     // Send the form data
-                    $.ajax({
+                    widget.validationAJAX = $.ajax({
                         url: url,
                         data: data,
                         method: ajax_method,
@@ -149,48 +150,50 @@
                             });
                         },
                         error: function(jqXHR, textStatus, errorThrown) {
-                            var returnType = jqXHR.getResponseHeader('content-type');
-                            
-                            if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
-                                // HTTP Error with JSON response
-                                var response = $.parseJSON(jqXHR.responseText)
-                                $form.validation('parseResponse', response);
+                            if ( errorThrown != "abort" ) {
+                                var returnType = jqXHR.getResponseHeader('content-type');
+                                
+                                if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
+                                    // HTTP Error with JSON response
+                                    var response = $.parseJSON(jqXHR.responseText)
+                                    $form.validation('parseResponse', response);
 
-                                // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
-                                $form.trigger({
-                                    type: 'validationComplete',
-                                    response: response
-                                });
+                                    // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
+                                    $form.trigger({
+                                        type: 'validationComplete',
+                                        response: response
+                                    });
 
-                            } else {
-                                // Update plugin state
-                                $form.validation('state', 'error');
-
-                                if ( textStatus == "parsererror" ) {
-                                    // Parse error
-                                    var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
-                                } else if ( textStatus == "timeout" ) {
-                                    // Timeout
-                                    var errorMessage = "Sorry, your request timed out. Please try again.";
                                 } else {
-                                    // Generic error message
-                                    var errorMessage = "Sorry, something went wrong. Please try again.";
-                                } 
-                                
-                                // Show error message
-                                $form.validation('showMessage', 'error', errorMessage);
-                                scrollToElement($form.validation('getMessage', 'error'), 200);
-                                
-                                // Deprecated (replaced by error event) - Trigger validationError event
-                                $form.trigger({
-                                    type: 'validationError',
-                                    errorMessage: errorMessage
-                                });
-                                // Trigger error event
-                                $form.trigger({
-                                    type: 'error.validation',
-                                    errorMessage: errorMessage
-                                });
+                                    // Update plugin state
+                                    $form.validation('state', 'error');
+
+                                    if ( textStatus == "parsererror" ) {
+                                        // Parse error
+                                        var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
+                                    } else if ( textStatus == "timeout" ) {
+                                        // Timeout
+                                        var errorMessage = "Sorry, your request timed out. Please try again.";
+                                    } else {
+                                        // Generic error message
+                                        var errorMessage = "Sorry, something went wrong. Please try again.";
+                                    } 
+                                    
+                                    // Show error message
+                                    $form.validation('showMessage', 'error', errorMessage);
+                                    scrollToElement($form.validation('getMessage', 'error'), 200);
+                                    
+                                    // Deprecated (replaced by error event) - Trigger validationError event
+                                    $form.trigger({
+                                        type: 'validationError',
+                                        errorMessage: errorMessage
+                                    });
+                                    // Trigger error event
+                                    $form.trigger({
+                                        type: 'error.validation',
+                                        errorMessage: errorMessage
+                                    });
+                                }
                             }
                         },
                         complete: function(jqXHR, textStatus) {
@@ -227,7 +230,7 @@
             var $scrollElement = undefined;
             // Check each record item is valid.
             $.each(response.record, function (name, object) {
-                var $element = $form.find('[name=' + name + ']');
+                var $element = $form.find('[name=' + name + ']:not(input[type=hidden])');
                 if ( ! object.valid ) {
                     // Record item not valid - mark invalid and display message to user.
                     if ( $element.length !== 0 ) {
@@ -506,6 +509,20 @@
             } else {
                 this.validationState= newState;
             }            
+        },
+
+        abort: function() {
+            // Abort current validation request
+            var widget = this;
+            var $form = $(widget.element);
+            // abort current AJAX request
+            widget.validationAJAX.abort()
+            // set validation plugin state to error
+            $form.validation('state', 'error');
+            // remove validating class
+            $form.removeClass('validating');
+            // re-enable future resubmit actions
+            $form.data('resubmit-disabled',false);            
         }
     });
     
