@@ -136,6 +136,7 @@
                         data: data,
                         method: ajax_method,
                         dataType: 'JSON',
+                        cache: false,
                         headers: {
                             'X-Authenticity-Token': Cookies.get('authenticity_token')
                         },
