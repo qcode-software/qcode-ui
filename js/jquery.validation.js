@@ -83,130 +83,145 @@
                 }
             });
             
-            // Handler function for submit event.
-            function validate (event) {
-                // Stop the form submission.
-                event.preventDefault();
+            // Handler function for submit event.            
+            $form.on('submit.validate', function(event) {
                 var $form = $(this);
 
-                // Do not allow concurrent validation requests
-                if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
-                    // update plugin state 
-                    $form.validation('state','validating');
-                    $form.addClass('validating');
-                    
-                    // blur() then focus() any text inputs in the form that currently have focus
-                    // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
-                    $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
+                // Stop the form submission.
+                event.preventDefault();
 
-                    // Hide any existing validation messages
-                    $('[data-hasqtip]:visible').qtip('hide');
-                    $form.validation('hideMessage', 'alert');
-                    $form.validation('hideMessage', 'notify');
-                    $form.validation('hideMessage', 'error');
-
-                    // Set up form data
-                    var data = $form.serializeArray();
-                    var ajax_method;
-                    if ( method === 'POST' || method === 'GET' ) {
-                        ajax_method = method;
-                    } else {
-                        // Emulate HTTP method
-                        ajax_method = 'POST';
-                        var found = false;
-                        $.each(data, function(index, item) {
-                            if ( item.name === '_method' ) {
-                                item.value = method;
-                                found = true;
-                                return;
-                            }
-                        });
-
-                        if ( !found ) {
-                            data.push({
-                                name: '_method',
-                                value: method
-                            });
-                        }
-                    }
-                    
-                    // Send the form data
-                    widget.validationAJAX = $.ajax({
-                        url: url,
-                        data: data,
-                        method: ajax_method,
-                        dataType: 'JSON',
-                        cache: false,
-                        headers: {
-                            'X-Authenticity-Token': Cookies.get('authenticity_token')
-                        },
-                        timeout: widget.options.timeout,
-                        success: function(response, success, request) {
-                            $form.validation('parseResponse', response);
-                            
-                            // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
-                            $form.trigger({
-                                type: 'validationComplete',
-                                response: response
-                            });
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            if ( errorThrown != "abort" ) {
-                                var returnType = jqXHR.getResponseHeader('content-type');
-                                
-                                if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
-                                    // HTTP Error with JSON response
-                                    var response = $.parseJSON(jqXHR.responseText)
-                                    $form.validation('parseResponse', response);
-
-                                    // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
-                                    $form.trigger({
-                                        type: 'validationComplete',
-                                        response: response
-                                    });
-
-                                } else {
-                                    // Update plugin state
-                                    $form.validation('state', 'error');
-
-                                    if ( textStatus == "parsererror" ) {
-                                        // Parse error
-                                        var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
-                                    } else if ( textStatus == "timeout" ) {
-                                        // Timeout
-                                        var errorMessage = "Sorry, your request timed out. Please try again.";
-                                    } else {
-                                        // Generic error message
-                                        var errorMessage = "Sorry, something went wrong. Please try again.";
-                                    } 
-                                    
-                                    // Show error message
-                                    $form.validation('showMessage', 'error', errorMessage);
-                                    scrollToElement($form.validation('getMessage', 'error'), 200);
-                                    
-                                    // Deprecated (replaced by error event) - Trigger validationError event
-                                    $form.trigger({
-                                        type: 'validationError',
-                                        errorMessage: errorMessage
-                                    });
-                                    // Trigger error event
-                                    $form.trigger({
-                                        type: 'error.validation',
-                                        errorMessage: errorMessage
-                                    });
-                                }
-                            }
-                        },
-                        complete: function(jqXHR, textStatus) {
-                            $form.removeClass('validating');
-                        }                            
-                    });
-                }
-            }
-            
-            $form.on('submit.validate', validate);
+                // Set up form data
+                var data = $form.serializeArray();
+               
+                // perform validation
+                $form.validation('validate', method, url, data);
+            });
         },
+        
+        validate: function(method, url, data) {
+            // Function to perform validation
+            var widget = this;
+            var $form = $(widget.element);
+            
+            if ( typeof(data) === 'undefined' ) {
+                // Initialise optional data argument as an empty object
+                data = {};
+            }
 
+            // Do not allow concurrent validation requests
+            if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
+                // update plugin state 
+                $form.validation('state','validating');
+                $form.addClass('validating');
+                
+                // blur() then focus() any text inputs in the form that currently have focus
+                // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
+                $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
+
+                // Hide any existing validation messages
+                $('[data-hasqtip]:visible').qtip('hide');
+                $form.validation('hideMessage', 'alert');
+                $form.validation('hideMessage', 'notify');
+                $form.validation('hideMessage', 'error');
+
+                // AJAX method
+                var ajax_method;
+                if ( method === 'POST' || method === 'GET' ) {
+                    ajax_method = method;
+                } else {
+                    // Emulate HTTP method
+                   ajax_method = 'POST';
+                    var found = false;
+                    $.each(data, function(index, item) {
+                        if ( item.name === '_method' ) {
+                            item.value = method;
+                            found = true;
+                            return;
+                        }
+                    });
+
+                    if ( !found ) {
+                        data.push({
+                            name: '_method',
+                            value: method
+                        });
+                    }
+                }
+                
+                // Send the form data
+                widget.validationAJAX = $.ajax({
+                    url: url,
+                    data: data,
+                    method: ajax_method,
+                    dataType: 'JSON',
+                    cache: false,
+                    headers: {
+                        'X-Authenticity-Token': Cookies.get('authenticity_token')
+                    },
+                    timeout: widget.options.timeout,
+                    success: function(response, success, request) {
+                        $form.validation('parseResponse', response);
+                        
+                        // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
+                        $form.trigger({
+                            type: 'validationComplete',
+                            response: response
+                        });
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        if ( errorThrown != "abort" ) {
+                            var returnType = jqXHR.getResponseHeader('content-type');
+                            
+                            if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
+                                // HTTP Error with JSON response
+                                var response = $.parseJSON(jqXHR.responseText)
+                                $form.validation('parseResponse', response);
+
+                                // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
+                                $form.trigger({
+                                    type: 'validationComplete',
+                                    response: response
+                                });
+
+                            } else {
+                                // Update plugin state
+                                $form.validation('state', 'error');
+
+                                if ( textStatus == "parsererror" ) {
+                                    // Parse error
+                                    var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
+                                } else if ( textStatus == "timeout" ) {
+                                    // Timeout
+                                    var errorMessage = "Sorry, your request timed out. Please try again.";
+                                } else {
+                                    // Generic error message
+                                    var errorMessage = "Sorry, something went wrong. Please try again.";
+                                } 
+                                
+                                // Show error message
+                                $form.validation('showMessage', 'error', errorMessage);
+                                scrollToElement($form.validation('getMessage', 'error'), 200);
+                                
+                                // Deprecated (replaced by error event) - Trigger validationError event
+                                $form.trigger({
+                                    type: 'validationError',
+                                    errorMessage: errorMessage
+                                });
+                                // Trigger error event
+                                $form.trigger({
+                                    type: 'error.validation',
+                                    errorMessage: errorMessage
+                                });
+                            }
+                        }
+                    },
+                    complete: function(jqXHR, textStatus) {
+                        $form.removeClass('validating');
+                    }                            
+                });
+            }
+        },
+        
         parseResponse: function(response) {
             // Parses the response to show qtips and messages where necessary.
             var $form = $(this.element);
