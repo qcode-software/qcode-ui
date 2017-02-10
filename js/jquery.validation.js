@@ -98,15 +98,11 @@
             });
         },
         
-        validate: function(method, url, data) {
+        validate: function(method, url, post_data) {
             // Function to perform validation
             var widget = this;
             var $form = $(widget.element);
-            
-            if ( typeof(data) === 'undefined' ) {
-                // Initialise optional data argument as an empty object
-                data = {};
-            }
+            data = post_data || [];
 
             // Do not allow concurrent validation requests
             if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
