@@ -87,19 +87,38 @@
             $form.on('submit.validate', function(event) {
                 var $form = $(this);
 
-                // Stop the form submission.
-                event.preventDefault();
+                if ( typeof FormData === "function" ) {
+                    // AJAX file upload supported
+                    // Stop the form submission.
+                    event.preventDefault();
 
-                // Set up form data
-                var data = $form.serializeArray();
-               
-                // perform validation
-                $form.validation('validate', method, url, data);
+                    // Set up form data
+                    var data = new FormData($form[0]);
+
+                    // perform validation
+                    $form.validation('validate', method, url, data, false);
+
+                } else if ( $form.prop('enctype') === "application/x-www-form-urlencoded" ) {
+                    // File upload not supported, but unneeded
+                    // Stop the form submission.
+                    event.preventDefault();
+
+                    // Set up form data
+                    var data = $form.serializeArray();
+
+                    // perform validation
+                    $form.validation('validate', method, url, data, true);
+
+                }
+                // Otherwise fall back to default form submission
             });
         },
         
-        validate: function(method, url, post_data) {
+        validate: function(method, url, post_data, processData) {
             // Function to perform validation
+            if ( typeof processData === "undefined" ) {
+                processData = true;
+            }
             var widget = this;
             var $form = $(widget.element);
             data = post_data || [];
@@ -148,6 +167,8 @@
                 widget.validationAJAX = $.ajax({
                     url: url,
                     data: data,
+                    processData: false,
+                    contentType: false,
                     method: ajax_method,
                     dataType: 'JSON',
                     cache: false,
