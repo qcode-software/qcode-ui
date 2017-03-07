@@ -87,14 +87,31 @@
             $form.on('submit.validate', function(event) {
                 var $form = $(this);
 
-                // Stop the form submission.
-                event.preventDefault();
 
-                // Set up form data
-                var data = $form.serializeArray();
-               
-                // perform validation
-                $form.validation('validate', method, url, data);
+                if ( typeof FormData === "function" ) {
+                    // AJAX file upload supported
+                    // Stop the form submission.
+                    event.preventDefault();
+
+                    // Set up form data
+                    var data = new FormData($form[0]);
+
+                    // perform validation
+                    $form.validation('validate', method, url, data);
+
+                } else if ( $form.prop('enctype') === "application/x-www-form-urlencoded" ) {
+                    // File upload not supported, but unneeded
+                    // Stop the form submission.
+                    event.preventDefault();
+
+                    // Set up form data
+                    var data = $form.serializeArray();
+
+                    // perform validation
+                    $form.validation('validate', method, url, data);
+
+                }
+                // Otherwise fall back to default form submission
             });
         },
         
