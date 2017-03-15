@@ -87,8 +87,11 @@
             $form.on('submit.validate', function(event) {
                 var $form = $(this);
 
-                if ( typeof FormData === "function" ) {
-                    // AJAX file upload supported
+                if ( typeof FormData === "function"
+                     && typeof FormData.prototype.get === "function"
+                   ) {
+                    // AJAX file upload fully supported
+
                     // Stop the form submission.
                     event.preventDefault();
 
@@ -96,10 +99,39 @@
                     var data = new FormData($form[0]);
 
                     // perform validation
-                    $form.validation('validate', method, url, data, false);
+                    $form.validation('validate', method, url, data);
+                    
+
+                } else if ( typeof FormData === "function" ) {
+                    // AJAX file upload append-only supported
+
+                    // Stop the form submission.
+                    event.preventDefault();
+                    
+                    var hidden = $form.find('[name="_method"]');
+                    if ( hidden.length > 0 ) {
+                        var _method = hidden.val();
+                        hidden.val(method);
+                        var data = new FormData($form[0]);
+                        hidden.val(_method);
+                        
+                    } else {
+                        var hidden = $('<input type="hidden" name="_method"/>')
+                                .val(method)
+                                .appendTo($form);
+                        var data = new FormData($form[0]);
+                        hidden.remove();
+                    }
+                    if ( method === 'GET' ) {
+                        var ajax_method = 'GET';
+                    } else {
+                        var ajax_method = 'POST'
+                    }
+                    $form.validation('validate', ajax_method, url, data);
 
                 } else if ( $form.prop('enctype') === "application/x-www-form-urlencoded" ) {
                     // File upload not supported, but unneeded
+
                     // Stop the form submission.
                     event.preventDefault();
 
@@ -107,18 +139,19 @@
                     var data = $form.serializeArray();
 
                     // perform validation
-                    $form.validation('validate', method, url, data, true);
+                    $form.validation('validate', method, url, data);
 
                 }
                 // Otherwise fall back to default form submission
             });
         },
         
-        validate: function(method, url, post_data, processData) {
+        validate: function(method, url, post_data) {
             // Function to perform validation
-            if ( typeof processData === "undefined" ) {
-                processData = true;
-            }
+
+            var isFormData = typeof FormData === "function"
+                    && FormData.prototype.isPrototypeOf(post_data);
+
             var widget = this;
             var $form = $(widget.element);
             data = post_data || [];
@@ -143,32 +176,38 @@
                 var ajax_method;
                 if ( method === 'POST' || method === 'GET' ) {
                     ajax_method = method;
+
                 } else {
                     // Emulate HTTP method
-                   ajax_method = 'POST';
-                    var found = false;
-                    $.each(data, function(index, item) {
-                        if ( item.name === '_method' ) {
-                            item.value = method;
-                            found = true;
-                            return;
-                        }
-                    });
+                    ajax_method = 'POST';
 
-                    if ( !found ) {
-                        data.push({
-                            name: '_method',
-                            value: method
+                    if ( isFormData ) {
+                        data.set('_method',method);
+
+                    } else {
+                        var found = false;
+
+                        $.each(data, function(index, item) {
+                            if ( item.name === '_method' ) {
+                                item.value = method;
+                                found = true;
+                                return;
+                            }
                         });
+
+                        if ( !found ) {
+                            data.push({
+                                name: '_method',
+                                value: method
+                            });
+                        }
                     }
                 }
                 
                 // Send the form data
-                widget.validationAJAX = $.ajax({
+                var ajaxOptions = {
                     url: url,
                     data: data,
-                    processData: false,
-                    contentType: false,
                     method: ajax_method,
                     dataType: 'JSON',
                     cache: false,
@@ -235,7 +274,12 @@
                     complete: function(jqXHR, textStatus) {
                         $form.removeClass('validating');
                     }                            
-                });
+                };
+                if ( isFormData ) {
+                    ajaxOptions.processData = false;
+                    ajaxOptions.contentType = false;
+                }
+                widget.validationAJAX = $.ajax(ajaxOptions);
             }
         },
         
