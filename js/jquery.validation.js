@@ -107,6 +107,8 @@
                     // Stop the form submission.
                     event.preventDefault();
 
+                    // Cannot modify FormData once created,
+                    // so fix "_method" before calling validate method
                     var ajax_method;
                     if ( method === 'POST' || method === 'GET' ) {
                         ajax_method = method;
