@@ -66,11 +66,6 @@
                 method = this.options.method;
             }
             
-            // Default url used for validation service.
-            if ( typeof this.options.url === 'undefined' ) {
-                var url = $form.attr('action');
-            }
-            
             // Click handlers for submit buttons on the form.
             // Used to add hidden input elements with the button's name and value because jQuery form.serialize() function does not
             // include submit button data since it has no way of knowing which button was used to submit the form.
@@ -85,7 +80,11 @@
             
             // Handler function for submit event.            
             $form.on('submit.validate', function(event) {
-                var $form = $(this);
+
+                // Default url used for validation service.
+                if ( typeof widget.options.url === 'undefined' ) {
+                    var url = $form.attr('action');
+                }
 
                 if ( typeof FormData === "function"
                      && typeof FormData.prototype.get === "function"
@@ -107,25 +106,29 @@
 
                     // Stop the form submission.
                     event.preventDefault();
+
+                    var ajax_method;
+                    if ( method === 'POST' || method === 'GET' ) {
+                        ajax_method = method;
+                        var data = new FormData($form[0]);
+
+                    } else {
+                        ajax_method = 'POST';
                     
-                    var hidden = $form.find('[name="_method"]');
-                    if ( hidden.length > 0 ) {
-                        var _method = hidden.val();
-                        hidden.val(method);
-                        var data = new FormData($form[0]);
-                        hidden.val(_method);
-                        
-                    } else {
-                        var hidden = $('<input type="hidden" name="_method"/>')
-                                .val(method)
-                                .appendTo($form);
-                        var data = new FormData($form[0]);
-                        hidden.remove();
-                    }
-                    if ( method === 'GET' ) {
-                        var ajax_method = 'GET';
-                    } else {
-                        var ajax_method = 'POST'
+                        var hidden = $form.find('[name="_method"]');
+                        if ( hidden.length > 0 ) {
+                            var _method = hidden.val();
+                            hidden.val(method);
+                            var data = new FormData($form[0]);
+                            hidden.val(_method);
+                            
+                        } else {
+                            var hidden = $('<input type="hidden" name="_method"/>')
+                                    .val(method)
+                                    .appendTo($form);
+                            var data = new FormData($form[0]);
+                            hidden.remove();
+                        }
                     }
                     $form.validation('validate', ajax_method, url, data);
 
