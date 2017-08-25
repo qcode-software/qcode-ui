@@ -188,7 +188,7 @@ function fixate(oDiv,oTH) {
  // END
 }
 
-function window.onbeforeprint() {
+$(window).on('beforeprint', function() {
   var divs=document.body.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv=divs[i];
@@ -200,9 +200,9 @@ function window.onbeforeprint() {
       oDiv.style.overflowX='visible';
     }
   }
-}
+});
 
-function window.onafterprint() {
+$(window).on('afterprint', function() {
   var divs=document.body.getElementsByTagName('DIV');
   for(var i=0;i<divs.length;i++) {
     var oDiv=divs[i];
@@ -213,5 +213,5 @@ function window.onafterprint() {
       oDiv.style.overflowX=oDiv.savedOverflowX;
     }
   }
-}
+});
 
