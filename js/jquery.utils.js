@@ -419,7 +419,7 @@ function scrollToElement($element, duration) {
 
     // Element is not fully visible - scroll page to the element
     if ( $('html').scrollTop()) {        
-        $('body').animate({
+        $('html').animate({
             scrollTop: $element.offset().top
         }, duration);
         return;
