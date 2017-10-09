@@ -416,11 +416,18 @@ function scrollToElement($element, duration) {
     var viewportBottom = viewportTop + $window.height();
     var elementTop = $element.offset().top;
     var elementBottom = elementTop + $element.height();
-    
-    if ( elementBottom > viewportBottom || elementTop < viewportTop ) {                                
-        // Element is not fully visible - scroll page to the element
+
+    // Element is not fully visible - scroll page to the element
+    if ( $('html').scrollTop()) {        
         $('body').animate({
             scrollTop: $element.offset().top
         }, duration);
+        return;
     }
+    if ( $('body').scrollTop()) {
+        $('body').animate({
+            scrollTop: $element.offset().top
+        }, duration);
+        return;
+    }    
 }
