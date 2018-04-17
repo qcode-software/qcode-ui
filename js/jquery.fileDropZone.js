@@ -14,6 +14,9 @@
                 .on('drop', function(event) {
                     event.preventDefault();
                     var fileList = event.originalEvent.dataTransfer.files;
+                    if { fileList.length > 0 ) {
+                        // Do nothing
+                        
                     if ( allowedMimeTypes === "any" || Array.prototype.every.call(fileList, function(file) {
                         return ( allowedMimeTypes.indexOf(file.type) > -1 )
                     }) ) {
