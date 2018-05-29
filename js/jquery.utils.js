@@ -433,3 +433,56 @@ function scrollToElement($element, duration) {
         }
     }
 }
+
+
+;(function($, window, document) {
+
+    $.fn.scrollToElement = function($element, duration) {
+        // Scrolls to the top of the given element if it isn't fully visible in the viewport.
+        var $viewport = $(this);
+
+        if ( $viewport.is($(window)) ) {
+            var viewportTop = 0;
+            var viewportBottom = viewportTop + $viewport.height();
+        } else {
+            var viewportTop = $viewport.offset().top;
+            var viewportBottom = viewportTop + $viewport.outerHeight();    
+        }
+        var viewportScrollTop = $viewport.scrollTop();      
+        var elementTop = $element.offset().top;
+        var elementBottom = elementTop + $element.outerHeight();
+        
+        if ( elementBottom > viewportBottom  ) {
+            var newViewportScrollTop = $viewport.scrollTop() + elementBottom - viewportBottom ;            
+        } else if ( elementTop < viewportTop ) {
+            var newViewportScrollTop = $viewport.scrollTop() - elementBottom + viewportBottom;
+        } else {
+            var newViewportScrollTop = $viewport.scrollTop();
+        }
+        
+        if ( newViewportScrollTop != viewportScrollTop ) {
+            // Element is not fully visible - scroll page to the element.
+            if ( $viewport.closest('body').length ) {
+                // Viewport element contained inside body - scrolling needs to happen on viewport element.
+                $viewport.animate({
+                    scrollTop: newViewportScrollTop
+                }, duration);
+                return;               
+            } else {
+                // Scrolling needs to happen on either html or body element.
+                if ( $('html').scrollTop()) {            
+                    $('html').animate({
+                        scrollTop: newViewportScrollTop
+                    }, duration);
+                    return;
+                }
+                if ( $('body').scrollTop()) {            
+                    $('body').animate({
+                        scrollTop: newViewportScrollTop
+                    }, duration);
+                    return;
+                }
+            }
+        }
+    };
+})(jQuery, window, document);
