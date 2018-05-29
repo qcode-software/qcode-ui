@@ -454,23 +454,26 @@ function scrollToElement($element, duration) {
         var elementBottom = elementTop + $element.outerHeight();
         
         if ( elementBottom > viewportBottom  ) {
+            // Element below bottom of viewport - scroll down so element is visible.
             var newViewportScrollTop = $viewportScrollTop + elementBottom - viewportBottom ;            
         } else if ( elementTop < viewportTop ) {
+            // Element above top of viewport - scroll up so element is visible.
             var newViewportScrollTop = $viewportScrollTop - elementBottom + viewportBottom;
         } else {
+            // Element is visible in viewport - no further scrolling necessary.
             var newViewportScrollTop = $viewportScrollTop;
         }
         
         if ( newViewportScrollTop != viewportScrollTop ) {
-            // Element is not fully visible - scroll page to the element.
+            // Viewport scrollTop needs to updated.
             if ( $viewport.closest('body').length ) {
-                // Viewport element contained inside body - scrolling needs to happen on viewport element.
+                // ScrollTop should be updated on viewport element.
                 $viewport.animate({
                     scrollTop: newViewportScrollTop
                 }, duration);
                 return;               
             } else {
-                // Scrolling needs to happen on either html or body element.
+                // ScrollTop should be updated on html and/or body element.
                 if ( $('html').scrollTop()) {            
                     $('html').animate({
                         scrollTop: newViewportScrollTop
