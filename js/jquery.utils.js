@@ -440,6 +440,7 @@ function scrollToElement($element, duration) {
     $.fn.scrollToElement = function($element, duration) {
         // Scrolls to the top of the given element if it isn't fully visible in the viewport.
         var $viewport = $(this);
+        var $viewportScrollTop = $viewport.scrollTop();
 
         if ( $viewport.is($(window)) ) {
             var viewportTop = 0;
@@ -453,11 +454,11 @@ function scrollToElement($element, duration) {
         var elementBottom = elementTop + $element.outerHeight();
         
         if ( elementBottom > viewportBottom  ) {
-            var newViewportScrollTop = $viewport.scrollTop() + elementBottom - viewportBottom ;            
+            var newViewportScrollTop = $viewportScrollTop + elementBottom - viewportBottom ;            
         } else if ( elementTop < viewportTop ) {
-            var newViewportScrollTop = $viewport.scrollTop() - elementBottom + viewportBottom;
+            var newViewportScrollTop = $viewportScrollTop - elementBottom + viewportBottom;
         } else {
-            var newViewportScrollTop = $viewport.scrollTop();
+            var newViewportScrollTop = $viewportScrollTop;
         }
         
         if ( newViewportScrollTop != viewportScrollTop ) {
