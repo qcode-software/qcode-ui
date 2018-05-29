@@ -465,7 +465,7 @@ function scrollToElement($element, duration) {
         }
         
         if ( newViewportScrollTop != viewportScrollTop ) {
-            // Viewport scrollTop needs to updated.
+            // Viewport scrollTop needs to be updated.
             if ( $viewport.closest('body').length ) {
                 // ScrollTop should be updated on viewport element.
                 $viewport.animate({
