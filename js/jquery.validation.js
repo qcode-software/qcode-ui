@@ -428,7 +428,7 @@
                     // Qtip hasn't been rendered yet - listen for render event then scroll to element
                     $scrollElement.qtip('api').set('events.visible', function(event, api) {
                         // Clicking on the tooltip causes the target element to gain focus and hides the tooltip.
-                        api.elements.tooltip.on('click', function(event) {
+                        api.elements.tooltip.one('click', function(event) {
                             api.elements.target.focus();
                             // Call the hide method in case the default hide events were overwritten
                             api.hide();

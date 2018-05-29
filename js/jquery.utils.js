@@ -440,28 +440,31 @@ function scrollToElement($element, duration) {
     $.fn.scrollToElement = function($element, duration) {
         // Scrolls to the top of the given element if it isn't fully visible in the viewport.
         var $viewport = $(this);
-        var $viewportScrollTop = $viewport.scrollTop();
+        var viewportScrollTop = $viewport.scrollTop();      
 
         if ( $viewport.is($(window)) ) {
-            var viewportTop = 0;
-            var viewportBottom = viewportTop + $viewport.height();
+            var viewportTop = viewportScrollTop;
+            var viewportHeight = $viewport.height();
+            var viewportBottom = viewportTop + viewportHeight;
+
         } else {
             var viewportTop = $viewport.offset().top;
-            var viewportBottom = viewportTop + $viewport.outerHeight();    
+            var viewportHeight = $viewport.outerHeight();
+            var viewportBottom = viewportTop + viewportHeight;    
         }
-        var viewportScrollTop = $viewport.scrollTop();      
         var elementTop = $element.offset().top;
-        var elementBottom = elementTop + $element.outerHeight();
+        var elementHeight = $element.outerHeight();
+        var elementBottom = elementTop + elementHeight;
         
         if ( elementBottom > viewportBottom  ) {
-            // Element below bottom of viewport - scroll down so element is visible.
-            var newViewportScrollTop = $viewportScrollTop + elementBottom - viewportBottom ;            
+            // Element below bottom of viewport - scroll down so element is at the top of viewport.
+            var newViewportScrollTop = viewportScrollTop + (elementBottom - viewportBottom) + viewportHeight - elementHeight - 10;            
         } else if ( elementTop < viewportTop ) {
-            // Element above top of viewport - scroll up so element is visible.
-            var newViewportScrollTop = $viewportScrollTop - elementBottom + viewportBottom;
+            // Element above top of viewport - scroll up so element is at top of viewport.
+            var newViewportScrollTop = viewportScrollTop + (elementTop - viewportTop) - 10;
         } else {
             // Element is visible in viewport - no further scrolling necessary.
-            var newViewportScrollTop = $viewportScrollTop;
+            var newViewportScrollTop = viewportScrollTop;
         }
         
         if ( newViewportScrollTop != viewportScrollTop ) {
