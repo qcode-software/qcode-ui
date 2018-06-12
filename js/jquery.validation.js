@@ -116,7 +116,7 @@
 
                     } else {
                         ajax_method = 'POST';
-                    
+                        
                         var hidden = $form.find('[name="_method"]');
                         if ( hidden.length > 0 ) {
                             var _method = hidden.val();
@@ -126,8 +126,8 @@
                             
                         } else {
                             var hidden = $('<input type="hidden" name="_method"/>')
-                                    .val(method)
-                                    .appendTo($form);
+                                .val(method)
+                                .appendTo($form);
                             var data = new FormData($form[0]);
                             hidden.remove();
                         }
@@ -155,7 +155,7 @@
             // Function to perform validation
 
             var isFormData = typeof FormData === "function"
-                    && FormData.prototype.isPrototypeOf(post_data);
+                && FormData.prototype.isPrototypeOf(post_data);
 
             var widget = this;
             var $form = $(widget.element);
