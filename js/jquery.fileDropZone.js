@@ -14,15 +14,28 @@
                 .on('drop', function(event) {
                     event.preventDefault();
                     var fileList = event.originalEvent.dataTransfer.files;
-                    if { fileList.length > 0 ) {
-                        // Do nothing
-                        
-                    if ( allowedMimeTypes === "any" || Array.prototype.every.call(fileList, function(file) {
-                        return ( allowedMimeTypes.indexOf(file.type) > -1 )
-                    }) ) {
+                    
+                    if ( fileList.length == 0 ) {
+                        // No files dropped, do nothing
+                        return
+                    }
+
+                    function fileAllowed(file) {
+                        // Return true iff file is in list of allowed types
+                        return ( allowedMimeTypes.indexOf(file.type) > -1 );
+                    }
+                    
+                    if ( allowedMimeTypes === "any"
+                         ||
+                         Array.prototype.every.call(fileList, fileAllowed)
+                       ) {
+                        // Every file is of an allowed type
                         handleFiles(fileList);
                     } else {
-                        qcode.alert('Only ' + allowedMimeTypes.join(', ') + ' files are currently supported');
+                        // Some files are not of allowed type
+                        qcode.alert('Only '
+                                    + allowedMimeTypes.join(', ')
+                                    + ' files are currently supported');
                     }
                 })
                 .on('dragleave drop', function(event) {
