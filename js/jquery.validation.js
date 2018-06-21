@@ -172,7 +172,7 @@
                 $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
 
                 // Hide any existing validation messages
-                $('[data-hasqtip]:visible').qtip('hide');
+                $form.validation('hideValidationMessage');
                 $form.validation('hideMessage', 'alert');
                 $form.validation('hideMessage', 'notify');
                 $form.validation('hideMessage', 'error');
@@ -467,9 +467,16 @@
         },
         
         hideValidationMessage: function($element) {
-            // Hide the validation message for the given element.
-            $element.qtip('hide');
-            return $element;
+            // Hide the validation tooltip for the given element or all tooltips
+            // if no arguments given.
+            if ( arguments.length == 0 ) {
+                return $('[data-hasqtip]:visible',$(this.element)).each(function(index, element) {
+                    $(element).qtip('hide');
+                });
+            } else {
+                $element.qtip('hide');
+                return $element;
+            }
         },
         
         showMessage: function(type, message) {
