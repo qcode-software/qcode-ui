@@ -19,11 +19,18 @@
   proc /upload {name chunk chunks file filename mime_type} {
   }
 */
+
+// Use namespace object and immediately-invoked function expression
+// to limit scope
 var qcode = qcode || {};
 qcode.Uploader = (function(undefined) {
     "use strict";
+
+    // Constructor function to export
     var Uploader = function(options) {
+        // Generate a unique id for this upload
         this.id = guidGenerate();
+
         this.file = options.file;
 
         // Maximum size (in bytes) of each chunk
@@ -48,31 +55,45 @@ qcode.Uploader = (function(undefined) {
     }
     jQuery.extend(Uploader.prototype, {
         start: function() {
+            // Begin the upload
             var uploader = this;
             var file = this.file;
             var chunkSize = this.chunkSize;
 
-            // Constructor function for new batch
+            // Constructor function for new batch of requests
             function Batch(chunks,startIndex,totalChunkCount) {
-                this.chunks = chunks;
-                this.startIndex = startIndex;
-                this.totalChunkCount = totalChunkCount;
+                this.chunks = chunks; // array of file chunks to upload
+                this.startIndex = startIndex; // index of first chunk
+                this.totalChunkCount = totalChunkCount; // total count of chunks
+                this.callbacks = [];
             }
             jQuery.extend(Batch.prototype, {
                 done: function(callback) {
-                    this.callback = callback;
+                    // Add a callback function, to be called when request
+                    // batch is complete
+                    this.callbacks.push(callback);
                 },
-                resolve: function(xhr) {
-                    this.callback(xhr);
+                _resolve: function(xhr) {
+                    // (Private) requests are complete, run the callbacks
+                    // with the last request object to resolve
+                    if ( this.callbacks.length > 0 ) {
+                        this.callbacks.foreach(function(callback,i){
+                            callback(xhr);
+                        });
+                    }
                 },
                 start: function() {
+                    // Start the request batch
                     var batch = this;
                     var requests = [];
+
+                    // Create a request for each chunk in batch
                     this.chunks.forEach(function(chunk, i) {
                         var index = batch.startIndex + i;
                         var xhr = new XMLHttpRequest();
                         requests.push(xhr);
 
+                        // Form data sent with each request
                         var data = new FormData();
                         data.append('name',uploader.id);
                         data.append('chunk',index);
@@ -86,6 +107,8 @@ qcode.Uploader = (function(undefined) {
                                             data.append(name,value);
                                         });
                         }
+
+                        // Request event listeners:
                         
                         xhr.onreadystatechange = function() {
                             // Listen for request success / failure
@@ -107,16 +130,20 @@ qcode.Uploader = (function(undefined) {
                                 return;
                             }
 
+                            // Mark this chunk as 100% complete
+                            // and update progress
                             chunkProgress[index] = chunk.size;
                             progress();
-                            
+
+                            // Check if all requests in batch are complete
                             if ( requests.every(function(request) {
                                 return ( request.readyState == request.DONE );
                             }) ) {
-                                batch.resolve(xhr);
+                                batch._resolve(xhr);
                             }
                         }
-                    
+
+                        // Listen for "progress" event, where supported
                         xhr.onprogress = function(event) {
                             if ( event.lengthComputable ) {
                                 chunkProgress[index] =
@@ -124,17 +151,23 @@ qcode.Uploader = (function(undefined) {
                                 progress();
                             }
                         };
-                        
+
+                        // Open the request so headers can be sent
                         xhr.open('POST', uploader.url);
-                
+
+                        // Set request headers
                         $.each(uploader.headers, function(header, value) {
                             xhr.setRequestHeader(header, value);
                         });
 
+                        // Send request data
                         xhr.send(data);
                     });
                 }
             });
+            // End of "Batch" definition
+
+            // Continue with "start upload"
 
             // Chunk the file
             var chunks = [];
@@ -164,26 +197,38 @@ qcode.Uploader = (function(undefined) {
                 chunkBatches[0] = chunks;
             }
 
-            // Create batches to upload the chunks, begin upload
+            // Create request batch objects to upload the chunks, begin upload
             var batches = [];
             chunkBatches.forEach(function(chunks, i) {
+
+                // Loop should only run once if batchSize === Infinity
+                // firstChunk index will be 0
                 if ( uploader.batchSize === Infinity ) {
                     var firstChunk = 0;
                 } else {
                     var firstChunk = i * uploader.batchSize;
                 }
+
+                // Create new batch object
                 var batch = new Batch(chunks,firstChunk,chunkCount);
+                
                 batches.push(batch);
+
+                // Chain batches - when previous batch is done, start this one
                 if ( i > 0 ) {
                     batches[i - 1].done(batch.start.bind(batch));
                 }
             });
+
+            // When final batch is done, trigger uploader complete
             batches[batches.length - 1].done(function(xhr){
                 $(uploader).trigger('complete', [xhr]);
             });
+
+            // Start first batch
             batches[0].start();
 
-            // Function & array to track total upload progress
+            // Function to track total upload progress
             var chunkProgress = [];
             function progress() {
                 var totalProgress = 0;
