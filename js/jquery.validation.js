@@ -48,14 +48,14 @@
             submit: true,
             timeout: 20000
         },
-        
+
         _create: function() {
             var widget = this;
             var $form = $(this.element);
             this.validationState = "clean";
             this.message = [];
             this.validationAJAX;
-            
+
             // Logic for default http method to be used for validation service.
             if ( typeof this.options.method === 'undefined' ) {
                 if ( typeof $form.attr('method') === 'undefined' || $form.attr('method') === 'GET' ) {
@@ -66,7 +66,7 @@
             } else {
                 method = this.options.method;
             }
-            
+
             // Click handlers for submit buttons on the form.
             // Used to add hidden input elements with the button's name and value because jQuery form.serialize() function does not
             // include submit button data since it has no way of knowing which button was used to submit the form.
@@ -78,7 +78,7 @@
                     $(this).before('<input type="hidden" name="' + name  + '" value="' + value  + '">');
                 }
             });
-            
+
             // Handler function for submit event.
             $form.on('submit.validate', function(event) {
                 
@@ -100,8 +100,7 @@
                     
                     // perform validation
                     $form.validation('validate', method, url, data);
-                    
-                    
+
                 } else if ( typeof FormData === "function" ) {
                     // AJAX file upload append-only supported
                     
@@ -117,14 +116,13 @@
                         
                     } else {
                         ajax_method = 'POST';
-                        
                         var hidden = $form.find('[name="_method"]');
                         if ( hidden.length > 0 ) {
                             var _method = hidden.val();
                             hidden.val(method);
                             var data = new FormData($form[0]);
                             hidden.val(_method);
-                            
+
                         } else {
                             var hidden = $('<input type="hidden" name="_method"/>')
                                 .val(method)
@@ -151,13 +149,13 @@
                 // Otherwise fall back to default form submission
             });
         },
-        
+
         validate: function(method, url, post_data) {
             // Function to perform validation
             
             var isFormData = typeof FormData === "function"
                 && FormData.prototype.isPrototypeOf(post_data);
-            
+
             var widget = this;
             var $form = $(widget.element);
             data = post_data || [];
@@ -167,13 +165,13 @@
                 // update plugin state
                 $form.validation('state','validating');
                 $form.addClass('validating');
-                
+
                 // blur() then focus() any text inputs in the form that currently have focus
                 // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
                 $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
                 
                 // Hide any existing validation messages
-                $('[data-hasqtip]:visible').qtip('hide');
+                $form.validation('hideValidationMessage');
                 $form.validation('hideMessage', 'alert');
                 $form.validation('hideMessage', 'notify');
                 $form.validation('hideMessage', 'error');
@@ -209,7 +207,7 @@
                         }
                     }
                 }
-                
+
                 // Send the form data
                 var ajaxOptions = {
                     url: url,
@@ -223,7 +221,7 @@
                     timeout: widget.options.timeout,
                     success: function(response, success, request) {
                         $form.validation('parseResponse', response);
-                        
+
                         // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
                         $form.trigger({
                             type: 'validationComplete',
@@ -233,7 +231,7 @@
                     error: function(jqXHR, textStatus, errorThrown) {
                         if ( errorThrown != "abort" ) {
                             var returnType = jqXHR.getResponseHeader('content-type');
-                            
+
                             if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
                                 // HTTP Error with JSON response
                                 var response = $.parseJSON(jqXHR.responseText)
@@ -289,11 +287,11 @@
                 widget.validationAJAX = $.ajax(ajaxOptions);
             }
         },
-        
+
         parseResponse: function(response) {
             // Parses the response to show qtips and messages where necessary.
             var $form = $(this.element);
-            
+
             if ( response.action && response.action.redirect ) {
                 // Redirect if the redirect action was given
                 
@@ -302,7 +300,7 @@
                 
                 // Initiate redirect
                 window.location.href = response.action.redirect.value;
-                
+
                 // Trigger redirect event
                 $form.trigger({
                     type: 'redirect.validation',
@@ -310,7 +308,7 @@
                 });
                 return;
             }
-            
+
             var $scrollElement = undefined;
             // Check each record item is valid.
             $.each(response.record, function (name, object) {
@@ -330,7 +328,7 @@
                     $element.removeClass('invalid');
                 }
             });
-            
+
             // Show messages if action redirect is not given
             var showMessages = true;
             if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
@@ -348,11 +346,11 @@
                     }
                 });
             }
-            
+
             if ( response.status === 'valid' ) {
                 // submission was valid
                 $form.validation('state', 'valid');
-                
+
                 // re-enable future resubmit actions
                 $form.data('resubmit-disabled',false);
                 
@@ -401,7 +399,7 @@
                 var scrollToHighest = function(api, $viewport) {
                     // Scrolls to the highest element on the page out of three possible elements:
                     // the qtip, the element the qtip is bound to, and the label for the element if it has one.
-                    
+
                     // Check if element has a label
                     var $label = $form.find('label[for=' + $scrollElement.attr('id') + ']');
                     if ( $label.length === 0 ) {
@@ -410,9 +408,9 @@
                     
                     // If a label was found then check if the label is higher than the element on the page
                     if ( $label.length > 0 && $label.offset().top < $scrollElement.offset().top ) {
-                        $scrollElement = $label
+                        $scrollElement = $label;
                     }
-                    
+
                     // Compare the top offset of highest elements to the qtip tooltip
                     if ( api.tooltip.offset().top < $scrollElement.offset().top ) {
                         $scrollElement = api.tooltip;
@@ -442,7 +440,7 @@
                 $viewport.scrollToElement($scrollElement, 200);
             }
         },
-        
+
         showValidationMessage: function($element, message) {
             // Show the validation message with the message as the content for the given element.
             var api = $element.qtip('api');
@@ -469,27 +467,34 @@
             }
             return $element;
         },
-        
+
         hideValidationMessage: function($element) {
-            // Hide the validation message for the given element.
-            $element.qtip('hide');
-            return $element;
+            // Hide the validation tooltip for the given element or all tooltips
+            // if no arguments given.
+            if ( arguments.length == 0 ) {
+                return $('[data-hasqtip]:visible',$(this.element)).each(function(index, element) {
+                    $(element).qtip('hide');
+                });
+            } else {
+                $element.qtip('hide');
+                return $element;
+            }
         },
-        
+
         showMessage: function(type, message) {
             // Show the message of the type given with message as the content.
             if (! this.message[type]) {
                 // Message area doesn't exist so create it.
                 var messageDiv = $('<div></div>').addClass(this.options.messages[type].classes)
                 var messageContent = $('<div></div>').html(message).addClass('message-content');
-                
+
                 messageDiv.append(messageContent).hide();
                 var validationElement = $(this.element);
                 messageDiv.click(function(event){
                     validationElement.validation('hideMessage', type);
                     validationElement.validation('reposition');
                 });
-                
+
                 if (this.options.messages[type].before) {
                     $(this.options.messages[type].before).before(messageDiv);
                 } else if (this.options.messages[type].after) {
@@ -510,7 +515,7 @@
                 }, this));
             }
         },
-        
+
         hideMessage: function(type) {
             // Hide the message with the given type.
             if (this.message[type]) {
@@ -524,7 +529,7 @@
             // Returns the jquery object for the message of the given type
             return this.message[type];
         },
-        
+
         reposition: function() {
             // Reposition or hide all validation messages.
             $('[data-hasqtip]').each(function() {
@@ -543,12 +548,12 @@
             this._validationMessagesDestroy();
             this._messagesDestroy();
         },
-        
+
         _validationMessagesDestroy: function() {
             // Destroy any tooltips associated with this element or it's descendants.
             $(this.element).find('[data-hasqtip]').qtip('destroy');
         },
-        
+
         _messagesDestroy: function() {
             // Remove all messages added by this plugin.
             if ( this.message['alert'] ) {
@@ -561,7 +566,7 @@
                 this.message['notify'].remove();
             }
         },
-        
+
         setValuesFromResponse: function(response) {
             // Set form values from the response
             var $form = $(this.element);
@@ -587,7 +592,7 @@
                 });
             }
         },
-        
+
         state: function(newState) {
             // Get/set the state of the plugin
             if(typeof(newState)=== "undefined") {
@@ -611,5 +616,5 @@
             $form.data('resubmit-disabled',false);
         }
     });
-    
+
 })(jQuery, window, document);
