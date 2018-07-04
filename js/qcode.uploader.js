@@ -190,9 +190,9 @@ qcode.Uploader = (function(undefined) {
                 uploader.postData
             );
         },
-        setChunkProgress: function(index, progress) {
-            // Set the numer of bytes uploaded
-            this.chunkProgress[index] = progress;
+        setChunkProgress: function(chunkIndex, bytes) {
+            // Set the number of bytes uploaded
+            this.chunkProgress[chunkIndex] = bytes;
         },
         updateProgress: function() {
             // Function to track total upload progress
@@ -226,7 +226,7 @@ qcode.Uploader = (function(undefined) {
             return chunks;
         },
         _createBatches: function(chunks, batchSize) {
-            // Create request batch objects to upload the chunks, begin upload
+            // Create request batch objects to upload the chunks, return array
             var batches = [];
             if ( chunks.length > batchSize ) {
                 var batchCount = Math.ceil(chunks.length / batchSize);
