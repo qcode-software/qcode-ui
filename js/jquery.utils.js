@@ -433,3 +433,63 @@ function scrollToElement($element, duration) {
         }
     }
 }
+
+
+;(function($, window, document) {
+
+    $.fn.scrollToElement = function($element, duration) {
+        // Scrolls to the top of the given element if it isn't fully visible in the viewport.
+        var $viewport = $(this);
+        var viewportScrollTop = $viewport.scrollTop();      
+
+        if ( $viewport.is($(window)) ) {
+            var viewportTop = viewportScrollTop;
+            var viewportHeight = $viewport.height();
+            var viewportBottom = viewportTop + viewportHeight;
+
+        } else {
+            var viewportTop = $viewport.offset().top;
+            var viewportHeight = $viewport.outerHeight();
+            var viewportBottom = viewportTop + viewportHeight;    
+        }
+        var elementTop = $element.offset().top;
+        var elementHeight = $element.outerHeight();
+        var elementBottom = elementTop + elementHeight;
+        
+        if ( elementBottom > viewportBottom  ) {
+            // Element below bottom of viewport - scroll down so element is at the top of viewport.
+            var newViewportScrollTop = viewportScrollTop + (elementBottom - viewportBottom) + viewportHeight - elementHeight - 10;            
+        } else if ( elementTop < viewportTop ) {
+            // Element above top of viewport - scroll up so element is at top of viewport.
+            var newViewportScrollTop = viewportScrollTop + (elementTop - viewportTop) - 10;
+        } else {
+            // Element is visible in viewport - no further scrolling necessary.
+            var newViewportScrollTop = viewportScrollTop;
+        }
+        
+        if ( newViewportScrollTop != viewportScrollTop ) {
+            // Viewport scrollTop needs to be updated.
+            if ( $viewport.closest('body').length ) {
+                // ScrollTop should be updated on viewport element.
+                $viewport.animate({
+                    scrollTop: newViewportScrollTop
+                }, duration);
+                return;               
+            } else {
+                // ScrollTop should be updated on html and/or body element.
+                if ( $('html').scrollTop()) {            
+                    $('html').animate({
+                        scrollTop: newViewportScrollTop
+                    }, duration);
+                    return;
+                }
+                if ( $('body').scrollTop()) {            
+                    $('body').animate({
+                        scrollTop: newViewportScrollTop
+                    }, duration);
+                    return;
+                }
+            }
+        }
+    };
+})(jQuery, window, document);

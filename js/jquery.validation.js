@@ -1,9 +1,10 @@
 // Server-side validation plugin
 ;(function($, window, document) {
-
+    
     $.widget('qcode.validation', {
-
+        
         options: {
+            viewport: $(window),
             qtip: {
                 position: {
                     my: 'bottom center',
@@ -72,7 +73,7 @@
             $form.find('button:not([type]), button[type="submit"], input[type="submit"]').click(function(event) {
                 var name = $(this).attr('name');
                 var value = $(this).attr('value');
-
+                
                 if ($form.find('input[type="hidden"][name="' + name + '"]').length === 0) {
                     $(this).before('<input type="hidden" name="' + name  + '" value="' + value  + '">');
                 }
@@ -80,43 +81,41 @@
 
             // Handler function for submit event.
             $form.on('submit.validate', function(event) {
-
+                
                 // Default url used for validation service.
                 if ( typeof widget.options.url === 'undefined' ) {
                     var url = $form.attr('action');
                 }
-
+                
                 if ( typeof FormData === "function"
                      && typeof FormData.prototype.get === "function"
                    ) {
                     // AJAX file upload fully supported
-
+                    
                     // Stop the form submission.
                     event.preventDefault();
-
+                    
                     // Set up form data
                     var data = new FormData($form[0]);
-
+                    
                     // perform validation
                     $form.validation('validate', method, url, data);
 
-
                 } else if ( typeof FormData === "function" ) {
                     // AJAX file upload append-only supported
-
+                    
                     // Stop the form submission.
                     event.preventDefault();
-
+                    
                     // Cannot modify FormData once created,
                     // so fix "_method" before calling validate method
                     var ajax_method;
                     if ( method === 'POST' || method === 'GET' ) {
                         ajax_method = method;
                         var data = new FormData($form[0]);
-
+                        
                     } else {
                         ajax_method = 'POST';
-
                         var hidden = $form.find('[name="_method"]');
                         if ( hidden.length > 0 ) {
                             var _method = hidden.val();
@@ -133,19 +132,19 @@
                         }
                     }
                     $form.validation('validate', ajax_method, url, data);
-
+                    
                 } else if ( $form.prop('enctype') === "application/x-www-form-urlencoded" ) {
                     // File upload not supported, but unneeded
-
+                    
                     // Stop the form submission.
                     event.preventDefault();
-
+                    
                     // Set up form data
                     var data = $form.serializeArray();
-
+                    
                     // perform validation
                     $form.validation('validate', method, url, data);
-
+                    
                 }
                 // Otherwise fall back to default form submission
             });
@@ -153,14 +152,14 @@
 
         validate: function(method, url, post_data) {
             // Function to perform validation
-
+            
             var isFormData = typeof FormData === "function"
                 && FormData.prototype.isPrototypeOf(post_data);
 
             var widget = this;
             var $form = $(widget.element);
             data = post_data || [];
-
+            
             // Do not allow concurrent validation requests
             if ( $form.validation('state') !== 'validating' && $form.validation('state') !== 'redirecting' ) {
                 // update plugin state
@@ -170,28 +169,28 @@
                 // blur() then focus() any text inputs in the form that currently have focus
                 // hack to fix bug where autocomplete popup can become detached from input when page layout changes (when error messages displayed/hidden)
                 $('input:focus', $form).filter('[type=text],[type=email],[type=tel],[type=password]').blur().focus();
-
+                
                 // Hide any existing validation messages
                 $form.validation('hideValidationMessage');
                 $form.validation('hideMessage', 'alert');
                 $form.validation('hideMessage', 'notify');
                 $form.validation('hideMessage', 'error');
-
+                
                 // AJAX method
                 var ajax_method;
                 if ( method === 'POST' || method === 'GET' ) {
                     ajax_method = method;
-
+                    
                 } else {
                     // Emulate HTTP method
                     ajax_method = 'POST';
-
+                    
                     if ( isFormData ) {
                         data.set('_method',method);
-
+                        
                     } else {
                         var found = false;
-
+                        
                         $.each(data, function(index, item) {
                             if ( item.name === '_method' ) {
                                 item.value = method;
@@ -199,7 +198,7 @@
                                 return;
                             }
                         });
-
+                        
                         if ( !found ) {
                             data.push({
                                 name: '_method',
@@ -237,17 +236,17 @@
                                 // HTTP Error with JSON response
                                 var response = $.parseJSON(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
-
+                                
                                 // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
                                 $form.trigger({
                                     type: 'validationComplete',
                                     response: response
                                 });
-
+                                
                             } else {
                                 // Update plugin state
                                 $form.validation('state', 'error');
-
+                                
                                 if ( textStatus == "parsererror" ) {
                                     // Parse error
                                     var errorMessage = "Sorry, we were unable to parse the server's response. Please try again.";
@@ -258,11 +257,12 @@
                                     // Generic error message
                                     var errorMessage = "Sorry, something went wrong. Please try again.";
                                 }
-
+                                
                                 // Show error message
                                 $form.validation('showMessage', 'error', errorMessage);
-                                scrollToElement($form.validation('getMessage', 'error'), 200);
-
+                                var $viewport =  widget.options.viewport;
+                                $viewport.scrollToElement($form.validation('getMessage', 'error'), 200);
+                                
                                 // Deprecated (replaced by error event) - Trigger validationError event
                                 $form.trigger({
                                     type: 'validationError',
@@ -294,10 +294,10 @@
 
             if ( response.action && response.action.redirect ) {
                 // Redirect if the redirect action was given
-
+                
                 // Update plugin state
                 $form.validation('state', 'redirecting');
-
+                
                 // Initiate redirect
                 window.location.href = response.action.redirect.value;
 
@@ -318,7 +318,7 @@
                     if ( $element.length !== 0 ) {
                         $form.validation('showValidationMessage', $element, object.message);
                         $element.addClass('invalid');
-
+                        
                         // Compare to highest element on page so far
                         if ( typeof $scrollElement === 'undefined' || $element.offset().top < $scrollElement.offset().top ) {
                             $scrollElement = $element;
@@ -353,14 +353,14 @@
 
                 // re-enable future resubmit actions
                 $form.data('resubmit-disabled',false);
-
+                
                 if ( this.options.submit ) {
                     // default action
                     // resubmit form without validation
                     $form.off('submit.validate').submit();
                     return;
                 }
-
+                
                 // Trigger valid event
                 $form.trigger({
                     type: 'valid.validation',
@@ -369,7 +369,7 @@
             } else {
                 // submission was invalid
                 $form.validation('state', 'invalid');
-
+                
                 // resubmit action - used for authenticity token errors
                 if ( response.action && response.action.resubmit && $form.data('resubmit-disabled')!==true ) {
                     // remove the validating flag before auto-resubmission
@@ -383,19 +383,20 @@
                     // re-enable future resubmit actions
                     $form.data('resubmit-disabled',false);
                 }
-
+                
                 // Trigger invalid event
                 $form.trigger({
                     type: 'invalid.validation',
                     response: response
                 });
             }
-
+            
             // Scroll to the element if there is one to scroll to
+            var $viewport =  this.options.viewport;
             if ( typeof $scrollElement !== 'undefined' && typeof $scrollElement.qtip('api') !== 'undefined' ) {
                 // $scrollElement exists and has has a qtip
-
-                var scrollToHighest = function(api) {
+                
+                var scrollToHighest = function(api, $viewport) {
                     // Scrolls to the highest element on the page out of three possible elements:
                     // the qtip, the element the qtip is bound to, and the label for the element if it has one.
 
@@ -404,38 +405,39 @@
                     if ( $label.length === 0 ) {
                         $label = $scrollElement.closest('label');
                     }
-
+                    
                     // If a label was found then check if the label is higher than the element on the page
                     if ( $label.length > 0 && $label.offset().top < $scrollElement.offset().top ) {
-                        $scrollElement = $label
+                        $scrollElement = $label;
                     }
 
                     // Compare the top offset of highest elements to the qtip tooltip
                     if ( api.tooltip.offset().top < $scrollElement.offset().top ) {
                         $scrollElement = api.tooltip;
                     }
-
-                    scrollToElement($scrollElement, 200);
+                    
+                    $viewport.scrollToElement($scrollElement, 200);
                 }
-
+                
                 if ( $scrollElement.qtip('api').rendered ) {
                     // Qtip for element has been rendered so can scroll to it
-                    scrollToHighest($scrollElement.qtip('api'));
+                    scrollToHighest($scrollElement.qtip('api'), $viewport);
                 } else {
                     // Qtip hasn't been rendered yet - listen for render event then scroll to element
-                    $scrollElement.qtip('api').set('events.render', function(event, api) {
+                    $scrollElement.qtip('api').set('events.visible', function(event, api) {
                         // Clicking on the tooltip causes the target element to gain focus and hides the tooltip.
-                        api.elements.tooltip.on('click', function(event) {
+                        api.elements.tooltip.one('click', function(event) {
                             api.elements.target.focus();
                             // Call the hide method in case the default hide events were overwritten
                             api.hide();
                         });
-                        scrollToHighest(api);
+                        scrollToHighest(api, $viewport);
                     });
                 }
             } else if ( typeof $scrollElement !== 'undefined' ) {
                 // $scrollElement exists but has no qtip - scroll to the $scrollElement
-                scrollToElement($scrollElement, 200);
+                
+                $viewport.scrollToElement($scrollElement, 200);
             }
         },
 
@@ -500,7 +502,7 @@
                 } else {
                     $('body').append(messageDiv);
                 }
-
+                
                 this.message[type] = messageDiv;
                 messageDiv.show(200, $.proxy(function() {
                     this.reposition();
@@ -522,7 +524,7 @@
                 }, this));
             }
         },
-
+        
         getMessage: function(type) {
             // Returns the jquery object for the message of the given type
             return this.message[type];
@@ -538,7 +540,7 @@
                 }
             });
         },
-
+        
         _destroy: function() {
             // Remove the elements created by this plugin.
             this.element.unbind('submit.validate');
@@ -599,7 +601,7 @@
                 this.validationState= newState;
             }
         },
-
+        
         abort: function() {
             // Abort current validation request
             var widget = this;
