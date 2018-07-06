@@ -266,7 +266,7 @@
                                 // Show error message
                                 $form.validation('showMessage', 'error', errorMessage);
                                 
-                                if ( this.options.scrollToFeedback.enabled ) {
+                                if ( widget.options.scrollToFeedback.enabled ) {
                                     // scroll to highest feedback element
                                     $form.validation('scrollToFeedback');
                                 }
