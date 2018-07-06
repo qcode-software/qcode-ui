@@ -574,9 +574,15 @@
             var $element = $([]);
             
             // notification messages - find highest element.
-            $.each(this.message, function(i, $message) {
+            console.log(this.message);
+            $.each(["error", "alert", "notify"], function(type) {
+                var $message = $form.validation('getMessage', type);
                 if ( $element.length === 0
-                     || ( $message.is(':visible') && $message.offset().top < $element.offset().top) ) {
+                     || ( typeof $message !== "undefined"
+                          && $message.is(':visible')
+                          && $message.offset().top < $element.offset().top
+                        )
+                   ) {
                     $element = $message;              
                 } 
             });
