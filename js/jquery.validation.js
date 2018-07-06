@@ -45,7 +45,11 @@
                 }
             },
             submit: true,
-            timeout: 20000
+            timeout: 20000,
+            scrollToFeedback: {
+                enabled: true, // true, false
+                behavior: 'smooth' // smooth, instant, auto
+            }
         },
 
         _create: function() {
@@ -261,7 +265,11 @@
 
                                 // Show error message
                                 $form.validation('showMessage', 'error', errorMessage);
-                                scrollToElement($form.validation('getMessage', 'error'), 200);
+                                
+                                if ( this.options.scrollToFeedback.enabled ) {
+                                    // scroll to highest feedback element
+                                    $form.validation('scrollToFeedback');
+                                }
 
                                 // Deprecated (replaced by error event) - Trigger validationError event
                                 $form.trigger({
@@ -309,7 +317,6 @@
                 return;
             }
 
-            var $scrollElement = undefined;
             // Check each record item is valid.
             $.each(response.record, function (name, object) {
                 var $element = $form.find('[name=' + name + ']:not(input[type=hidden])');
@@ -318,11 +325,6 @@
                     if ( $element.length !== 0 ) {
                         $form.validation('showValidationMessage', $element, object.message);
                         $element.addClass('invalid');
-
-                        // Compare to highest element on page so far
-                        if ( typeof $scrollElement === 'undefined' || $element.offset().top < $scrollElement.offset().top ) {
-                            $scrollElement = $element;
-                        }
                     }
                 } else {
                     $element.removeClass('invalid');
@@ -338,12 +340,6 @@
             if ( showMessages && response.message ) {
                 $.each(response.message, function(type, object) {
                     $form.validation('showMessage', type, object.value);
-                    // Compare message to highest element on page
-                    var $message = $form.validation('getMessage', type);
-                    if ( typeof $scrollElement === 'undefined' ||
-                         ($message.is(':visible') && $message.offset().top < $scrollElement.offset().top) ) {
-                        $scrollElement = $message;
-                    }
                 });
             }
 
@@ -391,51 +387,9 @@
                 });
             }
 
-            // Scroll to the element if there is one to scroll to
-            if ( typeof $scrollElement !== 'undefined' && typeof $scrollElement.qtip('api') !== 'undefined' ) {
-                // $scrollElement exists and has has a qtip
-
-                var scrollToHighest = function(api) {
-                    // Scrolls to the highest element on the page out of three possible elements:
-                    // the qtip, the element the qtip is bound to, and the label for the element if it has one.
-
-                    // Check if element has a label
-                    var $label = $form.find('label[for=' + $scrollElement.attr('id') + ']');
-                    if ( $label.length === 0 ) {
-                        $label = $scrollElement.closest('label');
-                    }
-
-                    // If a label was found then check if the label is higher than the element on the page
-                    if ( $label.length > 0 && $label.offset().top < $scrollElement.offset().top ) {
-                        $scrollElement = $label
-                    }
-
-                    // Compare the top offset of highest elements to the qtip tooltip
-                    if ( api.tooltip.offset().top < $scrollElement.offset().top ) {
-                        $scrollElement = api.tooltip;
-                    }
-
-                    scrollToElement($scrollElement, 200);
-                }
-
-                if ( $scrollElement.qtip('api').rendered ) {
-                    // Qtip for element has been rendered so can scroll to it
-                    scrollToHighest($scrollElement.qtip('api'));
-                } else {
-                    // Qtip hasn't been rendered yet - listen for render event then scroll to element
-                    $scrollElement.qtip('api').set('events.render', function(event, api) {
-                        // Clicking on the tooltip causes the target element to gain focus and hides the tooltip.
-                        api.elements.tooltip.on('click', function(event) {
-                            api.elements.target.focus();
-                            // Call the hide method in case the default hide events were overwritten
-                            api.hide();
-                        });
-                        scrollToHighest(api);
-                    });
-                }
-            } else if ( typeof $scrollElement !== 'undefined' ) {
-                // $scrollElement exists but has no qtip - scroll to the $scrollElement
-                scrollToElement($scrollElement, 200);
+            if ( this.options.scrollToFeedback.enabled ) {
+                // scroll to highest feedback element
+                $form.validation('scrollToFeedback');
             }
         },
 
@@ -612,6 +566,36 @@
             $form.removeClass('validating');
             // re-enable future resubmit actions
             $form.data('resubmit-disabled',false);
+        },
+        
+        scrollToFeedback: function() {
+            // Scroll to highest feedback element.
+            var $form = $(this.element);
+            var $element = $([]);
+            
+            // notification messages - find highest element.
+            $.each(this.message, function(i, $message) {
+                if ( $element.length === 0
+                     || ( $message.is(':visible') && $message.offset().top < $element.offset().top) ) {
+                    $element = $message;              
+                } 
+            });
+            
+            // invalid inputs - find highest element.
+            $('.invalid[name]:not(input[type=hidden])', $form).each(function() {
+                var $input = $(this);
+                if ( $element.length === 0
+                     || $input.offset().top < $element.offset().top
+                   ) {
+                    $element = $input;  
+                } 
+            });
+            
+            // scroll to highest element.
+            if ( $element.length ) {
+                $element.get(0).scrollIntoView(this.options.scrollToFeedback);
+                
+            }         
         }
     });
 
