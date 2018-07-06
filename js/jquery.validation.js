@@ -479,7 +479,11 @@
 
         getMessage: function(type) {
             // Returns the jquery object for the message of the given type
-            return this.message[type];
+            if ( this.message[type] ) {
+                return this.message[type]
+            } else {
+                return $([]);
+            }
         },
 
         reposition: function() {
@@ -574,16 +578,18 @@
             var $element = $([]);
             
             // notification messages - find highest element.
-            $.each(["error", "alert", "notify"], function(type) {
-                var $message = $form.validation('getMessage', type);
-                if ( $element.length === 0
-                     || ( typeof $message !== "undefined"
-                          && $message.is(':visible')
-                          && $message.offset().top < $element.offset().top
-                        )
+            var $messages = $([])
+                .add($form.validation('getMessage', 'error'))
+                .add($form.validation('getMessage', 'alert'))
+                .add($form.validation('getMessage', 'notify'));
+            $messages.each(function() {
+                var $message = $(this);
+                
+                if ( $element.length === 0                     
+                     || ( $message.is(':visible') && $message.offset().top < $element.offset().top)
                    ) {
                     $element = $message;              
-                } 
+                }
             });
             
             // invalid inputs - find highest element.
