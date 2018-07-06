@@ -574,7 +574,6 @@
             var $element = $([]);
             
             // notification messages - find highest element.
-            console.log(this.message);
             $.each(["error", "alert", "notify"], function(type) {
                 var $message = $form.validation('getMessage', type);
                 if ( $element.length === 0
