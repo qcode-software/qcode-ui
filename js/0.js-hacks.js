@@ -61,7 +61,7 @@ if ( ! String.prototype.trim ) {
 // Polyfill for scrollIntoView()
 //******************************************
 
-(function() {
+;(function() {
   'use strict';
 
 // polyfill
@@ -497,4 +497,4 @@ if (typeof exports === 'object' && typeof module !== 'undefined') {
   // global
   polyfill();
 }
-})
+})()
