@@ -58,7 +58,7 @@ if ( ! String.prototype.trim ) {
 
 
 //*******************************************
-// Polyfill for scrollIntoView()
+// Polyfill for mmooth scroll behaviour of scrollIntoView()
 //******************************************
 
 ;(function() {
