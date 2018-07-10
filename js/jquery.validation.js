@@ -585,8 +585,10 @@
             $messages.each(function() {
                 var $message = $(this);
                 
-                if ( $element.length === 0                     
-                     || ( $message.is(':visible') && $message.offset().top < $element.offset().top)
+                if ( $message.is(':visible')
+                     && ( $element.length === 0 
+                          || $message.offset().top < $element.offset().top
+                        )
                    ) {
                     $element = $message;              
                 }
