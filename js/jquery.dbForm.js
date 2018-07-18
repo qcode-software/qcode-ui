@@ -455,11 +455,23 @@
             var element = $('#' + name);
             if (object.valid) {
                 // update the value of the field
+
+                // input, textarea, or select elements
                 if (element.is('input, textarea, select')) {
                     element.val(object.value);
-                } else {
-                    element.html(object.value);
+                    return;
                 }
+
+                // radio button groups
+                var radios = element.find('input[type=radio]');
+                if ( radios.length > 0 ) {
+                    radios.val([object.value]);
+                    return;
+                }
+
+                // other elements
+                element.html(object.value);
+
             } else {
                 // show invalid message
                 $.check.showMessage(element, object.message);
