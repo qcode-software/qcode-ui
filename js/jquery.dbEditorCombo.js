@@ -191,7 +191,10 @@
 		this.editor.textrange('set', "all");
 		break;
 	    }
-	}, 
+	},
+        getTextrange: function() {
+            return this.editor.textrange('get');
+        },
 	search: function() {
 	    // Server side search for available options
 	    dbEditorCombo = this;

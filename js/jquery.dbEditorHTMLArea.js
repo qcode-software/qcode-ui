@@ -124,7 +124,10 @@
 		this.editor.textrange('set', "all");
 		break;
 	    }
-	}, 
+	},
+        getTextrange: function() {
+            return this.editor.textrange('get');
+        },
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
 	    this.editor.remove();
