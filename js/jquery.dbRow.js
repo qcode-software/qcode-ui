@@ -257,7 +257,7 @@
 		    dbRow.setCellValue(colName, value);		    
 		});		
 		if ( currentCell.size() && this.element.find(currentCell).size() ) {
-		    currentCell.dbCell('cellIn', 'end');
+		    currentCell.dbCell('cellIn', 'preserve');
 		}
 	    }
 

@@ -131,6 +131,19 @@
             cell.trigger('dbCellIn');
 
             this.editor('option', 'tab_on_return', this.options.tab_on_return);
+
+            if ( select === 'preserve' ) {
+                // preserve text selection
+                var textrange = this.editor('getTextrange');
+                if ( textrange.selectionAtStart && textrange.selectionAtEnd ) {
+                    select = 'all';
+                } else if ( textrange.selectionAtStart && textrange.selectionText === '' ) {
+                    select = 'start';
+                } else {
+                    select = 'end';
+                }
+            }
+            
 	    if ( this.getType() === 'combo' ) {
                 var data = this.getRow().dbRow('getRowData');
                 var searchURL = this.getCol().attr('searchURL');
