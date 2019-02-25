@@ -174,6 +174,7 @@
 	        }
 	    }).error(function(jqXHR, textStatus, errorThrown){
 	        dbForm.div.text("Software Bug ! " + errorThrown);
+                throw new Error("Software Bug ! " + errorThrown);
 	    });
         }
     });
