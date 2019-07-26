@@ -16,7 +16,7 @@
                 
             } else if ( $(element).is('a') ) {
 
-                if ( ! $(element).attr('href') ) {
+                if ( ! $(element).is('.disabled') && ! $(element).prop('disabled') && ! $(element).attr('href') ) {
                     // element has no href attribute
                     $.error("<a> must have an href property.");
                 }

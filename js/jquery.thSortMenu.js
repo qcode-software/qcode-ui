@@ -61,7 +61,7 @@
 	    // Get the sort type of the given column
 	    if ( col.hasClass('rank') ) {
                 return 'ranking';
-            } else if ( col.hasClass('number') || col.hasClass('money') ) {
+            } else if ( col.hasClass('number') || col.hasClass('money') || col.hasClass('perct') ) {
 		return 'numeric';
 	    } else if ( col.hasClass('date') ) {
 		return 'date';
