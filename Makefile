@@ -19,6 +19,7 @@ concat: check-version
 	$(NAME)-$(VERSION)-tmp/js-concat.tcl > $(NAME)-$(VERSION)/js/qcode-ui.js
 	$(NAME)-$(VERSION)-tmp/css-concat.tcl > $(NAME)-$(VERSION)/css/qcode-ui.css
 	cp -r $(NAME)-$(VERSION)-tmp/images $(NAME)-$(VERSION)/images
+	cp -r $(NAME)-$(VERSION)-tmp/fonts $(NAME)-$(VERSION)/fonts
 	cp $(NAME)-$(VERSION)-tmp/js/*.* $(NAME)-$(VERSION)/js/.
 	cp $(NAME)-$(VERSION)-tmp/css/*.* $(NAME)-$(VERSION)/css/.
 	# Clean up

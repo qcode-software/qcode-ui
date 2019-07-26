@@ -1,0 +1,11 @@
+/* Font */
+@font-face {
+    font-family: 'qc-font';
+    src: url('../fonts/qc-font.eot');
+    src: url('../fonts/qc-font.eot?#iefix') format('embedded-opentype'),
+    url('../fonts/qc-font.woff') format('woff'),
+    url('../fonts/qc-font.ttf') format('truetype'),
+    url('../fonts/qc-font.svg#qc-font') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
