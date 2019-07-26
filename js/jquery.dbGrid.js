@@ -358,9 +358,11 @@
 		}
 	    }
 	},
-	_requeryReturnError: function(errorMessage, errorType, jqXHR) {
+        _requeryReturnError: function(errorType, errorMessage, jqXHR) {
             // Notify plugins such as statusFrame of the error
-            if ( errorType === "HTTP" ) {
+            var contentType = jqXHR.getResponseHeader('Content-Type');
+            
+            if ( errorType === "HTTP" && contentType === "text/xml; charset=utf-8" ) {
                 var xml = $.parseXML(jqXHR.responseText);
                 var xmlError = $(xml).find('error').first();
                 if ( xmlError.length == 1 ) {
