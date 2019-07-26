@@ -15,3 +15,8 @@ All versions of the library available from CDN
 
 ### Prism.js Tcl definition
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
+
+## Dependencies
+- js.cookie-2.0.js
+- qTip2: https://d44vkqoeluhey.cloudfront.net/vendor/qtip/2.2.1/jquery.qtip.min.js
+- qc-font
