@@ -17,6 +17,6 @@ All versions of the library available from CDN
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
 
 ## Dependencies
-- js.cookie-2.0.js
-- qTip2: https://d44vkqoeluhey.cloudfront.net/vendor/qtip/2.2.1/jquery.qtip.min.js
+- js-cookie: https://js.qcode.co.uk/vendor/js-cookie/2.0.3/js-cookie.js
+- qTip2: https://js.qcode.co.uk/vendor/qtip/2.2.1/jquery.qtip.min.js
 - qc-font
