@@ -83,6 +83,8 @@
 	    var row = this.element;
 	    var grid = this.getGrid();
 
+            row.addClass('editing');
+
 	    // Custom Event: Trigger any dbRowIn events bound to this table
 	    row.trigger('dbRowIn');
 
@@ -96,7 +98,10 @@
 	},
 	rowOut: function(){
 	    // Save row if dirty
-	    // Custom Event: Trigger any dbRowOut events bound to this table
+
+            this.element.removeClass('editing');
+
+            // Custom Event: Trigger any dbRowOut events bound to this table
 	    this.element.trigger('dbRowOut');
 	    
 	    if ( this.state === 'dirty' ) {
