@@ -187,7 +187,7 @@
 	    }
 	    var dbForm = this;
 	    httpPost(this.settings.searchURL, data, function(data, jqXHR) {
-		formActionSuccess.call(dbForm, data, "search");
+		formActionSuccess.call(dbForm, data, "search", jqXHR);
 	    }, formActionError.bind(this), true, this.settings.headers);
 	},
 	del: function() {
