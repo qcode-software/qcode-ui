@@ -37,7 +37,10 @@
                 if ( stickyURL) {
                     data['sticky_url'] = stickyURL;
                 }
-                $.post('sticky_save.html', data);
+                httpPost('/sticky_save.html',
+                         data,
+                         function(){},
+                         function(){});
             }
         });
                 
