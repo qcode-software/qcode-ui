@@ -45,6 +45,7 @@
                 }
             },
             submit: true,
+            crossDomainRequest: false,
             timeout: 20000,
             scrollToFeedback: {
                 enabled: true, // true, false
@@ -219,6 +220,9 @@
                     data: data,
                     method: ajax_method,
                     dataType: 'JSON',
+                    xhrFields: {
+                        withCredentials: this.options.crossDomainRequest
+                    },
                     cache: false,
                     headers: {
                         'X-Authenticity-Token': Cookies.get('authenticity_token')
