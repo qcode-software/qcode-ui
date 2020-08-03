@@ -7,6 +7,7 @@
     "chunkSize": 1048576, //(optional, defaults to 1MiB)
     "url": '/upload',
     "batchSize": 3 //(optional, defaults to Infinity)
+    "crossDomainRequest": false //(optional, allows cross doamin request with credentials if true)
   };
   $(uploader)
     .on('progress', function progressHandler(event) {
@@ -33,7 +34,7 @@ qcode.Uploader = (function(undefined) {
         this.totalChunkCount = options.totalChunkCount; // total count of chunks
     }
     jQuery.extend(Batch.prototype, {
-        start: function(url,headers,postData) {
+        start: function(url,headers,postData,crossDomainRequest) {
             // Start the request batch
             var batch = this;
             var requests = [];
@@ -100,6 +101,10 @@ qcode.Uploader = (function(undefined) {
                     }
                 };
 
+                // Property to allow cross domain request
+                // with credentials e.g. cookies
+                xhr.withCredentials = crossDomainRequest;
+
                 // Open the request so headers can be sent
                 xhr.open('POST', url);
 
@@ -135,6 +140,13 @@ qcode.Uploader = (function(undefined) {
         } else {
             this.batchSize = Infinity;
         }
+
+        // Cross domain request with credentials
+        if ( options.crossDomainRequest ) {
+            this.crossDomainRequest = options.crossDomainRequest;
+        } else {
+            this.crossDomainRequest = false;
+        }
         
         this.url = options.url;
         this.headers = $.extend({
@@ -165,7 +177,8 @@ qcode.Uploader = (function(undefined) {
                         batch.start(
                             uploader.url,
                             uploader.headers,
-                            uploader.postData
+                            uploader.postData,
+                            uploader.crossDomainRequest
                         )
                     });
                 }
@@ -187,7 +200,8 @@ qcode.Uploader = (function(undefined) {
             batches[0].start(
                 uploader.url,
                 uploader.headers,
-                uploader.postData
+                uploader.postData,
+                uploader.crossDomainRequest
             );
         },
         setChunkProgress: function(chunkIndex, bytes) {
