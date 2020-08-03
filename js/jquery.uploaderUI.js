@@ -5,6 +5,7 @@
 //   uploadURL: json url to upload to
 //   uploadData: (optional) object-map of additional POST data, sent to upload url
 //   onUpload: (optional) function(responseObject) {called on upload completion, with response from server}
+//   crossDomainRequest: (optional) allows cross doamin request with credentials if true
 // }
 ;(function() {
     "use strict";
@@ -30,7 +31,8 @@
                                 $dropzone,
                                 options.uploadURL,
                                 options.uploadData,
-                                options.headers
+                                options.headers,
+                                options.crossDomainRequest
                             );
                             if ( typeof options.onUpload === 'function' ) {
                                 fileUpload.done(options.onUpload);
@@ -45,7 +47,7 @@
         return this; //jQuery plugin chaining
     }
 
-    function beginUpload(file, $dropzone, uploadURL, uploadData, headers) {
+    function beginUpload(file, $dropzone, uploadURL, uploadData, headers, crossDomainRequest) {
         // Upload a file, create a panel to display progress,
         // return a promise of the server response object for the completed upload
         var deferred = new jQuery.Deferred();
@@ -58,7 +60,8 @@
             chunkSize: '1MiB',
             url: uploadURL,
             postData: uploadData,
-            headers: headers
+            headers: headers,
+            crossDomainRequest: crossDomainRequest
         });
         $(uploader)
                 .on('progress', function(event) {

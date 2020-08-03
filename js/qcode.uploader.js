@@ -7,6 +7,7 @@
     "chunkSize": 1048576, //(optional, defaults to 1MiB)
     "url": '/upload',
     "batchSize": 3 //(optional, defaults to Infinity)
+    "crossDomainRequest": false //(optional, allows cross doamin request with credentials if true)
   };
   $(uploader)
     .on('progress', function progressHandler(event) {
@@ -99,6 +100,12 @@ qcode.Uploader = (function(undefined) {
                         ]);
                     }
                 };
+
+                // Property to allow cross domain request
+                // with credentials e.g. cookies
+                if ( uploader.options.crossDomainRequest ) {
+                    xhr.withCredentials = uploader.options.crossDomainRequest;
+                }
 
                 // Open the request so headers can be sent
                 xhr.open('POST', url);
