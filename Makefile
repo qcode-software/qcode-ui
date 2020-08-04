@@ -1,6 +1,6 @@
 NAME=qcode-ui
 REMOTEHOST=js.qcode.co.uk
-REMOTEDIR=/var/www/js.qcode.co.uk
+REMOTEDIR=/var/www/html/js.qcode.co.uk
 REMOTEUSER=nsd
 
 all: check-version concat upload clean
