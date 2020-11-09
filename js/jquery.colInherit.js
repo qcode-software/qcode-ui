@@ -32,8 +32,8 @@
                     css[selector] = {};
 
                     style.split(';').forEach(function(declaration) {
-                        var property = jQuery.trim(declaration.split(':')[0]);
-                        var value = jQuery.trim(declaration.split(':')[1]);
+                        var property = declaration.split(':')[0].trim();
+                        var value = declaration.split(':')[1].trim();
                         if ( ! (property === "display" && value === "table-column") ) {
                             css[selector][property] = value;
                         }

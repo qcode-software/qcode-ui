@@ -108,7 +108,7 @@
 	  
 	    if ( dbGrid.option('initialFocus') === 'end' ) {
 		// Return the first editable cell in the last row
-		initialFocusCell = $('tr:last > td:first', dbGrid.tbody);
+		initialFocusCell = $('tr').last().children('td').first(), dbGrid.tbody);
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 		}
@@ -118,7 +118,7 @@
 
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
-		var initialFocusCell = $('tr:first > td:first', dbGrid.tbody);
+		var initialFocusCell = $('tr').first().children('td').first(), dbGrid.tbody);
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 

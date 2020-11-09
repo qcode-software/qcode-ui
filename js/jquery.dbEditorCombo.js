@@ -221,7 +221,7 @@
 	    var comboOptions = this.comboOptions;
 	    comboOptions.empty();
 
-	    var rec = jQuery('error:first', xmlDoc);
+	    var rec = jQuery('error', xmlDoc).first();
 	    if ( rec.size() ) {
 		// Error returned by Server
 		comboOptions.text(rec.text());

@@ -230,7 +230,7 @@
             }
 
             function trimAndGetNodeText(config, node) {
-                return $.trim(getElementText(config, node));
+                return getElementText(config, node).trim();
             }
 
             function getParserById(name) {
@@ -557,7 +557,7 @@
                 var c = table.config;
                 if (c.widthFixed) {
                     var colgroup = $('<colgroup>');
-                    $("tr:first td", table.tBodies[0]).each(function () {
+                    $("tr", table.tBodies[0]).first().children("td").each(function() {
                         colgroup.append($('<col>').css('width', $(this).width()));
                     });
                     $(table).prepend(colgroup);
@@ -785,7 +785,7 @@
                         }
                     });
                     // apply easy methods that trigger binded events
-                    $this.bind("update", function () {
+                    $this.on("update", function() {
                         var me = this;
                         setTimeout(function () {
                             // rebuild parsers.
@@ -794,14 +794,14 @@
                             // rebuild the cache map
                             cache = buildCache(me);
                         }, 1);
-                    }).bind("updateCell", function (e, cell) {
+                    }).on("updateCell", function(e, cell) {
                         var config = this.config;
                         // get position from the dom.
                         var pos = [(cell.parentNode.rowIndex - 1), cell.cellIndex];
                         // update cache
                         cache.normalized[pos[0]][pos[1]] = config.parsers[pos[1]].format(
                         getElementText(config, cell), cell);
-                    }).bind("sorton", function (e, list) {
+                    }).on("sorton", function(e, list) {
                         $(this).trigger("sortStart");
                         config.sortList = list;
                         // update and store the sortlist
@@ -812,11 +812,11 @@
                         setHeadersCss(this, $headers, sortList, sortCSS);
                         // sort the table and append it to the dom
                         appendToTable(this, multisort(this, sortList, cache));
-                    }).bind("appendCache", function () {
+                    }).on("appendCache", function() {
                         appendToTable(this, cache);
-                    }).bind("applyWidgetId", function (e, id) {
+                    }).on("applyWidgetId", function(e, id) {
                         getWidgetById(id).format(this);
-                    }).bind("applyWidgets", function () {
+                    }).on("applyWidgets", function() {
                         // apply widgets
                         applyWidget(this);
                     });
@@ -861,7 +861,7 @@
             };
             this.isDigit = function (s, config) {
                 // replace all an wanted chars and match.
-                return /^[-+]?\d*$/.test($.trim(s.replace(/[,.']/g, '')));
+                return /^[-+]?\d*$/.test(s.replace(/[,.']/g, '').trim());
             };
             this.clearTableBody = function (table) {
                 if ($.browser.msie) {
@@ -891,7 +891,7 @@
         is: function (s) {
             return true;
         }, format: function (s) {
-            return $.trim(s.toLocaleLowerCase());
+            return s.toLocaleLowerCase().trim();
         }, type: "text"
     });
 
@@ -939,7 +939,7 @@
         is: function (s) {
             return /^(https?|ftp|file):\/\/$/.test(s);
         }, format: function (s) {
-            return jQuery.trim(s.replace(new RegExp(/(https?|ftp|file):\/\//), ''));
+            return s.replace(new RegExp(/(https?|ftp|file):\/\//), '').trim();
         }, type: "text"
     });
 
@@ -956,7 +956,7 @@
     ts.addParser({
         id: "percent",
         is: function (s) {
-            return /\%$/.test($.trim(s));
+            return /\%$/.test(s.trim());
         }, format: function (s) {
             return $.tablesorter.formatFloat(s.replace(new RegExp(/%/g), ""));
         }, type: "numeric"

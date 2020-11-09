@@ -73,7 +73,7 @@
                 .on('complete', function(event, xhr) {
                     percentSpan.text('Complete');
                     progressPanel.removeClass('uploading').addClass('complete');
-                    var response = jQuery.parseJSON(xhr.responseText);
+                    var response = JSON.parse(xhr.responseText);
                     deferred.resolve(response);
                 })
                 .on('error', function(event, xhr) {
