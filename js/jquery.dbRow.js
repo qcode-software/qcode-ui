@@ -254,14 +254,14 @@
             
 	    // Update row with record values in xmlDoc response
 	    var rec = $('records record', xmlDoc).first();
-	    if ( rec.size() ) {
+	    if ( rec.length ) {
 		rec.children().each(function() {
 		    var xmlNode = $(this);
 		    var colName = xmlNode.prop('nodeName');
 		    var value = xmlNode.text()
 		    dbRow.setCellValue(colName, value);		    
 		});		
-		if ( currentCell.size() && this.element.find(currentCell).size() ) {
+		if ( currentCell.length && this.element.find(currentCell).length ) {
 		    currentCell.dbCell('cellIn', 'preserve');
 		}
 	    }
@@ -286,7 +286,7 @@
 
 	    // Display info message in statusBar
 	    var xmlNode = $('records > info', xmlDoc);
-	    if ( xmlNode.size() ) {
+	    if ( xmlNode.length ) {
                 this.element.trigger('message', [{
                     type: 'info',
                     html: xmlNode.text()
@@ -295,7 +295,7 @@
 
 	    // Alert
 	    var xmlNode = $('records > alert', xmlDoc);
-	    if ( xmlNode.size() ) {
+	    if ( xmlNode.length ) {
 		qcode.alert(xmlNode.text());
 	    }
 	},
@@ -311,7 +311,7 @@
                     dbRow.setCellValue(name, properties.value);
                 });
                 
-                if ( currentCell.size() && this.element.find(currentCell).size() ) {
+                if ( currentCell.length && this.element.find(currentCell).length ) {
 		    currentCell.dbCell('cellIn', 'end');
 		}
             }

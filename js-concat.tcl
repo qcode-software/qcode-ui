@@ -1,4 +1,4 @@
-#!/usr/bin/tclsh8.5
+#!/usr/bin/tclsh
 
 #| Concat all .js files in js directory
 

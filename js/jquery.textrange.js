@@ -127,12 +127,12 @@
 	// character at index from start of this node
         var childNodes = node.contents();
 	var myRange =  document.createRange();
-        if (childNodes.size()) {
-            for (var i = 0; i < childNodes.size(); i++) {
+        if (childNodes.length) {
+            for (var i = 0; i < childNodes.length; i++) {
                 var childNode = childNodes.eq(i);
 		myRange.selectNode(childNode[0]);
                 textLength = myRange.toString().length;
-                if ((textLength > 0 && index < textLength) || (i==childNodes.size()-1 && index==textLength)) {
+                if ((textLength > 0 && index < textLength) || (i==childNodes.length-1 && index==textLength)) {
 		    // The point we are looking for is in this child
                     return getRangePosition(childNode, index);
                 }

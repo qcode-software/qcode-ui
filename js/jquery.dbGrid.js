@@ -26,7 +26,7 @@
 	    dbGrid.tbody = dbGrid.element.children('tbody');
 	    dbGrid.currentCell = $([]);
 	    dbGrid.editorDiv = $([]);
-	    dbGrid.recCount = dbGrid.tbody.children('tr').size();
+	    dbGrid.recCount = dbGrid.tbody.children('tr').length;
 	  	    
 	    // Update options with those set via table attributes
 	    var attributes = ['initialFocus', 'enabled', 'updateType', 'addURL', 'updateURL', 'deleteURL','dataURL','deleteKey'];
@@ -108,7 +108,7 @@
 	  
 	    if ( dbGrid.option('initialFocus') === 'end' ) {
 		// Return the first editable cell in the last row
-		initialFocusCell = $('tr').last().children('td').first(), dbGrid.tbody);
+		initialFocusCell = $('tr', dbGrid.tbody).last().children('td').first();
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 		}
@@ -118,7 +118,7 @@
 
 	    } else if ( dbGrid.option('initialFocus') === "start" || parseBoolean(dbGrid.option('initialFocus')) === true ) {
 		// Focus on first editableCell
-		var initialFocusCell = $('tr').first().children('td').first(), dbGrid.tbody);
+		var initialFocusCell = $('tr', dbGrid.tbody).first().children('td').first();
 		if ( ! initialFocusCell.dbCell('isEditable') ) {
 		    initialFocusCell = dbGrid.cellRightOf(initialFocusCell);
 
@@ -153,7 +153,7 @@
 	cellChange: function(newCell){
 	    // Perform any necessary cellOut/rowOut & cellIn/rowIn to begin editing newCell
 	    var newRow = newCell.dbCell('getRow');
-	    if ( ! this.currentCell.size() ) {
+	    if ( ! this.currentCell.length ) {
 		// No cell is currently being edited
 		newRow.dbRow('rowIn');
 		newCell.dbCell('cellIn');
@@ -210,13 +210,13 @@
 	    }
 	},
 	save: function(row,async) {
-	    if ( row === undefined || ! row.size() ) {
+	    if ( row === undefined || ! row.length ) {
 		var row = this.currentCell.closest('tr');
 	    }
 	    row.dbRow('save',async);
 	},
 	"delete": function(row) {
-	    if ( row === undefined || ! row.size() ) {
+	    if ( row === undefined || ! row.length ) {
 		var row = this.currentCell.closest('tr');
 	    }
 	    if ( row.dbRow('option', 'type') === 'update' && this.options.deleteURL !== undefined ) {
@@ -240,15 +240,15 @@
 	},
 	removeRow: function(row) {
 	    // Try to move away from the current row
-	    if ( row.find(this.currentCell).size() ) {
+	    if ( row.find(this.currentCell).length ) {
 		// Move Down
 		this.cellChange(this.cellBelow(this.currentCell));
 	    }
-	    if ( row.find(this.currentCell).size() ) {	
+	    if ( row.find(this.currentCell).length ) {	
 		// Still on same cell try to Move Up instead
 		this.cellChange(this.cellAbove(this.currentCell));
 	    }
-            if ( row.find(this.currentCell).size() ) {
+            if ( row.find(this.currentCell).length ) {
 		// Failed to move away
 		this.currentCell.dbCell('cellOut');
 	    } 
@@ -259,7 +259,7 @@
 	    // Append a blank row to the dbGrid with type='update'
 	    var row = $('<tr>');
 	    var cols = this.colgroup.children('col');
-	    for(var i=0;i<this.colgroup.children('col').size();i++) {
+	    for(var i=0;i<this.colgroup.children('col').length;i++) {
 		var cell = $('<td>');
 		var colClass = cols.eq(i).attr('class');
 		if ( colClass ) {
@@ -277,7 +277,7 @@
 	    // Append a new row to the dbGrid with type='add' and with any defaultValues defined on the colgroup
 	    var row = $('<tr>');
 	    var cols = this.colgroup.children('col');
-	    for(var i=0;i<this.colgroup.children('col').size();i++) {
+	    for(var i=0;i<this.colgroup.children('col').length;i++) {
 		var cell = $('<td>');
 		var defaultValue = cols.eq(i).attr('defaultValue');
 		if ( defaultValue ) {
@@ -305,7 +305,7 @@
                 type: 'notice',
                 html: ''
             }]);
-	    if ( this.currentCell.size() ) {
+	    if ( this.currentCell.length ) {
 		this.currentCell.dbCell('cellOut');
 	    }
 	    // Remove all rows
@@ -353,7 +353,7 @@
 
 		// initialFocus
 		var initialFocusCell = dbGrid.getInitialFocusCell();
-		if ( initialFocusCell.size() ) {
+		if ( initialFocusCell.length ) {
 		    dbGrid.cellChange(initialFocusCell);
 		}
 	    }
@@ -387,9 +387,9 @@
 	    var prevRow = fromCell.closest('tr').prev('tr');
 	    var colIndex = fromCell.index();
 
-	    while ( prevRow.size() ) {
+	    while ( prevRow.length ) {
 		prevCell = prevRow.children().eq(colIndex);
-		if ( prevCell.size() && prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
+		if ( prevCell.length && prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
 		    return prevCell;
 		}
 		prevRow = prevRow.prev('tr');
@@ -404,7 +404,7 @@
 	    var nextCell = fromCell.next('td');
 	    
 	    // Search for next editable cell on the same row
-	    while ( nextCell.size() ) {
+	    while ( nextCell.length ) {
 		if ( nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
 		    return nextCell;
 		} 
@@ -413,9 +413,9 @@
 	    if ( searchNextRows == true ) {
 		// Search for next editable cell on any subsequent row.
 		var nextRow = fromCell.closest('tr').next('tr');
-		while ( nextRow.size() ) {
+		while ( nextRow.length ) {
 		    nextCell = nextRow.children('td').first();
-		    while ( nextCell.size() ) {
+		    while ( nextCell.length ) {
 			if ( nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
 			    return nextCell;
 			}
@@ -433,9 +433,9 @@
 	    var nextRow = fromCell.closest('tr').next('tr');
 	    var colIndex = fromCell.index();
 	    
-	    while ( nextRow.size() ) {
+	    while ( nextRow.length ) {
 		nextCell = nextRow.children().eq(colIndex);
-		if  (nextCell.size() && nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
+		if  (nextCell.length && nextCell.dbCell('isEditable') && nextCell.dbCell('isTabStop') ) {
 		    return nextCell;
 		}
 		nextRow = nextRow.next('tr');
@@ -451,7 +451,7 @@
 	    var prevCell = fromCell.prev('td');
 	    
 	    // Search for previous editable cell on the same row
-	    while ( prevCell.size() ) {
+	    while ( prevCell.length ) {
 		if ( prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
 		    return prevCell;
 		} 
@@ -460,9 +460,9 @@
 	    if ( searchPreviousRows == true ) {
 		// Search for previous editable cell on any subsequent row.
 		var prevRow = fromCell.closest('tr').prev('tr');
-		while ( prevRow.size() ) {
+		while ( prevRow.length ) {
 		    prevCell = prevRow.children('td').last();
-		    while ( prevCell.size() ) {
+		    while ( prevCell.length ) {
 			if ( prevCell.dbCell('isEditable') && prevCell.dbCell('isTabStop') ) {
 			    return prevCell;
 			}
@@ -481,7 +481,7 @@
 	    $(window).trigger('resize');
 	},
 	_onBeforeUnload: function(){
-	    if ( ! this.currentCell.size() ) {	
+	    if ( ! this.currentCell.length ) {	
 		// No cells are begin edited
 		return;
 	    }
@@ -492,7 +492,7 @@
 	    }    
 	},
 	_onBeforePrint: function(){
-	    if ( this.currentCell.size() ) {
+	    if ( this.currentCell.length ) {
 		this.currentCell.dbCell('cellOut');
 	    }	
 	}
