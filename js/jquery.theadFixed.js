@@ -162,7 +162,8 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     {
                         childList: true,
                         characterData: true,
-                        subtree: true
+                        subtree: true,
+                        attributeFilter: ["class"]
                     }
                 );
 
