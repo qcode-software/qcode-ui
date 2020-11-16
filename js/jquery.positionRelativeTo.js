@@ -1,6 +1,6 @@
 // positionRelative to plugin - returns the position of the first element in the selection relative to the target.
 // nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
-(function ($, undefined) {
+;(function ($, undefined) {
     $.fn.positionRelativeTo = function(target) {
         if ( $(this).length == 0 ) {
             $.error('positionRelativeTo called on empty object');
@@ -40,7 +40,7 @@
         while ( chain.index(current) == -1 ) {
             current = current.offsetParent;
             if ( current === null ) {
-                $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
+                $.error('Root reached and no common ancestor found');
             }
         }
         return current;
@@ -48,24 +48,39 @@
 
     function positionRelativeToOffsetAncestor(element, ancestor) {
         var position = {left: 0, top: 0};
+        if ( $(element).is(ancestor) ) {
+            return position;
+        }
+        
         var current = $(element);
         while ( current.length > 0 && ! current.is(ancestor) ) {
             position.top += current[0].offsetTop;
             position.left += current[0].offsetLeft;
-            if ( ! current.is(element) ) {
-                position.top += parseFloat(current.css('border-top-width'))
-                        + parseFloat(current.css('margin-top'));
-                position.left += parseFloat(current.css('border-left-width'))
-                        + parseFloat(current.css('margin-left'));
+
+            if ( current.is('table')
+                 && current.css("border-collapse") === "collapse"
+               ) {
+                var isTableWithCollapsedBorder = true;
+            } else {
+                var isTableWithCollapsedBorder = false;
             }
+            
+            if ( ! current.is(element)
+                 && ! isTableWithCollapsedBorder
+               ) {
+                position.top += parseFloat(current.css('border-top-width'));
+                position.left += parseFloat(current.css('border-left-width'));
+            }
+            
             current = $(current[0].offsetParent);
         }
-        if ( ! ( $(element).is(ancestor)
-                 || $(ancestor)[0].offsetParent === null )
-           ) {
+        
+        var ancestorIsRoot = $(ancestor)[0].offsetParent === null
+        if ( ! ancestorIsRoot ) {
 	    position.left += $(ancestor).scrollLeft();
 	    position.top += $(ancestor).scrollTop();            
         }
+        
         return position;
     }
 })(jQuery);
