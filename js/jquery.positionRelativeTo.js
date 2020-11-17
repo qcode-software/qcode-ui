@@ -1,91 +1,86 @@
 // positionRelative to plugin - returns the position of the first element in the selection relative to the target.
 // nb. if either element is in the offset parent chain of the other, position will account for scrolling of that element.
-(function ($, undefined) {
+;(function ($, undefined) {
     $.fn.positionRelativeTo = function(target) {
-        if ( ! this.length ) {
+        if ( $(this).length == 0 ) {
             $.error('positionRelativeTo called on empty object');
         }
-	var target = $(target);
-        if ( ! target.length ) {
+        if ( $(target).length == 0 ) {
             $.error('positionRelativeTo called with empty target');
         }
-
-        var root = $('<div>').offsetParent();
         
-	// Find chain of offset parents from this element to body
-	var myOffsetParents = this;
-	var current = this;
-	while ( ! current.is(root) ) {
-	    current = current.offsetParent();
-            if ( current.is(myOffsetParents) ) {
-                $.error('positionRelativeTo Looping error');
-            }
-	    myOffsetParents = myOffsetParents.add(current);
-            if ( current.length !== 1 ) {
-                $.error('Offset chain error - perhaps positionRelativeTo was called on a detached object?');
-            }
-	}
-
-	// Search offset parents from target element up until a common offset parent is found
-	current = target;
-	while (( ! current.is(myOffsetParents)) && ( ! current.is(root)) ) {
-	    current = current.offsetParent();
-            if ( current.length !== 1 ) {
-                $.error('Offset chain error - perhaps positionRelativeTo was called with a detached target?');
-            }
-	}
-	var commonOffsetParent = current;
-
-	// Find position of this element relative to the common offset parent
-	var myPosition = {
-	    left: 0,
-	    top: 0
-	}
-	current = this;
-	while ( ! current.is(commonOffsetParent) ) {
-	    var positionOfCurrent = current.position();
-	    myPosition.left += positionOfCurrent.left;
-	    myPosition.top += positionOfCurrent.top;
-            if ( current != this ) {
-                myPosition.left += parseFloat(current.css('border-left-width'))
-                        + parseFloat(current.css('margin-left'));
-                myPosition.top += parseFloat(current.css('border-top-width'))
-                        + parseFloat(current.css('margin-top'));
-            }
-	    current = current.offsetParent();
-	}
-	if ( ! (this.is(commonOffsetParent) || commonOffsetParent.is(root)) ) {
-	    myPosition.left += commonOffsetParent.scrollLeft();
-	    myPosition.top += commonOffsetParent.scrollTop();
-	}
-
-	// Find position of target element relative to the common offset parent
-	var targetPosition = {
-	    left: 0,
-	    top: 0
-	}
-	current = target;
-	while ( ! current.is(commonOffsetParent) ) {
-	    var positionOfCurrent = current.position();
-	    targetPosition.left += positionOfCurrent.left;
-	    targetPosition.top += positionOfCurrent.top;
-            if ( current != target ) {
-                targetPosition.left += parseFloat(current.css('border-left-width'))
-                        + parseFloat(current.css('margin-left'));
-                targetPosition.top += parseFloat(current.css('border-top-width'))
-                        + parseFloat(current.css('margin-top'));
-            }
-	    current = current.offsetParent();
-	}
-	if ( ! (target.is(commonOffsetParent) || commonOffsetParent.is(root)) ) {
-	    targetPosition.left += commonOffsetParent.scrollLeft();
-	    targetPosition.top += commonOffsetParent.scrollTop();
-	}
-
-	// Return the difference of the two calculated positions
+	var myOffsetAncestors = getOffsetParentChain(this);
+	var commonOffsetAncestor = getCommonOffsetAncestor(
+            target, myOffsetAncestors
+        );
+        var myPosition = positionRelativeToOffsetAncestor(
+            this, commonOffsetAncestor
+        );
+	var targetPosition = positionRelativeToOffsetAncestor(
+            target, commonOffsetAncestor
+        );
 	return {
 	    left: myPosition.left - targetPosition.left,
 	    top: myPosition.top - targetPosition.top
 	}
     };
+
+    function getOffsetParentChain(element) {
+        var chain = $(element);
+        var current = $(element)[0];
+        while ( current.offsetParent ) {
+            current = current.offsetParent;
+            chain = chain.add(current);
+        }
+        return chain;
+    }
+
+    function getCommonOffsetAncestor(element, chain) {
+        var current = $(element)[0];
+        while ( chain.index(current) == -1 ) {
+            current = current.offsetParent;
+            if ( current === null ) {
+                $.error('Root reached and no common ancestor found');
+            }
+        }
+        return current;
+    }
+
+    function positionRelativeToOffsetAncestor(element, ancestor) {
+        var position = {left: 0, top: 0};
+        if ( $(element).is(ancestor) ) {
+            return position;
+        }
+        
+        var current = $(element);
+        while ( current.length > 0 && ! current.is(ancestor) ) {
+            position.top += current[0].offsetTop;
+            position.left += current[0].offsetLeft;
+
+            if ( current.is('table')
+                 && current.css("border-collapse") === "collapse"
+               ) {
+                var isTableWithCollapsedBorder = true;
+            } else {
+                var isTableWithCollapsedBorder = false;
+            }
+            
+            if ( ! current.is(element)
+                 && ! isTableWithCollapsedBorder
+               ) {
+                position.top += parseFloat(current.css('border-top-width'));
+                position.left += parseFloat(current.css('border-left-width'));
+            }
+            
+            current = $(current[0].offsetParent);
+        }
+        
+        var ancestorIsRoot = $(ancestor)[0].offsetParent === null
+        if ( ! ancestorIsRoot ) {
+	    position.left += $(ancestor).scrollLeft();
+	    position.top += $(ancestor).scrollTop();            
+        }
+        
+        return position;
+    }
 })(jQuery);

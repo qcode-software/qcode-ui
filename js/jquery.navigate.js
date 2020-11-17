@@ -86,7 +86,7 @@
     // Make Navigate Class available as a jQuery plugin   
     $.fn.navigate = function(selector) {
         var containers = this;
-        for (var i = 0; i < containers.size(); i++) {
+        for (var i = 0; i < containers.length; i++) {
             var container = containers.eq(i);
             if (!container.data('navigate')) {
                 container.data('navigate', new Navigate(container, selector));

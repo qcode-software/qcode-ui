@@ -59,7 +59,7 @@
     var elmts = this
 
     // Initialise ResizableHeight objects for each elmt unless this has already been done
-    for ( var i=0; i< elmts.size(); i++ ) {
+    for ( var i=0; i< elmts.length; i++ ) {
       var elmt = elmts.eq(i);
       var resizableHeight = elmt.data('resizableHeight');
 

@@ -243,7 +243,7 @@
 
                             if ( returnType == "application/json; charset=utf-8" && jqXHR.status != 200 && jqXHR.status != 0 ) {
                                 // HTTP Error with JSON response
-                                var response = $.parseJSON(jqXHR.responseText)
+                                var response = JSON.parse(jqXHR.responseText)
                                 $form.validation('parseResponse', response);
 
                                 // Deprecated (replaced by valid, invalid & redirect events) - Trigger validationComplete event
@@ -460,24 +460,24 @@
                 }
 
                 this.message[type] = messageDiv;
-                messageDiv.show(200, $.proxy(function() {
+                messageDiv.show(200, function() {
                     this.reposition();
-                }, this));
+                }.bind(this));
             } else {
                 // Update the message
                 this.message[type].find('.message-content').html(message);
-                this.message[type].show(200, $.proxy(function() {
+                this.message[type].show(200, function() {
                     this.reposition();
-                }, this));
+                }.bind(this));
             }
         },
 
         hideMessage: function(type) {
             // Hide the message with the given type.
             if (this.message[type]) {
-                this.message[type].hide(100, $.proxy(function() {
+                this.message[type].hide(100, function() {
                     this.reposition();
-                }, this));
+                }.bind(this));
             }
         },
 
@@ -503,7 +503,7 @@
 
         _destroy: function() {
             // Remove the elements created by this plugin.
-            this.element.unbind('submit.validate');
+            this.element.off('submit.validate');
             $(this.element).removeClass('validating');
             this._validationMessagesDestroy();
             this._messagesDestroy();

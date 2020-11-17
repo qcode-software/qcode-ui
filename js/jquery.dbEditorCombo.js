@@ -221,14 +221,14 @@
 	    var comboOptions = this.comboOptions;
 	    comboOptions.empty();
 
-	    var rec = jQuery('error:first', xmlDoc);
-	    if ( rec.size() ) {
+	    var rec = jQuery('error', xmlDoc).first();
+	    if ( rec.length ) {
 		// Error returned by Server
 		comboOptions.text(rec.text());
 	    } else {
 		// Success
 		var recs = jQuery('records > record > option', xmlDoc);
-		if ( recs.size() ) {
+		if ( recs.length ) {
 		    // Matches Found
 		    recs.each(function() {
 			var comboOption = jQuery('<div>')

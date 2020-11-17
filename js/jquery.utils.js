@@ -154,7 +154,7 @@ function httpPost(url,data,handler,errorHandler,async,headers) {
             switch(contentType) {
             case "application/json; charset=utf-8":
                 try {
-                    data = $.parseJSON(jqXHR.responseText);
+                    data = JSON.parse(jqXHR.responseText);
                 } catch(error) {
 		    return errorHandler('PARSE', 'Error! Unable to parse response', jqXHR);
                 }

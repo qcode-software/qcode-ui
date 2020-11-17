@@ -162,7 +162,8 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     {
                         childList: true,
                         characterData: true,
-                        subtree: true
+                        subtree: true,
+                        attributeFilter: ["class"]
                     }
                 );
 
@@ -263,7 +264,7 @@ Makes the body + foot of a table scrollable, while a "fixed" copy of the thead.
                     'display': display
                 }
                 if ( display !== 'none' ) {
-                    var width = $(th).outerWidth() + "px";
+                    var width = $(th)[0].getBoundingClientRect().width + "px";
                     styles[colSelectors[i]]['width'] = width;
                 }
                 styles[thSelectors[i]] = {

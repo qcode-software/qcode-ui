@@ -1,4 +1,4 @@
-#!/usr/bin/tclsh8.5
+#!/usr/bin/tclsh
 
 #| Concat all .css files in css directory
 

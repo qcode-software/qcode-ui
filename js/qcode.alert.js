@@ -49,7 +49,7 @@ var qcode = qcode || {};
                                 $(this).dialog('close');
                             }
                         },
-                        dialogClass: "alert",
+                        classes: {"ui-dialog": "alert"},
                         close: function() {
                             $(this).remove();
                             
@@ -93,7 +93,7 @@ var qcode = qcode || {};
                     .dialog({
                         resizable: false,
                         modal: true,
-                        dialogClass: "confirm",
+                        classes: {"ui-dialog": "confirm"},
                         buttons: [
                             {
                                 text: "Yes",

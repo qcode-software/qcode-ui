@@ -1,5 +1,5 @@
 ;(function($) {
-    if ( $.isFunction($.widget) ) {
+    if ( typeof $.widget === "function" ) {
 	var slice = Array.prototype.slice;
 
 	$.widget.bridge = function( name, object ) {
@@ -23,7 +23,8 @@
 			    $.data( this, fullName, new object( undefined, this ) );
 			    instance = $.data( this, fullName );
 			}
-			if ( !$.isFunction( instance[options] ) || options.charAt( 0 ) === "_" ) {
+			if ( typeof instance[options] !== "function"
+                             || options.charAt( 0 ) === "_" ) {
 			    return $.error( "no such method '" + options + "' for " + name + " widget instance" );
 			}
 			methodValue = instance[ options ].apply( instance, args );
