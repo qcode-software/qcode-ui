@@ -32,6 +32,9 @@
                     css[selector] = {};
 
                     style.split(';').forEach(function(declaration) {
+                        if ( declaration.length === 0 ) {
+                            return;
+                        }
                         var property = declaration.split(':')[0].trim();
                         var value = declaration.split(':')[1].trim();
                         if ( ! (property === "display" && value === "table-column") ) {
