@@ -4,10 +4,6 @@
         "test": "jest"
     },
     "jest": {
-        "setupFilesAfterEnv": [
-            "<rootDir>/setup-test.js",
-            "<rootDir>/external/jquery-ui-1.12.1.custom.min.js",
-            "<rootDir>/js/date.js"
-        ]
+        "setupFilesAfterEnv": ["<rootDir>/setup-test.js"]
     }
 }
