@@ -5,19 +5,6 @@ beforeEach(() => {
     const fragment = filesystem
           .readFileSync('./test/jquery.dbEditorCombo.test.html');
     document.body.innerHTML = fragment;
-    
-    jQuery.ajax = function(options) {
-        var xmlDoc = jQuery.parseXML(
-            "<records>" +
-                    "<record>" +
-                    "<option>Apple</option>" +
-                    "<option>Banana</option>" +
-                    "<option>Pear</option>" +
-                    "</record>" +
-                    "</records>"
-        );
-        options.success(xmlDoc);
-    }
 });
 
 test('jquery.dbEditorCombo.js show',() => {
@@ -83,7 +70,6 @@ test('jquery.dbEditorCombo.js setValue',() => {
     ).toBe('oranges');
 });
 
-
 test('jquery.dbEditorCombo.js hide',() => {
     $('.container').dbEditorCombo(
         'show',
@@ -96,4 +82,30 @@ test('jquery.dbEditorCombo.js hide',() => {
     expect(
         $('.db-editor').css('display')
     ).toBe('none');
+});
+
+test('jquery.dbEditorCombo.js search',() => {
+    const mockRequest = jest.fn(options => {
+        var xmlDoc = jQuery.parseXML(
+            "<records>" +
+                    "<record>" +
+                    "<option>Apple</option>" +
+                    "<option>Banana</option>" +
+                    "<option>Pear</option>" +
+                    "</record>" +
+                    "</records>"
+        );
+        options.success(xmlDoc);
+    })
+    jQuery.ajax = mockRequest;
+    
+    $('.container').dbEditorCombo(
+        'show',
+        $('.editor'),
+        $('.editor').text(),
+        "/dummy.xml"
+    );
+    $('.container').dbEditorCombo('search');
+
+    expect( mockRequest.mock.calls.length ).toBe(1);
 });
