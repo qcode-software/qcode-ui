@@ -1,0 +1,9 @@
+{
+    "name": "qcode-ui",
+    "scripts": {
+        "test": "jest"
+    },
+    "jest": {
+        "setupFilesAfterEnv": ["<rootDir>/setup-test.js"]
+    }
+}
