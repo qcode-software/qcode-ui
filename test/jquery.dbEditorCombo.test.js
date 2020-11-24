@@ -1,5 +1,5 @@
 beforeEach(() => {
-    require('./mocks/offsetParent.js');
+    require('./polyfills/offsetParent.js');
 
     const filesystem = require('fs');
     const fragment = filesystem
