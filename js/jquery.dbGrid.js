@@ -326,7 +326,7 @@
 		    var colName = xmlNode.prop('nodeName');
 		    var value = xmlNode.text()
 		    row.dbRow('setCellValue', colName, value);		    
-		});	
+		});
 	    });
 
 	    // Update 'Calculated' elements within grid

@@ -86,7 +86,7 @@ test('jquery.dbEditorCombo.js hide',() => {
 
 test('jquery.dbEditorCombo.js search',() => {
     const mockRequest = jest.fn(options => {
-        var xmlDoc = jQuery.parseXML(
+        const xmlDoc = jQuery.parseXML(
             "<records>" +
                     "<record>" +
                     "<option>Apple</option>" +
