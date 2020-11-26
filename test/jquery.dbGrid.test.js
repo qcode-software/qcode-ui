@@ -19,6 +19,10 @@ beforeEach(() => {
     });
 });
 
+afterEach(() => {
+    $('body').off();
+});
+
 test('jquery.dbGrid initialFocus start', () => {
     $('#mygrid').dbGrid({
         initialFocus: "start"
@@ -83,13 +87,51 @@ test('jquery.dbGrid cellChange', () => {
     expect( $(':focus').val() ).toBe('charlie@mymail.co.uk');
 });
 
-test('jquery.dbGrid save', () => {
+test('jquery.dbGrid save xml response', done => {
     global.Cookies = {
         get() {
             return "";
         }
     };
-    jQuery.ajax = jest.fn();
+    jQuery.ajax = jest.fn(options => {
+        const fakeResponse = jQuery.parseXML(
+            "<records>" +
+                    "<record>" +
+                    "<name>Alice</name>" +
+                    "<email>alice@anemail.co.uk</email>" +
+                    "<highscore>50</highscore>" +
+                    "</record>" +
+                    "</records>");
+        const fakeStatus = "success";
+        const fakeXHR = {
+            getResponseHeader() {
+                return "text/xml; charset=utf-8";
+            }
+        }
+
+        options.success(fakeResponse, fakeStatus, fakeXHR);
+        return Promise.resolve(fakeResponse);
+    });
+
+    $('body').on('message',(event, additionalData) => {
+        if ( additionalData.html === "Saved." ) {            
+            expect( jQuery.ajax.mock.calls.length ).toBe(1);
+            expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-update');
+            expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
+                name: 'Charlie',
+                email: 'charlie@mymail.co.uk',
+                highscore: '42'
+            });
+            expect(
+                $('tbody tr').first().dbRow('getRowData')
+            ).toEqual({
+                name: 'Alice',
+                email: 'alice@anemail.co.uk',
+                highscore: '50'
+            });
+            done();
+        }
+    });
     
     $('#mygrid').dbGrid({
         initialFocus: "start",
@@ -97,14 +139,60 @@ test('jquery.dbGrid save', () => {
     });
     $('body').trigger('pluginsReady');    
     $('#mygrid').dbGrid('save');
+});
 
-    expect( jQuery.ajax.mock.calls.length ).toBe(1);
-    expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-update');
-    expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
-        name: 'Charlie',
-        email: 'charlie@mymail.co.uk',
-        highscore: '42'
+test('jquery.dbGrid save json response', done => {
+    global.Cookies = {
+        get() {
+            return "";
+        }
+    };
+    jQuery.ajax = jest.fn(options => {
+        const fakeResponse = {
+            status: "valid",
+            record: {
+                name: {value:"Alice"},
+                email: {value:"alice@anemail.co.uk"},
+                highscore: {value:"50"}
+            }
+        }
+        const fakeStatus = "success";
+        const fakeXHR = {
+            getResponseHeader() {
+                return "application/json; charset=utf-8";
+            }
+        }
+
+        options.success(fakeResponse, fakeStatus, fakeXHR);
+        return Promise.resolve(fakeResponse);
     });
+
+    $('body').on('message',(event, additionalData) => {
+        if ( additionalData.html === "Saved." ) {
+            expect( jQuery.ajax.mock.calls.length ).toBe(1);
+            expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-update');
+            expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
+                name: 'Charlie',
+                email: 'charlie@mymail.co.uk',
+                highscore: '42'
+            });
+            expect(
+                $('tbody tr').first().dbRow('getRowData')
+            ).toEqual({
+                name: 'Alice',
+                email: 'alice@anemail.co.uk',
+                highscore: '50'
+            });
+            done();
+        }
+    });
+    
+    $('#mygrid').dbGrid({
+        initialFocus: "start",
+        updateURL: "/dummy-update"
+    });
+    $('body').trigger('pluginsReady');    
+    $('#mygrid').dbGrid('save');
 });
 
 test('jquery.dbGrid delete', done => {
@@ -191,4 +279,44 @@ test('jquery.dbGrid requery', () => {
     $('#mygrid').dbGrid('requery');
 
     expect( $('tbody tr').length ).toBe(2);
+});
+
+test('jquery.dbGrid cellAbove', () => {
+    $('#mygrid').dbGrid();
+    $('body').trigger('pluginsReady');
+    const middleCell = $('tbody tr').eq(1).find('td').find(1);
+    const topCell = $('tbody tr').eq(0).find('td').find(1);
+    expect(
+        $('#mygrid').dbGrid('cellAbove', middleCell)[0]
+    ).toBe(topCell[0]);
+});
+
+test('jquery.dbGrid cellRightOf', () => {
+    $('#mygrid').dbGrid();
+    $('body').trigger('pluginsReady');
+    const middleCell = $('tbody tr').eq(1).find('td').find(1);
+    const rightCell = $('tbody tr').eq(1).find('td').find(2);
+    expect(
+        $('#mygrid').dbGrid('cellRightOf', middleCell)[0]
+    ).toBe(rightCell[0]);
+});
+
+test('jquery.dbGrid cellBelow', () => {
+    $('#mygrid').dbGrid();
+    $('body').trigger('pluginsReady');
+    const middleCell = $('tbody tr').eq(1).find('td').find(1);
+    const bottomCell = $('tbody tr').eq(2).find('td').find(1);
+    expect(
+        $('#mygrid').dbGrid('cellBelow', middleCell)[0]
+    ).toBe(bottomCell[0]);
+});
+
+test('jquery.dbGrid cellLeftOf', () => {
+    $('#mygrid').dbGrid();
+    $('body').trigger('pluginsReady');
+    const middleCell = $('tbody tr').eq(1).find('td').find(1);
+    const leftCell = $('tbody tr').eq(1).find('td').find(0);
+    expect(
+        $('#mygrid').dbGrid('cellLeftOf', middleCell)[0]
+    ).toBe(leftCell[0]);
 });
