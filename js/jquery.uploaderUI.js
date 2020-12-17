@@ -5,6 +5,7 @@
 //   uploadURL: json url to upload to
 //   uploadData: (optional) object-map of additional POST data, sent to upload url
 //   onUpload: (optional) function(responseObject) {called on upload completion, with response from server}
+//   onError: (optional) function(responseObject) {called when error occurs while uploading, with response from server}
 //   crossDomainRequest: (optional) allows cross doamin request with credentials if true
 // }
 ;(function() {
@@ -36,6 +37,9 @@
                             );
                             if ( typeof options.onUpload === 'function' ) {
                                 fileUpload.done(options.onUpload);
+                            }
+                            if ( typeof options.onError === 'function' ) {
+                                fileUpload.fail(options.onError);
                             }
                         });
                     })
@@ -79,6 +83,8 @@
                 .on('error', function(event, xhr) {
                     percentSpan.text('Error');
                     progressPanel.removeClass('uploading').addClass('error');
+                    var response = JSON.parse(xhr.responseText);
+                    deferred.reject(response);
                 });
         uploader.start();
         return deferred.promise();
