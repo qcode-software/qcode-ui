@@ -72,34 +72,88 @@ test('jquery.navigate', () => {
     $('#topRight').focus();
     expect( $(':focus').attr('id') ).toBe('topRight');
     
-    expect( $('#topRight').southOf('[tabindex]').attr('id') ).toBe('bottomRight');
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: down }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowDown",
+            code: "ArrowDown",
+            which: down,
+            keyCode: down
+        }
+    ));*/
+    expect( $('#topRight').southOf('[tabindex]').attr('id') ).toBe('bottomRight');
     expect( $(':focus').attr('id') ).toBe('bottomRight');
     
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: left }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowLeft",
+            code: "ArrowLeft",
+            which: left,
+            keyCode: left
+        }
+    ));*/
     expect( $(':focus').attr('id') ).toBe('bottomLeft');
     
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: up }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowUp",
+            code: "ArrowUp",
+            which: up,
+            keyCode: up
+        }
+    ));*/
     expect( $(':focus').attr('id') ).toBe('topLeft');
     
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: right }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowRight",
+            code: "ArrowRight",
+            which: right,
+            keyCode: right
+        }
+    ));*/
     expect( $(':focus').attr('id') ).toBe('topRight');
     
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: right }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowRight",
+            code: "ArrowRight",
+            which: right,
+            keyCode: right
+        }
+    ));*/
     expect( $(':focus').attr('id') ).toBe('bottomLeft');
     
     $(':focus').trigger( jQuery.Event(
         "keydown", { which: left }
     ));
+    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
+        'keydown',
+        {
+            key: "ArrowLeft",
+            code: "ArrowLeft",
+            which: left,
+            keyCode: left
+        }
+    ));*/
     expect( $(':focus').attr('id') ).toBe('topRight');
 });
