@@ -15,38 +15,38 @@ test('jquery.navigate', () => {
     });
     $('#topRight')[0].getBoundingClientRect = function(){
         return {
-            x: 50,
+            x: 51,
             y: 0,
-            left: 50,
+            left: 51,
             top: 0,
             width: 50,
             height: 10,
             right: 0,
-            bottom: 10
+            bottom: 11
         };
     };
     $('#bottomLeft')[0].getBoundingClientRect = function(){
         return {
-            x: 50,
-            y: 0,
-            left: 50,
-            top: 0,
+            x: 0,
+            y: 11,
+            left: 0,
+            top: 11,
             width: 50,
             height: 10,
-            right: 0,
-            bottom: 10
+            right: 51,
+            bottom: 0
         };
     };
     $('#bottomRight')[0].getBoundingClientRect = function(){
         return {
-            x: 50,
-            y: 0,
-            left: 50,
-            top: 0,
+            x: 51,
+            y: 11,
+            left: 51,
+            top: 11,
             width: 50,
             height: 10,
             right: 0,
-            bottom: 10
+            bottom: 0
         };
     };
     HTMLElement.prototype.getClientRects = function(){
@@ -54,15 +54,15 @@ test('jquery.navigate', () => {
     };
     expect( $('#topRight').offset() ).toEqual({
         top: 0,
-        left: 50
+        left: 51
     });
     expect( $('#bottomLeft').offset() ).toEqual({
-        top: 10,
+        top: 11,
         left: 0
     });
     expect( $('#bottomRight').offset() ).toEqual({
-        top: 10,
-        left: 50
+        top: 11,
+        left: 51
     });
 
     $('#container').navigate('[tabindex]');
@@ -72,33 +72,34 @@ test('jquery.navigate', () => {
     $('#topRight').focus();
     expect( $(':focus').attr('id') ).toBe('topRight');
     
+    expect( $('#topRight').southOf('[tabindex]').attr('id') ).toBe('bottomRight');
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: down }
+        "keydown", { which: down }
     ));
     expect( $(':focus').attr('id') ).toBe('bottomRight');
     
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: left }
+        "keydown", { which: left }
     ));
     expect( $(':focus').attr('id') ).toBe('bottomLeft');
     
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: up }
+        "keydown", { which: up }
     ));
     expect( $(':focus').attr('id') ).toBe('topLeft');
     
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: right }
+        "keydown", { which: right }
     ));
     expect( $(':focus').attr('id') ).toBe('topRight');
     
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: right }
+        "keydown", { which: right }
     ));
     expect( $(':focus').attr('id') ).toBe('bottomLeft');
     
     $(':focus').trigger( jQuery.Event(
-        "keydown", { keyCode: left }
+        "keydown", { which: left }
     ));
     expect( $(':focus').attr('id') ).toBe('topRight');
 });
