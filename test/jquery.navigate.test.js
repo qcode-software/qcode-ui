@@ -4,16 +4,8 @@ test('jquery.navigate', () => {
           .readFileSync('./test/jquery.navigate.test.html');
     document.body.innerHTML = fragment;
 
-    const left = 37;
-    const up = 38;
-    const right = 39;
-    const down = 40;
-
-    expect( $('#topLeft').offset() ).toEqual({
-        top: 0,
-        left: 0
-    });
-    $('#topRight')[0].getBoundingClientRect = function(){
+    // Imitate DOM behaviour
+    document.getElementById('topRight').getBoundingClientRect = function(){
         return {
             x: 51,
             y: 0,
@@ -25,7 +17,7 @@ test('jquery.navigate', () => {
             bottom: 11
         };
     };
-    $('#bottomLeft')[0].getBoundingClientRect = function(){
+    document.getElementById('bottomLeft').getBoundingClientRect = function(){
         return {
             x: 0,
             y: 11,
@@ -37,7 +29,7 @@ test('jquery.navigate', () => {
             bottom: 0
         };
     };
-    $('#bottomRight')[0].getBoundingClientRect = function(){
+    document.getElementById('bottomRight').getBoundingClientRect = function(){
         return {
             x: 51,
             y: 11,
@@ -52,108 +44,49 @@ test('jquery.navigate', () => {
     HTMLElement.prototype.getClientRects = function(){
         return [this.getBoundingClientRect()];
     };
-    expect( $('#topRight').offset() ).toEqual({
-        top: 0,
-        left: 51
-    });
-    expect( $('#bottomLeft').offset() ).toEqual({
-        top: 11,
-        left: 0
-    });
-    expect( $('#bottomRight').offset() ).toEqual({
-        top: 11,
-        left: 51
-    });
 
+    // Helper function to simulate arrow key events
+    const which = {
+        "ArrowLeft": 37,
+        "ArrowUp": 38,
+        "ArrowRight": 39,
+        "ArrowDown": 40
+    };
+    function pressArrowKey(key) {
+        document.activeElement.dispatchEvent(new KeyboardEvent(
+            'keydown',
+            {
+                bubbles: true,
+                key: key,
+                code: key,
+                which: which[key],
+                keyCode: which[key]
+            }
+        ));
+    }
+
+    // Initialise navigate plugin
     $('#container').navigate('[tabindex]');
 
-    expect( $('#topRight').attr('id') ).toBe('topRight');
+    // Tests:
+    document.getElementById('topRight').focus();    
+    expect( document.activeElement.id ).toBe('topRight');
+
+    pressArrowKey("ArrowDown");
+    expect( document.activeElement.id ).toBe('bottomRight');
     
-    $('#topRight').focus();
-    expect( $(':focus').attr('id') ).toBe('topRight');
+    pressArrowKey("ArrowLeft");
+    expect( document.activeElement.id ).toBe('bottomLeft');
     
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: down }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowDown",
-            code: "ArrowDown",
-            which: down,
-            keyCode: down
-        }
-    ));*/
-    expect( $('#topRight').southOf('[tabindex]').attr('id') ).toBe('bottomRight');
-    expect( $(':focus').attr('id') ).toBe('bottomRight');
+    pressArrowKey("ArrowUp");
+    expect( document.activeElement.id ).toBe('topLeft');
     
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: left }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowLeft",
-            code: "ArrowLeft",
-            which: left,
-            keyCode: left
-        }
-    ));*/
-    expect( $(':focus').attr('id') ).toBe('bottomLeft');
+    pressArrowKey("ArrowRight");
+    expect( document.activeElement.id ).toBe('topRight');
+
+    pressArrowKey("ArrowRight");
+    expect( document.activeElement.id ).toBe('bottomLeft');
     
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: up }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowUp",
-            code: "ArrowUp",
-            which: up,
-            keyCode: up
-        }
-    ));*/
-    expect( $(':focus').attr('id') ).toBe('topLeft');
-    
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: right }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowRight",
-            code: "ArrowRight",
-            which: right,
-            keyCode: right
-        }
-    ));*/
-    expect( $(':focus').attr('id') ).toBe('topRight');
-    
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: right }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowRight",
-            code: "ArrowRight",
-            which: right,
-            keyCode: right
-        }
-    ));*/
-    expect( $(':focus').attr('id') ).toBe('bottomLeft');
-    
-    $(':focus').trigger( jQuery.Event(
-        "keydown", { which: left }
-    ));
-    /*$(':focus')[0].dispatchEvent(new KeyboardEvent(
-        'keydown',
-        {
-            key: "ArrowLeft",
-            code: "ArrowLeft",
-            which: left,
-            keyCode: left
-        }
-    ));*/
-    expect( $(':focus').attr('id') ).toBe('topRight');
+    pressArrowKey("ArrowLeft");
+    expect( document.activeElement.id ).toBe('topRight');
 });
