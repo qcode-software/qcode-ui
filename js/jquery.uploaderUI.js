@@ -25,6 +25,7 @@
         function uploadHandler(files) {
             $.when(validation(files))
                     .done(function(okFiles) {
+                        var uploads = [];
                         $.each(okFiles, function(i, file) {
                             var fileUpload = beginUpload(
                                 file,
@@ -37,7 +38,13 @@
                             if ( typeof options.onUpload === 'function' ) {
                                 fileUpload.done(options.onUpload);
                             }
+                            if ( typeof options.onUploadAll === 'function' ) {
+                                uploads.push(fileUpload);
+                            }
                         });
+                        if ( typeof options.onUploadAll === 'function' ) {
+                            jQuery.when.apply(jQuery, uploads).done(options.onUploadAll);
+                        }
                     })
                     .fail(function() {
                         qcode.alert('Server Error - A report has been sent to our engineers');
