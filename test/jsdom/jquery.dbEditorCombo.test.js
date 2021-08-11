@@ -3,7 +3,7 @@ beforeEach(() => {
 
     const filesystem = require('fs');
     const fragment = filesystem
-          .readFileSync('./test/jquery.dbEditorCombo.test.html');
+          .readFileSync('./test/jsdom/jquery.dbEditorCombo.test.html');
     document.body.innerHTML = fragment;
 });
 

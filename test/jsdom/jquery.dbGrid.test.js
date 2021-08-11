@@ -3,7 +3,7 @@ beforeEach(() => {
     
     const filesystem = require('fs');
     const fragment = filesystem
-          .readFileSync('./test/jquery.dbGrid.test.html');
+          .readFileSync('./test/jsdom/jquery.dbGrid.test.html');
     document.body.innerHTML = fragment;
 
     // Note - offsetWidth is used by jQuery's ":visible" pseudo-class
