@@ -1,7 +1,7 @@
 test('jquery.navigate', () => {
     const filesystem = require('fs');
     const fragment = filesystem
-          .readFileSync('./test/jquery.navigate.test.html');
+          .readFileSync('./test/jsdom/jquery.navigate.test.html');
     document.body.innerHTML = fragment;
 
     // Imitate DOM behaviour

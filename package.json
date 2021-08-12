@@ -1,9 +1,12 @@
 {
     "name": "qcode-ui",
     "scripts": {
-        "test": "jest"
+        "test:jsdom": "jest --config=./test/jsdom/jest-jsdom-conf.json ./test/jsdom",
+        "test:puppeteer": "jest --config=./test/headless-browser/jest-conf.json ./test/headless-browser"
     },
-    "jest": {
-        "setupFilesAfterEnv": ["<rootDir>/setup-test.js"]
+    "devDependencies": {
+        "http-server": "^13.0.0",
+        "jest-dev-server": "^5.0.3",
+        "jest-puppeteer": "^5.0.4"
     }
 }

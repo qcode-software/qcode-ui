@@ -1,6 +1,6 @@
 test('colInherit test', () => {
     const fs = require('fs');
-    const fragment = fs.readFileSync('./test/jquery.colInherit.test.html');
+    const fragment = fs.readFileSync('./test/jsdom/jquery.colInherit.test.html');
     
     document.body.innerHTML = fragment;
 
