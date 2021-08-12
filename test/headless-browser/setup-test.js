@@ -1,5 +1,3 @@
-page.on('pageerror', message => console.log('Error: ' + message));
-
 global.load_qcode_ui = function(page) {
     // Concatenate all the .js files in qcode-ui to load in a source tag
     const fs = require('fs');
@@ -19,4 +17,15 @@ global.dom_ready = function(page) {
             resolve => $(resolve)
         )
     );
+}
+global.ready_page = async function(html_file) {
+    let page = await browser.newPage();
+    page = await browser.newPage();
+    page.on('pageerror', message => console.log('Error: ' + message));
+    await page.goto('http://localhost:4444/test/headless-browser/' + html_file,{
+        waitUntil: "domcontentloaded"
+    });
+    await load_qcode_ui(page);
+    await dom_ready(page);
+    return page;
 }

@@ -1,12 +1,7 @@
 describe('dbCell', () => {
     let page;
     beforeAll(async () => {
-        page = await browser.newPage();
-        await page.goto('http://localhost:4444/test/headless-browser/jquery.dbCell.test.html',{
-            waitUntil: "domcontentloaded"
-        });
-        await load_qcode_ui(page);
-        await dom_ready(page);
+        page = await ready_page('jquery.dbCell.test.html');
         await page.evaluate(
             () => $('td').first().dbCell()
         );
