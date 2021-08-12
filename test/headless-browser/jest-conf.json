@@ -1,3 +1,4 @@
 {
-    "preset": "jest-puppeteer"
+    "preset": "jest-puppeteer",
+    "setupFilesAfterEnv": ["<rootDir>/setup-test.js"]
 }
