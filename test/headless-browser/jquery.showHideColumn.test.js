@@ -1,27 +1,10 @@
 test('columnShowHide plugin', async () => {
-    page.on('pageerror', message => console.log('Error: ' + message));
-    
+    const page = await browser.newPage();
     await page.goto('http://localhost:4444/test/headless-browser/jquery.showHideColumn.test.html',{
         waitUntil: "domcontentloaded"
     });
-
-    // Concatenate all the .js files in qcode-ui to load in a source tag
-    const fs = require('fs');
-    var source = "";
-    for (const filename of fs.readdirSync('./js/').sort()) {
-        if ( filename.slice(-3) === '.js' ) {
-            source += fs.readFileSync('./js/' + filename,'utf8') + "\n";
-        }
-    }
-    await page.addScriptTag({
-        content: source
-    });
-
-    await page.evaluate(
-        () => new Promise(
-            resolve => $(resolve)
-        )
-    );
+    await load_qcode_ui(page);
+    await dom_ready(page);
 
     await expect(
         page.evaluate(
@@ -44,4 +27,6 @@ test('columnShowHide plugin', async () => {
             () => $('td').first().css('display')
         )
     ).resolves.toBe('none');
+
+    return page.close();
 });
