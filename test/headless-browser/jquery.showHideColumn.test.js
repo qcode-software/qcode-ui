@@ -5,6 +5,7 @@ test('columnShowHide plugin', async () => {
         waitUntil: "domcontentloaded"
     });
 
+    // Concatenate all the .js files in qcode-ui to load in a source tag
     const fs = require('fs');
     var source = "";
     for (const filename of fs.readdirSync('./js/').sort()) {
