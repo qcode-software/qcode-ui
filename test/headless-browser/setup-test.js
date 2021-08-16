@@ -20,7 +20,6 @@ global.dom_ready = function(page) {
 }
 global.ready_page = async function(html_file) {
     let page = await browser.newPage();
-    page = await browser.newPage();
     page.on('pageerror', message => console.log('Error: ' + message));
     await page.goto('http://localhost:4444/test/headless-browser/' + html_file,{
         waitUntil: "domcontentloaded"
