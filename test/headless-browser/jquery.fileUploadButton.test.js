@@ -18,4 +18,6 @@ describe('fileUploadButton', () => {
         });
         expect(result).toBe('OK');
     });
+
+    afterAll( () => page.close() );
 });

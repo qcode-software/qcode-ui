@@ -20,4 +20,6 @@ describe('Validation plugin',() => {
         page.off('request', callback);
         return expect(callback.mock.calls.length).toBe(1);
     });
+
+    afterAll( () => page.close() );
 });
