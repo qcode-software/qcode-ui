@@ -18,7 +18,6 @@ describe('Qcode uploader', () => {
         await page.evaluate(
             () => {
                 const file = document.getElementsByTagName('input')[0].files[0];
-                console.log(file);
                 const uploader = new qcode.Uploader({
                     file: file,
                     url: "/upload"
@@ -26,6 +25,7 @@ describe('Qcode uploader', () => {
                 uploader.start();
             }
         );
+        await page.waitForTimeout(1000);
         page.off('request', callback);
         return expect(callback.mock.calls.length).toBe(1);
     });
