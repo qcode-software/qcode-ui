@@ -1,7 +1,6 @@
 NAME=qcode-ui
-REMOTEHOST=js.qcode.co.uk
-REMOTEDIR=/var/www/html/js.qcode.co.uk
-REMOTEUSER=nsd
+PROFILE=sso_qcode_makefile
+BUCKET=js-qcode-co-uk
 
 all: check-version concat upload clean
 concat: check-version
@@ -26,9 +25,7 @@ concat: check-version
 	rm $(NAME)-$(VERSION).tar.gz
 upload: check-version
 	# Upload concatenated and source CSS and JS files to js.qcode.co.uk
-	scp -r $(NAME)-$(VERSION) $(REMOTEUSER)@$(REMOTEHOST):$(REMOTEDIR)/$(NAME)-$(VERSION)
-	# Change permissions to read only to prevent files being overwritten
-	ssh $(REMOTEUSER)@$(REMOTEHOST) 'find $(REMOTEDIR)/$(NAME)-$(VERSION) -type f -exec chmod 444 {} +'
+	aws --profile $(PROFILE) s3 cp $(NAME)-$(VERSION) s3://$(BUCKET)/$(NAME)-$(VERSION) --recursive
 clean: 
 	rm -rf $(NAME)-$(VERSION)
 check-version:
