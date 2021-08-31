@@ -2,7 +2,7 @@
 
 All versions of the library available from CDN
 
-**https://d1ab3pgt4r9xn1.cloudfront.net/**
+**https://d3nz4z14c0bzit.cloudfront.net/**
 
 - [Tables](docs/tables/index.md)
 - [Forms](docs/forms/index.md) (forms and data entry)
@@ -17,18 +17,18 @@ All versions of the library available from CDN
 [jsFiddle](http://jsfiddle.net/PeterChaplin/ta9vy1e0/)
 
 ## Dependencies
-- js-cookie: https://js.qcode.co.uk/vendor/js-cookie/2.0.3/js-cookie.js
-- qTip2: https://js.qcode.co.uk/vendor/qtip/2.2.1/jquery.qtip.min.js
+- js-cookie: https://d3nz4z14c0bzit.cloudfront.net/vendor/js-cookie/2.0.3/js-cookie.js
+- qTip2: https://d3nz4z14c0bzit.cloudfront.net/vendor/qtip/2.2.1/jquery.qtip.min.js
 - qc-font:
 ```css
 /* Font */
 @font-face {
     font-family: 'qc-font';
-    src: url('https://js.qcode.co.uk/qc-font/1.0.0/qc-font.eot');
-    src: url('https://js.qcode.co.uk/qc-font/1.0.0/qc-font.eot?#iefix') format('embedded-opentype'),
-    url('https://js.qcode.co.uk/qc-font/1.0.0/qc-font.woff') format('woff'),
-    url('https://js.qcode.co.uk/qc-font/1.0.0/qc-font.ttf') format('truetype'),
-    url('https://js.qcode.co.uk/qc-font/1.0.0/qc-font.svg#qc-font') format('svg');
+    src: url('https://d3nz4z14c0bzit.cloudfront.net/qc-font/1.0.0/qc-font.eot');
+    src: url('https://d3nz4z14c0bzit.cloudfront.net/qc-font/1.0.0/qc-font.eot?#iefix') format('embedded-opentype'),
+    url('https://d3nz4z14c0bzit.cloudfront.net/qc-font/1.0.0/qc-font.woff') format('woff'),
+    url('https://d3nz4z14c0bzit.cloudfront.net/qc-font/1.0.0/qc-font.ttf') format('truetype'),
+    url('https://d3nz4z14c0bzit.cloudfront.net/qc-font/1.0.0/qc-font.svg#qc-font') format('svg');
     font-weight: normal;
     font-style: normal;
 }

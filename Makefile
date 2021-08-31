@@ -24,7 +24,7 @@ concat: check-version
 	rm -rf $(NAME)-$(VERSION)-tmp
 	rm $(NAME)-$(VERSION).tar.gz
 upload: check-version
-	# Upload concatenated and source CSS and JS files to js.qcode.co.uk
+	# Upload concatenated and source CSS and JS files to s3://js-qcode-co-uk
 	aws --profile $(PROFILE) s3 cp $(NAME)-$(VERSION) s3://$(BUCKET)/$(NAME)-$(VERSION) --recursive
 clean: 
 	rm -rf $(NAME)-$(VERSION)
