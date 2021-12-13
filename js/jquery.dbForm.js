@@ -122,21 +122,41 @@
 	    case "submit":
                 this.setState('updating');
 		this.form.attr('action', this.settings.submitURL);
-		this.getElements().filter('.db-form-html-area').each(function(i, div){
+                var elements = this.getElements()
+                
+		elements.filter('.db-form-html-area').each(function(i, div){
 		    this.form.append(
 			$('<input type="hidden">')
 			    .attr('name', $(div).attr('name'))
 			    .val($(div).html())
 		    );
 		}.bind(this));
-		this.getElements().filter('input[type="checkbox"]:not(:checked)').each(function(i, input) {
-		    if ( $(input).attr('boolean') ) {
+                
+                elements.filter(
+                    'input[type="checkbox"][boolean="true"]:checked'
+                ).each(function(i, input) {
+                    elements.filter(
+                        'input[type="hidden"][name="'
+                                + $(input).attr('name')
+                                + '"]'
+                    ).remove()
+                });
+
+                elements.filter(
+                    'input[type="checkbox"][boolean="true"]:not(:checked)'
+                ).each(function(i, input) {
+                    var existing = elements.filter(
+                        'input[type="hidden"][name="'
+                                + $(input).attr('name')
+                                + '"]'
+                    );
+                    if ( existing.size() == 0 ) {
 			this.form.append(
 			    $('<input type="hidden">')
-				.attr('name', $(input).attr('name'))
-				.val("false")
+				    .attr('name', $(input).attr('name'))
+				    .val("false")
 			);
-		    }
+                    }
 		}.bind(this));
 		this.form.submit();
 		break;

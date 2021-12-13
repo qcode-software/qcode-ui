@@ -6,7 +6,10 @@
     },
     "devDependencies": {
         "http-server": "^13.0.0",
+        "jest": "^27.0.6",
         "jest-dev-server": "^5.0.3",
-        "jest-puppeteer": "^5.0.4"
+        "jest-puppeteer": "^5.0.4",
+        "puppeteer": "^10.2.0",
+        "puppeteer-core": "^10.2.0"
     }
 }
