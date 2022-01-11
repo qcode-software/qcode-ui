@@ -67,8 +67,8 @@
 		        buttons: {
 			    Yes: yesFunction,
 			    No: function() {
-			        $(this).dialog('close').dialog('destroy').remove();
-			    }
+                                this.remove()
+                            }
 		        },
 		        modal: true,
 		        width: 400,
