@@ -1,0 +1,33 @@
+.dialog {
+    resize: both;
+    border: 1px solid grey;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.dialog__title {
+    font-size: 1em;
+    margin: 0;
+    padding: 0.5em;
+    border-bottom: 1px solid grey;
+    background: #64543f;
+    color: #ece9d8;
+}
+
+.dialog__content {
+    padding: 1em;
+}
+
+.dialog__footer {
+    border-top: 1px solid grey;
+    padding: 0.5em;
+}
+
+.dialog__buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dialog__button {
+    margin-left: 0.5em;
+}

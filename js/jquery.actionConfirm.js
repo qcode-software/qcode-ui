@@ -60,20 +60,20 @@
                     }
 
                     // Display a modal dialog to confirm a user's action.
-                    $('<div>')
-		            .text("Are you sure you wish to " + action + "?")
-		            .dialog({
-		                title: "Confirm Action",
-		                buttons: {
-			            Yes: yesFunction,
-			            No: function() {
-			                $(this).dialog('close').dialog('destroy').remove();
-			            }
-		                },
-		                modal: true,
-		                width: 400,
-		                height: 200
-		            });
+                    var div = document.createElement('div');
+                    div.innerText = "Are you sure you wish to " + action + "?";
+                    qcode.Dialog(div,{
+		        title: "Confirm Action",
+		        buttons: {
+			    Yes: yesFunction,
+			    No: function() {
+			        $(this).dialog('close').dialog('destroy').remove();
+			    }
+		        },
+		        modal: true,
+		        width: 400,
+		        height: 200
+		    });
                 }
             });
         });
