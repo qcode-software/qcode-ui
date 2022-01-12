@@ -2,9 +2,11 @@
     border: 1px solid grey;
     border-radius: 3px;
     padding: 2px;
-    width: 250px;
     min-width: 100px;
     min-height: 100px;
+    top: 0;
+    bottom: 0;
+    z-index: 200;
 }
 
 .dialog__title {

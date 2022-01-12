@@ -8,7 +8,9 @@ qcode.Dialog = (function(undefined) {
         resizable: true,
         buttons: {},
         modal: false,
-        classes: {}
+        classes: {},
+        persist: false,
+        autoOpen: true
     }
     
     const Dialog = function(content, options) {
@@ -30,7 +32,7 @@ qcode.Dialog = (function(undefined) {
                     text: text
                 };
                 if ( typeof options.buttons[text] === "function" ) {
-                    button.click = config.buttons[text];
+                    button.click = options.buttons[text];
                 }
                 config.buttons.push(button);
             }
@@ -75,7 +77,9 @@ qcode.Dialog = (function(undefined) {
         });
         
         dialog.addEventListener('close',(event) => {
-            dialog.remove();
+            if ( ! config.persist ) {
+                dialog.remove();
+            }
         });
 
         if ( config.resizable ) {
@@ -88,10 +92,12 @@ qcode.Dialog = (function(undefined) {
             dialog.style.height = options.height;
         }
 
-        if ( config.modal ) {
-            dialog.showModal();
-        } else {
-            dialog.show();
+        if ( config.autoOpen ) {
+            if ( config.modal ) {
+                dialog.showModal();
+            } else {
+                dialog.show();
+            }
         }
         
         return dialog;
