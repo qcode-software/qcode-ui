@@ -66,9 +66,7 @@
 		        title: "Confirm Action",
 		        buttons: {
 			    Yes: yesFunction,
-			    No: function() {
-                                this.remove()
-                            }
+			    No: null
 		        },
 		        modal: true,
 		        width: 400,

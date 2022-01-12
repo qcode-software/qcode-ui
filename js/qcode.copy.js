@@ -30,19 +30,15 @@ qcode.copy = function(content) {
 
     } else {
         // Unable to copy directly - use a dialog instead
-        var dialog = $('<div>');
-        dialog.append('<p>Please use ctrl+c to copy.</p>');
-        textarea.appendTo(dialog);
-        dialog.dialog({
+        var div = $('<div>');
+        div.append('<p>Please use ctrl+c to copy.</p>');
+        textarea.appendTo(div);
+        var dialog = qcode.Dialog(div[0],{
             modal: true,
             buttons: {
                 Cancel: function() {
                     deferred.resolve(false);
-                    $(this).dialog('close');
                 }
-            },
-            close: function() {
-                $(this).remove();
             }
         });
         textarea.select();
@@ -51,7 +47,7 @@ qcode.copy = function(content) {
         textarea.on('copy', function() {
             deferred.resolve(true);
             window.setZeroTimeout(function() {
-                dialog.dialog('close');
+                dialog.close();
             });
         });
     }
