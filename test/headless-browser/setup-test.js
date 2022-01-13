@@ -14,7 +14,13 @@ global.load_qcode_ui = function(page) {
 global.dom_ready = function(page) {
     return page.evaluate(
         () => new Promise(
-            resolve => $(resolve)
+            resolve => {
+                if ( document.readyState === "complete" ) {
+                    setTimeout(resolve, 1);
+                } else {
+                    window.addEventListener('DOMContentLoaded',resolve);
+                }
+            }
         )
     );
 }
