@@ -38,32 +38,27 @@ var qcode = qcode || {};
             if ( toFocus.is(':input') ) {
                 textRange = toFocus.textrange('get');
             }
-            
-            $('<div>')
-                    .html(message)
-                    .dialog({
-                        resizable: false,
-                        modal: true,
-                        buttons: {
-                            OK: function() {
-                                $(this).dialog('close');
-                            }
-                        },
-                        classes: {"ui-dialog": "alert"},
-                        close: function() {
-                            $(this).remove();
-                            
-                            // Restore focus
-                            toFocus.trigger('focus');
-                            if ( toFocus.is(':input') ) {
-                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
-                            }
-                            if ( typeof callback == "function" ) {
-                                callback();
-                            }
-                            showNextMessage();
-                        }
-                    });
+
+            var div = document.createElement('div');
+            div.innerHTML = message;
+            qcode.Dialog(div, {
+                resizable: false,
+                modal: true,
+                buttons: {
+                    OK: null
+                },
+                classes: {"dialog": "alert"}
+            }).addEventListener('close', function() {                    
+                // Restore focus
+                toFocus.trigger('focus');
+                if ( toFocus.is(':input') ) {
+                    toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                }
+                if ( typeof callback == "function" ) {
+                    callback();
+                }
+                showNextMessage();
+            });
             if ( qcode.Sound && qcode.Sound.supported && qcode.alert.config.sound ) {
                 qcode.alert.config.sound.play();
             }
@@ -87,54 +82,55 @@ var qcode = qcode || {};
                     textRange = toFocus.textrange('get');
                 }
             }
-            
-            $('<div>')
-                    .html(message)
-                    .dialog({
-                        resizable: false,
-                        modal: true,
-                        classes: {"ui-dialog": "confirm"},
-                        buttons: [
-                            {
-                                text: "Yes",
-                                click: function() {
-                                    $(this).dialog('close');
-                                    if ( typeof onConfirm === "function" ) {
-                                        onConfirm();
-                                    }
-                                },
-                                keydown: function(event) {
-                                    // Arrow key events
-                                    if ( event.which >= 37 && event.which <= 40 ) {
-                                        $(this).next().focus();
-                                    }
-                                }
-                            },
-                            {
-                                text: "No",
-                                click: function() {
-                                    $(this).dialog('close');
-                                    if ( typeof onCancel === "function" ) {
-                                        onCancel();
-                                    }
-                                },
-                                keydown: function(event) {
-                                    // Arrow key events
-                                    if ( event.which >= 37 && event.which <= 40 ) {
-                                        $(this).prev().focus();
-                                    }
-                                }
+
+            var div = document.createElement('div');
+            div.innerHTML = message;
+            var dialog = qcode.Dialog(div,{
+                resizable: false,
+                modal: true,
+                classes: {"dialog": "confirm"},
+                buttons: [
+                    {
+                        text: "Yes",
+                        click: function() {
+                            if ( typeof onConfirm === "function" ) {
+                                onConfirm();
                             }
-                        ],
-                        close: function() {
-                            $(this).remove();
-                            toFocus.trigger('focus');
-                            if ( toFocus.is(':input') && supportsSelection ) {
-                                toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                        },
+                        keydown: function(event) {
+                            // Arrow key events
+                            if ( event.which >= 37 && event.which <= 40 ) {
+                                $(this).next().focus();
                             }
-                            showNextMessage();
                         }
-                    });
+                    },
+                    {
+                        text: "No",
+                        click: function() {
+                            if ( typeof onCancel === "function" ) {        
+                                onCancel();
+                            }
+                        },
+                        keydown: function(event) {
+                            // Arrow key events
+                            if ( event.which >= 37 && event.which <= 40 ) {
+                                $(this).prev().focus();
+                            }
+                        }
+                    }
+                ]
+            });
+            dialog.addEventListener('close', function() {
+                toFocus.trigger('focus');
+                if ( toFocus.is(':input') && supportsSelection ) {
+                    toFocus.textrange(
+                        'set',
+                        textRange.selectionStart,
+                        textRange.selectionEnd);
+                }
+                showNextMessage();
+            });
+            
             if ( qcode.Sound && qcode.Sound.supported && qcode.confirm.config.sound ) {
                 qcode.confirm.config.sound.play();
             }

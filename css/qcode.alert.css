@@ -1,5 +1,5 @@
 /* Add a triangular "warning" symbol to alerts */
-.ui-dialog.alert .ui-dialog-content::before {
+.dialog.alert .dialog__content::before {
     display: table-cell;
     content: '\e009';
     -webkit-font-smoothing: antialiased;
@@ -11,7 +11,7 @@
 }
 /* Apply a text gradient where supported */
 @supports ( -webkit-background-clip: text ) {
-    .ui-dialog.alert .ui-dialog-content::before {
+    .dialog.alert .dialog__content::before {
         -webkit-background-clip: text;
         background-image: linear-gradient(to bottom, rgb(250, 230, 50) 30%, rgb(250, 150, 50));
         color: transparent;
@@ -19,7 +19,7 @@
         background-position: center center;
     }
 }
-.ui-dialog.alert .ui-dialog-content {
+.dialog.alert .dialog__content {
     display: table !important;
-    padding: 1em 1em 0.5em;
+    padding: 1em 1em;
 }
