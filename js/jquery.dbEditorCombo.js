@@ -165,7 +165,7 @@
 		}
 
 		// position
-		var position = element.positionRelativeTo(this.editor.offsetParent());
+		var position = element.positionRelativeTo(this.editor[0].offsetParent);
 		editor.css({
 		    'left': position.left,
 		    'top': position.top
