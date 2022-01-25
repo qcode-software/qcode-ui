@@ -54,7 +54,7 @@
 
             // default container
             if ( this.options.container === null ) {
-                this.options.container = this.element.offsetParent();
+                this.options.container = this.element[0].offsetParent;
             }
             if ( $(this.options.container).is('html') ) {
                 this.options.container = $('body');

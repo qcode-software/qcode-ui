@@ -108,7 +108,7 @@
 		    editor.css('backgroundColor', element.css('backgroundColor'));
 		}
 		// position
-		editor.css(element.positionRelativeTo(this.editor.offsetParent()));
+		editor.css(element.positionRelativeTo(this.editor[0].offsetParent));
 	    }
 	},
 	selectText: function(option) {

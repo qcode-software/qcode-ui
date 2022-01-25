@@ -88,7 +88,7 @@
 
 		editor
 		    .height((typeof element.data('editorHeight') == "undefined") ? element.height() : element.data('editorHeight'))
-		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+		    .css(element.positionRelativeTo(this.editor[0].offsetParent));
 
                 if ( element.css('border-collapse') === "collapse" ) {
                     editor.css({
