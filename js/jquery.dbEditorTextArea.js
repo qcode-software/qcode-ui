@@ -105,7 +105,7 @@
 			'height': "+=1", 
 			'padding-bottom': "-=1"
 		    })*/
-		    .css(element.positionRelativeTo(this.editor.offsetParent()));
+		    .css(element.positionRelativeTo(this.editor[0].offsetParent));
 	    }
 	},
 	selectText: function(option) {
