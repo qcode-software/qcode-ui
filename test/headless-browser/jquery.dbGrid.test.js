@@ -8,7 +8,7 @@ describe('dbGrid plugin',() => {
 
     afterEach( () => page.close() );
 
-    it('Supports initialFocus at start', async () => expect(
+    it('Supports initialFocus at start', () => expect(
         page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start"
@@ -20,7 +20,7 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe('Charlie'));
 
-    it('Supports initialFocus at end', async () => expect(
+    it('Supports initialFocus at end', () => expect(
         page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "end"
@@ -32,7 +32,7 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe('Bobby'));
 
-    it('Can be disabled', async () => expect(
+    it('Can be disabled', () => expect(
         page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start",
@@ -45,36 +45,32 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe(0));
 
-    it('Fires a message event', async done => {
+    /*it('Fires a message event', async done => {
         var message;
         const logMessage = jest.fn((event,additionalData) => {
             message = additionalData.html;
         });
-        const messageLogged = page.evaluate(log => {
-            return new Promise((resolve, reject) => {
+        await page.evaluate(log => {
+            let logged = new Promise((resolve, reject) => {
                 $('body').on('message',event => {
                     log(event);
                     resolve();
                 });
             });
-        }, logMessage);
-        
-        await page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start"
             });
 
             $('body').trigger('pluginsReady');
-        });
-
-        await messageLogged;
+            return logged;
+        }, logMessage);
 
         expect(mockCallback.mock.calls.length).toBe(1);
         expect(message).toBe("Record 1 of 3");
         done();
     });
 
-    /*it('Allows cell change', async () => expect(
+    it('Allows cell change', async () => expect(
         page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start"
