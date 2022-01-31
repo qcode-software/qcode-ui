@@ -171,10 +171,10 @@
 		    'top': position.top
 		});
 
-                var pagePosition = editor.positionRelativeTo('body');
+                var pagePosition = editor[0].getBoundingClientRect();
 		comboOptions.css({
-		    'left': pagePosition.left + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
-		    'top': pagePosition.top + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
+		    'left': pagePosition.x + parseInt(editor.css('borderLeftWidth')) - parseInt(comboOptions.css('borderLeftWidth')),
+		    'top': pagePosition.y + editor.outerHeight() - parseInt(comboOptions.css('borderTopWidth'))
 		});
 	    }
 	}, 
