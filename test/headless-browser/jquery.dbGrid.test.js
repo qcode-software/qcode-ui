@@ -45,12 +45,20 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe(0));
 
-    it('Fires a message event', async () => {
+    it('Fires a message event', async done => {
         var message;
-        const mockCallback = jest.fn((event,additionalData) => {
+        const logMessage = jest.fn((event,additionalData) => {
             message = additionalData.html;
         });
-        page.on('message',mockCallback);
+        const messageLogged = page.evaluate(log => {
+            return new Promise((resolve, reject) => {
+                $('body').on('message',event => {
+                    log(event);
+                    resolve();
+                });
+            });
+        }, logMessage);
+        
         await page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start"
@@ -59,11 +67,14 @@ describe('dbGrid plugin',() => {
             $('body').trigger('pluginsReady');
         });
 
-        return expect(mockCallback.mock.calls.length).toBe(1)
-                && expect(message).toBe("Record 1 of 3");
+        await messageLogged;
+
+        expect(mockCallback.mock.calls.length).toBe(1);
+        expect(message).toBe("Record 1 of 3");
+        done();
     });
 
-    it('Allows cell change', async () => expect(
+    /*it('Allows cell change', async () => expect(
         page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start"
@@ -81,8 +92,8 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe('charlie@mymail.co.uk'));
 
-    it('Saves via xhr, with xml response', async () => expect(
-        page.evaluate(() => {
+    describe('Saves via http/xml', () => {
+        const save = () => {
             global.Cookies = {
                 get() {
                     return "";
@@ -107,70 +118,49 @@ describe('dbGrid plugin',() => {
                 options.success(fakeResponse, fakeStatus, fakeXHR);
                 return Promise.resolve(fakeResponse);
             });
-
-            $('body').on('message',(event, additionalData) => {
-                if ( additionalData.html === "Saved." ) {            
-                    expect( jQuery.ajax.mock.calls.length ).toBe(1);
-                    expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-update');
-                    expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
-                        name: 'Charlie',
-                        email: 'charlie@mymail.co.uk',
-                        highscore: '42'
-                    });
-                    expect(
-                        $('tbody tr').first().dbRow('getRowData')
-                    ).toEqual({
-                        name: 'Alice',
-                        email: 'alice@anemail.co.uk',
-                        highscore: '50'
-                    });
-                    done();
-                }
-            });
-            
             $('#mygrid').dbGrid({
                 initialFocus: "start",
                 updateURL: "/dummy-update"
             });
             $('body').trigger('pluginsReady');    
             $('#mygrid').dbGrid('save');
-    });
-
-    it('Saves via xhr, with json response', done => {
-        global.Cookies = {
-            get() {
-                return "";
-            }
+            return jQuery.ajax;
         };
-        jQuery.ajax = jest.fn(options => {
-            const fakeResponse = {
-                status: "valid",
-                record: {
-                    name: {value:"Alice"},
-                    email: {value:"alice@anemail.co.uk"},
-                    highscore: {value:"50"}
-                }
-            }
-            const fakeStatus = "success";
-            const fakeXHR = {
-                getResponseHeader() {
-                    return "application/json; charset=utf-8";
-                }
-            }
-
-            options.success(fakeResponse, fakeStatus, fakeXHR);
-            return Promise.resolve(fakeResponse);
+        
+        it('Sends one xhr request', async done => {
+            let mock;
+            page.on('message', () => {
+                expect( mock.calls.length ).toBy(1);
+                done();
+            });
+            mock = save();
         });
 
-        $('body').on('message',(event, additionalData) => {
-            if ( additionalData.html === "Saved." ) {
-                expect( jQuery.ajax.mock.calls.length ).toBe(1);
-                expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-update');
+        it('Uses the updateURL', async done => {
+            let mock;
+            page.on('message', () => {
+                expect( mock.calls[0][0].url ).toBe('/dummy-update');
+                done();
+            });
+            mock.save();
+        });
+
+        it('Supplies record data', async done => {
+            let mock;
+            page.on('message', () => {
                 expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
                     name: 'Charlie',
                     email: 'charlie@mymail.co.uk',
                     highscore: '42'
                 });
+                done()
+            });
+            mock.save();
+        });
+
+        it('Updates record data', async done => {
+            let mock;
+            page.on('message', () => {
                 expect(
                     $('tbody tr').first().dbRow('getRowData')
                 ).toEqual({
@@ -179,140 +169,223 @@ describe('dbGrid plugin',() => {
                     highscore: '50'
                 });
                 done();
-            }
+            });
+            mock.save();
         });
-        
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            updateURL: "/dummy-update"
-        });
-        $('body').trigger('pluginsReady');    
-        $('#mygrid').dbGrid('save');
     });
 
-    it('Supports row delete', done => {
-        jQuery.ajax = jest.fn();
-        
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            updateURL: "/dummy-update",
-            deleteURL: "/dummy-delete"
-        });
-        $('body').trigger('pluginsReady');
+    describe('Saves via http/json', () => {
+        const save = () => {
+            global.Cookies = {
+                get() {
+                    return "";
+                }
+            };
+            jQuery.ajax = jest.fn(options => {
+                const fakeResponse = {
+                    status: "valid",
+                    record: {
+                        name: {value:"Alice"},
+                        email: {value:"alice@anemail.co.uk"},
+                        highscore: {value:"50"}
+                    }
+                }
+                const fakeStatus = "success";
+                const fakeXHR = {
+                    getResponseHeader() {
+                        return "application/json; charset=utf-8";
+                    }
+                }
 
-        // Click "Yes" on confirm dialog
-        $('body').one('focusin',event => {
-            $('.ui-dialog-buttonset .ui-button').first().trigger('click');
-            expect( jQuery.ajax.mock.calls.length ).toBe(1);
-            expect( jQuery.ajax.mock.calls[0][0].url ).toBe('/dummy-delete');
+                options.success(fakeResponse, fakeStatus, fakeXHR);
+                return Promise.resolve(fakeResponse);
+            });
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                updateURL: "/dummy-update"
+            });
+            $('body').trigger('pluginsReady');    
+            $('#mygrid').dbGrid('save');
+            return jQuery.ajax;
+        };
+
+        it('Sends one xhr request', async done => {
+            let mock;
+            page.on('message', (event, additionalData) => {
+                expect( jQuery.ajax.mock.calls.length ).toBe(1);
+                done();
+            });
+            mock = save();
+        });
+
+        it('Updates dbRow data', async done => {
+            let mock;
+            page.on('message', (event, additionalData) => {
+                expect(
+                    $('tbody tr').first().dbRow('getRowData')
+                ).toEqual({
+                    name: 'Alice',
+                    email: 'alice@anemail.co.uk',
+                    highscore: '50'
+                });
+                done();
+            });
+        });
+    });
+
+    it('Supports row delete', async done => {
+        let request;
+        page.on('focusin', async event => {
+            await page.evaluate(() => {
+                $('dialog button').first().trigger('click');
+            });
+            expect( request.mock.calls.length ).toBe(1);
+            expect( request.mock.calls[0][0].url ).toBe('/dummy-delete');
             done();
         });
-        
-        $('#mygrid').dbGrid('delete');
-    });
+        request = await page.evaluate(async () => {
+            jQuery.ajax = jest.fn();
+            
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                updateURL: "/dummy-update",
+                deleteURL: "/dummy-delete"
+            });
+            $('body').trigger('pluginsReady');
+            
+            $('#mygrid').dbGrid('delete');
 
-    it('Supports removeRow method', () => {
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            updateURL: "/dummy-update"
+            return jQuery.ajax;
         });
-        $('body').trigger('pluginsReady');
-        $('#mygrid').dbGrid('removeRow',$('tbody tr').first());
-
-        expect( $('tbody tr').length ).toBe(2);
-        expect( $('#mygrid').dbGrid('getCurrentCell')[0] ).toBe(
-            $('tbody tr td').first()[0]
-        );
     });
 
-    it('Supports createBlankRow method', () => {
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            updateURL: "/dummy-update"
+    it('Supports removeRow method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                updateURL: "/dummy-update"
+            });
+            $('body').trigger('pluginsReady');
+            $('#mygrid').dbGrid('removeRow',$('tbody tr').first());
         });
-        $('body').trigger('pluginsReady');
-        $('#mygrid').dbGrid('createBlankRow');
-
-        expect( $('tbody tr').length ).toBe(4);
+        let rows = await page.$$('tbody tr');
+        expect(rows.length).toBe(2);
+        done();
     });
 
-    it('Supports createNewRow method', () => {
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            updateURL: "/dummy-update"
+    it('Supports createBlankRow method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                updateURL: "/dummy-update"
+            });
+            $('body').trigger('pluginsReady');
+            $('#mygrid').dbGrid('createBlankRow');
         });
-        $('body').trigger('pluginsReady');
-        $('#mygrid').dbGrid('createNewRow');
-
-        expect( $('tbody tr').length ).toBe(4);
+        let rows = await page.$$('tbody tr');
+        expect(rows.length).toBe(4);
+        done();
     });
 
-    it('Supports requery method', () => {
-        jQuery.ajax = jest.fn(options => {
-            const fakeResponse = jQuery.parseXML(
-                "<records>" +
-                        "<record>" +
-                        "<name>Alice</name>" +
-                        "<email>alice@anemail.co.uk</email>" +
-                        "<highscore>50</highscore>" +
-                        "</record>" +
-                        "<record>" +
-                        "<name>Billy</name>" +
-                        "<email>billy@anotheremail.com</email>" +
-                        "<highscore>101</highscore>" +
-                        "</record>" +
-                        "</records>");
-
-            options.success(fakeResponse);
-            return Promise.resolve(fakeResponse);
+    it('Supports createNewRow method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                updateURL: "/dummy-update"
+            });
+            $('body').trigger('pluginsReady');
+            $('#mygrid').dbGrid('createNewRow');
         });
-        $('#mygrid').dbGrid({
-            initialFocus: "start",
-            dataURL: "/dummy-data"
+        let rows = await page.$$('tbody tr');
+        expect(rows.length).toBe(4);
+        done();
+    });
+
+    it('Supports requery method', async done => {
+        await page.evaluate(() => {
+            jQuery.ajax = jest.fn(options => {
+                const fakeResponse = jQuery.parseXML(
+                    "<records>" +
+                            "<record>" +
+                            "<name>Alice</name>" +
+                            "<email>alice@anemail.co.uk</email>" +
+                            "<highscore>50</highscore>" +
+                            "</record>" +
+                            "<record>" +
+                            "<name>Billy</name>" +
+                            "<email>billy@anotheremail.com</email>" +
+                            "<highscore>101</highscore>" +
+                            "</record>" +
+                            "</records>");
+
+                options.success(fakeResponse);
+                return Promise.resolve(fakeResponse);
+            });
+            $('#mygrid').dbGrid({
+                initialFocus: "start",
+                dataURL: "/dummy-data"
+            });
+            $('body').trigger('pluginsReady');
+            $('#mygrid').dbGrid('requery');
         });
-        $('body').trigger('pluginsReady');
-        $('#mygrid').dbGrid('requery');
-
-        expect( $('tbody tr').length ).toBe(2);
+        let rows = await page.$$('tbody tr');
+        expect(rows.length).toBe(2);
+        done();
     });
 
-    it('Supports cellAbove method', () => {
-        $('#mygrid').dbGrid();
-        $('body').trigger('pluginsReady');
-        const middleCell = $('tbody tr').eq(1).find('td').find(1);
-        const topCell = $('tbody tr').eq(0).find('td').find(1);
-        expect(
-            $('#mygrid').dbGrid('cellAbove', middleCell)[0]
-        ).toBe(topCell[0]);
+    it('Supports cellAbove method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid();
+            $('body').trigger('pluginsReady');
+        });
+        const middleCell = await page.$(
+            'tbody tr:nth-child(2) td:nth-child(1)');
+        const topCell = await page.$(
+            'tbody tr:nth-child(1) td:nth-child(1)');
+
+        expect(middleCell).toBe(topCell);
+        done();
     });
 
-    it('Supports cellRightOf method', () => {
-        $('#mygrid').dbGrid();
-        $('body').trigger('pluginsReady');
-        const middleCell = $('tbody tr').eq(1).find('td').find(1);
-        const rightCell = $('tbody tr').eq(1).find('td').find(2);
-        expect(
-            $('#mygrid').dbGrid('cellRightOf', middleCell)[0]
-        ).toBe(rightCell[0]);
+    it('Supports cellRightOf method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid();
+            $('body').trigger('pluginsReady');
+        });
+        const middleCell = await page.$(
+            'tbody tr:nth-child(2) td:nth-child(1)');
+        const rightCell = await page.$(
+            'tbody tr:nth-child(1) td:nth-child(1)');
+
+        expect(middleCell).toBe(rightCell);
+        done();
     });
 
-    it('Supports cellBelow method', () => {
-        $('#mygrid').dbGrid();
-        $('body').trigger('pluginsReady');
-        const middleCell = $('tbody tr').eq(1).find('td').find(1);
-        const bottomCell = $('tbody tr').eq(2).find('td').find(1);
-        expect(
-            $('#mygrid').dbGrid('cellBelow', middleCell)[0]
-        ).toBe(bottomCell[0]);
+    it('Supports cellBelow method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid();
+            $('body').trigger('pluginsReady');
+        });
+        const middleCell = await page.$(
+            'tbody tr:nth-child(1) td:nth-child(1)');
+        const bottomCell = await page.$(
+            'tbody tr:nth-child(2) td:nth-child(1)');
+
+        expect(middleCell).toBe(bottomCell);
+        done();
     });
 
-    it('Supports cellLeftOf method', () => {
-        $('#mygrid').dbGrid();
-        $('body').trigger('pluginsReady');
-        const middleCell = $('tbody tr').eq(1).find('td').find(1);
-        const leftCell = $('tbody tr').eq(1).find('td').find(0);
-        expect(
-            $('#mygrid').dbGrid('cellLeftOf', middleCell)[0]
-        ).toBe(leftCell[0]);
-    });
+    it('Supports cellLeftOf method', async done => {
+        await page.evaluate(() => {
+            $('#mygrid').dbGrid();
+            $('body').trigger('pluginsReady');
+        });
+        const middleCell = await page.$(
+            'tbody tr:nth-child(1) td:nth-child(2)');
+        const leftCell = await page.$(
+            'tbody tr:nth-child(1) td:nth-child(1)');
+
+        expect(middleCell).toBe(leftCell);
+        done();
+    });*/
 });
