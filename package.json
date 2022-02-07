@@ -11,5 +11,6 @@
         "jest-puppeteer": "^5.0.4",
         "puppeteer": "^10.2.0",
         "puppeteer-core": "^10.2.0"
-    }
+    },
+    "dependencies": {}
 }

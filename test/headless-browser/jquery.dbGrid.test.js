@@ -45,29 +45,24 @@ describe('dbGrid plugin',() => {
         })
     ).resolves.toBe(0));
 
-    /*it('Fires a message event', async done => {
-        var message;
-        const logMessage = jest.fn((event,additionalData) => {
-            message = additionalData.html;
-        });
-        await page.evaluate(log => {
-            let logged = new Promise((resolve, reject) => {
-                $('body').on('message',event => {
-                    log(event);
+    it('Fires a message event', async () => {
+        const logMessage = jest.fn();
+        await page.exposeFunction("logMessage", logMessage);
+        await page.evaluate(() => {
+            return new Promise(resolve => {
+                $('body').on('message', async (event,message) => {
+                    await logMessage(message);
                     resolve();
                 });
+                $('#mygrid').dbGrid({
+                    initialFocus: "start"
+                });
+                $('body').trigger('pluginsReady');
             });
-            $('#mygrid').dbGrid({
-                initialFocus: "start"
-            });
+        });
 
-            $('body').trigger('pluginsReady');
-            return logged;
-        }, logMessage);
-
-        expect(mockCallback.mock.calls.length).toBe(1);
-        expect(message).toBe("Record 1 of 3");
-        done();
+        expect(logMessage.mock.calls.length).toBe(1);
+        expect(logMessage.mock.calls[0][0].html).toBe("Record 1 of 3");
     });
 
     it('Allows cell change', async () => expect(
@@ -90,172 +85,173 @@ describe('dbGrid plugin',() => {
 
     describe('Saves via http/xml', () => {
         const save = () => {
-            global.Cookies = {
-                get() {
-                    return "";
-                }
-            };
-            jQuery.ajax = jest.fn(options => {
-                const fakeResponse = jQuery.parseXML(
-                    "<records>" +
-                            "<record>" +
-                            "<name>Alice</name>" +
-                            "<email>alice@anemail.co.uk</email>" +
-                            "<highscore>50</highscore>" +
-                            "</record>" +
-                            "</records>");
-                const fakeStatus = "success";
-                const fakeXHR = {
-                    getResponseHeader() {
-                        return "text/xml; charset=utf-8";
+            return new Promise(resolve => {
+                jQuery.ajax = options => {
+                    const fakeResponse = jQuery.parseXML(
+                        "<records>" +
+                                "<record>" +
+                                "<name>Alice</name>" +
+                                "<email>alice@anemail.co.uk</email>" +
+                                "<highscore>50</highscore>" +
+                                "</record>" +
+                                "</records>");
+                    const fakeStatus = "success";
+                    const fakeXHR = {
+                        getResponseHeader() {
+                            return "text/xml; charset=utf-8";
+                        }
                     }
-                }
-
-                options.success(fakeResponse, fakeStatus, fakeXHR);
-                return Promise.resolve(fakeResponse);
+                    
+                    options.success(fakeResponse, fakeStatus, fakeXHR);
+                    mockFunction(options)
+                    resolve();
+                };
+                $('#mygrid').dbGrid({
+                    initialFocus: "start",
+                    updateURL: "/dummy-update"
+                });
+                $('body').trigger('pluginsReady');    
+                $('#mygrid').dbGrid('save');
             });
-            $('#mygrid').dbGrid({
-                initialFocus: "start",
-                updateURL: "/dummy-update"
-            });
-            $('body').trigger('pluginsReady');    
-            $('#mygrid').dbGrid('save');
-            return jQuery.ajax;
         };
         
-        it('Sends one xhr request', async done => {
-            let mock;
-            page.on('message', () => {
-                expect( mock.calls.length ).toBy(1);
-                done();
-            });
-            mock = save();
+        it('Sends one xhr request', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+            
+            expect( mockFunction.mock.calls.length ).toBe(1);
         });
 
-        it('Uses the updateURL', async done => {
-            let mock;
-            page.on('message', () => {
-                expect( mock.calls[0][0].url ).toBe('/dummy-update');
-                done();
-            });
-            mock.save();
+        it('Uses the updateURL', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+            
+            expect( mockFunction.mock.calls[0][0].url ).toBe('/dummy-update');
         });
 
-        it('Supplies record data', async done => {
-            let mock;
-            page.on('message', () => {
-                expect( jQuery.ajax.mock.calls[0][0].data ).toEqual({
-                    name: 'Charlie',
-                    email: 'charlie@mymail.co.uk',
-                    highscore: '42'
-                });
-                done()
+        it('Supplies record data', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+            
+            expect( mockFunction.mock.calls[0][0].data ).toEqual({
+                name: 'Charlie',
+                email: 'charlie@mymail.co.uk',
+                highscore: '42'
             });
-            mock.save();
         });
 
-        it('Updates record data', async done => {
-            let mock;
-            page.on('message', () => {
-                expect(
-                    $('tbody tr').first().dbRow('getRowData')
-                ).toEqual({
-                    name: 'Alice',
-                    email: 'alice@anemail.co.uk',
-                    highscore: '50'
-                });
-                done();
+        it('Updates record data', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+            const rowData = await page.evaluate(() => {
+                return $('tbody tr').first().dbRow('getRowData')
             });
-            mock.save();
+            
+            expect(rowData).toEqual({
+                name: 'Alice',
+                email: 'alice@anemail.co.uk',
+                highscore: '50'
+            });
         });
     });
 
     describe('Saves via http/json', () => {
         const save = () => {
-            global.Cookies = {
-                get() {
-                    return "";
-                }
-            };
-            jQuery.ajax = jest.fn(options => {
-                const fakeResponse = {
-                    status: "valid",
-                    record: {
-                        name: {value:"Alice"},
-                        email: {value:"alice@anemail.co.uk"},
-                        highscore: {value:"50"}
+            return new Promise(resolve => {
+                jQuery.ajax = options => {
+                    const fakeResponse = {
+                        status: "valid",
+                        record: {
+                            name: {value:"Alice"},
+                            email: {value:"alice@anemail.co.uk"},
+                            highscore: {value:"50"}
+                        }
                     }
-                }
-                const fakeStatus = "success";
-                const fakeXHR = {
-                    getResponseHeader() {
-                        return "application/json; charset=utf-8";
+                    const fakeStatus = "success";
+                    const fakeXHR = {
+                        getResponseHeader() {
+                            return "application/json; charset=utf-8";
+                        }
                     }
-                }
 
-                options.success(fakeResponse, fakeStatus, fakeXHR);
-                return Promise.resolve(fakeResponse);
+                    options.success(fakeResponse, fakeStatus, fakeXHR);
+                    mockFunction(options);
+                    resolve();
+                };
+                $('#mygrid').dbGrid({
+                    initialFocus: "start",
+                    updateURL: "/dummy-update"
+                });
+                $('body').trigger('pluginsReady');    
+                $('#mygrid').dbGrid('save');
             });
-            $('#mygrid').dbGrid({
-                initialFocus: "start",
-                updateURL: "/dummy-update"
-            });
-            $('body').trigger('pluginsReady');    
-            $('#mygrid').dbGrid('save');
-            return jQuery.ajax;
         };
 
-        it('Sends one xhr request', async done => {
-            let mock;
-            page.on('message', (event, additionalData) => {
-                expect( jQuery.ajax.mock.calls.length ).toBe(1);
-                done();
-            });
-            mock = save();
+        it('Sends one xhr request', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+
+            expect( mockFunction.mock.calls.length ).toBe(1);
         });
 
-        it('Updates dbRow data', async done => {
-            let mock;
-            page.on('message', (event, additionalData) => {
-                expect(
-                    $('tbody tr').first().dbRow('getRowData')
-                ).toEqual({
-                    name: 'Alice',
-                    email: 'alice@anemail.co.uk',
-                    highscore: '50'
+        it('Updates dbRow data', async () => {
+            const mockFunction = jest.fn();
+            
+            await page.exposeFunction("mockFunction", mockFunction);
+            await page.evaluate(save);
+            const rowData = await page.evaluate(() => {
+                return $('tbody tr').first().dbRow('getRowData')
+            });
+            
+            expect(rowData).toEqual({
+                name: 'Alice',
+                email: 'alice@anemail.co.uk',
+                highscore: '50'
+            });
+        });
+    });
+
+    it('Supports row delete', async () => {
+        const mockFunction = jest.fn();
+        await page.exposeFunction("mockFunction", mockFunction);
+
+        await page.evaluate(() => {
+            return new Promise(resolve => {
+                jQuery.ajax = options => {
+                    mockFunction(options);
+                    resolve();
+                };
+            
+                $('body').on('focusin', async event => {
+                    $('dialog button').first().trigger('click');
                 });
-                done();
+                
+                $('#mygrid').dbGrid({
+                    initialFocus: "start",
+                    updateURL: "/dummy-update",
+                    deleteURL: "/dummy-delete"
+                });
+                $('body').trigger('pluginsReady');
+                
+                $('#mygrid').dbGrid('delete');
             });
         });
+        
+        expect( mockFunction.mock.calls.length ).toBe(1);
+        expect( mockFunction.mock.calls[0][0].url ).toBe('/dummy-delete');
     });
 
-    it('Supports row delete', async done => {
-        let request;
-        page.on('focusin', async event => {
-            await page.evaluate(() => {
-                $('dialog button').first().trigger('click');
-            });
-            expect( request.mock.calls.length ).toBe(1);
-            expect( request.mock.calls[0][0].url ).toBe('/dummy-delete');
-            done();
-        });
-        request = await page.evaluate(async () => {
-            jQuery.ajax = jest.fn();
-            
-            $('#mygrid').dbGrid({
-                initialFocus: "start",
-                updateURL: "/dummy-update",
-                deleteURL: "/dummy-delete"
-            });
-            $('body').trigger('pluginsReady');
-            
-            $('#mygrid').dbGrid('delete');
-
-            return jQuery.ajax;
-        });
-    });
-
-    it('Supports removeRow method', async done => {
+    it('Supports removeRow method', async () => {
         await page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start",
@@ -264,12 +260,11 @@ describe('dbGrid plugin',() => {
             $('body').trigger('pluginsReady');
             $('#mygrid').dbGrid('removeRow',$('tbody tr').first());
         });
-        let rows = await page.$$('tbody tr');
+        const rows = await page.$$('tbody tr');
         expect(rows.length).toBe(2);
-        done();
     });
 
-    it('Supports createBlankRow method', async done => {
+    it('Supports createBlankRow method', async () => {
         await page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start",
@@ -280,10 +275,9 @@ describe('dbGrid plugin',() => {
         });
         let rows = await page.$$('tbody tr');
         expect(rows.length).toBe(4);
-        done();
     });
 
-    it('Supports createNewRow method', async done => {
+    it('Supports createNewRow method', async () => {
         await page.evaluate(() => {
             $('#mygrid').dbGrid({
                 initialFocus: "start",
@@ -294,12 +288,11 @@ describe('dbGrid plugin',() => {
         });
         let rows = await page.$$('tbody tr');
         expect(rows.length).toBe(4);
-        done();
     });
 
-    it('Supports requery method', async done => {
+    it('Supports requery method', async () => {
         await page.evaluate(() => {
-            jQuery.ajax = jest.fn(options => {
+            jQuery.ajax = options => {
                 const fakeResponse = jQuery.parseXML(
                     "<records>" +
                             "<record>" +
@@ -315,8 +308,7 @@ describe('dbGrid plugin',() => {
                             "</records>");
 
                 options.success(fakeResponse);
-                return Promise.resolve(fakeResponse);
-            });
+            };
             $('#mygrid').dbGrid({
                 initialFocus: "start",
                 dataURL: "/dummy-data"
@@ -326,24 +318,25 @@ describe('dbGrid plugin',() => {
         });
         let rows = await page.$$('tbody tr');
         expect(rows.length).toBe(2);
-        done();
     });
 
-    it('Supports cellAbove method', async done => {
-        await page.evaluate(() => {
+    it('Supports cellAbove method', async () => {
+        expect(await page.evaluate(() => {
             $('#mygrid').dbGrid();
             $('body').trigger('pluginsReady');
-        });
-        const middleCell = await page.$(
-            'tbody tr:nth-child(2) td:nth-child(1)');
-        const topCell = await page.$(
-            'tbody tr:nth-child(1) td:nth-child(1)');
 
-        expect(middleCell).toBe(topCell);
-        done();
+            const rows = document.getElementsByTagName('tr');
+            const middleCell = rows[1].getElementsByTagName('td')[0];
+            const topCell = rows[0].getElementsByTagName('td')[0];
+
+            return middleCell instanceof HTMLElement;
+            
+            return $('#mygrid').dbGrid('cellAbove', $(middleCell))[0]
+                    == topCell;
+        })).toBe(true);
     });
 
-    it('Supports cellRightOf method', async done => {
+    /*it('Supports cellRightOf method', async done => {
         await page.evaluate(() => {
             $('#mygrid').dbGrid();
             $('body').trigger('pluginsReady');
