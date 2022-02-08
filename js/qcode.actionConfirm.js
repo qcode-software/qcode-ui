@@ -43,7 +43,7 @@ actionConfirm only supports <a>, <button>, <input>.`;
             action = target.getAttribute('title');
             
         } else if ( target.matches('a, button') ) {
-            action = target.innerText();
+            action = target.innerText;
             
         } else if ( target.hasAttribute('val') ) {
             action = target.getAttribute('val');
