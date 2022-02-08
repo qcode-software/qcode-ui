@@ -326,55 +326,53 @@ describe('dbGrid plugin',() => {
             $('body').trigger('pluginsReady');
 
             const rows = document.getElementsByTagName('tr');
-            const middleCell = rows[1].getElementsByTagName('td')[0];
-            const topCell = rows[0].getElementsByTagName('td')[0];
-
-            return middleCell instanceof HTMLElement;
+            const middleCell = rows[2].getElementsByTagName('td')[0];
+            const topCell = rows[1].getElementsByTagName('td')[0];
             
             return $('#mygrid').dbGrid('cellAbove', $(middleCell))[0]
                     == topCell;
         })).toBe(true);
     });
 
-    /*it('Supports cellRightOf method', async done => {
-        await page.evaluate(() => {
+    it('Supports cellRightOf method', async () => {
+        expect(await page.evaluate(() => {
             $('#mygrid').dbGrid();
             $('body').trigger('pluginsReady');
-        });
-        const middleCell = await page.$(
-            'tbody tr:nth-child(2) td:nth-child(1)');
-        const rightCell = await page.$(
-            'tbody tr:nth-child(1) td:nth-child(1)');
 
-        expect(middleCell).toBe(rightCell);
-        done();
+            const rows = document.getElementsByTagName('tr');
+            const middleCell = rows[1].getElementsByTagName('td')[0];
+            const rightCell = rows[1].getElementsByTagName('td')[1];
+
+            return $('#mygrid').dbGrid('cellRightOf', $(middleCell))[0]
+                    == rightCell;
+        })).toBe(true);
     });
 
-    it('Supports cellBelow method', async done => {
-        await page.evaluate(() => {
+    it('Supports cellBelow method', async () => {
+        expect(await page.evaluate(() => {
             $('#mygrid').dbGrid();
             $('body').trigger('pluginsReady');
-        });
-        const middleCell = await page.$(
-            'tbody tr:nth-child(1) td:nth-child(1)');
-        const bottomCell = await page.$(
-            'tbody tr:nth-child(2) td:nth-child(1)');
 
-        expect(middleCell).toBe(bottomCell);
-        done();
+            const rows = document.getElementsByTagName('tr');
+            const middleCell = rows[1].getElementsByTagName('td')[0];
+            const bottomCell = rows[2].getElementsByTagName('td')[0];
+
+            return $('#mygrid').dbGrid('cellBelow', $(middleCell))[0]
+                    == bottomCell;
+        })).toBe(true);
     });
 
-    it('Supports cellLeftOf method', async done => {
-        await page.evaluate(() => {
+    it('Supports cellLeftOf method', async () => {
+        expect(await page.evaluate(() => {
             $('#mygrid').dbGrid();
             $('body').trigger('pluginsReady');
-        });
-        const middleCell = await page.$(
-            'tbody tr:nth-child(1) td:nth-child(2)');
-        const leftCell = await page.$(
-            'tbody tr:nth-child(1) td:nth-child(1)');
 
-        expect(middleCell).toBe(leftCell);
-        done();
-    });*/
+            const rows = document.getElementsByTagName('tr');
+            const middleCell = rows[1].getElementsByTagName('td')[1];
+            const leftCell = rows[1].getElementsByTagName('td')[0];
+
+            return $('#mygrid').dbGrid('cellLeftOf', $(middleCell))[0]
+                    == leftCell;
+        })).toBe(true);
+    });
 });
