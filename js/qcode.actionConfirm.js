@@ -1,6 +1,10 @@
 // qcode actionConfirm plugin
+// Call on <a>, <button>, or <input>
+// Prompts user with a modal dialog box to confirm their action.
+// If the user confirms then the form is submitted if a button or input otherwise navigates to the anchor href.
 ;var qcode = qcode || {};
 qcode.actionConfirm = function(target) {
+    "use strict";
     if ( target instanceof HTMLCollection ) {
         target = Array.from(target);
     }
