@@ -12,20 +12,20 @@
         border: 1px solid grey;
       }
     </style>
-    <link href="../qcode-ui.css" rel="stylesheet"/>
+    <link href="qcode-ui.css" rel="stylesheet"/>
     <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
     <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
-    <script src="../qcode-ui.js"></script>
+    <script src="qcode-ui.js"></script>
     <script>
       $(function() {
-        $('table').columnResize({
-          "overflow": "hidden"
-        });
+          qcode.columnResize(document.getElementById('table'), {
+              "overflow": "break-word"
+          });
       });
     </script>
   </head>
   <body>
-    <table>
+    <table id="table">
       <colgroup>
         <col/><col/><col/>
       </colgroup>

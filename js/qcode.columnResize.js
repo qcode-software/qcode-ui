@@ -21,23 +21,24 @@ qcode.columnResize = (function() {
     let dragging = false;
     
     return function(target, options) {
-        Object.assign(options,{
+        options = Object.assign({
             overflow: "shrink-one-line",
             'min-font-size': 1
-        });
+        }, options);
         
         return qcode.each(target, table => {
             if ( ! (table instanceof HTMLTableElement) ) {
                 return
             }
             target.classList.add('qc-column-resize');
+            
             const id = qcode.getID(table);
             const cells = Array.from(table.rows[0].children);
 
             if ( options.overflow === 'hidden'
                  && qcode.getStyle(table, 'table-layout') === 'auto'
                ) {
-                qcode.tableAuto2Fixed(table);
+                tableAuto2Fixed(table);
             }
 
             switch (options.overflow) {
@@ -55,7 +56,7 @@ qcode.columnResize = (function() {
             }
 
             const thead = table.tHead;
-            qcode.addDelegateEventListener(
+            qcode.addDelegatedEventListener(
                 table, 'th', 'mousemove', (event, th) => {
                     if ( dragging ) {
                         return;
@@ -70,13 +71,13 @@ qcode.columnResize = (function() {
                     }
                 }
             );
-            qcode.addDelegateEventListener(
+            qcode.addDelegatedEventListener(
                 table, 'th', 'mouseout', (event, th) => {
                     thead.style.setProperty('cursor', 'auto');
                 }
             );
             const tableLeft = table.getBoundingClientRect().left;
-            qcode.addDelegateEventListener(
+            qcode.addDelegatedEventListener(
                 table, 'th', 'mousedown', (event, th) => {
                     event.preventDefault();
                     const rect = th.getBoundingClientRect();
@@ -100,13 +101,81 @@ qcode.columnResize = (function() {
                     const initialLeft = event.pageX - tableLeft;
                     th.append(handle);
                     handle.style.setProperty('left', `${initialLeft}px`);
+
+                    let width = toResize.getBoundingClientRect().width;
+                    const initialWidth = width;
+
+                    const dragListener = function(event) {
+                        event.preventDefault();
+                        const left = (
+                            event.pageX - tableLeft
+                        );
+                        width = initialWidth + left - initialLeft;
+                        if ( width < minWidth ) {
+                            width = minWidth;
+                        }
+                        handle.style.setProperty('left',`${left}px`);
+                    }
+
+                    window.addEventListener('mousemove',dragListener);
+                    window.addEventListener('mouseup',event => {
+                        window.removeEventListener('mousemove',dragListener);
+                        dragging = false;
+                        handle.remove();
+                        resize(toResize,width,options);
+                    }, {once: true});
                 }
             );
         });
     }
 
+    function resize(th,width,options) {
+        const index = qcode.index(th)
+        const nth = index + 1;
+        const table = qcode.closest(th,'table');
+        const id = qcode.getID(table);
+        const colSelector = `#${id} > colgroup > col:nth-child(${nth})`;
+        const cellSelector = `#${id} > * > tr > :nth-child(${nth})`;
+        qcode.style(colSelector, 'width', `${width}px`);
+
+        switch ( options.overflow ) {
+        case 'break-word':
+            if ( th.getBoundingClientRect().width > width ) {
+                qcode.style(cellSelector, 'word-break', "break-all");
+            } else {
+                qcode.style(cellSelector, 'word-break', "normal");
+            }
+            break;
+        case 'shrink-one-line':
+        case 'shrink':
+            let fontSize = th.dataset.originalFontSize;
+            qcode.style(cellSelector, 'font-size', `${fontSize}px`);
+            let measuredWidth = th.getBoundingClientRect().width;
+            let lastChangeFontSize = fontSize;
+            while ( measuredWidth > width ) {
+                fontSize--;
+                if ( fontSize < options['min-font-size'] ) {
+                    break;
+                }
+                qcode.style(cellSelector, 'font-size', `${fontSize}px`);
+                if ( th.getBoundingClientRect().width < measuredWidth ) {
+                    lastChangeFontSize = fontSize;
+                }
+                measuredWidth = th.getBoundingClientRect().width;
+            }
+            qcode.style(cellSelector, 'font-size', `${lastChangeFontSize}px`);
+        }
+        
+        table.dispatchEvent(
+            new Event('resize', {
+                bubbles: true,
+                cancelable: true,
+                composed: true
+            })
+        );
+    }
+
     function tableAuto2Fixed(table){
-        "use strict";
         const id = qcode.getID(table);
         let css = {};
         css[`#${id}`] = {
@@ -119,7 +188,7 @@ qcode.columnResize = (function() {
                 "width": qcode.getStyle(cells[index],'width')
             };
         }
-        qcode.style(styles);
+        qcode.style(css);
     }
 
     function onLeftHandle(event, rect) {

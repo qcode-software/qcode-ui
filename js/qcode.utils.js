@@ -32,6 +32,7 @@ qcode.addDelegatedEventListener = function(
                     delegateTarget = event.target;
                     break
                 }
+                parent = parent.parentElement;
             }
             if ( typeof delegateTarget === "undefined" ) {
                 return
@@ -39,4 +40,8 @@ qcode.addDelegatedEventListener = function(
         }
         handler(event,delegateTarget);
     });
+};
+
+qcode.index = function(element) {
+    return Array.from(element.parentElement.children).indexOf(element);
 };
