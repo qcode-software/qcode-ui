@@ -10,19 +10,19 @@ qcode.columnsShowHide = function(target, selector, showHide) {
     return qcode.each(target, table => {
         const id = qcode.getID(table);
 
-        let css = {}
+        let css = {};
         for (const column of Array.from(table.querySelectorAll(selector))) {
             const index = qcode.index(column);
             const nthChild = `:nth-child(${index+1})`;
             if ( showHide === 'hide'
                  || (showHide === undefined
-                     && qcode.getStyle(column,'display') === 'table-column')
+                     && qcode.getStyle(column,'display') === "table-column")
                ) {
-                css[`#${id} col ${nthChild}`] = {display: "none"};
-                css[`#${id} tr > * ${nthChild}`] = {display: "none"};
+                css[`#${id} col${nthChild}`] = {display: "none"};
+                css[`#${id} tr > ${nthChild}`] = {display: "none"};
             } else {
-                css[`#${id} col ${nthChild}`] = {display: "table-column"};
-                css[`#${id} tr > * ${nthChild}`] = {display: "table-cell"};
+                css[`#${id} col${nthChild}`] = {display: "table-column"};
+                css[`#${id} tr > ${nthChild}`] = {display: "table-cell"};
             }
         }
 
@@ -36,6 +36,6 @@ qcode.columnsShowHide = function(target, selector, showHide) {
             })
         );
         
-        return table
+        return table;
     });
 };
