@@ -1,7 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <title>Column Reize Demo</title>
+    <title>qcode columnResize plugin</title>
+    <script src="/external/jquery-3.5.1.min.js"></script>
+    <script src="/external/jquery-ui-1.12.1.custom.min.js"></script>
+    <script src="/external/js.cookie-2.0.js"></script>
     <style>
       table {
         border-collapse: collapse;
@@ -12,17 +15,6 @@
         border: 1px solid grey;
       }
     </style>
-    <link href="qcode-ui.css" rel="stylesheet"/>
-    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
-    <script src="qcode-ui.js"></script>
-    <script>
-      $(function() {
-          qcode.columnResize(document.getElementById('table'), {
-              "overflow": "break-word"
-          });
-      });
-    </script>
   </head>
   <body>
     <table id="table">
