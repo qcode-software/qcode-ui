@@ -30,7 +30,7 @@ qcode.columnResize = (function() {
             if ( ! (table instanceof HTMLTableElement) ) {
                 return
             }
-            target.classList.add('qc-column-resize');
+            table.classList.add('qc-column-resize');
             
             const id = qcode.getID(table);
             const cells = Array.from(table.rows[0].children);
