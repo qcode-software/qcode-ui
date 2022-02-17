@@ -13,12 +13,14 @@ qcode.closest = function(element, selector) {
 };
 
 qcode.getStyle = function(element,property) {
+    "use strict";
     return window.getComputedStyle(element).getPropertyValue(property);
 };
 
 qcode.addDelegatedEventListener = function(
     element, selector, eventName, handler
 ) {
+    "use strict";
     element.addEventListener(eventName, event => {
         let delegateTarget;
         if ( event.target.matches(selector) ) {
@@ -43,5 +45,6 @@ qcode.addDelegatedEventListener = function(
 };
 
 qcode.index = function(element) {
+    "use strict";
     return Array.from(element.parentElement.children).indexOf(element);
 };
