@@ -12,6 +12,18 @@ qcode.closest = function(element, selector) {
     return null;
 };
 
+qcode.closestInArray = function(element, elementArray) {
+    "use strict";
+    let parent = element.parentElement;
+    while ( parent instanceof HTMLElement ) {
+        if ( elementArray.indxOf(parent) > -1 ) {
+            return parent
+        }
+        parent = parent.parentElement;
+    }
+    return null;    
+};
+
 qcode.getStyle = function(element,property) {
     "use strict";
     return window.getComputedStyle(element).getPropertyValue(property);
