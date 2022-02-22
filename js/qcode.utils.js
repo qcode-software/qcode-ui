@@ -60,3 +60,17 @@ qcode.index = function(element) {
     "use strict";
     return Array.from(element.parentElement.children).indexOf(element);
 };
+
+qcode.onClassChange = function(element, callback) {
+    "use strict";
+    const htmlObserver = new MutationObserver(callback);
+    htmlObserver.observe(
+        element,
+        {
+            childList: true,
+            characterData: true,
+            subtree: true,
+            attributeFilter: ["class"]
+        }
+    );
+};
