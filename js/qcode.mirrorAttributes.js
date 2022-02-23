@@ -17,9 +17,10 @@ qcode.mirrorAttributes = (function() {
                     targetElement
                 );
                 if ( change.newValue == "" ) {
-                    targetDescendant.removeAttribute(name);
+                    targetDescendant.removeAttribute(change.attribute);
                 } else {
-                    targetDescendant.setAttribute(name, change.newValue);
+                    targetDescendant.setAttribute(
+                        change.attribute, change.newValue);
                 }
             }
             sourceElement.dispatchEvent(
@@ -28,11 +29,11 @@ qcode.mirrorAttributes = (function() {
                         changes: summary
                     },
                     bubbles: true
-                });
+                })
             );
         });
         observer.observe(
-            targetElement,
+            sourceElement,
             {
                 attributes: true,
                 attributeFilter: attributeFilter,
@@ -76,7 +77,7 @@ qcode.mirrorAttributes = (function() {
                     attribute: name
                 });
             }
-        });
+        };
         return summary;
     }
 })();
