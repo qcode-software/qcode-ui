@@ -7,6 +7,23 @@
 ;var qcode = qcode || {};
 qcode.theadFixed = (function() {
     "use strict";
+    const tableStylesToCopy = [
+        'border-top-width', 'border-right-width', 'border-left-width',
+        'border-top-style', 'border-right-style', 'border-left-style',
+        'border-top-color', 'border-right-color', 'border-left-color',
+        'border-collapse', 'border-spacing'
+    ];
+    const thStylesToCopy = [
+        'display', 'position', 'color', 'background-color',
+        'font-family', 'font-weight', 'font-size', 'font-style',
+        'text-align', 'vertical-align', 'white-space', 'overflow-x',
+        'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+        'border-top-width', 'border-top-style', 'border-top-color',
+        'border-right-width', 'border-right-style', 'border-right-color',
+        'border-bottom-width', 'border-bottom-style', 'border-bottom-color',
+        'border-left-width', 'border-left-style', 'border-left-color'
+    ];
+    
     return function(target, options) {
         options = Object.assign({
             'height': "500px",
@@ -18,15 +35,19 @@ qcode.theadFixed = (function() {
                 return
             }
             const clone = document.createElement('table');
-            clone.append(table.querySelector('colgroup').cloneNode());
-            clone.append(table.thead.cloneNode());
+            const colgroup = table.querySelector('colgroup');
+            if ( ! (colgroup instanceof HTMLElement) ) {
+                throw "Could not find colgroup element"
+            }
+            clone.append(colgroup.cloneNode());
+            clone.append(table.tHead.cloneNode());
             clone.classList.add('thead-fixed-clone');
 
             const id = qcode.getID(clone);
             qcode.style(`#${id}`, 'table-layout', 'fixed');
 
             for (const input of Array.from(
-                table.thead.querySelectorAll('input, textarea, select, button')
+                table.tHead.querySelectorAll('input, textarea, select, button')
             )) {
                 input.removeAttribute('name');
             }
@@ -51,6 +72,7 @@ qcode.theadFixed = (function() {
 
             const widget = {
                 table: table,
+                colgroup: colgroup,
                 clone: clone
             };
 
@@ -70,7 +92,7 @@ qcode.theadFixed = (function() {
                 }
             });
 
-            event.copyEvents(table, clone, [
+            qcode.copyEvents(table, clone, [
                 'click',
                 'mousedown',
                 'mouseup',
@@ -83,13 +105,13 @@ qcode.theadFixed = (function() {
             qcode.onClassChange(wrapper,() => repaintWidths(widget));
 
             qcode.mirrorAttributes(
-                table.thead,
-                clone.thead,
+                table.tHead,
+                clone.tHead,
                 ['class', 'style', 'disabled']
             );
 
             qcode.mirrorAttributes(
-                table.querySelector('colgroup'),
+                colgroup,
                 clone.querySelector('colgroup'),
                 ['class', 'style']
             );
@@ -106,29 +128,13 @@ qcode.theadFixed = (function() {
             
             wrapper.insertBefore(clone, scrollBox);
 
-            zoomfix(id, table.thead.rows[0], clone.thead.rows[0]);
+            zoomfix(id, table.tHead.rows[0], clone.tHead.rows[0]);
         });
     };
     function repaint(widget) {
         repaintStyles(widget);
         repaintWidths(widget);
-    }
-    const tableStylesToCopy = [
-        'border-top-width', 'border-right-width', 'border-left-width',
-        'border-top-style', 'border-right-style', 'border-left-style',
-        'border-top-color', 'border-right-color', 'border-left-color',
-        'border-collapse', 'border-spacing'
-    ];
-    const thStylesToCopy = [
-        'display', 'position', 'color', 'background-color',
-        'font-family', 'font-weight', 'font-size', 'font-style',
-        'text-align', 'vertical-align', 'white-space', 'overflow-x',
-        'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-        'border-top-width', 'border-top-style', 'border-top-color',
-        'border-right-width', 'border-right-style', 'border-right-color',
-        'border-bottom-width', 'border-bottom-style', 'border-bottom-color',
-        'border-left-width', 'border-left-style', 'border-left-color'
-    ];
+    };
     function repaintStyles(widget) {
         const id = qcode.getID(widget.clone);
         const selector = `#${id}`;
@@ -143,7 +149,7 @@ qcode.theadFixed = (function() {
             }
         }
 
-        const cells = Array.from(widget.table.thead.rows[0].cells);
+        const cells = Array.from(widget.table.tHead.rows[0].cells);
         for (let i = 0; i < cells.length; i++) {
             const selector = `#{$id}>thead>tr>th:nth-child(${i+1})`;
             styles[selector] = {};
@@ -158,10 +164,9 @@ qcode.theadFixed = (function() {
             }
         }
 
-        const columns = Array.from(
-            widget.table.querySelector('colgroup').children());
+        const columns = Array.from(widget.colgroup.children);
         const cloneColumns = Array.from(
-            widget.clone.querySelector('colgroup').children());
+            widget.clone.querySelector('colgroup').children);
         for (let i = 0; i < columns.length; i++) {
             const selector = `#${id}>colgroup>col:nth-child(${i+1})`;
             styles[selector] = {}
@@ -182,15 +187,13 @@ qcode.theadFixed = (function() {
             'width': widget.table.offsetWidth
         }
 
-        const cells = Array.from(widget.table.thead.rows[0].cells);
-        const columns = Array.from(
-            widget.table.querySelector('colgroup').children()
-        );
+        const cells = Array.from(widget.table.tHead.rows[0].cells);
+        const columns = Array.from(widget.colgroup.children);
         for (let i = 0; i < cells.length; i++) {
             const selector = `#${id}>colgroup>col:nth-child(${i+1})`;
             const display = qcode.getStyle(columns[i],'display')
             styles[selector] = {
-                'display': display;
+                'display': display
             };
             if ( display !== 'none' ) {
                 var width = cells[i].getBoundingClientRect().width + "px";
@@ -210,12 +213,13 @@ qcode.theadFixed = (function() {
             styles = {};
             const cells = Array.from(originalRow.cells);
             for (let i = 0; i < cells.size; i++) {
-                const fontSize = parseFloat(qcode.getStyle(cells[i]));
+                const fontSize = parseFloat(
+                    qcode.getStyle(cells[i], 'font-size'));
                 styles[`#${id}>thead>tr>th:nth-child(${i+1})`] = {
-                    'font-size': `${fontSize * multiplier}px`;
+                    'font-size': `${fontSize * multiplier}px`
                 };
-            });
-            qcode.style(styles);
-        }
+            };
+        };
+        qcode.style(styles);
     }
 })();
