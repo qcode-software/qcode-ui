@@ -51,13 +51,13 @@ describe('qcode.getStyle', () => {
     });
 });
 
-/*describe('qcode.addDelegatedEventListener', () => {
-    it('adds a delegated event listener', async () => {
+describe('qcode.addDelegatedEventListener', () => {
+    it('calls callback when event matches selector', async () => {
         const callback = jest.fn();
         await page.exposeFunction('callback', callback);
         await page.evaluate(() => {
             qcode.addDelegatedEventListener(
-                document.getElementBy('section'),
+                document.getElementById('section'),
                 'p',
                 'click',
                 callback
@@ -69,5 +69,48 @@ describe('qcode.getStyle', () => {
                 })
             );
         });
+        expect(callback.mock.calls.length).toBe(1);
     });
-});*/
+
+    it('does not call callback if event does not match selector', async () => {
+        const callback = jest.fn();
+        await page.exposeFunction('callback', callback);
+        await page.evaluate(() => {
+            qcode.addDelegatedEventListener(
+                document.getElementById('section'),
+                'p',
+                'click',
+                callback
+            )
+            document.getElementById('heading').dispatchEvent(
+                new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true
+                })
+            );
+        });
+        expect(callback.mock.calls.length).toBe(0);
+    });
+});
+
+describe('qcode.index', () => {
+    it('gets index of an element in its parent', async () => {
+        const result = await page.evaluate(() => {
+            return qcode.index(document.getElementById('p1'));
+        });
+        expect(result).toBe(1);
+    });
+});
+
+describe('qcode.onClassChange', () => {
+    it('runs callback when target element class changes', async () => {
+        const callback = jest.fn();
+        await page.exposeFunction('callback', callback);
+        await page.evaluate(() => {
+            const p = document.getElementById('p1');
+            qcode.onClassChange(p,callback);
+            p.classList.add('selected');
+        });
+        expect(callback.mock.calls.length).toBe(1);
+    });
+});
