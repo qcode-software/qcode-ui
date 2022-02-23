@@ -12,6 +12,18 @@ qcode.closest = function(element, selector) {
     return null;
 };
 
+qcode.closestInArray = function(element, elementArray) {
+    "use strict";
+    let parent = element.parentElement;
+    while ( parent instanceof HTMLElement ) {
+        if ( elementArray.indexOf(parent) > -1 ) {
+            return parent
+        }
+        parent = parent.parentElement;
+    }
+    return null;
+};
+
 qcode.getStyle = function(element,property) {
     "use strict";
     return window.getComputedStyle(element).getPropertyValue(property);
@@ -47,4 +59,18 @@ qcode.addDelegatedEventListener = function(
 qcode.index = function(element) {
     "use strict";
     return Array.from(element.parentElement.children).indexOf(element);
+};
+
+qcode.onClassChange = function(element, callback) {
+    "use strict";
+    const htmlObserver = new MutationObserver(callback);
+    htmlObserver.observe(
+        element,
+        {
+            childList: true,
+            characterData: true,
+            subtree: true,
+            attributeFilter: ["class"]
+        }
+    );
 };
