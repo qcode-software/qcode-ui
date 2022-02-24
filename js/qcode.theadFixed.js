@@ -39,8 +39,8 @@ qcode.theadFixed = (function() {
             if ( ! (colgroup instanceof HTMLElement) ) {
                 throw "Could not find colgroup element"
             }
-            clone.append(colgroup.cloneNode());
-            clone.append(table.tHead.cloneNode());
+            clone.append(colgroup.cloneNode(true));
+            clone.append(table.tHead.cloneNode(true));
             clone.classList.add('thead-fixed-clone');
 
             const id = qcode.getID(clone);
@@ -128,7 +128,7 @@ qcode.theadFixed = (function() {
             
             wrapper.insertBefore(clone, scrollBox);
 
-            zoomfix(id, table.tHead.rows[0], clone.tHead.rows[0]);
+            zoomFix(id, table.tHead.rows[0], clone.tHead.rows[0]);
         });
     };
     function repaint(widget) {
@@ -151,7 +151,7 @@ qcode.theadFixed = (function() {
 
         const cells = Array.from(widget.table.tHead.rows[0].cells);
         for (let i = 0; i < cells.length; i++) {
-            const selector = `#{$id}>thead>tr>th:nth-child(${i+1})`;
+            const selector = `#${id}>thead>tr>th:nth-child(${i+1})`;
             styles[selector] = {};
             if ( qcode.getStyle(cells[i],'display') == 'table-cell' ) {
                 for (const property of thStylesToCopy) {
@@ -199,13 +199,14 @@ qcode.theadFixed = (function() {
                 var width = cells[i].getBoundingClientRect().width + "px";
                 styles[selector]['width'] = width;
             }
-            styles[`#{$id}>thead>tr>th:nth-child(${i+1})`] = {
+            styles[`#${id}>thead>tr>th:nth-child(${i+1})`] = {
                 'display': qcode.getStyle(cells[i],'display')
             };
         }
         qcode.style(styles);
     };
     function zoomFix(id, originalRow, cloneRow) {
+        let styles;
         for (let multiplier = 0.99; multiplier > 0; multiplier -= 0.01) {
             if ( cloneRow.offsetHeight <= originalRow.offsetHeight ) {
                 break
