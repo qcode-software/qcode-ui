@@ -129,6 +129,8 @@ qcode.theadFixed = (function() {
             wrapper.insertBefore(clone, scrollBox);
 
             zoomFix(id, table.tHead.rows[0], clone.tHead.rows[0]);
+
+            return widget;
         });
     };
     function repaint(widget) {
