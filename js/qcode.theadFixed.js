@@ -73,7 +73,9 @@ qcode.theadFixed = (function() {
             const widget = {
                 table: table,
                 colgroup: colgroup,
-                clone: clone
+                clone: clone,
+                wrapper: wrapper,
+                scrollBox: scrollBox
             };
 
             let windowWidth = window.innerWidth;
@@ -129,6 +131,8 @@ qcode.theadFixed = (function() {
             wrapper.insertBefore(clone, scrollBox);
 
             zoomFix(id, table.tHead.rows[0], clone.tHead.rows[0]);
+
+            return widget;
         });
     };
     function repaint(widget) {

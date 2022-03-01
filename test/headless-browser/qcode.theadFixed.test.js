@@ -16,4 +16,26 @@ describe('qcode.theadFixed', () => {
         });
         expect(true).toBe(true);
     });
+
+    describe('returned widget object', () => {
+        it('references original table', async() => {
+            const result = await page.evaluate(() => {
+                let widget = qcode.theadFixed(
+                    document.getElementById('table')
+                );
+                return widget.table == document.getElementById('table');
+            });
+            expect(result).toBe(true);
+        });
+        
+        it('references wrapper', async() => {
+            const result = await page.evaluate(() => {
+                let widget = qcode.theadFixed(
+                    document.getElementById('table')
+                );
+                return widget.wrapper.getAttribute('class');
+            });
+            expect(result).toBe('thead-fixed-wrapper');
+        });
+    });
 });
