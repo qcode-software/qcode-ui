@@ -73,7 +73,9 @@ qcode.theadFixed = (function() {
             const widget = {
                 table: table,
                 colgroup: colgroup,
-                clone: clone
+                clone: clone,
+                wrapper: wrapper,
+                scrollBox: scrollBox
             };
 
             let windowWidth = window.innerWidth;
