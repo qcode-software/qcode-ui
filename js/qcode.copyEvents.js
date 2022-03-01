@@ -43,8 +43,8 @@ qcode.copyEvents = function(sourceElement, copyRoot, eventNames) {
                 properties['relatedTarget'] = qcode.equivalentDescendant(
                     sourceElement,
                     event.relatedTarget,
-                    targetElement
-                );
+                    copyRoot
+                ) || event.relatedTarget;
             }
                 
             copiedEvent = new MouseEvent(event.type, properties);

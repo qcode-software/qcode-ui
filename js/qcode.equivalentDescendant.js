@@ -22,14 +22,17 @@ qcode.indexPath = function(root, element) {
     }
     const path = [qcode.index(element)];
     let parent = element.parentElement;
-    while ( parent instanceof HTMLElement ) {
+    while ( true ) {
         if ( parent == root ) {
             return path
         }
-        path.unshift(qcode.index(parent));
-        parent = parent.parentElement;
+        if ( parent.parentElement instanceof HTMLElement ) {
+            path.unshift(qcode.index(parent));
+            parent = parent.parentElement;
+        } else {
+            return null
+        }
     }
-    return null
 };
 
 qcode.getElementByIndexPath = function(root, indexPath) {
