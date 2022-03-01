@@ -14,6 +14,10 @@ qcode.copyEvents = function(sourceElement, copyRoot, eventNames) {
             event.target,
             copyRoot
         );
+
+        if ( ! (target instanceof HTMLElement)) {
+            return
+        }
         
         const properties = {}
         for (const key of [
