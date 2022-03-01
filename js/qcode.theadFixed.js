@@ -210,7 +210,7 @@ qcode.theadFixed = (function() {
         qcode.style(styles);
     };
     function zoomFix(id, originalRow, cloneRow) {
-        let styles;
+        let styles = {};
         for (let multiplier = 0.99; multiplier > 0; multiplier -= 0.01) {
             if ( cloneRow.offsetHeight <= originalRow.offsetHeight ) {
                 break
