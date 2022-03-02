@@ -87,7 +87,7 @@ qcode.theadFixed = (function() {
                     repaint(widget)
                 } else if ( windowWidth != window.innerWidth ) {
                     repaintStyles(widget)
-                    if ( ! this.options.fixedWidth ) {
+                    if ( ! options.fixedWidth ) {
                         repaintWidths(widget)
                     }
                     windowWidth = window.innerWidth
