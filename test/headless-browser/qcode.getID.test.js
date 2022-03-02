@@ -16,6 +16,6 @@ describe('qcode.getID plugin',() => {
             });
             return ids;
         });        
-        expect(result).toEqual(['qcodeUI_id_0','qcodeUI_id_1','third-para']);
+        expect(result).toEqual(['qcode_ui_id_0','qcode_ui_id_1','third-para']);
     });
 });
