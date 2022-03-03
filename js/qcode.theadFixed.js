@@ -188,7 +188,7 @@ qcode.theadFixed = (function() {
         const styles = {}
         styles[`#${id}`] = {
             'display': qcode.getStyle(widget.table,'display'),
-            'width': widget.table.offsetWidth
+            'width': widget.table.offsetWidth + "px"
         }
 
         const cells = Array.from(widget.table.tHead.rows[0].cells);
