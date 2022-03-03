@@ -94,7 +94,7 @@ qcode.theadFixed = (function() {
                 }
             });
 
-            qcode.copyEvents(table, clone, [
+            qcode.copyEvents(clone, table, [
                 'click',
                 'mousedown',
                 'mouseup',
