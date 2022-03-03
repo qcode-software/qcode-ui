@@ -24,8 +24,11 @@ qcode.indexPath = function(root, element) {
     if ( root == element ) {
         return [];
     }
-    const path = [qcode.index(element)];
     let parent = element.parentElement;
+    if ( ! (parent instanceof HTMLElement) ) {
+        return null
+    }
+    const path = [qcode.index(element)];
     while ( true ) {
         if ( parent == root ) {
             return path
