@@ -57,8 +57,8 @@ qcode.copyEvents = function(sourceElement, copyRoot, eventNames) {
         }
 
         target.dispatchEvent(copiedEvent);
-        if ( event.defaultPrevented ) {
-            copiedEvent.preventDefault();
+        if ( copiedEvent.defaultPrevented ) {
+            event.preventDefault();
         }
     };
 
