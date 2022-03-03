@@ -16,6 +16,9 @@ qcode.mirrorAttributes = (function() {
                     change.element,
                     targetElement
                 );
+                if ( ! (targetDescendant instanceof HTMLElement) ) {
+                    continue
+                }
                 if ( change.newValue == "" ) {
                     targetDescendant.removeAttribute(change.attribute);
                 } else {
