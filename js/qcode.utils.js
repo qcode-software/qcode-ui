@@ -74,3 +74,15 @@ qcode.onClassChange = function(element, callback) {
         }
     );
 };
+
+qcode.selectionAsArray(selection) {
+    "use strict";
+    if ( typeof selection === "undefined" ) {
+        return [];
+    }
+    if ( selection instanceof HTMLElement
+         || selection instanceof HTMLDocument ) {
+        return [selection];
+    }
+    return Array.from(selection);
+}
