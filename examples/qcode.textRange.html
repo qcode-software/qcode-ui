@@ -5,5 +5,33 @@
     <script src="qcode.textRange.js"></script>
   </head>
   <body>
+    <input id="textInput" value="Hello World"/>
+    <textarea id="textArea">Foo bar</textarea>
+    <p id="editable" contenteditable="true">Editable text</p>
+    <p id="log"></p>
+    <input id="start" value="start"/><input id="end" value="end"/>
+    <select id="idSelect">
+      <option value="textInput">textInput</option>
+      <option value="textArea">textArea</option>
+      <option value="editable">editable</option>
+    </select>
+    <button id="setTextRange">Set</button>
+    <script>
+      document.addEventListener('mouseup', () => {
+          console.log(window.getSelection());
+          document.getElementById('log').innerText = JSON.stringify(
+              qcode.textRange.get(document.activeElement)
+          );
+      });
+      document.getElementById('setTextRange').addEventListener('click', () => {
+          qcode.textRange.set(
+              document.getElementById(
+                  document.getElementById('idSelect').value
+              ),
+              document.getElementById('start').value,
+              document.getElementById('end').value
+          );
+      });
+    </script>
   </body>
 </html>
