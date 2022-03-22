@@ -117,9 +117,9 @@ qcode.columnResize = (function() {
                         handle.style.setProperty('left',`${left}px`);
                     }
 
-                    window.addEventListener('mousemove',dragListener);
-                    window.addEventListener('mouseup',event => {
-                        window.removeEventListener('mousemove',dragListener);
+                    qcode.on(window,'mousemove',dragListener);
+                    qcode.on(window,'mouseup',event => {
+                        qcode.off(window, 'mousemove');
                         dragging = false;
                         handle.remove();
                         resize(toResize,width,options);

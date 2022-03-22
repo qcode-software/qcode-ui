@@ -29,7 +29,7 @@ input[type=button]`) ) {
 actionConfirm only supports <a>, <button>, <input>.`;
         }
 
-        target.addEventListener('click',event => {
+        qcode.on(target, 'click', event => {
             event.preventDefault();
             if ( target.disabled ) {
                 return false;

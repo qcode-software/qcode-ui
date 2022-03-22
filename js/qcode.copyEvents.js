@@ -63,6 +63,6 @@ qcode.copyEvents = function(sourceElement, copyRoot, eventNames) {
     };
 
     for (const eventName of eventNames) {
-        sourceElement.addEventListener(eventName, copyEvent);
+        qcode.on(sourceElement, eventName, copyEvent);
     }
 };

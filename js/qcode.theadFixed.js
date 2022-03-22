@@ -63,7 +63,7 @@ qcode.theadFixed = (function() {
             scrollBox.append(table);
 
             if ( options.initialScroll === "end" ) {
-                document.body.addEventListener('pluginsReady', event => {
+                qcode.on(document, 'pluginsReady', event => {
                     scrollBox.scrollTop = (
                         scrollBox.scrollHeight - scrollBox.clientHeight
                     );
@@ -79,7 +79,7 @@ qcode.theadFixed = (function() {
             };
 
             let windowWidth = window.innerWidth;
-            window.addEventListener('resize', event => {
+            qcode.on(window, 'resize', event => {
                 const isTableResize = qcode.closestInArray(
                     event.target,[table,clone]) !== null;
                 
@@ -117,8 +117,8 @@ qcode.theadFixed = (function() {
                 clone.querySelector('colgroup'),
                 ['class', 'style']
             );
-            
-            table.addEventListener('attributeChange', event => {
+
+            qcode.on(table, 'attributeChange', event => {
                 if ( event.detail.changes.some(
                     change => change.attribute == 'class'
                 )) {
