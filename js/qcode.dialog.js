@@ -71,12 +71,12 @@ qcode.Dialog = (function(undefined) {
             buttons.append(button);
             ['click','keydown'].forEach(eventName => {
                 if ( typeof buttonConfig[eventName] === "function" ) {
-                    button.addEventListener(eventName, buttonConfig[eventName]);
+                    qcode.on(button, eventName, buttonConfig[eventName]);
                 }
             });
         });
-        
-        dialog.addEventListener('close',(event) => {
+
+        qcode.on(dialog, 'close',(event) => {
             if ( ! config.persist ) {
                 dialog.remove();
             }

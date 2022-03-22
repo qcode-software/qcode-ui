@@ -33,7 +33,7 @@ qcode.addDelegatedEventListener = function(
     element, selector, eventName, handler
 ) {
     "use strict";
-    element.addEventListener(eventName, event => {
+    qcode.on(element, eventName, event => {
         let delegateTarget;
         if ( event.target.matches(selector) ) {
             delegateTarget = event.target;

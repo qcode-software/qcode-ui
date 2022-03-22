@@ -41,25 +41,32 @@ var qcode = qcode || {};
 
             var div = document.createElement('div');
             div.innerHTML = message;
-            qcode.Dialog(div, {
+            const dialog = qcode.Dialog(div, {
                 resizable: false,
                 modal: true,
                 buttons: {
                     OK: null
                 },
                 classes: {"dialog": "alert"}
-            }).addEventListener('close', function() {                    
+            });
+            qcode.on(dialog, 'close', function() {                    
                 // Restore focus
                 toFocus.trigger('focus');
                 if ( toFocus.is(':input') ) {
-                    toFocus.textrange('set', textRange.selectionStart, textRange.selectionEnd);
+                    toFocus.textrange(
+                        'set',
+                        textRange.selectionStart,
+                        textRange.selectionEnd);
                 }
                 if ( typeof callback == "function" ) {
                     callback();
                 }
                 showNextMessage();
             });
-            if ( qcode.Sound && qcode.Sound.supported && qcode.alert.config.sound ) {
+            if ( qcode.Sound
+                 && qcode.Sound.supported
+                 && qcode.alert.config.sound
+               ) {
                 qcode.alert.config.sound.play();
             }
         });
@@ -99,7 +106,9 @@ var qcode = qcode || {};
                         },
                         keydown: function(event) {
                             // Arrow key events
-                            if ( event.which >= 37 && event.which <= 40 ) {
+                            if ( event.which >= 37
+                                 && event.which <= 40
+                               ) {
                                 $(this).next().focus();
                             }
                         }
@@ -113,14 +122,16 @@ var qcode = qcode || {};
                         },
                         keydown: function(event) {
                             // Arrow key events
-                            if ( event.which >= 37 && event.which <= 40 ) {
+                            if ( event.which >= 37
+                                 && event.which <= 40
+                               ) {
                                 $(this).prev().focus();
                             }
                         }
                     }
                 ]
             });
-            dialog.addEventListener('close', function() {
+            qcode.on(dialog, 'close', function() {
                 toFocus.trigger('focus');
                 if ( toFocus.is(':input') && supportsSelection ) {
                     toFocus.textrange(
@@ -131,7 +142,10 @@ var qcode = qcode || {};
                 showNextMessage();
             });
             
-            if ( qcode.Sound && qcode.Sound.supported && qcode.confirm.config.sound ) {
+            if ( qcode.Sound
+                 && qcode.Sound.supported
+                 && qcode.confirm.config.sound
+               ) {
                 qcode.confirm.config.sound.play();
             }
         });
