@@ -4,15 +4,15 @@ qcode.columnsShowHideControl = function(targets) {
     "use strict";
     return qcode.each(targets, target => {
         const checkbox = target.querySelector('[type=checkbox]');
-        const colSelector = getData(target, 'col_selector');
         const tableSelector = getData(target, 'table_selector');
+        const colSelector = getData(target, 'col_selector');
         const tables = document.querySelectorAll(tableSelector);
         const sticky = parseBoolean(getData(checkbox,'sticky'));
         const stickyUrl = getData(checkbox,'sticky_url');
         
         
-        target.addEventListener('click', onClick);        
-        checkbox.addEventListener('change', onCheckBoxChange);        
+        target.addEventListener('click', onClick);
+        checkbox.addEventListener('change', onCheckBoxChange);
         target.addEventListener('mouseenter', onMouseEnter);
         target.addEventListener('mouseleave', onMouseLeave);
         update();
@@ -42,7 +42,7 @@ qcode.columnsShowHideControl = function(targets) {
             );
         }
 
-        function onCheckboxChange(event) {
+        function onCheckBoxChange(event) {
             update()
             if ( ! sticky ) {
                 return
@@ -65,15 +65,23 @@ qcode.columnsShowHideControl = function(targets) {
                 col.classList.add('highlight');
             }
         }
+
+        function onMouseLeave(event) {
+            target.classList.remove('hover');
+            const cols = Array.from(table.querySelectorAll(colSelector));
+            for ( const col of cols ) {
+                col.classList.add('highlight');
+            }
+        }
     });
 
     function getData(element, key) {
-        if ( target.hasAttribute(key) ) {
-            return target.getAttribute(key);
+        if ( element.hasAttribute(key) ) {
+            return element.getAttribute(key);
         }
         key = qcode.underscore2camelCase(key);
-        if ( target.dataset[key] !== undefined ) {
-            return target.dataset[key];
+        if ( element.dataset[key] !== undefined ) {
+            return element.dataset[key];
         }
         return ""
     }
