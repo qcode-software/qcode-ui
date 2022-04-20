@@ -60,17 +60,21 @@ qcode.columnsShowHideControl = function(targets) {
 
         function onMouseEnter(event) {
             target.classList.add('hover');
-            const cols = Array.from(table.querySelectorAll(colSelector));
-            for ( const col of cols ) {
-                col.classList.add('highlight');
+            for ( const table of tables ) {
+                const cols = Array.from(table.querySelectorAll(colSelector));
+                for ( const col of cols ) {
+                    col.classList.add('highlight');
+                }
             }
         }
 
         function onMouseLeave(event) {
             target.classList.remove('hover');
-            const cols = Array.from(table.querySelectorAll(colSelector));
-            for ( const col of cols ) {
-                col.classList.remove('highlight');
+            for ( const table of tables ) {
+                const cols = Array.from(table.querySelectorAll(colSelector));
+                for ( const col of cols ) {
+                    col.classList.remove('highlight');
+                }
             }
         }
     });
