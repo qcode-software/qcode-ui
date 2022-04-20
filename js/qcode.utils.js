@@ -74,3 +74,8 @@ qcode.onClassChange = function(element, callback) {
         }
     );
 };
+
+qcode.underscore2camelCase = function(string) {
+    "use strict";
+    return string.replace(/_([a-z])/g, g => g[1].toUpperCase());
+}
