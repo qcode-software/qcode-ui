@@ -284,8 +284,6 @@ function preloadImages() {
                     fn();
                 }
                 return false;
-            } else {                
-                throw new Error(event.source);
             }
         }
 
