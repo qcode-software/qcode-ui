@@ -49,8 +49,8 @@ qcode.columnsShowHideControl = function(targets) {
             }
             const data = {}
             data[checkbox.getAttribute('name')] = checkbox.checked;
-            if ( stickyURL ) {
-                data['sticky_url'] = stickyURL;
+            if ( stickyUrl ) {
+                data['sticky_url'] = stickyUrl;
             }
             httpPost('/sticky_save.html',
                      data,
@@ -70,7 +70,7 @@ qcode.columnsShowHideControl = function(targets) {
             target.classList.remove('hover');
             const cols = Array.from(table.querySelectorAll(colSelector));
             for ( const col of cols ) {
-                col.classList.add('highlight');
+                col.classList.remove('highlight');
             }
         }
     });
