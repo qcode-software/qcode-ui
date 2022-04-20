@@ -4,8 +4,8 @@ qcode.columnsShowHideControl = function(targets) {
     "use strict";
     return qcode.each(targets, target => {
         const checkbox = target.querySelector('[type=checkbox]');
-        const tableSelector = getData(target, 'table_selector');
-        const colSelector = getData(target, 'col_selector');
+        const tableSelector = getData(checkbox, 'table_selector');
+        const colSelector = getData(checkbox, 'col_selector');
         const tables = document.querySelectorAll(tableSelector);
         const sticky = parseBoolean(getData(checkbox,'sticky'));
         const stickyUrl = getData(checkbox,'sticky_url');
