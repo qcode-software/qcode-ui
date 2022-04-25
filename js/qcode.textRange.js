@@ -100,7 +100,7 @@ qcode.textRange = (function(){
         // on the left of character at index from start of this node
         const childNodes = node.childNodes;
 	const myRange =  document.createRange();
-        if ( childNodes.length ) {
+        if ( childNodes.length > 0 ) {
             for (let i = 0; i < childNodes.length; i++) {
                 const childNode = childNodes[i];
 		myRange.selectNode(childNode);
@@ -112,11 +112,10 @@ qcode.textRange = (function(){
                 }
                 index -= textLength;
             }
-        } else {
-            return {
-                node: node,
-                offset: index
-            }
+        }
+        return {
+            node: node,
+            offset: index
         }
     }
 
