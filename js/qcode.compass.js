@@ -30,7 +30,7 @@
         // Returns the element above the target if one exists,
         // otherwise the bottom element from the previous column,
         // or undefined if no match
-        return({
+        return qcode.compass({
             target: target,
             elements: elements,
             direction: 'before',
@@ -42,7 +42,7 @@
         // Returns the element below the target if one exists,
         // otherwise the top element from the next column,
         // or undefined if no match
-        return ({
+        return qcode.compass({
             target: target,
             elements: elements,
             direction: 'after',
@@ -93,8 +93,8 @@
         const elements = removeSelfAndHidden(config.elements, target);
         const direction = config.direction;
         const closer = opposites[direction]
-        const majorAxis = axis[config.axis];
-        const minorAxis = axis[opposites[config.majorAxis]];
+        const majorAxis = config.axis;
+        const minorAxis = opposites[config.axis];
         
         let bestMatch;
         // Find an element that overlaps in major axis,
@@ -164,7 +164,7 @@
         const minKey = boundaries[axis].min;
         const maxKey = boundaries[axis].max;
         
-        switch (config.type) {
+        switch (type) {
         case 'fully before':
             return rect[maxKey] <= base[minKey];
         case 'fully after':
@@ -175,7 +175,7 @@
             return rect[maxKey] > base[maxKey];
         case 'overlaps':
             return (rect[minKey] < base[maxKey]
-                    && rect[maxKey] >= base[minKey]);
+                    && rect[maxKey] > base[minKey]);
         }
     }
     
