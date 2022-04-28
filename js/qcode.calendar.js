@@ -4,6 +4,7 @@
 ;var qcode = qcode || {};
 
 qcode.Calendar = class {
+    // editable fields
     bodyHeight = 150
     headerHeight = 40
     pxPerDay = 20
@@ -13,17 +14,22 @@ qcode.Calendar = class {
     styleToday = 'rgba(160,200,240,1)'
     startDate
     finishDate
-    
+
+    // read-only fields
     _canvas
-    _drawTimeout
+    get canvas() { return this._canvas }    
     _width
+    get width () { return this._width }    
     _height
-    
+    get height () { return this._height}    
     _canvasObjects = []
-    get canvasObjects() { return this._canvasObjects }
-    
+    get canvasObjects() { return this._canvasObjects }    
     _context
     get context() { return this._context }
+
+    // private fields
+    _drawTimeout
+    
     
     constructor(canvas, options) {
         for (const fieldName of Object.keys(this)) {
@@ -45,13 +51,15 @@ qcode.Calendar = class {
         for (const eventName of [
             'mousemove',
             'mouseleave',
-            'mouseclick'
+            'click'
         ]) {
             canvas.addEventListener(
                 eventName,
                 this._handleEvent.bind(this, eventName)
             );
         }
+
+        this.draw();
     }
     
     draw(draw_async) {
@@ -110,6 +118,13 @@ qcode.Calendar = class {
 
     addObject(canvasObject) {
         this._canvasObjects.push(canvasObject);
+        this.draw();
+    }
+
+    removeObject(canvasObject) {
+        this._canvasObjects.splice(
+            this._canvasObjects.indexOf(canvasObject), 1
+        );
     }
     
     _drawNow() {
@@ -138,10 +153,10 @@ qcode.Calendar = class {
                 this.startDate
             ) + 1
         ) * this.pxPerDay;
-        this.element.setAttribute('width', this._width);
+        this.canvas.setAttribute('width', this._width);
         
         this._height = this.bodyHeight + this.headerHeight;
-        this.element.setAttribute('height', height);
+        this.canvas.setAttribute('height', this._height);
     }
 
     _clear() {
@@ -162,7 +177,7 @@ qcode.Calendar = class {
     _drawGridLines () {
         // Draw vertical lines at the end of each day
         let x = 0.5;
-        this.context.beginPath();
+        this._context.beginPath();
 
         for (const date of Date.days(
             this.startDate, this.finishDate
@@ -175,18 +190,18 @@ qcode.Calendar = class {
                 this._context.moveTo(x, this.headerHeight);
             }
             
-            this._context.lineTo(x, height);            
+            this._context.lineTo(x, this._height);
         }
 
         // Actually draw all the lines
-        this._context.strokeStyle = this.stylesLines;
+        this._context.strokeStyle = this.styleLines;
         this._context.stroke();
     }
 
     _drawWeekendHighlights() {
         // Highlight each weekend
         let x = 0.5;
-        this._context.fillStyle = this.stylesWeekends;
+        this._context.fillStyle = this.styleWeekends;
         
         for (const date of Date.days(
             this.startDate, this.finishDate
@@ -205,7 +220,7 @@ qcode.Calendar = class {
         // Add first day of letter to top of column
         let x = 0.5;
         this._context.textAlign = "center";
-        this._context.fillStyle = this.stylesText;
+        this._context.fillStyle = this.styleText;
         
         for (const date of Date.days(
             this.startDate, this.finishDate
@@ -222,7 +237,7 @@ qcode.Calendar = class {
     _drawWeeklyHeaderText() {
         // Add Date of week start to the top of every week
         let x = 0.5;
-        this._context.fillStyle = this.stylesText;
+        this._context.fillStyle = this.styleText;
         this._context.textAlign = "left";
         
         for (const date of Date.days(
@@ -230,7 +245,7 @@ qcode.Calendar = class {
         )) {
             if ( date.getDay() == 1 ) {
                 this._context.fillText(
-                    `{date.getDate()} {date.getMonthShort()}`,
+                    `${date.getDate()} ${date.getMonthShort()}`,
                     x, (this.headerHeight / 4)
                 );
             }
@@ -311,14 +326,14 @@ qcode.Calendar.CanvasObject = class {
     }
 
     update(options) {
-        this._updateCanvasObject(options);
+        this.updateCanvasObject(options);
     }
     
     draw(layer) {
         // Draw/redraw this object
         if ( layer === undefined || layer === this.layer ) {
-            qcodeCanvas.context.fillStyle = this.color;
-            qcodeCanvas.context.fillRect(
+            this.calendar.context.fillStyle = this.color;
+            this.calendar.context.fillRect(
                 this.left, this.top, this.width, this.height
             );
         }
@@ -332,7 +347,7 @@ qcode.Calendar.CanvasObject = class {
         // Bind an event handler
         // to one of the mouse events provided by this class
         if ( ! Array.isArray(this._eventHandlers[eventName]) ) {
-            throw `Event {eventName} not supported by canvas object`;
+            throw `Event ${eventName} not supported by canvas object`;
         }
         this._eventHandlers[eventName].push(handler);
         return this;
@@ -350,7 +365,7 @@ qcode.Calendar.CanvasObject = class {
         const handler = {
             'mousemove': this._canvasMouseMove,
             'mouseleave': this._canvasMouseLeave,
-            'mouseclick': this._canvasMouseClick
+            'click': this._canvasMouseClick
         }[eventName];
         
         handler.call(this, eventObject);
@@ -411,11 +426,10 @@ qcode.Calendar.CanvasObject = class {
     }
 
     _eventPositionToCanvas(position) {
-        const canvas = this.calendar.getCanvas()
-        const offset = canvas.offset()
+        const offset = this.calendar.canvas.getBoundingClientRect();
         return [
-            event.pageX + canvas.scrollLeft() - offset.left,
-            event.pageY + canvas.scrollTop() - offset.top
+            event.pageX + this.calendar.canvas.scrollLeft - offset.left,
+            event.pageY + this.calendar.canvas.scrollTop - offset.top
         ];
     }
 };
@@ -482,7 +496,6 @@ qcode.Calendar.DateHighlighter = class extends qcode.Calendar.CanvasObject {
 // A horizontal bar added to the calendar
 // ============================================================
 qcode.Calendar.Bar = class extends qcode.Calendar.CanvasObject {
-    barHeight = 10
     layer = 2
     startDate
     finishDate
@@ -494,10 +507,13 @@ qcode.Calendar.Bar = class extends qcode.Calendar.CanvasObject {
 
     updateBar(options) {
         if ( options !== undefined ) {
-            this.left = this.calendar.date2positionLeft(this.startDate);
-            const right = this.calendar.date2positionRight(this.finishDate);
-            this.width = this.calendarCanvas.width - this.left - right;
+            for (const field of ['layer','startDate','finishDate']) {
+                this[field] = coalesce(options[field], this[field]);
+            }
         }
+        this.left = this.calendar.date2positionLeft(this.startDate);
+        const right = this.calendar.date2positionRight(this.finishDate);
+        this.width = this.calendar.width - this.left - right;
     }
     
     update(options) {

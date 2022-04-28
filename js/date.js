@@ -105,7 +105,7 @@
     Date.days = function* (from_date, to_date) {
         // Generator for iterating over a date range
         const date = new Date(from_date.getTime());
-        while( date.getTime() <= to_time.getTime() ) {
+        while( date.getTime() <= to_date.getTime() ) {
             yield date;
             date.incrDays(1);
         }

@@ -15,6 +15,25 @@
           startDate: new Date('2022-04-01'),
           finishDate: new Date('2022-05-31')
       });
+      const bar = calendar.newBar({
+          color: 'rgba(220,160,160,0.6)',
+          height: 20,
+          top: 80,
+          startDate: new Date('2022-04-07'),
+          finishDate: new Date('2022-05-24')
+      });
+      bar.on('mouseEnter', () => {
+          bar.color = 'rgba(160,220,160,0.8)';
+          calendar.draw();
+      });
+      bar.on('mouseLeave', () => {
+          bar.color = 'rgba(160,160,220,0.8)';
+          calendar.draw();
+      });
+      bar.on('click', () => {
+          bar.color = 'rgba(255,160,160,1.0)';
+          calendar.draw();
+      });
     </script>
   </body>
 </html>
