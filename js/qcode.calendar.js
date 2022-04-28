@@ -43,7 +43,7 @@ qcode.Calendar = class {
         });
         
         for (const eventName of [
-            'mouseenter',
+            'mousemove',
             'mouseleave',
             'mouseclick'
         ]) {
@@ -106,6 +106,10 @@ qcode.Calendar = class {
         var bar = new qcode.Calendar.Bar(this, options);
         this.addObject(bar);
         return bar;
+    }
+
+    addObject(canvasObject) {
+        this._canvasObjects.push(canvasObject);
     }
     
     _drawNow() {
@@ -294,13 +298,9 @@ qcode.Calendar.CanvasObject = class {
     
     constructor(calendar, options) {
         this.updateCanvasObject(options);
-        this._calendar = calendar;
+        this.calendar = calendar;
     }
 
-    update(options) {
-        this.updateCanvasObject(options)
-    }
-    
     updateCanvasObject(options) {
         if ( options === undefined ) {
             return
@@ -308,6 +308,10 @@ qcode.Calendar.CanvasObject = class {
         for (const fieldName of Object.keys(this)) {
             this[fieldName] = coalesce(options[fieldName], this[fieldName])
         }
+    }
+
+    update(options) {
+        this._updateCanvasObject(options);
     }
     
     draw(layer) {
@@ -340,11 +344,6 @@ qcode.Calendar.CanvasObject = class {
             this._eventHandlers[eventName].indexOf(handler), 1
         );
         return this;
-    }
-    
-    remove(qcodeCanvas) {
-        // Remove all event listeners and remove this from the calendar
-        this.calendarCanvas.calendar('removeObject',this);
     }
 
     handleCanvasEvent(eventName, eventObject) {
@@ -412,10 +411,11 @@ qcode.Calendar.CanvasObject = class {
     }
 
     _eventPositionToCanvas(position) {
-        const offset = this.canvas.offset()
+        const canvas = this.calendar.getCanvas()
+        const offset = canvas.offset()
         return [
-            event.pageX + this.canvas.scrollLeft() - offset.left,
-            event.pageY + this.canvas.scrollTop() - offset.top
+            event.pageX + canvas.scrollLeft() - offset.left,
+            event.pageY + canvas.scrollTop() - offset.top
         ];
     }
 };
@@ -429,24 +429,34 @@ qcode.Calendar.CanvasObject = class {
 // This object highlights a single date in a calendar.
 // ============================================================
 qcode.Calendar.DateHighlighter = class extends qcode.Calendar.CanvasObject {    
-    date
+    _date
+    get date() {
+        return this._date;
+    }
     set date(newDate) {
-        this.date = date
+        this._date = newDate
         this.calendar.draw();
     }
     
-    color
-    setColor(newColor) {
-        this.color = newColor;
+    _color
+    get color() {
+        return this._color;
+    }
+    set color(newColor) {
+        this._color = newColor;
         this.calendar.draw();
     }
-    
-    update(options) {
+
+    constructor(calendar, options) {
+        super(calendar, options)
+        this.updateDateHighlighter(options)
+    }
+
+    updateDateHighlighter(options) {
         if ( options !== undefined ) {
-            super.update(options)
+            this._date = options.date;
+            this._color = options.color;
         }
-        this.date = options.date;
-        this.color = options.color;
         if ( ! Date.isValid(this.date) ) {
             throw "Invalid Date";
         } 
@@ -455,6 +465,11 @@ qcode.Calendar.DateHighlighter = class extends qcode.Calendar.CanvasObject {
         this.width = this.calendar.width - this.left - right;
         this.top = this.calendar.headerHeight;
         this.height = this.calendar.bodyHeight;
+    }
+    
+    update(options) {
+        super.update(options);
+        this.updateDateHighlighter(options);
     }
 };
 // End of DateHighlighter class
@@ -471,14 +486,23 @@ qcode.Calendar.Bar = class extends qcode.Calendar.CanvasObject {
     layer = 2
     startDate
     finishDate
+
+    constructor(calendar, options) {
+        super(calendar, options)
+        this.updateBar(options)
+    }
+
+    updateBar(options) {
+        if ( options !== undefined ) {
+            this.left = this.calendar.date2positionLeft(this.startDate);
+            const right = this.calendar.date2positionRight(this.finishDate);
+            this.width = this.calendarCanvas.width - this.left - right;
+        }
+    }
     
     update(options) {
-        if ( options !== undefined ) {
-            super.update(options)
-        }
-        this.left = this.calendar.date2positionLeft(this.startDate);
-        const right = this.calendar.date2positionRight(this.finishDate);
-        this.width = this.calendarCanvas.width - this.left - right;
+        super.update(options);
+        this.updateBar(options);
     }
 };
 // End of Bar class
