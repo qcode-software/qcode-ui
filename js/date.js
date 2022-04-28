@@ -102,6 +102,14 @@
         var milliseconds = date1.getTime() - date2.getTime();
         return Math.round(milliseconds / millisecondsPerDay);
     }
+    Date.days = function* (from_date, to_date) {
+        // Generator for iterating over a date range
+        const date = new Date(from_date.getTime());
+        while( date.getTime() <= to_date.getTime() ) {
+            yield date;
+            date.incrDays(1);
+        }
+    }
     Date.isValid = function(date) {
         // Returns true if passed a valid date object. Returns false if the argument is not a valid date object
         return (date instanceof Date) && ( ! isNaN(date.getTime()) );
