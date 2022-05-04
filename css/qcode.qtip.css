@@ -1,0 +1,65 @@
+.qtip {
+    z-index: 100;
+}
+
+.qtip-pointer {
+    position: absolute;
+    border-style: solid;
+    border-width: 8px;
+}
+
+.qtip-pointer--left {
+    right: 100%;
+    border-left-width: 0;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+}
+
+.qtip-pointer--right {
+    left: 100%;
+    border-right-width: 0;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+}
+
+.qtip-pointer--top {
+    bottom: 100%;
+    border-top-width: 0;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+.qtip-pointer--bottom {
+    top: 100%;
+    border-bottom-width: 0;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+.qtip-pointer--at-top {
+    top: 0;
+}
+
+.qtip-pointer--at-bottom {
+    bottom: 0;
+}
+
+.qtip-pointer--at-left {
+    left: 0;
+}
+
+.qtip-pointer--at-right {
+    right: 0;
+}
+
+.qtip-pointer--top.qtip-pointer--at-center,
+.qtip-pointer--bottom.qtip-pointer--at-center {
+    left: 50%;
+    margin-left: -8px;
+}
+
+.qtip-pointer--left.qtip-pointer--at-center,
+.qtip-pointer--right.qtip-pointer--at-center {
+    top: 50%;
+    margin-top: -8px;
+}
