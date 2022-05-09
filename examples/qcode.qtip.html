@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Qcode Qtip demo</title>
+    <link rel="stylesheet" href="qcode.qtip.css"/>
+    <script src="qcode.deepCopy.js"></script>
+    <script src="qcode.setStateClass.js"></script>
+    <script src="qcode.qtip.js"></script>
+  </head>
+  <body>
+    <label>This is a test with a very long label for the input element. <input id="input"/></label>
+    <div>
+      <button id="show">Show</button>
+      <button id="hide">Hide</button>
+    </div>
+    <script>      
+      const input = document.getElementById('input');
+      const qtip = new qcode.Qtip(input, {
+          content: "Test",
+          position: {
+              my: 'left top',
+              at: 'bottom right'
+          }
+      });
+      const show = document.getElementById('show');
+      show.addEventListener('click', () => {
+          qtip.set_content(input.value);
+          qtip.show();
+      });
+      const hide = document.getElementById('hide');
+      hide.addEventListener('click', () => {
+          qtip.hide();
+      });
+    </script>
+  </body>
+</html>
