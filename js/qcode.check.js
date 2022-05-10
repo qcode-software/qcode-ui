@@ -2,68 +2,55 @@
   Client-side validation plugin
 */
 ;var qcode = qcode || {};
-(function() {
-    const formOptions = {};
+qcode.Check = class {
+    form
+    options
     
-    qcode.check = function(form, options) {
-        if ( options === "validate" ) {
-            return validateIfHasOptions(form);
-        }
-        return setup(form, options);
-    };
-
-    function validateIfHasOptions(form) {
-        const id = qcode.getID(form);
-        const options = formOptions[id];
-        if ( options === undefined ) {
-            return true
-        }
-        return validate(form, options);
+    constructor(form, options) {
+        this.form = form;
+        this.options = options;
+        this._setup();
     }
 
-    function setup(form, options) {
-        formOptions[id] = options;
-        
-        for (const selector of options.keys()) {
-            const fieldOptions = options[selector];
-            for (const field of form.querySelectorAll(selector)) {
+    _setup() {        
+        for (const selector of Object.keys(this.options)) {
+            const fieldOptions = this.options[selector];
+            for (const field of this.form.querySelectorAll(selector)) {
                 field.addEventListener('blur', () => {
-                    validateField(field, fieldOptions);
-                });
-                field.addEventListener('focus', () => {
-                    qcode.check.hideMessage(field);
+                    qcode.Check.validateField(field, fieldOptions);
                 });
             }
         }
-        form.addEventListener('submit', () => {
-            if ( ! validate(form, options)) {
+        this.form.addEventListener('submit', () => {
+            if ( ! this.validate() ) {
                 event.preventDefault();
             }
         });
-        form.addEventListener('reset', () => {
-            for (const selector of options.keys()) {
-                for (const field of form.querySelectorAll(selector)) {
-                    qcode.check.hideMessage(field);
+        this.form.addEventListener('reset', () => {
+            for (const selector of Object.keys(this.options)) {
+                for (const field of this.form.querySelectorAll(selector)) {
+                    qcode.Check.hideMessage(field);
                 }
             }
         });
-        return form;
     }
 
-    function validate(form, options) {
+    validate() {
         let valid = true;
-        for (const selector of options.keys()) {
-            const fieldOptions = options[selector];
-            for (const field of form.querySelectorAll(selector)) {
-                valid = validateField(field, fieldOptions) && valid;
+        for (const selector of Object.keys(this.options)) {
+            const fieldOptions = this.options[selector];
+            for (const field of this.form.querySelectorAll(selector)) {
+                valid = ( qcode.Check.validateField(field, fieldOptions)
+                          && valid );
             }
         }
+        return valid;
     }
 
-    function validateField(field, fieldOptions) {
+    static validateField(field, fieldOptions) {
         field.value = field.value.trim();
-        if ( ! fieldOptions.check.call(field) ) {
-            qcode.check.showMessage(
+        if ( ! fieldOptions.check(field) ) {
+            qcode.Check.showMessage(
                 field, fieldOptions.message
             );
             return false
@@ -71,62 +58,57 @@
         return true
     }
 
-    Object.assign(qcode.check, {
-        required: {
-            check: () => {
-                return this.value != "";
-            },
-            message: "This field is required."
+    static required = {
+        check: field => {
+            return field.value != "";
         },
-        isPostcode: string => {
-            var re1 = /^[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][ABD-HJLNP-UW-Z]{2}$/;
-            var re2 = /^BFPO ?[0-9]+$/;
-            return re1.test(string) || re2.test(string);
-        },
-        isInteger: string => {
-            var re = /^\d+$/;
-            return re.test(string);
-        },
-        isDate: string => {
-            var re1 = /^\d{4}-\d{2}-\d{2}$/;
-            var re2 = /^\d{2}\/\d{2}\/\d{4}$/;
-            return re1.test(string) || re2.test(string);
-        },       
-        isEmail: string => {
-            var re = /^[a-zA-Z0-9_\-]+([\.\+][a-zA-Z0-9_\-]+)*@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$/;
-            return re.test(string);
-        },    
-        showMessage: (element, message) => {
-            // Set zindex to be lower than jquery-ui dialog
-            $.fn.qtip.zindex = 100;
-            var api = $element.qtip('api');
-            if ( api === undefined ) {
-                // initialise qtip
-                $element.qtip({
+        message: "This field is required."
+    }
+    
+    static isPostcode(string) {
+        var re1 = /^[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][ABD-HJLNP-UW-Z]{2}$/;
+        var re2 = /^BFPO ?[0-9]+$/;
+        return re1.test(string) || re2.test(string);
+    }
+    
+    static isInteger(string) {
+        var re = /^\d+$/;
+        return re.test(string);
+    }
+    
+    static isDate(string) {
+        var re1 = /^\d{4}-\d{2}-\d{2}$/;
+        var re2 = /^\d{2}\/\d{2}\/\d{4}$/;
+        return re1.test(string) || re2.test(string);
+    }
+    
+    static isEmail(string) {
+        var re = /^[a-zA-Z0-9_\-]+([\.\+][a-zA-Z0-9_\-]+)*@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+$/;
+        return re.test(string);
+    }
+
+    static showMessage(element, message) {
+        const qtip = element.qcodeQtip;
+        if ( qtip === undefined ) {
+            element.qcodeQtip = new qcode.Qtip(
+                element, {
                     content: message,
                     position: {
                         my: "left top",
-                        at: "top right",
-                        target: $element
-                    },
-                    show: {
-                        event: false,
-                        ready: true
-                    },
-                    hide: {
-                        event: 'focus blurs reset keydown paste cut',
-                        delay: 0
+                        at: "top right"
                     }
-                });
-            } else {
-                // Update existing qtip and show
-                api.set('content.text', message);
-                api.reposition();
-                api.show();
-            }
-        },
-        hideMessage: function($element) {
-            $element.qtip('hide');
+                }
+            );
+        } else {
+            // Update existing qtip and show
+            qtip.set_content(message);
+            qtip.show();
         }
-    });
-})();
+    }
+
+    static hideMessage(element) {
+        if ( element.qcodeQtip !== undefined ) {
+            element.qcodeQtip.hide();
+        }
+    }
+};
