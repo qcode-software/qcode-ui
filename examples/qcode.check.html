@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <title>qcode.check demo</title>
+    <link rel="stylesheet" href="css/qcode.qtip.css"/>
+    <script src="js/qcode.deepCopy.js"></script>
+    <script src="js/qcode.setStateClass.js"></script>
+    <script src="js/qcode.qtip.js"></script>
+    <script src="js/qcode.check.js"></script>
+    <style>
+      form {
+          display: table;
+          width: 75%;
+      }
+      section {
+          display: table-cell;
+      }
+      h1 {
+          margin: 0;
+      }
+      label {
+          display: table-row;
+      }
+      p, input {
+          display: table-cell;
+      }
+      p {
+          padding: 0.5em 0.5em 0.5em 0;
+          vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="form">
+      <section>
+        <h1>User</h1>
+        <label>
+          <p>Name</p>
+          <input name="username"/>
+        </label>
+        <label>
+          <p>Date of Birth</p>
+          <input name="birth_date"/>
+        </label>
+        <label>
+          <p>Team No.</p>
+          <input name="team_no"/>
+        </label>
+        <label>
+          <p>Notes</p>
+          <textarea></textarea>
+        </label>
+      </section>
+      <section>
+        <h1>Address</h1>
+        <label>
+          <p>Address Line 1</p>
+          <input name="address_line1"/>
+        </label>
+        <label>
+          <p>Address Line 2</p>
+          <input name="address_line2"/>
+        </label>
+        <label>
+          <p>Postcode</p>
+          <input name="postcode"/>
+        </label>
+        <label>
+          <p>Email</p>
+          <input name="email"/>
+        </label>
+      </section>
+      <div>
+        <button type="button" id="validate">Validate</button>
+        <button type="reset">Reset</button>
+        <button type="submit">Submit</button>
+      </div>
+    </form>
+    <script>
+      const check = new qcode.Check(document.getElementById('form'), {
+          '[name="username"]': qcode.Check.required,
+          '[name="birth_date"]': {
+              check: field => qcode.Check.isDate(field.value),
+              message: "DoB must be a date"
+          },
+          '[name="team_no"]': {
+              check: field => qcode.Check.isInteger(field.value),
+              message: "Team No. must be an integer"
+          },
+          '[name="address_line1"]': qcode.Check.required,
+          '[name="postcode"]': {
+              check: field => qcode.Check.isPostcode(field.value),
+              message: "Invalid postcode"
+          },
+          '[name="email"]': {
+              check: field => qcode.Check.isEmail(field.value),
+              message: "Invalid email"
+          }
+      });
+
+      const validate = document.getElementById('validate');
+      validate.addEventListener('click', () => {
+          check.validate();
+      });
+    </script>
+  </body>
+</html>

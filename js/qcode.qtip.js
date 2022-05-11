@@ -6,11 +6,15 @@ qcode.Qtip = class {
     element
     pointer
     _resizeListener
+    _hideThis
+    _boundHideEvents = []
     
     constructor(target, options) {
         this.target = target;
         
         this.options = qcode.deepCopy(qcode.Qtip.options, options);
+
+        this._hideThis = this.hide.bind(this);
         
         this.element = document.createElement('div');
         this.element.classList.add('qtip');
@@ -35,11 +39,25 @@ qcode.Qtip = class {
         window.addEventListener('resize',this._resizeListener);
         this.element.style.display = 'block';
         this.reposition();
+
+        for (const event of this.options.hide_events) {
+            this._boundHideEvents.push(event);
+            this.target.addEventListener(event, this._hideThis);
+        }
     }
 
     hide() {
         window.removeEventListener('resize',this._resizeListener);
         this.element.style.display = 'none';
+
+        for (const event of this._boundHideEvents) {
+            this.target.removeEventListener(event, this._hideThis);
+        }
+        this._boundHideEvents = [];
+    }
+
+    is_showing() {
+        return (this.element.style.display == 'block');
     }
 
     set_content(new_content) {
@@ -192,7 +210,15 @@ qcode.Qtip.options = {
         my: 'bottom center',
         at: 'bottom center'
     },
-    classes: []
+    classes: [],
+    hide_events: [
+        'click',
+        'focus',
+        'blur',
+        'keydown',
+        'paste',
+        'cut'
+    ]
 };
 
 qcode.Qtip.pointer = class {
