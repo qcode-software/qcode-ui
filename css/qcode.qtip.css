@@ -6,6 +6,7 @@
     font-size: 0.8em;
     color: rgb(80,80,80);
     background: rgb(245,245,245);
+    cursor: pointer;
 }
 
 .qtip-pointer {

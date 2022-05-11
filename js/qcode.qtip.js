@@ -33,6 +33,11 @@ qcode.Qtip = class {
 
         this._resizeListener = this.reposition.bind(this);
         window.addEventListener('resize',this._resizeListener);
+
+        this.element.addEventListener('click', event => {
+            this.target.focus();
+            this.hide();
+        });
     }
 
     show() {
