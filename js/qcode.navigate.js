@@ -22,8 +22,8 @@ qcode.navigate = function(container, selector) {
         
         switch (event.key) {
         case "ArrowLeft":
-            if ( is_text_input
-                 && qcode.textRange.get(event.target).selectionAtStart
+            if ( ! is_text_input
+                 || qcode.textRange.get(event.target).selectionAtStart
                ) {
                 nextElement = qcode.westOf(event.target, fields);
             } else {
@@ -31,8 +31,8 @@ qcode.navigate = function(container, selector) {
             }
             break;
         case "ArrowRight":
-            if ( is_text_input
-                 && qcode.textRange.get(event.target).selectionAtEnd
+            if ( ! is_text_input
+                 || qcode.textRange.get(event.target).selectionAtEnd
                ) {
                 nextElement = qcode.eastOf(event.target, fields);
             } else {
@@ -40,8 +40,8 @@ qcode.navigate = function(container, selector) {
             }
             break;
         case "ArrowUp":
-            if ( is_text_input
-                 && qcode.textRange.get(event.target).selectionAtStart
+            if ( !is_text_input
+                 || qcode.textRange.get(event.target).selectionAtStart
                ) {
                 nextElement = qcode.northOf(event.target, fields);
             } else {
@@ -49,8 +49,8 @@ qcode.navigate = function(container, selector) {
             }
             break;
         case "ArrowDown":
-            if ( is_text_input
-                 && qcode.textRange.get(event.target).selectionAtEnd
+            if ( ! is_text_input
+                 || qcode.textRange.get(event.target).selectionAtEnd
                ) {
                 nextElement = qcode.southOf(event.target, fields);
             } else {

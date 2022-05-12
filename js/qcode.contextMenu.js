@@ -78,7 +78,7 @@ var qcode = qcode || {};
             positionSet();
 
             // Set up arrow-key navigation
-            menuDiv.navigate('li');
+            qcode.navigate(menuDiv[0],'li');
 
             // Append the menu div to the page body
             $('body').append(menuDiv);
