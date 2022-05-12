@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Qcode Context-Menu plugin</title>
+    <link rel="stylesheet" href="css/qcode.contextMenu.css"/>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/qcode.each.js"></script>
+    <script src="js/qcode.compass.js"></script>
+    <script src="js/qcode.navigate.js"></script>
+    <script src="js/qcode.contextMenu.js"></script>
+  </head>
+  <body>
+    <p>This is a test.</p>
+    <script>
+      $(function() {
+          $('p').on('click', function(event) {
+              qcode.contextMenu({
+                  position: [event.clientX, event.clientY],
+                  menuItems: [
+                      {
+                          label: "Action 1",
+                          action: function() {
+                              console.log("Action 1");
+                          }
+                      },
+                      {
+                          label: "Action 2",
+                          action: function() {
+                              console.log("Action 2");
+                          }
+                      }
+                  ]
+              });
+          });
+      });
+    </script>
+  </body>
+</html>
