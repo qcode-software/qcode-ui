@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <title>dbEditorBool plugin</title>
+    <style>
+      th, td {
+          border: 1px solid darkgrey;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
+    <script src="js/jquery.dbEditorBool.js"></script>
+    <script>
+      $(function() {
+          $('#wrapper').dbEditorBool();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Read</th>
+            <th>Write</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Adam</td>
+            <td class="editable">Yes</td>
+            <td class="editable">No</td>
+          </tr>
+          <tr>
+            <td>Eve</td>
+            <td class="editable">No</td>
+            <td class="editable">Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
