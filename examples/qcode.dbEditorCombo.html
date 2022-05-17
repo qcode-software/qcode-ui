@@ -45,7 +45,6 @@
     </div>
     <script>
       jQuery.ajax = function(options) {
-          console.log('dummy ajax call');
           const parser = new DOMParser();
           options.success(parser.parseFromString(`<records>
   <record>
