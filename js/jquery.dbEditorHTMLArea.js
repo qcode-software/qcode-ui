@@ -115,18 +115,18 @@
 	    // Set the text selection / cursor position
 	    switch(option) {
 	    case "start":
-		this.editor.textrange('set', "start", "start");
+                qcode.textRange.set(this.editor[0], "start", "start");
 		break;
 	    case "end":
-		this.editor.textrange('set', "end", "end");
+		qcode.textRange.set(this.editor[0], "end", "end");
 		break;
 	    case "all":
-		this.editor.textrange('set', "all");
+		qcode.textRange.set(this.editor[0], "all");
 		break;
 	    }
 	},
         getTextrange: function() {
-            return this.editor.textrange('get');
+            return qcode.textRange.get(this.editor[0]);
         },
 	destroy: function() {
 	    // If the widget is destroyed, remove the editor from the DOM.
@@ -134,7 +134,7 @@
 	},
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    var selection = this.editor.textrange('get');
+	    var selection = qcode.textRange.get(this.editor[0]);
 
 	    switch(e.which) {
 	    case 38: // up
@@ -212,7 +212,7 @@
             }
 	},
 	_inputOnKeyUp: function(e) {
-            var selection = this.editor.textrange('get');
+            var selection = qcode.textRange.get(this.editor[0]);
             if ( (e.which == 13 // return key
                   && ( ! e.shiftKey)
                   && ( ! this.option('tab_on_return'))
