@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+  <head>
+    <title>dbEditorHTMLArea plugin</title>
+    <style>
+      th, td {
+          border: 1px solid darkgrey;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/qcode.textRange.js"></script>
+    <script src="js/jquery.utils.js"></script>
+    <script src="js/jquery.positionRelativeTo.js"></script>
+    <script src="js/jquery.dbEditorHTMLArea.js"></script>
+    <script>
+      $(function() {
+          $('#wrapper').dbEditorHTMLArea();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Title</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Adam</td>
+            <td class="editable">Wizard</td>
+            <td class="editable">Caster of Spells</td>
+          </tr>
+          <tr>
+            <td>Eve</td>
+            <td class="editable">Witch</td>
+            <td class="editable">Brewer of Potions</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <script>
+      const $wrapper = $('#wrapper');
+      let currentCell;
+      $wrapper.dbEditorHTMLArea();
+      $wrapper.on('click','td', event => {
+          if ( currentCell ) {
+              if ( currentCell == event.currentTarget ) {
+                  return;
+              }
+              
+              currentCell.innerText =
+                      $wrapper.dbEditorHTMLArea('getValue');
+              $wrapper.dbEditorHTMLArea('hide');
+          }
+          currentCell = event.currentTarget;
+          $wrapper.dbEditorHTMLArea(
+              'show',
+              event.currentTarget,
+              event.currentTarget.innerText
+          );
+          $wrapper.dbEditorHTMLArea('selectText', 'all');
+      });
+      $wrapper.on('click', event => {
+          if ( currentCell && event.target != currentCell ) {
+              console.log(
+                  $wrapper.dbEditorHTMLArea('getTextrange').selectionText
+              );
+          }
+      });
+    </script>
+  </body>
+</html>
