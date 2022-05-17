@@ -44,6 +44,22 @@
       </table>
     </div>
     <script>
+      jQuery.ajax = function(options) {
+          console.log('dummy ajax call');
+          const parser = new DOMParser();
+          options.success(parser.parseFromString(`<records>
+  <record>
+    <option>Apples</option>
+  </record>
+  <record>
+    <option>Bananas</option>
+  </record>
+  <record>
+    <option>Carrots</option>
+  </record>
+</records>`, 'application/xml'));
+      };
+      
       const $wrapper = $('#wrapper');
       let currentCell;
       $wrapper.dbEditorCombo();
