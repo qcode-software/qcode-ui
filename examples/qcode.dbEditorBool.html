@@ -47,11 +47,15 @@
       const $wrapper = $('#wrapper');
       let currentCell;
       $wrapper.dbEditorBool();
-      $wrapper.on('click','td',event => {
+      $wrapper.on('click','td', event => {
           if ( currentCell ) {
+              if ( currentCell == event.currentTarget ) {
+                  return;
+              }
+              
               currentCell.innerText =
                       $wrapper.dbEditorBool('getValue') ? 'Yes' : 'No';
-              $wrapper.dbEditorBool('hide');                  
+              $wrapper.dbEditorBool('hide');
           }
           currentCell = event.currentTarget;
           $wrapper.dbEditorBool(
@@ -60,6 +64,13 @@
               event.currentTarget.innerText
           );
           $wrapper.dbEditorBool('selectText', 'all');
+      });
+      $wrapper.on('click', event => {
+          if ( currentCell && event.target != currentCell ) {
+              console.log(
+                  $wrapper.dbEditorBool('getTextrange').selectionText
+              );
+          }
       });
     </script>
   </body>
