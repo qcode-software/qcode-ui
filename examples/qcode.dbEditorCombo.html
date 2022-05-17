@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <title>dbEditorCombo plugin</title>
+    <style>
+      th, td {
+          border: 1px solid darkgrey;
+      }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/qcode.textRange.js"></script>
+    <script src="js/jquery.positionRelativeTo.js"></script>
+    <script src="js/jquery.dbEditorCombo.js"></script>
+    <script>
+      $(function() {
+          $('#wrapper').dbEditorCombo();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Order No#</th>
+            <th>First Item</th>
+            <th>Second Item</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1234</td>
+            <td class="editable">Apples</td>
+            <td class="editable">Bananas</td>
+          </tr>
+          <tr>
+            <td>5678</td>
+            <td class="editable">Carrots</td>
+            <td class="editable">Apples</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <script>
+      jQuery.ajax = function(options) {
+          const parser = new DOMParser();
+          options.success(parser.parseFromString(`<records>
+  <record>
+    <option>Apples</option>
+  </record>
+  <record>
+    <option>Bananas</option>
+  </record>
+  <record>
+    <option>Carrots</option>
+  </record>
+</records>`, 'application/xml'));
+      };
+      
+      const $wrapper = $('#wrapper');
+      let currentCell;
+      $wrapper.dbEditorCombo();
+      $wrapper.on('click','td', event => {
+          if ( currentCell ) {
+              if ( currentCell == event.currentTarget ) {
+                  return;
+              }
+              
+              currentCell.innerText = $wrapper.dbEditorCombo('getValue');
+              $wrapper.dbEditorCombo('hide');
+          }
+          currentCell = event.currentTarget;
+          $wrapper.dbEditorCombo(
+              'show',
+              event.currentTarget,
+              event.currentTarget.innerText,
+              'qcode.dbEditorCombo.xml'
+          );
+          $wrapper.dbEditorCombo('selectText', 'all');
+      });
+      $wrapper.on('click', event => {
+          if ( currentCell && event.target != currentCell ) {
+              console.log(
+                  $wrapper.dbEditorCombo('getTextrange').selectionText
+              );
+          }
+      });
+    </script>
+  </body>
+</html>

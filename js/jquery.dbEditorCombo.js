@@ -182,18 +182,18 @@
 	    // Set the text selection / cursor position
 	    switch(option) {
 	    case "start":
-		this.editor.textrange('set', "start", "start");
+                qcode.textRange.set(this.editor[0], "start", "start");
 		break;
 	    case "end":
-		this.editor.textrange('set', "end", "end");
+                qcode.textRange.set(this.editor[0], "end", "end");
 		break;
 	    case "all":
-		this.editor.textrange('set', "all");
+                qcode.textRange.set(this.editor[0], "all");
 		break;
 	    }
 	},
         getTextrange: function() {
-            return this.editor.textrange('get');
+            return qcode.textRange.get(this.editor[0]);
         },
 	search: function() {
 	    // Server side search for available options
@@ -253,7 +253,7 @@
         },
 	_inputOnKeyDown: function(e) {
 	    // Some key events are passed to the target element, but only the ones where we might need some non-default behavior.
-	    var selection = this.editor.textrange('get');
+	    var selection = qcode.textRange.get(this.editor[0]);
 
 	    switch(e.which) {
 	  
