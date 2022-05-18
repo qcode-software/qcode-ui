@@ -167,13 +167,13 @@
             } else {
                 switch (newRange) {
                 case "start":
-		    this.element.textrange('set', "start", "start");
+		    qcode.textRange.set(this.element[0], "start", "start");
                     break;
                 case "end":
-		    this.element.textrange('set', "end", "end");
+		    qcode.textRange.set(this.element[0], "end", "end");
                     break;
                 case "all":
-		    this.element.textrange('set', "all");
+		    qcode.textRange.set(this.element[0], "all");
                     break;
                 default:
                     $.error('Unrecognised range declaration');

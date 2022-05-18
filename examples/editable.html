@@ -1,19 +1,31 @@
 <!DOCTYPE html>
 <html>
-<head>
-<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
-<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
-<script src="../qcode-ui.js"></script>
-<script>
-$(function() {
-  $('.editable').editable();
-});
-</script>
-<title>jquery.editable.js example</title>
-</head>
-<body>
-<p class="editable" tabIndex="-1" type="bool">Yes</p>
-<p class="editable" tabIndex="-1" type="bool">No</p>
-<p class="editable" tabIndex="-1">Hello</p>
-</body>
+  <head>
+    <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <script src="js/0.jquery-ui-hacks.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/qcode.textRange.js"></script>
+    <script src="js/jquery.utils.js"></script>
+    <script src="js/jquery.positionRelativeTo.js"></script>
+    <script src="js/jquery.dbEditorBool.js"></script>
+    <script src="js/jquery.dbEditorText.js"></script>
+    <script src="js/jquery.editable.js"></script>
+    <script>
+      $(function() {
+          $('.editable').editable();
+      });
+    </script>
+    <style>
+      p {
+          margin: 0;
+      }
+    </style>
+    <title>jquery.editable.js example</title>
+  </head>
+  <body>
+    <p class="editable" tabIndex="-1" type="bool">Yes</p>
+    <p class="editable" tabIndex="-1" type="bool">No</p>
+    <p class="editable" tabIndex="-1">Hello</p>
+  </body>
 </html>
