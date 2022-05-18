@@ -20,7 +20,7 @@ $.fn.markDownImageHandler = function(options) {
     }, options);
 
     return function handleFiles(fileList) {
-        var index = $textarea.textrange('get').selectionStart;
+        var index = qcode.textRange.get($textarea[0]).selectionStart;
         $.each(fileList, function (i, file) {
             var head = $textarea.val().slice(0, index);
             var tail = $textarea.val().slice(index);
@@ -30,7 +30,7 @@ $.fn.markDownImageHandler = function(options) {
             var tagPattern = new RegExp('!\\[Uploading ' + uploadName + ' [0-9]+%\\]\\(\\)');
             $textarea.val(head + tag + tail);
             index = index + tag.length;
-            $textarea.textrange('set', index, index);
+            qcode.textRange.set($textarea[0], index, index);
 
             var uploader = new qcode.Uploader({
                 file: file,
