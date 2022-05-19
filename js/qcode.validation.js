@@ -31,13 +31,12 @@ qcode.Validation = class {
     
     options
     form
-    validationState = "clean"
-    state
+    state = "clean"
     message = [];
     activeRequest
     _onThisSuccess
     _onThisError
-    _onThisComplete
+    _onThisSubmit
     
     constructor(form, options) {
         this.options = qcode.deepCopy(qcode.Validation.defaults, options);
@@ -53,14 +52,14 @@ qcode.Validation = class {
 
         this._onThisSuccess = this._onSuccess.bind(this);
         this._onThisError = this._onError.bind(this);
-        this._onThisComplete = this._onComplete.bind(this);
 
         this._setupSubmitValueInclusion();
 
-        this.form.on('submit', event => {
+        this._onThisSubmit = event => {
             event.preventDefault();
             this.validate(new FormData(this.form));
-        });
+        };
+        this.form.on('submit', this._onThisSubmit);
     }
 
     validate(data) {
@@ -82,36 +81,24 @@ qcode.Validation = class {
             data.set('_method',method);
         }
 
-        const ajaxOptions = {
-            url: this.options.url,
-            data: data,
-            method: ajax_method,
-            dataType: 'JSON',
-            xhrFields: {
-                withCredentials: this.options.crossDomainRequest
-            },
-            cache: false,
-            headers: {
-                'X-Authenticity-Token': Cookies.get('authenticity_token')
-            },
-            timeout: this.options.timeout,
-            success: this._onThisSuccess,
-            error: this._onThisError,
-            complete: this._onThisComplete
-            processData: false,
-            contentType: false
-        }
-
         const xhr = new XMLHttpRequest();
         xhr.timeout = this.options.timeout;
         xhr.withCredentials = this.options.crossDomainRequest;
         xhr.addEventListener('load', this._onThisSuccess);
         xhr.addEventListener('error', this._onThisError);
-        xhr.open(ajaxMethod, this.options.url);
+        xhr.open(
+            ajaxMethod,
+            urlSet(
+                this.options.url,
+                '_timestamp',
+                Date.now()
+            )
+        );
         xhr.setRequestHeader(
             'X-Authenticity-Token',
             Cookies.get('authenticity_token')
         );
+        xhr.responseType = 'json';
         xhr.send(data);
 
         this.activeRequest = xhr;
@@ -122,6 +109,154 @@ qcode.Validation = class {
         this.hideMessage('alert');
         this.hideMessage('notify');
         this.hideMessage('error');
+    }
+
+    showValidationMessage(element, message) {
+        const qtip = element.qcodeQtip;
+        if ( qtip === undefined ) {
+            let qtipOptions = qcode.deepCopy(
+                this.options.qtip,
+                {content: message}
+            );
+            for (const selector of Object.keys(this.options.hints)) {
+                if ( element.matches(selector) ) {
+                    qtipOptions = qcode.deepCopy(
+                        qtipOptions, this.options.hints[selector]
+                    );
+                }
+            }
+            element.qcodeQtip = new qcode.Qtip(element, qtipOptions);
+        } else {
+            qtip.set_content(message);
+            qtip.show();
+        }
+    }
+
+    _onSuccess() {
+        this.form.classList.remove('validating');
+        this._parseResponse(
+            this.activeRequest.response
+        );
+    }
+
+    _parseResponse(response) {
+        if ( this._shouldRedirect(response) ) {
+            this._parseRedirect(response);
+            return;
+        }
+        if ( this._shouldResubmit(response) ) {
+            this._parseResubmit(response);
+            return;
+        }
+        if ( this._shouldSubmit(response) ) {
+            this._parseSubmit(response);
+            return;
+        }
+        
+        this._parseRecords(response);
+        this._parseMessages(response);
+
+        if ( this._responseIsValid(response) ) {
+            this._parseValidResponse(response);
+        } else {
+            this._parseInvalidResponse(response);
+        }
+
+        if ( this._shouldScrollToFeedback(response) ) {
+            this.scrollToFeedback();
+        }
+    }
+
+    _responseIsValid(response) {
+        return response.status === 'valid';
+    }
+
+    _parseValidResponse(response) {
+        this.state = 'valid';
+        this.form.dataSet.resubmitDisabled = false;
+
+        this.form.dispatchEvent(
+            new CustomEvent('valid', {
+                details: { response: response }
+            })
+        );
+    }
+
+    _shouldSubmit(response) {
+        return response.status === 'valid' && this.options.submit;
+    }
+
+    _parseSubmit(response) {
+        this.state = 'valid';
+        this.form.dataSet.resubmitDisabled = false;
+        
+        this.form.removeEventListener('submit', this._onThisSubmit);
+        this.form.submit();
+    }
+
+    _parseInvalidResponse(response) {
+        this.state = 'invalid';
+        this.form.dataSet.resubmitDisabled = false;
+        this.form.dispatchEvent(
+            new CustomEvent('invalid', {
+                details: { response: response }
+            })
+        );
+    }
+
+    _shouldResubmit(response) {
+        return ( response.action
+                 && response.action.resubmit
+                 && this.form dataSet.resubmitDisabled !== true );
+    }
+
+    _shouldRedirect(response) {
+        return response.action && response.action.redirect;
+    }
+
+    _parseMessages(response) {
+        if ( ! response.message ) {
+            return
+        }
+        for (const type of Object.keys(response.message)) {
+            this.showMessage(type, response.message[type].value);
+        }
+    }
+
+    _parseRedirect(response) {
+        this.state = 'redirecting';
+        window.location.href = response.action.redirect.value;
+        this.form.dispatchEvent(
+            new CustomEvent('redirect', {
+                bubbles: true,
+                detail: { response: response }
+            });
+        );
+    }
+
+    _parseResubmit(response) {
+        this.state = 'invalid';
+        
+        this.form.classList.remove('validating');
+        this.form.submit();
+        this.form.dataSet.resubmitDisabled = true;
+    }
+
+    _parseRecords(response) {
+        for (const name of Object.keys(response.record)) {
+            const object = response.record[name];
+            const elements = this.form.querySelectorAll(
+                `[name="${name}"]:not(input[type="hidden"])`
+            );
+            elements.forEach(element => {
+                if ( ! object.valid ) {
+                    this.showValidationMessage(element, object.message);
+                    element.classList.add('invalid');
+                } else {
+                    element.classList.remove('invalid');
+                }
+            });
+        }
     }
 
     _autocompleteBugfixHack() {
@@ -173,6 +308,22 @@ input[name][value][type="submit"]`);
             return "POST";
         } else {
             return "VALIDATE";
+        }
+    }
+
+    _onError() {
+        this.form.classList.remove('validating');
+
+        const returnType = this.activeRequest.getResponseHeader('content-type');
+
+        if ( returnType === "application/json; charset=utf-8"
+             && ! [0,200].includes(this.activeRequest.status)
+           ) {
+            this._parseResponse( this.activeRequest.response );
+        } else {
+            this.state = 'error';
+
+            
         }
     }
 }
