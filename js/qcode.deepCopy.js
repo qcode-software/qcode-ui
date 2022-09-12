@@ -1,7 +1,7 @@
 ;var qcode = qcode || {};
 
-qcode.deepCopy = function(baseObject, sourceObject) {
-    const copy = {};
+qcode.deepCopy = function(baseObject, sourceObject, ...additionalObjects) {
+    let copy = {};
     for (const key of Object.keys(baseObject)) {
         if ( ! Object.keys(sourceObject).includes(key)) {
             if ( qcode.isPlainObject(baseObject[key]) ) {
@@ -29,6 +29,9 @@ qcode.deepCopy = function(baseObject, sourceObject) {
         if ( ! Object.keys(baseObject).includes(key)) {
             copy[key] = sourceObject[key];
         }
+    }
+    for (const additionalObject of additionalObjects) {
+        copy = qcode.deepCopy(copy, additionalObject);
     }
     return copy;
 };

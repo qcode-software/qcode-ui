@@ -29,37 +29,71 @@ qcode.Validation = class {
         }
     }
     
+    static states = [
+        'clean',
+        'error',
+        'validating',
+        'redirecting',
+        'valid',
+        'invalid'
+    ]
+    _state = "clean"
+    get state() {
+        return this._state;
+    }
+    set state(new_state) {
+        for (const state of qcode.Validation.states) {
+            if ( new_state === state ) {
+                this.form.classList.add(state);
+            } else {
+                this.form.classList.remove(state);
+            }
+        }
+        this._state = new_state;
+    }
+
     options
     form
-    state = "clean"
-    message = [];
+    message = []
     activeRequest
     _onThisSuccess
     _onThisError
+    _onThisTimeout
     _onThisSubmit
     
     constructor(form, options) {
-        this.options = qcode.deepCopy(qcode.Validation.defaults, options);
         this.form = form;
+        
+        this.options = qcode.deepCopy(
+            qcode.Validation.defaults,
+            this.getDefaultsFromHTML(),
+            options
+        );
 
-        if ( this.options.method === undefined ) {
-            this.options.method = this._getDefaultMethod();
-        }
-
-        if ( this.options.url === undefined ) {
-            this.options.url = this.form.getAttribute('action');
-        }
-
-        this._onThisSuccess = this._onSuccess.bind(this);
-        this._onThisError = this._onError.bind(this);
+        this._bindEvents();
 
         this._setupSubmitValueInclusion();
+        
+        this.form.addEventListener('submit', this._onThisSubmit);
+    }
 
-        this._onThisSubmit = event => {
-            event.preventDefault();
-            this.validate(new FormData(this.form));
+    getDefaultsFromHTML() {
+        return {
+            method: this._getDefaultMethod(),
+            url: this.form.getAttribute('action')
         };
-        this.form.on('submit', this._onThisSubmit);
+    }
+
+    _bindEvents() {
+        this._onThisSuccess = this._onSuccess.bind(this);
+        this._onThisError = this._onError.bind(this);
+        this._onThisTimeout = this._onTimeout.bind(this);
+        this._onThisSubmit = this._onSubmit.bind(this);
+    }
+
+    _onSubmit(event) {
+        event.preventDefault();
+        this.validate(new FormData(this.form));        
     }
 
     validate(data) {
@@ -67,7 +101,6 @@ qcode.Validation = class {
             return
         }
         this.state = 'validating';
-        this.form.classList.add('validating');
         
         this._autocompleteBugfixHack();
 
@@ -86,6 +119,7 @@ qcode.Validation = class {
         xhr.withCredentials = this.options.crossDomainRequest;
         xhr.addEventListener('load', this._onThisSuccess);
         xhr.addEventListener('error', this._onThisError);
+        xhr.addEventListener('timeout', this._onThisTimeout);
         xhr.open(
             ajaxMethod,
             urlSet(
@@ -114,29 +148,35 @@ qcode.Validation = class {
     showValidationMessage(element, message) {
         const qtip = element.qcodeQtip;
         if ( qtip === undefined ) {
-            let qtipOptions = qcode.deepCopy(
-                this.options.qtip,
-                {content: message}
+            element.qcodeQtip = new qcode.Qtip(
+                element,
+                this._getElementQtipOptions(element);
             );
-            for (const selector of Object.keys(this.options.hints)) {
-                if ( element.matches(selector) ) {
-                    qtipOptions = qcode.deepCopy(
-                        qtipOptions, this.options.hints[selector]
-                    );
-                }
-            }
-            element.qcodeQtip = new qcode.Qtip(element, qtipOptions);
-        } else {
-            qtip.set_content(message);
-            qtip.show();
         }
+        qtip.set_content(message);
+        qtip.show();
+    }
+
+    _getElementQtipOptions(element) {
+        let qtipOptions = qcode.deepCopy(this.options.qtip, {});
+        for (const selector of Object.keys(this.options.hints)) {
+            if ( element.matches(selector) ) {
+                qtipOptions = qcode.deepCopy(
+                    qtipOptions, this.options.hints[selector]
+                );
+            }
+        }
+        return qtipOptions;
     }
 
     _onSuccess() {
-        this.form.classList.remove('validating');
-        this._parseResponse(
-            this.activeRequest.response
-        );
+        if ( this.activeRequest.response == null ) {
+            this._onParserError();
+        } else {
+            this._parseResponse(
+                this.activeRequest.response
+            );
+        }
     }
 
     _parseResponse(response) {
@@ -162,7 +202,7 @@ qcode.Validation = class {
             this._parseInvalidResponse(response);
         }
 
-        if ( this._shouldScrollToFeedback(response) ) {
+        if ( this.options.scrollToFeedback.enabled ) {
             this.scrollToFeedback();
         }
     }
@@ -207,7 +247,7 @@ qcode.Validation = class {
     _shouldResubmit(response) {
         return ( response.action
                  && response.action.resubmit
-                 && this.form dataSet.resubmitDisabled !== true );
+                 && this.form.dataSet.resubmitDisabled !== true );
     }
 
     _shouldRedirect(response) {
@@ -230,7 +270,7 @@ qcode.Validation = class {
             new CustomEvent('redirect', {
                 bubbles: true,
                 detail: { response: response }
-            });
+            })
         );
     }
 
@@ -274,6 +314,7 @@ qcode.Validation = class {
         for (const input of this._getNamedSubmitElements()) {
             const name = input.getAttribute('name');
             const value = input.getAttribute('value');
+            
             input.addEventListener('click', event => {
                 if ( ! this._hasHiddenInput(name) ) {
                     this._addHiddenInput(name, value, input);
@@ -312,18 +353,47 @@ input[name][value][type="submit"]`);
     }
 
     _onError() {
-        this.form.classList.remove('validating');
-
         const returnType = this.activeRequest.getResponseHeader('content-type');
-
         if ( returnType === "application/json; charset=utf-8"
              && ! [0,200].includes(this.activeRequest.status)
            ) {
             this._parseResponse( this.activeRequest.response );
-        } else {
-            this.state = 'error';
-
-            
+            return;
         }
+        
+        this.state = 'error';
+
+        const errorMessage = "Sorry, something went wrong. Please try again.";
+        this.showMessage('error', errorMessage);
+
+        if ( this.options.scrollToFeedback.enabled ) {
+            this.scrollToFeedback();
+        }
+
+        this.form.dispatchEvent(new CustomEvent('error', {
+            detail: {
+                message: errorMessage
+            }
+        }));
+    }
+
+    _onParserError() {
+    }
+
+    _onTimeout() {
+        this.form.classList.remove('validating');
+        this.state = 'error';
+        const errorMessage = "Sorry, your request timed out. Please try again.";
+        this.showMessage('error', errorMessage);
+
+        if ( this.options.scrollToFeedback.enabled ) {
+            this.scrollToFeedback();
+        }
+
+        this.form.dispatchEvent(new CustomEvent('error', {
+            detail: {
+                message: errorMessage
+            }
+        }));
     }
 }
