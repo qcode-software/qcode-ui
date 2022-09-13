@@ -54,8 +54,9 @@ qcode.Validation = class {
 
     options
     form
-    message = []
+    messageAreas = {}
     activeRequest
+    _resubmitDisabled = false
     _onThisSuccess
     _onThisError
     _onThisTimeout
@@ -138,6 +139,112 @@ qcode.Validation = class {
         this.activeRequest = xhr;
     }
 
+    showMessage(type, message) {
+        if ( ! this.hasMessageArea(type) ) {
+            this._initMessageArea(type);
+        }
+        const messageArea = this.getMessageArea(type);
+        messageArea.setMessage(message);
+        messageArea.show();
+    }
+
+    hideMessage(type) {
+        if ( this.hasMessageArea(type) ) {
+            this.getMessageArea(type).hide();
+        }
+    }
+
+    hasMessageArea(type) {
+        return this.messageAreas[type] !== undefined;
+    }
+
+    getMessageArea(type) {
+        return this.messageAreas[type];
+    }
+
+    _initMessageArea(type) {
+        const messageArea = new qcode.Validation.MessageArea(
+            this.options.messages[type]
+        );
+        messageArea.root.addEventListener(
+            'hide', this.reposition.bind(this)
+        );
+        messageArea.root.addEventListener(
+            'show', this.reposition.bind(this)
+        );
+        this.messageAreas[type] = messageArea;
+    }
+
+    reposition() {
+        for (const field of this.getVisibleFields()) {
+            if ( field.qcodeQtip === undefined ) {
+                continue;
+            }
+            if ( qcode.isVisible(field) ) {
+                field.qcodeQtip.hide();
+            } else {
+                field.qcodeQtip.reposition();
+            }
+        }
+    }
+
+    setValuesFromResponse(response) {
+        if ( response.record === undefined ) {
+            return;
+        }
+        const fields = this.getFieldElementsByName();
+        for (const name of Object.keys(response.record)) {
+            const record = response.record[name];
+            const element = fields[name];
+            if ( element === undefined
+                 || ! record.valid
+                 || ! record.hasOwnProperty('value')
+               ) {
+                continue
+            }
+            const value = record.value;
+            this._setFieldValue(element, value);
+        }
+    }
+
+    abort() {
+        this.activeRequest.abort();
+        this.state = error;
+    }
+
+    _getFieldElementsByName() {
+        const nodeList = this.element.querySelectorAll('[name]');
+        const fieldElements = {};
+        for (const element of Array.from(nodeList)) {
+            const name = element.getAttribute('name');
+            fieldElements[name] = element;
+        }
+        return fieldElements;
+    }
+
+    _setFieldValue(element, value) {
+        if ( ! _isCheckbox(element) ) {
+            element.value = value;
+            return;
+        }
+        if ( element.value === value ) {
+            element.checked = true;
+            return;
+        }
+        if ( parseBoolean(element.value)
+             && parseBoolean(value)
+           ) {
+            element.checked = true;
+        } else {
+            element.checked = false;
+        }
+    }
+
+    _isCheckbox(element) {
+        return ( element.hasAttribute('type')
+                 && element.getAttribute('type') === 'checkbox' );
+    }
+
     hideMessages() {
         this.hideValidationMessage();
         this.hideMessage('alert');
@@ -157,6 +264,18 @@ qcode.Validation = class {
         qtip.show();
     }
 
+    hideValidationMessage(element) {
+        if ( element === undefined ) {
+            for (const field of this.getVisibleFields()) {
+                this.hideValidationMessage(field);
+            }
+            return
+        }
+        if ( element.qcodeQtip !== undefined ) {
+            element.qcodeQtip.hide();
+        }
+    }
+
     _getElementQtipOptions(element) {
         let qtipOptions = qcode.deepCopy(this.options.qtip, {});
         for (const selector of Object.keys(this.options.hints)) {
@@ -170,13 +289,21 @@ qcode.Validation = class {
     }
 
     _onSuccess() {
+        const status = this.activeRequest.status;
+        const statusOK = status >= 200 && status < 300 || status === 304;
+        if ( ! statusOK ) {
+            this._onError();
+            return;
+        }
+        
         if ( this.activeRequest.response == null ) {
             this._onParserError();
-        } else {
-            this._parseResponse(
-                this.activeRequest.response
-            );
+            return;
         }
+        
+        this._parseResponse(
+            this.activeRequest.response
+        );
     }
 
     _parseResponse(response) {
@@ -285,9 +412,7 @@ qcode.Validation = class {
     _parseRecords(response) {
         for (const name of Object.keys(response.record)) {
             const object = response.record[name];
-            const elements = this.form.querySelectorAll(
-                `[name="${name}"]:not(input[type="hidden"])`
-            );
+            const elements = this.getVisibleFields();
             elements.forEach(element => {
                 if ( ! object.valid ) {
                     this.showValidationMessage(element, object.message);
@@ -297,6 +422,12 @@ qcode.Validation = class {
                 }
             });
         }
+    }
+
+    getVisibleFields() {
+        return this.form.querySelectorAll(
+            `[name="${name}"]:not(input[type="hidden"])`
+        );
     }
 
     _autocompleteBugfixHack() {
@@ -362,7 +493,6 @@ input[name][value][type="submit"]`);
         }
         
         this.state = 'error';
-
         const errorMessage = "Sorry, something went wrong. Please try again.";
         this.showMessage('error', errorMessage);
 
@@ -378,10 +508,23 @@ input[name][value][type="submit"]`);
     }
 
     _onParserError() {
+        this.state = 'error';
+        const errorMessage =
+              "Sorry, we were unable to parse the server's response. Please try again.";
+        this.showMessage('error', errorMessage);
+
+        if ( this.options.scrollToFeedback.enabled ) {
+            this.scrollToFeedback();
+        }
+
+        this.form.dispatchEvent(new CustomEvent('error', {
+            detail: {
+                message: errorMessage
+            }
+        }));
     }
 
     _onTimeout() {
-        this.form.classList.remove('validating');
         this.state = 'error';
         const errorMessage = "Sorry, your request timed out. Please try again.";
         this.showMessage('error', errorMessage);
@@ -395,5 +538,59 @@ input[name][value][type="submit"]`);
                 message: errorMessage
             }
         }));
+    }
+}
+
+qcode.Validation.MessageArea = class {
+    root
+    contentWrapper
+    
+    constructor(options) {
+        const htmlClasses = options.classes.split(' ');
+        this.root = document.createElement('div');
+        this.root.classList.add(...htmlClasses);
+        this.root.style.transitionProperty = 'transform';
+        this.root.style.transitionDuration = '0.2s';
+
+        this.contentWrapper = document.createElement('div');
+        this.contentWrapper.classList.add('message-content');
+        this.root.append(this.contentWrapper);
+
+        this.root.addEventListener('click', this.hide.bind(this));
+
+        if ( options.before ) {
+            options.before(this.root);
+        } else if ( options.after ) {
+            options.after(this.root);
+        } else {
+            document.getRootElement.body.append(this.root);
+        }
+
+        this.hide();
+    }
+
+    setMessage(newMessage) {
+        this.contentWrapper.innerHTML = newMessage;
+    }
+
+    show() {
+        this.root.style.display = 'block';
+        window.setZeroTimeout(() => {
+            this.root.style.transform = 'scale(1,1)';
+        });
+    }
+
+    hide() {
+        this.root.style.transform = 'scale(1,1)';
+    }
+
+    _onTransitionEnd() {
+        const transform = window.getComputedStyle(this.root).transform;
+        if ( transform.replace(/\s/g,'') == 'matrix(0,0,0,0,0,0)' ) {
+            this.root.style.display = 'none';
+            this.root.dispatchEvent(new CustomEvent('hide'));
+        } else {
+            this.root.dispatchEvent(new CustomEvent('show'));
+        }
     }
 }
