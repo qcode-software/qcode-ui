@@ -7,12 +7,20 @@
     <script src="/external/js.cookie-2.0.js"></script>
   </head>
   <body>
-    <form id="testForm" action="#" method="GET">
+    <form id="testForm" action="/gethandler" method="GET">
       <label>
-        Name: <input name="username"/>
+        Name: <input id="username" name="username"/>
       </label>
       <label>
-        Role: <input name="role"/>
+        Role: <input id="role" name="role"/>
+      </label>
+    </form>
+    <form id="testForm2" action="/posthandler" method="POST">
+      <label>
+        Name: <input id="username2" name="username"/>
+      </label>
+      <label>
+        Role: <input id="role2" name="role"/>
       </label>
     </form>
   </body>

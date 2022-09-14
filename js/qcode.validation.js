@@ -67,8 +67,8 @@ qcode.Validation = class {
         
         this.options = qcode.deepCopy(
             qcode.Validation.defaults,
-            this.getDefaultsFromHTML(),
-            options
+            this._getDefaultsFromHTML(),
+            coalesce(options,{})
         );
 
         this._bindEvents();
@@ -78,7 +78,7 @@ qcode.Validation = class {
         this.form.addEventListener('submit', this._onThisSubmit);
     }
 
-    getDefaultsFromHTML() {
+    _getDefaultsFromHTML() {
         return {
             method: this._getDefaultMethod(),
             url: this.form.getAttribute('action')
@@ -257,7 +257,7 @@ qcode.Validation = class {
         if ( qtip === undefined ) {
             element.qcodeQtip = new qcode.Qtip(
                 element,
-                this._getElementQtipOptions(element);
+                this._getElementQtipOptions(element)
             );
         }
         qtip.set_content(message);
@@ -340,7 +340,7 @@ qcode.Validation = class {
 
     _parseValidResponse(response) {
         this.state = 'valid';
-        this.form.dataSet.resubmitDisabled = false;
+        this._resubmitDisabled = false;
 
         this.form.dispatchEvent(
             new CustomEvent('valid', {
@@ -355,7 +355,7 @@ qcode.Validation = class {
 
     _parseSubmit(response) {
         this.state = 'valid';
-        this.form.dataSet.resubmitDisabled = false;
+        this._resubmitDisabled = false;
         
         this.form.removeEventListener('submit', this._onThisSubmit);
         this.form.submit();
@@ -363,7 +363,7 @@ qcode.Validation = class {
 
     _parseInvalidResponse(response) {
         this.state = 'invalid';
-        this.form.dataSet.resubmitDisabled = false;
+        this._resubmitDisabled = false;
         this.form.dispatchEvent(
             new CustomEvent('invalid', {
                 details: { response: response }
@@ -374,7 +374,7 @@ qcode.Validation = class {
     _shouldResubmit(response) {
         return ( response.action
                  && response.action.resubmit
-                 && this.form.dataSet.resubmitDisabled !== true );
+                 && this._resubmitDisabled !== true );
     }
 
     _shouldRedirect(response) {
@@ -406,7 +406,7 @@ qcode.Validation = class {
         
         this.form.classList.remove('validating');
         this.form.submit();
-        this.form.dataSet.resubmitDisabled = true;
+        this._resubmitDisabled = true;
     }
 
     _parseRecords(response) {
@@ -592,5 +592,34 @@ qcode.Validation.MessageArea = class {
         } else {
             this.root.dispatchEvent(new CustomEvent('show'));
         }
+    }
+
+    scrollToFeedback() {
+        const messageAreas = this.messageAreas.values();
+        const visibleFields = this.getVisibleFields();
+        const feedbackElements = messageAreas.concat(visibleFields);
+        
+        const highestElement = _getHighestElement(feedbackElements);
+
+        if ( highestElement === undefined ) {
+            return;
+        }
+        highestElement.scrollIntoView(this.options.scrollToFeedback);
+    }
+
+    _getHighestElement(elements) {
+        let highestElement;
+        let highestTop = Infinity;
+        for (const element of elements) {
+            if ( ! qcode.isVisible(element) ) {
+                continue;
+            }
+            const top = element.getBoundingClientRect().top;
+            if ( top < highestTop ) {
+                highestTop = top;
+                highestElement = element;
+            }
+        }
+        return highestElement;
     }
 }
