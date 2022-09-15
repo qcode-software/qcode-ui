@@ -94,7 +94,7 @@ qcode.Validation = class {
 
     _onSubmit(event) {
         event.preventDefault();
-        this.validate(new FormData(this.form));        
+        this.validate(new FormData(this.form));
     }
 
     validate(data) {
@@ -107,12 +107,12 @@ qcode.Validation = class {
 
         this.hideMessages();
 
-        let ajaxMathod;
+        let ajaxMethod;
         if ( ['GET','POST'].includes(this.options.method) ) {
             ajaxMethod = this.options.method;
         } else {
             ajaxMethod = 'POST';
-            data.set('_method',method);
+            data.set('_method',this.options.method);
         }
 
         const xhr = new XMLHttpRequest();
@@ -162,6 +162,14 @@ qcode.Validation = class {
         return this.messageAreas[type];
     }
 
+    getMessageAreasElements() {
+        const elements = [];
+        for (const messageArea of Object.values(this.messageAreas)) {
+            elements.push(messageArea.root);
+        }
+        return elements;
+    }
+
     _initMessageArea(type) {
         const messageArea = new qcode.Validation.MessageArea(
             this.options.messages[type]
@@ -192,7 +200,7 @@ qcode.Validation = class {
         if ( response.record === undefined ) {
             return;
         }
-        const fields = this.getFieldElementsByName();
+        const fields = this._getFieldElementsByName();
         for (const name of Object.keys(response.record)) {
             const record = response.record[name];
             const element = fields[name];
@@ -203,7 +211,7 @@ qcode.Validation = class {
                 continue
             }
             const value = record.value;
-            this._setFieldValue(element, value);
+            qcode.Validation._setFieldValue(element, value);
         }
     }
 
@@ -213,7 +221,7 @@ qcode.Validation = class {
     }
 
     _getFieldElementsByName() {
-        const nodeList = this.element.querySelectorAll('[name]');
+        const nodeList = this.form.querySelectorAll('[name]');
         const fieldElements = {};
         for (const element of Array.from(nodeList)) {
             const name = element.getAttribute('name');
@@ -222,8 +230,8 @@ qcode.Validation = class {
         return fieldElements;
     }
 
-    _setFieldValue(element, value) {
-        if ( ! _isCheckbox(element) ) {
+    static _setFieldValue(element, value) {
+        if ( ! qcode.Validation._isCheckbox(element) ) {
             element.value = value;
             return;
         }
@@ -240,7 +248,7 @@ qcode.Validation = class {
         }
     }
 
-    _isCheckbox(element) {
+    static _isCheckbox(element) {
         return ( element.hasAttribute('type')
                  && element.getAttribute('type') === 'checkbox' );
     }
@@ -311,17 +319,24 @@ qcode.Validation = class {
             this._parseRedirect(response);
             return;
         }
+        
+        if ( this._responseHasRecords(response) ) {
+            this._parseRecords(response);
+        }
+        
         if ( this._shouldResubmit(response) ) {
             this._parseResubmit(response);
             return;
         }
+
+        if ( this._responseHasMessages(response) ) {
+            this._parseMessages(response);
+        }
+        
         if ( this._shouldSubmit(response) ) {
             this._parseSubmit(response);
             return;
         }
-        
-        this._parseRecords(response);
-        this._parseMessages(response);
 
         if ( this._responseIsValid(response) ) {
             this._parseValidResponse(response);
@@ -344,7 +359,7 @@ qcode.Validation = class {
 
         this.form.dispatchEvent(
             new CustomEvent('valid', {
-                details: { response: response }
+                detail: { response: response }
             })
         );
     }
@@ -381,6 +396,10 @@ qcode.Validation = class {
         return response.action && response.action.redirect;
     }
 
+    _responseHasMessages(response) {
+        return response.hasOwnProperty('message');
+    }
+
     _parseMessages(response) {
         if ( ! response.message ) {
             return
@@ -409,24 +428,29 @@ qcode.Validation = class {
         this._resubmitDisabled = true;
     }
 
+    _responseHasRecords(response) {
+        return response.hasOwnProperty('record');
+    }
+
     _parseRecords(response) {
+        const elements = this._getFieldElementsByName();
         for (const name of Object.keys(response.record)) {
             const object = response.record[name];
-            const elements = this.getVisibleFields();
-            elements.forEach(element => {
-                if ( ! object.valid ) {
-                    this.showValidationMessage(element, object.message);
-                    element.classList.add('invalid');
-                } else {
-                    element.classList.remove('invalid');
-                }
-            });
+            const element = elements[name];
+            if ( ! object.valid ) {
+                this.showValidationMessage(element, object.message);
+                element.classList.add('invalid');
+            } else {
+                element.classList.remove('invalid');
+            }
         }
     }
 
     getVisibleFields() {
-        return this.form.querySelectorAll(
-            `[name="${name}"]:not(input[type="hidden"])`
+        return Array.from(
+            this.form.querySelectorAll(
+                `[name]:not(input[type="hidden"])`
+            )
         );
     }
 
@@ -539,6 +563,35 @@ input[name][value][type="submit"]`);
             }
         }));
     }
+
+    scrollToFeedback() {
+        const messageAreas = this.getMessageAreasElements();
+        const visibleFields = this.getVisibleFields();
+        const feedbackElements = messageAreas.concat(visibleFields);
+        const highestElement = 
+              qcode.Validation._getHighestElement(feedbackElements);
+
+        if ( highestElement === undefined ) {
+            return;
+        }
+        highestElement.scrollIntoView(this.options.scrollToFeedback);
+    }
+
+    static _getHighestElement(elements) {
+        let highestElement;
+        let highestTop = Infinity;
+        for (const element of elements) {
+            if ( ! qcode.isVisible(element) ) {
+                continue;
+            }
+            const top = element.getBoundingClientRect().top;
+            if ( top < highestTop ) {
+                highestTop = top;
+                highestElement = element;
+            }
+        }
+        return highestElement;
+    }
 }
 
 qcode.Validation.MessageArea = class {
@@ -563,7 +616,7 @@ qcode.Validation.MessageArea = class {
         } else if ( options.after ) {
             options.after(this.root);
         } else {
-            document.getRootElement.body.append(this.root);
+            document.body.append(this.root);
         }
 
         this.hide();
@@ -592,34 +645,5 @@ qcode.Validation.MessageArea = class {
         } else {
             this.root.dispatchEvent(new CustomEvent('show'));
         }
-    }
-
-    scrollToFeedback() {
-        const messageAreas = this.messageAreas.values();
-        const visibleFields = this.getVisibleFields();
-        const feedbackElements = messageAreas.concat(visibleFields);
-        
-        const highestElement = _getHighestElement(feedbackElements);
-
-        if ( highestElement === undefined ) {
-            return;
-        }
-        highestElement.scrollIntoView(this.options.scrollToFeedback);
-    }
-
-    _getHighestElement(elements) {
-        let highestElement;
-        let highestTop = Infinity;
-        for (const element of elements) {
-            if ( ! qcode.isVisible(element) ) {
-                continue;
-            }
-            const top = element.getBoundingClientRect().top;
-            if ( top < highestTop ) {
-                highestTop = top;
-                highestElement = element;
-            }
-        }
-        return highestElement;
     }
 }

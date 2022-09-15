@@ -4,6 +4,9 @@ describe('qcode.validation plugin',() => {
     beforeEach(async () => {
         page = await ready_page('qcode.validation.test.html');
         await page.setRequestInterception(true);
+        page.on('console', message => {
+            console.log(message.text());
+        });
     });
 
     afterEach( () => page.close() );
@@ -44,40 +47,74 @@ describe('qcode.validation plugin',() => {
     });
 
     it('submits a request on submit', async () => {
+        let countRequests = 0;
         page.on('request', interceptedRequest => {
+            countRequests++;
             interceptedRequest.respond({
                 status: 200,
                 contentType: 'application/json',
-                body: `{
-                    status: "valid",
-                    record: {
-                        username: {
-                            status: "valid",
-                            value: "Adam"
-                        },
-                        role: {
-                            status: "valid",
-                            value: "Admin"
-                        }
-                    }
-                }`
+                body: JSON.stringify({
+                    status: "valid"
+                })
             })
         });
-        await page.evaluate(async () => {
+        const result = await page.evaluate(async () => {
             const form = document.getElementById('testForm');
-            const validation = new qcode.Validation(form);
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
             const valid = new Promise(resolve => {
                 form.addEventListener('valid', event => {
                     resolve(event.detail.response)
                 });
             });
-            form.submit();
+            document.getElementById('submit').click();
+            await valid;
+            return;
+        });
+        expect(countRequests).toBe(1);
+    });
+
+    it('Can set values from response', async () => {
+        page.on('request', interceptedRequest => {
+            interceptedRequest.respond({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    status: "valid",
+                    record: {
+                        username: {
+                            valid: true,
+                            value: "Adam"
+                        },
+                        role: {
+                            valid: true,
+                            value: "Admin"
+                        }
+                    }
+                })
+            })
+        });
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            const valid = new Promise(resolve => {
+                form.addEventListener('valid', event => {
+                    validation.setValuesFromResponse(
+                        event.detail.response
+                    );
+                    resolve("Done");
+                });
+            });
+            document.getElementById('submit').click();
             await valid;
             return [
                 document.getElementById('username').value,
                 document.getElementById('role').value
             ];
         });
-        expect(countRequests).toEqual(['Adam','Admin']);
+        expect(result).toEqual(['Adam','Admin']);
     });
 });
