@@ -18,6 +18,7 @@ qcode.Qtip = class {
         
         this.element = document.createElement('div');
         this.element.classList.add('qtip');
+        this.element.classList.add('qcode-qtip');
         this.element.append(options.content);
 
         for (const className of this.options.classes) {
@@ -67,10 +68,8 @@ qcode.Qtip = class {
 
     set_content(new_content) {
         this.options.content = new_content;
-        this.element.replaceChildren(
-            new_content,
-            this.pointer.element
-        );
+        this.element.innerHTML = new_content;
+        this.element.append(this.pointer.element);
     }
 
     reposition() {

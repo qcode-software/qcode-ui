@@ -133,6 +133,10 @@ qcode.Validation = class {
             'X-Authenticity-Token',
             Cookies.get('authenticity_token')
         );
+        xhr.setRequestHeader(
+            'Accept',
+            'application/json, text/javascript, */*; q=0.01'
+        );
         xhr.responseType = 'json';
         xhr.send(data);
 
@@ -613,9 +617,9 @@ qcode.Validation.MessageArea = class {
         this.root.addEventListener('click', this.hide.bind(this));
 
         if ( options.before ) {
-            options.before(this.root);
+            options.before.before(this.root);
         } else if ( options.after ) {
-            options.after(this.root);
+            options.after.after(this.root);
         } else {
             document.body.append(this.root);
         }
