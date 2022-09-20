@@ -261,12 +261,13 @@ qcode.Validation = class {
     }
 
     showValidationMessage(element, message) {
-        const qtip = element.qcodeQtip;
+        let qtip = element.qcodeQtip;
         if ( qtip === undefined ) {
-            element.qcodeQtip = new qcode.Qtip(
+            qtip = new qcode.Qtip(
                 element,
                 this._getElementQtipOptions(element)
             );
+            element.qcodeQtip = qtip
         }
         qtip.set_content(message);
         qtip.show();

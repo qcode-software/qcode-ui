@@ -46,7 +46,7 @@ describe('qcode.validation plugin',() => {
                                 'invalid']);
     });
 
-    it('submits a request on submit', async () => {
+    it('submits a request and fires valid event', async () => {
         let countRequests = 0;
         page.on('request', interceptedRequest => {
             countRequests++;
@@ -116,5 +116,76 @@ describe('qcode.validation plugin',() => {
             ];
         });
         expect(result).toEqual(['Adam','Admin']);
+    });
+
+    it('Shows mesage area from response', async() => {
+        page.on('request', interceptedRequest => {
+            interceptedRequest.respond({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    status: "invalid",
+                    message: {
+                        error: {
+                            value: "This is an error."
+                        }
+                    }
+                })
+            });
+        });
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            const invalidEvent = new Promise(resolve => {
+                form.addEventListener('invalid', event => {
+                    resolve("Done");
+                });
+            });
+            document.getElementById('submit').click();
+            await invalidEvent;
+            const messageArea = document.getElementsByClassName(
+                'message-area'
+            );
+            return messageArea[0].innerText;
+        });
+        expect(result).toBe('This is an error.');
+    });
+
+    it('Displays feedback qtip', async() => {
+        page.on('request', interceptedRequest => {
+            interceptedRequest.respond({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    status: "invalid",
+                    record: {
+                        username: {
+                            valid: false,
+                            message: "I don't like your name."
+                        }
+                    }
+                })
+            });
+        });
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            const invalid = new Promise(resolve => {
+                form.addEventListener('invalid', event => {
+                    resolve("Done");
+                });
+            });
+            document.getElementById('submit').click();
+            await invalid;
+            const messageArea = document.getElementsByClassName(
+                'qtip'
+            );
+            return messageArea[0].innerText;
+        });
+        expect(result).toBe("I don't like your name.");
     });
 });
