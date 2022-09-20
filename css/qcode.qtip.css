@@ -1,4 +1,4 @@
-.qtip {
+.qtip.qcode-qtip {
     z-index: 100;
     position: absolute;
     border: 1px solid darkgrey;
@@ -6,6 +6,7 @@
     font-size: 0.8em;
     color: rgb(80,80,80);
     background: rgb(245,245,245);
+    cursor: pointer;
 }
 
 .qtip-pointer {

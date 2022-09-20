@@ -79,3 +79,10 @@ qcode.underscore2camelCase = function(string) {
     "use strict";
     return string.replace(/_([a-z])/g, g => g[1].toUpperCase());
 }
+
+qcode.isVisible = function(element) {
+    "use strict";
+    return !! ( element.offsetWidth
+                || element.offsetHeight
+                || element.getClientRects().length );
+}
