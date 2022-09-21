@@ -188,4 +188,48 @@ describe('qcode.validation plugin',() => {
         });
         expect(result).toBe("I don't like your name.");
     });
+
+    it('Ignores unmatched records', async() => {
+        page.on('request', interceptedRequest => {
+            interceptedRequest.respond({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    status: 'invalid',
+                    record: {
+                        username: {
+                            valid: false,
+                            message: "I don't like your name."
+                        },
+                        height: {
+                            valid: true,
+                            value: ''
+                        },
+                        role: {
+                            valid: true,
+                            value: 'Admin'
+                        }
+                    }
+                })
+            });
+        });
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            const invalid = new Promise(resolve => {
+                form.addEventListener('invalid', event => {
+                    resolve("Done");
+                });
+            });
+            document.getElementById('submit').click();
+            await invalid;
+            const messageArea = document.getElementsByClassName(
+                'qtip'
+            );
+            return messageArea[0].innerText;
+        });
+        expect(result).toBe("I don't like your name.");
+    });
 });

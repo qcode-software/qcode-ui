@@ -441,6 +441,9 @@ qcode.Validation = class {
         const elements = this._getFieldElementsByName();
         for (const name of Object.keys(response.record)) {
             const object = response.record[name];
+            if ( elements[name] === undefined ) {
+                continue;
+            }
             const element = elements[name];
             if ( ! object.valid ) {
                 this.showValidationMessage(element, object.message);
