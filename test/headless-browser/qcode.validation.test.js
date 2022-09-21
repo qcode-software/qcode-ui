@@ -68,7 +68,7 @@ describe('qcode.validation plugin',() => {
                     resolve(event.detail.response)
                 });
             });
-            document.getElementById('submit').click();
+            document.getElementById('submitButton').click();
             await valid;
             return;
         });
@@ -108,7 +108,7 @@ describe('qcode.validation plugin',() => {
                     resolve("Done");
                 });
             });
-            document.getElementById('submit').click();
+            document.getElementById('submitButton').click();
             await valid;
             return [
                 document.getElementById('username').value,
@@ -143,7 +143,7 @@ describe('qcode.validation plugin',() => {
                     resolve("Done");
                 });
             });
-            document.getElementById('submit').click();
+            document.getElementById('submitButton').click();
             await invalidEvent;
             const messageArea = document.getElementsByClassName(
                 'message-area'
@@ -179,7 +179,7 @@ describe('qcode.validation plugin',() => {
                     resolve("Done");
                 });
             });
-            document.getElementById('submit').click();
+            document.getElementById('submitButton').click();
             await invalid;
             const messageArea = document.getElementsByClassName(
                 'qtip'
@@ -223,7 +223,7 @@ describe('qcode.validation plugin',() => {
                     resolve("Done");
                 });
             });
-            document.getElementById('submit').click();
+            document.getElementById('submitButton').click();
             await invalid;
             const messageArea = document.getElementsByClassName(
                 'qtip'
@@ -232,4 +232,63 @@ describe('qcode.validation plugin',() => {
         });
         expect(result).toBe("I don't like your name.");
     });
+
+    it('Submits form on success', async() => {
+        const redirect = new Promise(resolve => {
+            page.on('request', interceptedRequest => {
+                if ( interceptedRequest.method() === 'POST' ) {
+                    interceptedRequest.respond({
+                        status: 200,
+                        contentType: 'application/json',
+                        body: JSON.stringify({status: 'valid'})
+                    });
+                } else {
+                    interceptedRequest.respond({
+                        status: 200,
+                        contentType: 'text/html',
+                        body:`<!doctype html>
+<title>Simple Page</title>
+<p>A simple html page`
+                    });
+                    resolve("Done");
+                }
+            });
+        });
+        await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form);
+            document.getElementById('submitButton').click();
+        });
+        await redirect;
+    });
+
+    it('Handles form submit method being masked by inputElement id "submit"',
+       async() => {
+           const redirect = new Promise(resolve => {
+               page.on('request', interceptedRequest => {
+                   if ( interceptedRequest.method() === 'POST' ) {
+                       interceptedRequest.respond({
+                           status: 200,
+                           contentType: 'application/json',
+                           body: JSON.stringify({status: 'valid'})
+                       });
+                   } else {
+                       interceptedRequest.respond({
+                           status: 200,
+                           contentType: 'text/html',
+                           body:`<!doctype html>
+<title>Simple Page</title>
+<p>A simple html page`
+                       });
+                       resolve("Done");
+                   }
+               });
+           });
+           await page.evaluate(async () => {
+               const form = document.getElementById('testForm2');
+               const validation = new qcode.Validation(form);
+               document.getElementById('submit').click();
+           });
+           await redirect;
+       });
 });
