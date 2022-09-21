@@ -378,7 +378,10 @@ qcode.Validation = class {
         this._resubmitDisabled = false;
         
         this.form.removeEventListener('submit', this._onThisSubmit);
-        this.form.submit();
+
+        // this.form.submit(), but don't let the function
+        // be masked by an input element with a name or id of "submit".
+        HTMLFormElement.prototype.submit.call(this.form);
     }
 
     _parseInvalidResponse(response) {
