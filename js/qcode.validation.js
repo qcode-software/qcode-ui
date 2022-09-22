@@ -510,7 +510,7 @@ input[name][value][type="submit"]`);
 
     _getDefaultMethod() {
         if ( this.form.hasAttribute('method')
-             && ! this.form.getAttribute('method') === "GET"
+             && this.form.getAttribute('method') != "GET"
            ) {
             return "POST";
         } else {
