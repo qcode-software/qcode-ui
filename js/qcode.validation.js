@@ -491,6 +491,7 @@ qcode.Validation = class {
 
     _addHiddenInput(name, value, input) {
         const hidden = document.createElement('input');
+        hidden.setAttribute('type', 'hidden');
         hidden.setAttribute('name', name);
         hidden.setAttribute('value', value);
         input.parentElement.insertBefore(hidden, input);
