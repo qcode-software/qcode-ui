@@ -46,6 +46,29 @@ describe('qcode.validation plugin',() => {
                                 'invalid']);
     });
 
+    it('gets default method from html', async() => {
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            return validation.options.method
+        });
+        expect(result).toBe('VALIDATE');
+    });
+
+    it('gets default method from html', async() => {
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            form.setAttribute('method','POST');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            return validation.options.method
+        });
+        expect(result).toBe('POST');
+    });
+
     it('submits a request and fires valid event', async () => {
         let countRequests = 0;
         page.on('request', interceptedRequest => {
