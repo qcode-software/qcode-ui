@@ -23,3 +23,7 @@
     display: table !important;
     padding: 1em 1em;
 }
+
+.dialog.alert {
+    max-width: 40%;
+}
