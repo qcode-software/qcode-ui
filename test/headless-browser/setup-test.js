@@ -1,4 +1,4 @@
-global.load_qcode_ui = function(page) {
+global.load_qcode_ui = async function(page) {
     // Concatenate all the .js files in qcode-ui to load in a source tag
     const fs = require('fs');
     var source = "";
@@ -7,8 +7,18 @@ global.load_qcode_ui = function(page) {
             source += fs.readFileSync('./js/' + filename,'utf8') + "\n";
         }
     }
-    return page.addScriptTag({
+    await page.addScriptTag({
         content: source
+    });
+    // Concatenate all the .css files in qcode-ui to load in a style tag
+    var css = "";
+    for (const filename of fs.readdirSync('./css/').sort()) {
+        if ( filename.slice(-4) === '.css' ) {
+            css += fs.readFileSync('./css/' + filename,'utf8') + "\n";
+        }
+    }
+    return page.addStyleTag({
+        content: css
     });
 }
 global.dom_ready = function(page) {
