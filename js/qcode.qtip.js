@@ -99,13 +99,27 @@ qcode.Qtip = class {
     }
 
     get_anchor_point(target, position) {
-        const rect = target.getBoundingClientRect();
+        const rect = this._getDocumentRect(target);
 
         const horizontal_vertical = this._parse_position_at(position);
         
         return {
             x: this._get_x(rect, horizontal_vertical[0]),
             y: this._get_y(rect, horizontal_vertical[1])
+        }
+    }
+
+    _getDocumentRect(element) {
+        const clientRect = element.getBoundingClientRect();
+        return {
+            x: clientRect.x + window.scrollX,
+            y: clientRect.y + window.scrollY,
+            width: clientRect.width,
+            height: clientRect.height,
+            top: clientRect.top + window.scrollY,
+            right: clientRect.right + window.scrollX,
+            bottom: clientRect.bottom + window.scrollY,
+            left: clientRect.left + window.scrollX
         }
     }
 
