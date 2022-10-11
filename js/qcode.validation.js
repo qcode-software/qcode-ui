@@ -11,13 +11,13 @@ qcode.Validation = class {
         hints: {},
         messages: {
             error: {
-                classes: 'message-area error'
+                classes: 'message-area message-area--error'
             },
             notify: {
-                classes: 'message-area notify'
+                classes: 'message-area message-area--notify'
             },
             alert: {
-                classes: 'message-area alert'
+                classes: 'message-area message-area--alert'
             }
         },
         submit: true,

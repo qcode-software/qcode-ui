@@ -27,13 +27,13 @@
     content: "\00d7"
 }
 
-.message-area.alert {
+.message-area--alert {
     color: #8a6d3b;
     background-color: #fcf8e3;
     border-color: #faebcc;
 }
 
-.message-area.error {
+.message-area--error {
     color: #a94442;
     background-color: #f2dede;
     border-color: #ebccd1;
