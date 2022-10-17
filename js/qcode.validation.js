@@ -646,7 +646,7 @@ qcode.Validation.MessageArea = class {
     }
 
     hide() {
-        this.root.style.transform = 'scale(1,1)';
+        this.root.style.transform = 'scale(0,0)';
     }
 
     _onTransitionEnd() {

@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Qcode Validation Message Area Demo</title>
+    <link rel="stylesheet" href="css/validation.css"/>
+    <script src="js/utils.js"></script>
+    <script src="js/qcode.deepCopy.js"></script>
+    <script src="js/qcode.validation.js"></script>
+  </head>
+  <body>
+    <button id="show">Show</button>
+    <button id="hide">Hide</button>
+    <script>
+      "use strict";
+      const message = new qcode.Validation.MessageArea({
+          classes: "message-area"
+      });
+      message.setMessage('This is a test');
+      document.getElementById('show').addEventListener('click', event => {
+          message.show();
+      });
+      document.getElementById('hide').addEventListener('click', event => {
+          message.hide();
+      });
+    </script>
+  </body>
+</html>
