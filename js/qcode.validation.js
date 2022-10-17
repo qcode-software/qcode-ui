@@ -622,6 +622,8 @@ qcode.Validation.MessageArea = class {
         this.root.append(this.contentWrapper);
 
         this.root.addEventListener('click', this.hide.bind(this));
+        this.root.addEventListener(
+            'transitionend', this._onTransitionEnd.bind(this));
 
         if ( options.before ) {
             options.before.before(this.root);
@@ -632,6 +634,7 @@ qcode.Validation.MessageArea = class {
         }
 
         this.hide();
+        this.root.style.display = 'none';
     }
 
     setMessage(newMessage) {

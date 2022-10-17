@@ -8,12 +8,16 @@
     <script src="js/qcode.validation.js"></script>
   </head>
   <body>
-    <button id="show">Show</button>
-    <button id="hide">Hide</button>
+    <div id="buttons">
+      <button id="show">Show</button>
+      <button id="hide">Hide</button>
+    </div>
     <script>
       "use strict";
+      const buttons = document.getElementById('buttons');
       const message = new qcode.Validation.MessageArea({
-          classes: "message-area"
+          classes: "message-area",
+          before: buttons
       });
       message.setMessage('This is a test');
       document.getElementById('show').addEventListener('click', event => {
