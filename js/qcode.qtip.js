@@ -13,6 +13,9 @@ qcode.Qtip = class {
         this.target = target;
         
         this.options = qcode.deepCopy(qcode.Qtip.options, options);
+        if ( ! this.options.container ) {
+            this.options.container = document.body;
+        }
 
         this._hideThis = this.hide.bind(this);
         
@@ -24,8 +27,8 @@ qcode.Qtip = class {
         for (const className of this.options.classes) {
             this.element.classList.add(className);
         }
-        
-        document.body.append(this.element);
+
+        this.options.container.append(this.element);
         
         this.pointer = new qcode.Qtip.pointer(this.element);
 
@@ -99,8 +102,14 @@ qcode.Qtip = class {
     }
 
     get_anchor_point(target, position) {
-        const rect = this._getDocumentRect(target);
-
+        let rect = this._getDocumentRect(target);
+        if ( ! (this.options.container instanceof HTMLBodyElement) ) {
+            const containerRect = this._getDocumentRect(this.options.container);
+            rect = this._translateRect(rect, {
+                x: -containerRect.x,
+                y: -containerRect.y
+            });
+        }
         const horizontal_vertical = this._parse_position_at(position);
         
         return {
@@ -111,16 +120,19 @@ qcode.Qtip = class {
 
     _getDocumentRect(element) {
         const clientRect = element.getBoundingClientRect();
-        return {
-            x: clientRect.x + window.scrollX,
-            y: clientRect.y + window.scrollY,
-            width: clientRect.width,
-            height: clientRect.height,
-            top: clientRect.top + window.scrollY,
-            right: clientRect.right + window.scrollX,
-            bottom: clientRect.bottom + window.scrollY,
-            left: clientRect.left + window.scrollX
-        }
+        return this._translateRect(
+            clientRect,
+            {x: window.scrollX, y: window.scrollY}
+        );
+    }
+
+    _translateRect(rect, vector) {
+        return new DOMRect(
+            rect.x + vector.x,
+            rect.y + vector.y,
+            rect.width,
+            rect.height
+        );
     }
 
     _parse_position_my(position) {
