@@ -364,7 +364,8 @@ qcode.Validation = class {
 
         this.form.dispatchEvent(
             new CustomEvent('valid', {
-                detail: { response: response }
+                detail: { response: response },
+                bubbles: true
             })
         );
     }
