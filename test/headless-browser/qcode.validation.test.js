@@ -98,6 +98,35 @@ describe('qcode.validation plugin',() => {
         expect(countRequests).toBe(1);
     });
 
+    it('bubbles "valid" event', async () => {
+        let countRequests = 0;
+        page.on('request', interceptedRequest => {
+            countRequests++;
+            interceptedRequest.respond({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    status: "valid"
+                })
+            })
+        });
+        const result = await page.evaluate(async () => {
+            const form = document.getElementById('testForm');
+            const validation = new qcode.Validation(form, {
+                submit: false
+            });
+            const valid = new Promise(resolve => {
+                document.body.addEventListener('valid', event => {
+                    resolve(event.target === form)
+                });
+            });
+            document.getElementById('submitButton').click();
+            return await valid;
+        });
+        expect(countRequests).toBe(1);
+        expect(result).toBe(true);
+    });
+
     it('Can set values from response', async () => {
         page.on('request', interceptedRequest => {
             interceptedRequest.respond({
