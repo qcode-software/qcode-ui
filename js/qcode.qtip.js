@@ -73,6 +73,10 @@ qcode.Qtip = class {
     }
 
     reposition() {
+        this.set_anchor_point({
+            x: 0,
+            y: 0
+        });
         this.set_anchor_point(
             this.get_anchor_point(
                 this.target,
@@ -102,10 +106,16 @@ qcode.Qtip = class {
         const rect = this._getDocumentRect(target);
 
         const horizontal_vertical = this._parse_position_at(position);
-        
+
+        const x = (
+            this._get_x(rect, horizontal_vertical[0]) + this.options.offset.x
+        );
+        const y = (
+            this._get_y(rect, horizontal_vertical[1]) + this.options.offset.y
+        )
         return {
-            x: this._get_x(rect, horizontal_vertical[0]),
-            y: this._get_y(rect, horizontal_vertical[1])
+            x: x,
+            y: y
         }
     }
 
@@ -227,6 +237,10 @@ qcode.Qtip.options = {
     position: {
         my: 'bottom center',
         at: 'bottom center'
+    },
+    offset: {
+        x: 0,
+        y: 0
     },
     classes: [],
     hide_events: [
