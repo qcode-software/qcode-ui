@@ -390,7 +390,8 @@ qcode.Validation = class {
         this._resubmitDisabled = false;
         this.form.dispatchEvent(
             new CustomEvent('invalid', {
-                details: { response: response }
+                detail: { response: response },
+                bubbles: true
             })
         );
     }
