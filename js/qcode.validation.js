@@ -314,12 +314,12 @@ qcode.Validation = class {
             return;
         }
         
-        this._parseResponse(
+        this.parseResponse(
             this.activeRequest.response
         );
     }
 
-    _parseResponse(response) {
+    parseResponse(response) {
         if ( this._shouldRedirect(response) ) {
             this._parseRedirect(response);
             return;
@@ -526,7 +526,7 @@ input[name][value][type="submit"]`);
         if ( returnType === "application/json; charset=utf-8"
              && ! [0,200].includes(this.activeRequest.status)
            ) {
-            this._parseResponse( this.activeRequest.response );
+            this.parseResponse( this.activeRequest.response );
             return;
         }
         
