@@ -450,5 +450,3 @@ window.isEditingKeyEvent = isEditingKeyEvent;
 window.guidGenerate = guidGenerate;
 window.bytesWithUnits2Int = bytesWithUnits2Int;
 window.scrollToElement = scrollToElement;
-window.bytesWithUnits2Int = bytesWithUnits2Int;
-window.scrollToElement = scrollToElement;
