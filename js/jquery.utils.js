@@ -433,3 +433,22 @@ function scrollToElement($element, duration) {
         }
     }
 }
+
+window.heir = heir;
+window.coalesce = coalesce;
+window.splitURL = splitURL;
+window.formFocus = formFocus;
+window.focusFirstChild = focusFirstChild;
+window.stripHTML = stripHTML;
+window.escapeHTML = escapeHTML;
+window.unescapeHTML = unescapeHTML;
+window.urlSet = urlSet;
+window.urlDataSet = urlDataSet;
+window.httpPost = httpPost;
+window.parseBoolean = parseBoolean;
+window.isEditingKeyEvent = isEditingKeyEvent;
+window.guidGenerate = guidGenerate;
+window.bytesWithUnits2Int = bytesWithUnits2Int;
+window.scrollToElement = scrollToElement;
+window.bytesWithUnits2Int = bytesWithUnits2Int;
+window.scrollToElement = scrollToElement;
