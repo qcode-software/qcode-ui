@@ -134,11 +134,9 @@
 	},
 	setTrue: function() {
 	    this.editor.html('<span class=true>Yes</span>');
-            this.currentElement.trigger('editorValueChange');
 	},
 	setFalse: function() {
 	    this.editor.html('<span class=false>No</span>');
-            this.currentElement.trigger('editorValueChange');
 	},
 	_onResize: function(event) {
 	    // Any event that might change the size or position of the editor's target needs to trigger this.
@@ -196,12 +194,14 @@
 	     case 84: // t
 	     case 89: // y
 		 this.setTrue();
+                 this.currentElement.trigger('editorValueChange');
 		 break;
 	     case 96: // 0
 	     case 48: // 0
 	     case 70: // f
 	     case 78: // n
 		 this.setFalse();
+                 this.currentElement.trigger('editorValueChange');
 		 break; 
 	     }
 
@@ -229,8 +229,10 @@
 	_inputOnPaste: function(e) {
 	    if ( this.getValue() ) {
 		this.setFalse();
+                 this.currentElement.trigger('editorValueChange');
 	    } else {
 		this.setTrue();
+                 this.currentElement.trigger('editorValueChange');
 	    }
 
 	    // Pass all paste events on to the target element.
