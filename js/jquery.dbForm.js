@@ -500,7 +500,7 @@
 
         // HTML elements
         if ( response.html ) {
-            $.each(json.html, function(name, value) {
+            $.each(response.html, function(name, value) {
                 var element = $('#' + name);
                 if ( element.is('input, textarea, select') ) {
                     element.val(value);
